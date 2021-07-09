@@ -1,0 +1,404 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unity DOTS：入门简介（ECS，Burst Complier，JobSystem） | 烟雨迷离半世殇的成长之路</title><meta name="keywords" content="Unity技术,ECS,多线程,Unity DOTS"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="本文章已于2021.4.13更新，修正了当时因为水平不足而导致的一些错误，拓展了部分内容。   前言 近期想从更深层次上学习ECS，之前一直停留在浅层次的编码模式（即ECS意识流），没有真正的去了解ECS的内部原理，Unity目前在维护一套以ECS为架构开发的DOTS技术栈，非常值得学习。  ECS  什么是ECS ECS即实体（Entity），组件（Component），系统（System），">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）">
+<meta property="og:url" content="https://www.lfzxb.top/unity-dots-ecs-burst-complier-jobsystem/index.html">
+<meta property="og:site_name" content="烟雨迷离半世殇的成长之路">
+<meta property="og:description" content="本文章已于2021.4.13更新，修正了当时因为水平不足而导致的一些错误，拓展了部分内容。   前言 近期想从更深层次上学习ECS，之前一直停留在浅层次的编码模式（即ECS意识流），没有真正的去了解ECS的内部原理，Unity目前在维护一套以ECS为架构开发的DOTS技术栈，非常值得学习。  ECS  什么是ECS ECS即实体（Entity），组件（Component），系统（System），">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp">
+<meta property="article:published_time" content="2021-01-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-04-13T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="Unity DOTS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/avatar_0001.png!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-dots-ecs-burst-complier-jobsystem/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-04-13 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/avatar_0001.png!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">167</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">83</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">39</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">烟雨迷离半世殇的成长之路</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-01T00:00:00.000Z" title="发表于 2021-01-01 00:00:00">2021-01-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-04-13T00:00:00.000Z" title="更新于 2021-04-13 00:00:00">2021-04-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>7分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<div class="note info modern"><p>本文章已于2021.4.13更新，修正了当时因为水平不足而导致的一些错误，拓展了部分内容。</p>
+</div>
+<h1 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h1>
+<p>近期想从更深层次上学习ECS，之前一直停留在浅层次的编码模式（即ECS意识流），没有真正的去了解ECS的内部原理，Unity目前在维护一套以ECS为架构开发的DOTS技术栈，非常值得学习。</p>
+<h1 id="ecs"><a class="markdownIt-Anchor" href="#ecs"></a> ECS</h1>
+<h2 id="什么是ecs"><a class="markdownIt-Anchor" href="#什么是ecs"></a> 什么是ECS</h2>
+<p>ECS即实体（Entity），组件（Component），系统（System），其中Entity，Component皆为纯数据向的类，System负责操控他们，这种模式会一定程度上优化我们的代码速度。</p>
+<ul>
+<li>Entities：游戏中的事物，但在ECS中他只作为一个Id</li>
+<li>Components：与Entity相关的数据，但是这些数据应该由Component本身而不是Entity来组织。（这种组织上的差异正是面向对象和面向数据的设计之间的关键差异之一）。</li>
+<li>Systems：Systems是把Components的数据从当前状态转换为下一个状态的逻辑，但System本身应当是无状态的。例如，一个system可能会通过他们的速度乘以从前一帧到这一帧的时间间隔来更新所有的移动中的entities的位置。</li>
+</ul>
+<h2 id="ecs为什么会快"><a class="markdownIt-Anchor" href="#ecs为什么会快"></a> ECS为什么会快</h2>
+<h3 id="计算机组成原理前置知识"><a class="markdownIt-Anchor" href="#计算机组成原理前置知识"></a> 计算机组成原理前置知识</h3>
+<p>首先明确几个知识点</p>
+<ul>
+<li>CPU处理数据的速度非常快，往往会出现CPU处理完数据在那干等着的情况，所以需要设计能跟上CPU的高速缓存区来尽量保证CPU有事干，同时也提高了数据访问效率。</li>
+<li>CPU自身有三级缓存，俗称高速缓存，CPU访问第一级（L1）缓存最快，容量最小，第三级（L3）缓存最慢，容量最大。</li>
+<li>我们常说的内存是指CPU拿取数据的起源点，CPU访问内存所需的时钟周期远大于访问高速缓存所需的时钟周期。</li>
+<li>CPU操作数据会先从一，二，三级缓存中取得数据，速度非常快，尤其在一级缓存处速率基本可以满足CPU的需求（即不让CPU歇着），但是有些情况下我们请求的数据不在这三级缓存中（即Cache Miss，实际上如果没有在一级缓存中找到数据都算作是Cache Miss，但是在高速缓存中的CacheMiss惩罚并不严重，所以这里说的Cache Miss指的是高级缓存全部没有命中，需要从内存取数据的过程），就需要寻址到内存中的数据（包含这个数据的一整块数据都将被存入缓存），并且把目标数据放到高速缓存中，提高下一次的访问速度（因为这一次调用的数据块往往在不久的将来还会用到）。</li>
+</ul>
+<h3 id="ecs的数据组织与使用形式"><a class="markdownIt-Anchor" href="#ecs的数据组织与使用形式"></a> ECS的数据组织与使用形式</h3>
+<p>ECS架构在执行逻辑时，只会操作需要操作的数据：System在操作数据的时候只会收集它关心的Component数据，CPU运行时就会将这一整块内存装入高速缓存中，这样就减少了<code>Cache Miss</code>次数，增加了缓存命中率，整体上提高了程序效率。对于此部分更加详细的内容参见：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/64378775">浅谈Unity ECS（二）Uniy ECS内存管理详解：ECS因何而快</a><br />
+此外现代CPU中的使用数据对齐的先进技术（自动矢量化 即：SIMD）与这种数据密集的架构相性极好，可以进一步提高性能。</p>
+<h2 id="ecs有什么优势"><a class="markdownIt-Anchor" href="#ecs有什么优势"></a> ECS有什么优势</h2>
+<p>对比传统的面向对象编程，ECS模式无疑更加适合现代CPU架构，因为它可以做到高效的处理数据而不用把多余的数据字段存入宝贵的缓存从而导致多次Cache Miss。<br />
+举个例子就是传统模式下我们操作Unity对象的Position属性，他会把GameObject所有相关数据都加入缓存，浪费了宝贵的缓存空间。<br />
+而如果在ECS模式下，将只会把Position属性集放入内存，节省了缓存空间，也一定程度上减少了Cache Miss，即常说的<code>提高缓存命中率</code>。</p>
+<h2 id="ecs在实践中真有那么神吗"><a class="markdownIt-Anchor" href="#ecs在实践中真有那么神吗"></a> ECS在实践中真有那么神吗</h2>
+<p>很遗憾，我的答案是否定的，或许它的理念是没有问题，甚至是完美的，但是当理论应用到实践，就会有很多想不到的问题暴露出来</p>
+<ul>
+<li>内存管理，其中包括内存的分配，回收和内存对齐，这是最重要的一点，如果没有做到良好的内存管理，就没有办法享受到ECS的高性能，可以看看Unity ECS为内存管理做了多少事情（Archetype的chunk内存分配都是以指针+unsafe代码的方式进行的）</li>
+<li>编码规范，代码必须是无引用的形式，不然就会破坏Cache友好，这也是为什么Unity ECS的Component中的数据不支持引用类型的一个重要原因之一，但是无引用的形式势必会导致一些烦恼，比如自己处理数据的拷贝和移动</li>
+<li>如果没有做到上面两点，基本上性能和传统OOP没有什么区别，这就是把ECS当成一个编程范式，这当然也是极好的，它比组件式编程更上一层楼，更利于解耦和维护</li>
+<li>开发思想的转变，从OOP到ECS思路需要有很大的转变，在OOP下，A对B发起攻击，就是一个Utility函数处理这个过程，但是在ECS下，你得提供一个专门用来伤害处理的数据类Component与一个System，在System里进行所有此类Component的收集与处理</li>
+</ul>
+<p>综上所述，ECS的概念很美好，但是现实是骨感的，真正启用ECS道路上势必会困难重重</p>
+<p>但是我们可以在特定模块中使用ECS来提高我们的程序性能，例如寻路模块，渲染模块，这些模块实现起来是强内聚的，几乎不会和外界产生耦合，这就降低了心智负担，开发起来比较容易一些</p>
+<p>当然了，我们也没有必要追求纯ECS的实现，可以学习下守望先锋技术团队根据自己的项目做的特化版的ECS，它就是有ECS（比如部分Gameplay模块，PlayerInput，MoveComponent），也有OOP部分（技能系统和网络同步），当然大架构还是ECS，OOP只是包含在这个架构中的一小块。详情参见：<a href="https://www.lfzxb.top/ow-gdc-gameplay-architecture-and-netcode/">《守望先锋》架构设计和网络同步</a></p>
+<h1 id="unity-dots"><a class="markdownIt-Anchor" href="#unity-dots"></a> Unity DOTS</h1>
+<h2 id="什么是unity-dots"><a class="markdownIt-Anchor" href="#什么是unity-dots"></a> 什么是Unity DOTS</h2>
+<p>Unity DOTS就是Unity官方基于ECS架构开发的一套包含Burst Complier技术和JobSystem技术面向数据的技术栈，它旨在充分利用SIMD，多线程操作充分发挥ECS的优势。</p>
+<h2 id="burst-complier"><a class="markdownIt-Anchor" href="#burst-complier"></a> Burst Complier</h2>
+<p>Burst是使用LLVM从IL/.NET字节码转换为高度优化的本机代码的编译器。它作为Unity package发布，并使用Unity Package Manager集成到Unity中。<br />
+它全盘接管了我们编写的新C#编译工作，可以让我们在特定模式下无痛写出高性能代码。</p>
+<h2 id="jobsystem"><a class="markdownIt-Anchor" href="#jobsystem"></a> JobSystem</h2>
+<p>它可以让我们无痛写出多线程并行处理的代码，并且内部配合Burst Complier进行SIMD优化。<br />
+你可以把JobSystem和Unity的ECS一起用，两者配合可以让为所有平台生成高性能机器代码变得简单。</p>
+<h3 id="jobsystem是如何工作的"><a class="markdownIt-Anchor" href="#jobsystem是如何工作的"></a> JobSystem是如何工作的</h3>
+<p>编写多线程代码可以带来高性能的收益，包括帧率的显著提高，将Burst Compiler和C# JobSystem一起用可以提高生成代码的质量，<code>这可以大大减少移动设备上的电池消耗</code>。</p>
+<p>C# JobsSystem另一个重要的点是，他和Unity的native jobsystem整合在一起，用户编写的代码和Unity共享线程，这种合作形式避免了创建多于CPU核心数的线程（会引起CPU资源竞争）</p>
+<h2 id="unitymathematics"><a class="markdownIt-Anchor" href="#unitymathematics"></a> Unity.Mathematics</h2>
+<p>一个C＃数学库提供矢量类型和数学函数（类似Shader里的语法）。由Burst编译器用来将C＃/IL编译为高效的本机代码。</p>
+<p>这个库的主要目标是提供一个友好的数学API（对于熟悉SIMD和图形/着色器的开发者们来说），使用常说的float4，float3类型…等等。带有由静态类math提供的所有内在函数，可以使用轻松将其导入到C＃程序中然后using static Unity.Mathematics.math来使用它。</p>
+<p>除此之外，Burst编译器还可以识别这些类型，并为所有受支持的平台（x64，ARMv7a …等）上为正在运行的CPU提供优化的SIMD类型。</p>
+<p><code>注意：该API尚在开发中，我们可能会引入重大更改（API和基本行为）</code></p>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>所以Unity的DOTS就是替我们解决了ECS的一大难题，即内存管理和编码规范部分，Unity还提供了一些自己的概念，例如WriteGroup，SharedComponent，Archetype等，我了解了一下感觉还是很好的，都是为了能在Gameplay中更好的运用而做出的抽象。</p>
+<p>总的来说，可以期待。</p>
+<h1 id="推荐阅读"><a class="markdownIt-Anchor" href="#推荐阅读"></a> 推荐阅读</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/Unity-Technologies/EntityComponentSystemSamples">官方的ECSSample开源库</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@latest/index.html">官方的ECS文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.burst@latest/index.html">官方的Burst文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/JobSystem.html">官方的JobSystem文档</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.mathematics@latest/index.html">官方的Unity.Mathematics简介</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.benmutou.com/archives/category/unity3d/ecs/unityecs_beginner/page/2">木头哥的ECS教程</a></li>
+<li><a target="_blank" rel="noopener" href="https://connect.unity.com/u/enthervarope">EntherVarope的教程</a></li>
+<li><a target="_blank" rel="noopener" href="https://gametorrahod.com/">十分深入的ECS好文</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.zhihu.com/column/c_1078686690062942208">知乎风小锐DOTS专栏</a></li>
+<li><a href="https://www.lfzxb.top/ow-gdc-share-table-of-contents/">《守望先锋》GDC2017技术分享精粹重制版总目录</a></li>
+<li><a href="https://www.lfzxb.top/unity-dots-table-of-contents/">我的Unity DOTS学习笔记</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-dots-ecs-burst-complier-jobsystem/">https://www.lfzxb.top/unity-dots-ecs-burst-complier-jobsystem/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">烟雨迷离半世殇的成长之路</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><a class="post-meta__tags" href="/tags/Unity-DOTS/">Unity DOTS</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/unity-dots-core-of-ecs/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Unity DOTS：ECS的核心部分</div></div></a></div><div class="next-post pull-right"><a href="/unity-dots-part-of-entities/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Unity DOTS：Entities部分</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/unity-dots-core-of-ecs/" title="Unity DOTS：ECS的核心部分"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Unity DOTS：ECS的核心部分</div></div></a></div><div><a href="/unity-dots-part-of-entities/" title="Unity DOTS：Entities部分"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Unity DOTS：Entities部分</div></div></a></div><div><a href="/unity-dots-table-of-contents/" title="Unity DOTS：目录"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Unity DOTS：目录</div></div></a></div><div><a href="/dots-anything-about-isharedcomponent/" title="关于ISharedComponent的一切"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-03</div><div class="title">关于ISharedComponent的一切</div></div></a></div><div><a href="/unity-dots-extension/" title="Unity DOTS：ECS拓展内容"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Unity DOTS：ECS拓展内容</div></div></a></div><div><a href="/unity-dots-part-of-components/" title="Unity DOTS：Components部分"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Unity DOTS：Components部分</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text"> 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#ecs"><span class="toc-number">2.</span> <span class="toc-text"> ECS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFecs"><span class="toc-number">2.1.</span> <span class="toc-text"> 什么是ECS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ecs%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BC%9A%E5%BF%AB"><span class="toc-number">2.2.</span> <span class="toc-text"> ECS为什么会快</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BB%84%E6%88%90%E5%8E%9F%E7%90%86%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="toc-number">2.2.1.</span> <span class="toc-text"> 计算机组成原理前置知识</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#ecs%E7%9A%84%E6%95%B0%E6%8D%AE%E7%BB%84%E7%BB%87%E4%B8%8E%E4%BD%BF%E7%94%A8%E5%BD%A2%E5%BC%8F"><span class="toc-number">2.2.2.</span> <span class="toc-text"> ECS的数据组织与使用形式</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ecs%E6%9C%89%E4%BB%80%E4%B9%88%E4%BC%98%E5%8A%BF"><span class="toc-number">2.3.</span> <span class="toc-text"> ECS有什么优势</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ecs%E5%9C%A8%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9C%9F%E6%9C%89%E9%82%A3%E4%B9%88%E7%A5%9E%E5%90%97"><span class="toc-number">2.4.</span> <span class="toc-text"> ECS在实践中真有那么神吗</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#unity-dots"><span class="toc-number">3.</span> <span class="toc-text"> Unity DOTS</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFunity-dots"><span class="toc-number">3.1.</span> <span class="toc-text"> 什么是Unity DOTS</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#burst-complier"><span class="toc-number">3.2.</span> <span class="toc-text"> Burst Complier</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#jobsystem"><span class="toc-number">3.3.</span> <span class="toc-text"> JobSystem</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#jobsystem%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84"><span class="toc-number">3.3.1.</span> <span class="toc-text"> JobSystem是如何工作的</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#unitymathematics"><span class="toc-number">3.4.</span> <span class="toc-text"> Unity.Mathematics</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.5.</span> <span class="toc-text"> 总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8E%A8%E8%8D%90%E9%98%85%E8%AF%BB"><span class="toc-number">4.</span> <span class="toc-text"> 推荐阅读</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210509112635.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2021 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210126215735.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>(()=>{
+  const $countDom = document.getElementById('twikoo-count')
+  const init = () => {
+    let initData = {
+      el: '#twikoo-wrap',
+      envId: 'twikoo-4gsr2cmdebe58feb',
+      region: ''
+    }
+
+    if (false) {
+      const otherData = false
+      initData = Object.assign(initData, otherData)
+    }
+    
+    twikoo.init(initData)
+  }
+
+  const getCount = () => {
+    twikoo.getCommentsCount({
+      envId: 'twikoo-4gsr2cmdebe58feb',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      $countDom.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const loadTwikoo = (bool = false) => {
+    if (typeof twikoo === 'object') {
+      init()
+      bool && $countDom && setTimeout(getCount,0)
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(()=> {
+        init()
+        bool && $countDom && setTimeout(getCount,0)
+      })
+    }
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo(true)
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

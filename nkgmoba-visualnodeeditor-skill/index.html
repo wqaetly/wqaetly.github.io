@@ -1,0 +1,470 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>基于行为树的MOBA技能系统：技能系统与可视化节点技能编辑器 | 烟雨迷离半世殇的成长之路</title><meta name="keywords" content="Unity技术,战斗系统,技能系统,个人项目,技能编辑器"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="前言 基于行为树的Moba技能系统系列文章总目录：https:&#x2F;&#x2F;www.lfzxb.top&#x2F;nkgmoba-totaltabs&#x2F; 在开始正文之前感觉还是有必要说明为什么需要开发基于行为树的可视化节点技能编辑器（本文简称技能编辑器），并且推荐大家去看下我之前写过的一篇回答：unity怎么去实现act战斗? 试想一下，英雄的技能多种多样，很多技能释放的流程，产生的效果都不一样，可以简单纯粹到如蛮">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于行为树的MOBA技能系统：技能系统与可视化节点技能编辑器">
+<meta property="og:url" content="https://www.lfzxb.top/nkgmoba-visualnodeeditor-skill/index.html">
+<meta property="og:site_name" content="烟雨迷离半世殇的成长之路">
+<meta property="og:description" content="前言 基于行为树的Moba技能系统系列文章总目录：https:&#x2F;&#x2F;www.lfzxb.top&#x2F;nkgmoba-totaltabs&#x2F; 在开始正文之前感觉还是有必要说明为什么需要开发基于行为树的可视化节点技能编辑器（本文简称技能编辑器），并且推荐大家去看下我之前写过的一篇回答：unity怎么去实现act战斗? 试想一下，英雄的技能多种多样，很多技能释放的流程，产生的效果都不一样，可以简单纯粹到如蛮">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp">
+<meta property="article:published_time" content="2021-06-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-01T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="战斗系统">
+<meta property="article:tag" content="技能系统">
+<meta property="article:tag" content="个人项目">
+<meta property="article:tag" content="技能编辑器">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/avatar_0001.png!webp"><link rel="canonical" href="https://www.lfzxb.top/nkgmoba-visualnodeeditor-skill/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-06-01 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/avatar_0001.png!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">167</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">83</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">39</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">烟雨迷离半世殇的成长之路</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">基于行为树的MOBA技能系统：技能系统与可视化节点技能编辑器</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-06-01T00:00:00.000Z" title="发表于 2021-06-01 00:00:00">2021-06-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-06-01T00:00:00.000Z" title="更新于 2021-06-01 00:00:00">2021-06-01</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">7.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>24分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<h2 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h2>
+<p>基于行为树的Moba技能系统系列文章总目录：<a href="https://www.lfzxb.top/nkgmoba-totaltabs/">https://www.lfzxb.top/nkgmoba-totaltabs/</a></p>
+<p>在开始正文之前感觉还是有必要说明为什么需要开发<strong>基于行为树的可视化节点技能编辑器（本文简称技能编辑器）</strong>，并且推荐大家去看下我之前写过的一篇回答：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/441024228/answer/1696249544">unity怎么去实现act战斗?</a></p>
+<p>试想一下，英雄的技能多种多样，很多技能释放的流程，产生的效果都不一样，可以简单纯粹到如蛮王Q技能的主动回血（泰达米尔消耗怒气，回复生命值），也可以像瑞文那样的三段Q那般复杂（锐雯向前直冲，发起突袭。这个技能可以再次施放另外的2段。 第一段和第二段：向前斩击，对接触到的所有敌人造成物理伤害。 第三段:跃向空中，随后猛击地面，造成物理伤害，并且以冲击点为中心，将周围的敌人击飞。），或者像诺克萨斯之手那让人头痛的被动（在德莱厄斯用斧刃对敌人造成伤害时,敌人会流血,在5秒里持续受到物理伤害,最多叠加5次.<br />
+只要有一名敌方英雄身上的【出血】效果叠到最大层数,或死于【诺克萨斯断头台】 ,德莱厄斯就会获得【诺克萨斯之力】,持续5秒,获得额外攻击力,并对命中的敌人施加最大层数的【出血】效果.），再比如会生成有复杂逻辑的飞行物的女警Q（凯特琳加速转动她步枪来射出一颗穿刺弹，造成物理伤害。在子弹命中第一个单位后，它会绽开为一个更宽的弹体，造成物理伤害。被90口径绳网显形的敌人总会受到全额伤害。。），又或者是如塞拉斯，佛耶戈直接窃取其他英雄技能的技能机制。。。假使我们全部使用Excel配表，用枚举，表跳转来做，这些技能流程，效果，那么技能系统的表将会演变成何等复杂，庞大的怪物，难以维护，拓展。</p>
+<p>但是我们如果使用技能编辑器来开发，这些问题全都可以迎刃而解，对于技能流程，完全可以依靠行为树的运行机制来直观的开发和控制整个技能流程，具体可以参照 <a href="https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/#statescript%E5%AE%9E%E4%BE%8B">守望先锋武器和技能和系统Statescript实例</a> ，思路和效果完全一致，对于技能产生的效果，实际上很多复杂效果都是由一个个的原子效果组合起来的， 所以我们可以把非常多重复的功能都封装到节点里，然后通过节点组合来实现这个技能的最终效果，对于会生成飞行物/召唤物的技能，我们就专门给这个飞行物/召唤物制作一个行为树，因为我们可以完全把他们抽象成一个AI，他们有自己的逻辑，或者也可能随时被召唤主控制着，对于最后一类特殊的技能类型，我们偷不得懒，只能把所有英雄的技能全部为他制作一个特殊版本（因为某些技能机制脱离了原英雄后，会有非常奇怪的表现（譬如豹女的R，杰斯的R），然后技能加成也可能不是原来的加成形式），然后拆分成一个个子树，供运行时进行组装，但是其实已经非常不错了，换成Excel，怎么做呢，降维到Code这边吗？</p>
+<p>我想请读者好好想想，思考一下，我针对这些问题提出的解决方案是否有用，高效，直观，简便，这些观点将始终贯穿这个系列文章，可以说是本技能系统的起源，指导思想了，如果认同了我的观点，就可以接着看下面的开发细节啦。</p>
+<h2 id="可视化插件技术选型"><a class="markdownIt-Anchor" href="#可视化插件技术选型"></a> 可视化插件技术选型</h2>
+<p>现在市面/开源社区里有很多可视化插件供我们选择，对于我们即将制作的技能编辑器来说，相较于自带了很多绑定功能的可视化方案（Node Canvas，Bolt，FlowCanvas，Behavior Designer等），我更推荐大家选择纯粹的可视化插件（Node_Editor_Framework，xNode），这样更方便自己做定制。当然了，在其他情况下，如果那些绑定的功能正好满足你的需求，那也是很好的，毕竟一切为产品服务。对于这方面的更多内容，大家可以去看一下我之前出的一个视频：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1i7411w7tW">想拥有一套自己的Unity可视化工作流？我来带你一网打尽！</a></p>
+<p>那么我们选择的范围就只剩Node_Editor_Framework，xNode二选一了，给大家瞅两眼这俩长啥样</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/Seneral/Node_Editor_Framework">Node_Editor_Framework</a>：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210216195608.png" alt="image-20210216195602167" /></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/Siccity/xNode">xNode</a>：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210216195723.png" alt="image-20210216195723235" /></p>
+<p>虽然我项目用的是Node_Editor_Framework，但其实我更推荐大家使用Xnode来开发，Xnode的基建更全面一些，比如Redo/Undo，多框选等，代码也比较简洁，不像Node_Editor_Framework那样有一堆冗余功能，与Odin的相性也更好一些，最重要的，颜值也更高一些。</p>
+<p>我用Node_Editor_Framework仅仅是因为我先接触的它（明明是我先来的，为什么。。。哦，就是选的我啊，那没事了），当时年轻不懂事，就硬着头皮把整个插件魔改了，裁剪大量代码，重写Redo/Undo，选中节点高亮，重写Group，重写右键菜单等，还好结果可以接受，目前我已经能非常熟练地用它进行开发各种功能的编辑器了。</p>
+<p>还有一个重要问题——序列化，Unity的半吊子序列化根本满足不了我们会在技能编辑器中用到的各种复杂的容器和数据类型，所以我们需要神器——Odin，对于Odin的介绍这里就不多说了，没听说过的可以百度一下，简而言之就是他内部有一套序列化系统，并且支持通过元数据标记的方式来快速将数据可视化出来。</p>
+<p>Node_Editor_Framework和Xnode接入Odin的方式都很简单，几行代码的事。</p>
+<p>到这里其实就已经可以做出这样的效果了：（<strong>这个EditorWindow下文称为Canvas</strong>）</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210215182812.png" alt="技能编辑器v0.0.3" /></p>
+<p>不过仅仅有这空壳子也没用，我们要给他加上灵魂</p>
+<p>（PS：其实还有一种选择，那就是基于UnityGraphView的节点编辑器，但是当时的我在制作技能编辑器的时候还没听说这东西，有些可惜，不过对于GraphView相关内容，我也写了一篇文章：<a href="https://www.lfzxb.top/nodegraphprocesssor-and-odin/">https://www.lfzxb.top/nodegraphprocesssor-and-odin/</a> 里面详细介绍了它的优势以及接入Odin的过程，其实我是更看好它的，后续也准备将可视化方案移植到UnityGraphView上）</p>
+<h2 id="行为树技术选型"><a class="markdownIt-Anchor" href="#行为树技术选型"></a> 行为树技术选型</h2>
+<p>行为树也有几十年的历史了，以便捷，直观便于维护著称，多用来做怪物的AI。</p>
+<p>先提一下基于事件的行为树，相对于传统行为树，基于事件的行为树最大的优势是可以在条件不变的情况下不执行任何多余结点，而传统行为树需要不断地进行Condition节点的判断来决策整棵行为树的状态。基于事件的行为树的性能优势同传统行为树相比高下立判。</p>
+<p>所以就直接选用了Github上的<a target="_blank" rel="noopener" href="https://github.com/meniku/NPBehave">NPBehave</a>，不过可惜的是原作者并没有提供可视化编辑工具，是纯代码的形式创建一颗行为树，就像这样：</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">behaviorTree = <span class="keyword">new</span> Root(</span><br><span class="line">    <span class="keyword">new</span> Service(<span class="number">0.5f</span>, () =&gt; &#123; behaviorTree.Blackboard[<span class="string">&quot;foo&quot;</span>] = !behaviorTree.Blackboard.Get&lt;<span class="built_in">bool</span>&gt;(<span class="string">&quot;foo&quot;</span>); &#125;,</span><br><span class="line">        <span class="keyword">new</span> Selector(</span><br><span class="line">        </span><br><span class="line">            <span class="keyword">new</span> BlackboardCondition(<span class="string">&quot;foo&quot;</span>, Operator.IS_EQUAL, <span class="literal">true</span>, Stops.IMMEDIATE_RESTART,</span><br><span class="line">                <span class="keyword">new</span> Sequence(</span><br><span class="line">                    <span class="keyword">new</span> Action(() =&gt; Debug.Log(<span class="string">&quot;foo&quot;</span>)),</span><br><span class="line">                    <span class="keyword">new</span> WaitUntilStopped()</span><br><span class="line">                )</span><br><span class="line">            ),</span><br><span class="line"></span><br><span class="line">            <span class="keyword">new</span> Sequence(</span><br><span class="line">                <span class="keyword">new</span> Action(() =&gt; Debug.Log(<span class="string">&quot;bar&quot;</span>)),</span><br><span class="line">                <span class="keyword">new</span> WaitUntilStopped()</span><br><span class="line">            )</span><br><span class="line">        )</span><br><span class="line">    )</span><br><span class="line">);</span><br><span class="line">behaviorTree.Start();</span><br></pre></td></tr></table></figure>
+<p>那肯定是不行的，所以我们要通读一遍源码，然后考虑怎么把它和我们的可视化方案结合起来。</p>
+<p>可以看一下我总结的<a href="https://www.lfzxb.top/the-architecture-of-npbehave/">NPBehave行为树架构</a></p>
+<h2 id="行为树的可视化与数据导出"><a class="markdownIt-Anchor" href="#行为树的可视化与数据导出"></a> 行为树的可视化与数据导出</h2>
+<p>我们可以从刚刚那张图看到整个Canvas包含两部分，一个是技能逻辑部分（也就是行为树部分），一个是Buff数据部分，Buff数据部分比较简单，我们先来看行为树部分的处理</p>
+<p>具体的流程架构，我们只需要分离好Editor和Runtime Data即可，Editor依赖于Runtime Data，但Runtime Data不能依赖于Editor，这也是插件开发的准则，一图胜千言：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210218164153.png" alt="为NPBehave而生的可视化编辑器架构" /></p>
+<p>首先是GUI这边，为Canvas做了按钮，用于序列化为二进制文件</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Button(<span class="meta-string">&quot;自动配置所有结点数据&quot;</span>, 25), GUIColor(0.4f, 0.8f, 1)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AddAllNodeData</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">base</span>.AutoSetCanvasDatas(MNpDataSupportor.NpDataSupportorBase);</span><br><span class="line">    <span class="keyword">this</span>.AutoSetSkillData_NodeData();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">[<span class="meta">Button(<span class="meta-string">&quot;保存行为树信息为二进制文件&quot;</span>, 25), GUIColor(0.4f, 0.8f, 1)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Save</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">string</span>.IsNullOrEmpty(SavePath) || <span class="built_in">string</span>.IsNullOrEmpty(Name))</span><br><span class="line">    &#123;</span><br><span class="line">        Log.Error(<span class="string">&quot;保存路径或文件名不能为空，请检查配置&quot;</span>);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">using</span> (FileStream file = File.Create(<span class="string">$&quot;<span class="subst">&#123;SavePath&#125;</span>/<span class="subst">&#123;<span class="keyword">this</span>.Name&#125;</span>.bytes&quot;</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//这就是使用Bson序列化数据为二进制文件的过程</span></span><br><span class="line">        BsonSerializer.Serialize(<span class="keyword">new</span> BsonBinaryWriter(file), MNpDataSupportor);</span><br><span class="line">    &#125;</span><br><span class="line">    Debug.Log(<span class="string">$&quot;保存 <span class="subst">&#123;SavePath&#125;</span>/<span class="subst">&#123;<span class="keyword">this</span>.Name&#125;</span>.bytes 成功&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">[<span class="meta">Button(<span class="meta-string">&quot;测试反序列化&quot;</span>, 25), GUIColor(0.4f, 0.8f, 1)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">TestDe</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//客户端使用AB包加载二进制数据，便于热更新，服务端则会像这样直接读取路径文件</span></span><br><span class="line">    <span class="built_in">byte</span>[] mfile = File.ReadAllBytes(<span class="string">$&quot;<span class="subst">&#123;SavePath&#125;</span>/<span class="subst">&#123;<span class="keyword">this</span>.Name&#125;</span>.bytes&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span> (mfile.Length == <span class="number">0</span>) Debug.Log(<span class="string">&quot;没有读取到文件&quot;</span>);</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//这就是使用Bson反序列化二进制文件为对象的过程</span></span><br><span class="line">        MNpDataSupportor1 = BsonSerializer.Deserialize&lt;NP_DataSupportor&gt;(mfile);</span><br><span class="line">    &#125;</span><br><span class="line">    catch (Exception e)</span><br><span class="line">    &#123;</span><br><span class="line">        Debug.Log(e);</span><br><span class="line">        <span class="keyword">throw</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>导出的技能行为树二进制文件（客户端和服务端）</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210216220019.png" alt="image-20210216220019539" /></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210216215851.png" alt="image-20210216215851272" /></p>
+<p>其中比较关键的代码是行为树基础节点数据的导出（AutoSetCanvasDatas）和重建（CreateNpRuntimeTree ）代码，也没什么算法，将行为树节点排好序序列化反序列化就好</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 自动配置当前图所有数据（结点，黑板）</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;npDataSupportorBase&quot;&gt;</span>自定义的继承于NP_DataSupportorBase的数据体<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">virtual</span> <span class="keyword">void</span> <span class="title">AutoSetCanvasDatas</span>(<span class="params">NP_DataSupportorBase npDataSupportorBase</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.AutoSetNP_NodeData(npDataSupportorBase);</span><br><span class="line">    <span class="keyword">this</span>.AutoSetNP_BBDatas(npDataSupportorBase);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 自动配置所有行为树结点</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;npDataSupportorBase&quot;&gt;</span>自定义的继承于NP_DataSupportorBase的数据体<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">AutoSetNP_NodeData</span>(<span class="params">NP_DataSupportorBase npDataSupportorBase</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    npDataSupportorBase.NP_DataSupportorDic.Clear();</span><br><span class="line">    <span class="comment">//当前Canvas所有NP_Node</span></span><br><span class="line">    List&lt;NP_NodeBase&gt; allNodes = <span class="keyword">new</span> List&lt;NP_NodeBase&gt;();</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> node <span class="keyword">in</span> <span class="keyword">this</span>.nodes)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (node <span class="keyword">is</span> NP_NodeBase mNode)</span><br><span class="line">        &#123;</span><br><span class="line">            allNodes.Add(mNode);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//排序</span></span><br><span class="line">    allNodes.Sort((x, y) =&gt; -x.position.y.CompareTo(y.position.y));</span><br><span class="line">    <span class="comment">//配置每个节点Id</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> node <span class="keyword">in</span> allNodes)</span><br><span class="line">    &#123;</span><br><span class="line">        node.NP_GetNodeData().id = IdGenerater.GenerateId();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//设置根结点Id</span></span><br><span class="line">    npDataSupportorBase.RootId = allNodes[allNodes.Count - <span class="number">1</span>].NP_GetNodeData().id;</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> node <span class="keyword">in</span> allNodes)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//获取结点对应的NPData</span></span><br><span class="line">        NP_NodeDataBase mNodeData = node.NP_GetNodeData();</span><br><span class="line">        <span class="keyword">if</span> (mNodeData.LinkedIds == <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            mNodeData.LinkedIds = <span class="keyword">new</span> List&lt;<span class="built_in">long</span>&gt;();</span><br><span class="line">        &#125;</span><br><span class="line">        mNodeData.LinkedIds.Clear();</span><br><span class="line">        <span class="comment">//出结点连接的Nodes</span></span><br><span class="line">        List&lt;NP_NodeBase&gt; theNodesConnectedToOutNode = <span class="keyword">new</span> List&lt;NP_NodeBase&gt;();</span><br><span class="line">        List&lt;ValueConnectionKnob&gt; valueConnectionKnobs = node.GetNextNodes()?.connections;</span><br><span class="line">        <span class="keyword">if</span> (valueConnectionKnobs != <span class="literal">null</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> valueConnectionKnob <span class="keyword">in</span> valueConnectionKnobs)</span><br><span class="line">            &#123;</span><br><span class="line">                theNodesConnectedToOutNode.Add((NP_NodeBase) valueConnectionKnob.body);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">//对所连接的节点们进行排序</span></span><br><span class="line">            theNodesConnectedToOutNode.Sort((x, y) =&gt; x.position.x.CompareTo(y.position.x));</span><br><span class="line">            <span class="comment">//配置连接的Id，运行时实时构建行为树</span></span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> npNodeBase <span class="keyword">in</span> theNodesConnectedToOutNode)</span><br><span class="line">            &#123;</span><br><span class="line">                mNodeData.LinkedIds.Add(npNodeBase.NP_GetNodeData().id);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//将此结点数据写入字典</span></span><br><span class="line">        npDataSupportorBase.NP_DataSupportorDic.Add(mNodeData.id, mNodeData);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 自动配置黑板数据</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;npDataSupportorBase&quot;&gt;</span>自定义的继承于NP_DataSupportorBase的数据体<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">AutoSetNP_BBDatas</span>(<span class="params">NP_DataSupportorBase npDataSupportorBase</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    npDataSupportorBase.NP_BBValueManager.Clear();</span><br><span class="line">    <span class="comment">//设置黑板数据</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> bbvalues <span class="keyword">in</span> <span class="keyword">this</span>.GetCurrentCanvasDatas().BBValues)</span><br><span class="line">    &#123;</span><br><span class="line">        npDataSupportorBase.NP_BBValueManager.Add(bbvalues.Key, bbvalues.Value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 创建一个行为树实例,默认存入Unit的NP_RuntimeTreeManager中</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;unit&quot;&gt;</span>行为树所归属unit<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name=&quot;nPDataId&quot;&gt;</span>行为树数据id<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> NP_RuntimeTree <span class="title">CreateNpRuntimeTree</span>(<span class="params">Unit <span class="built_in">unit</span>, <span class="built_in">long</span> nPDataId</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="comment">//只需要深拷贝黑板数据即可，因为我们反序列化出来的行为树节点数据是无状态的，完全可以复用</span></span><br><span class="line">    NP_DataSupportor npDataSupportor =</span><br><span class="line">            Game.Scene.GetComponent&lt;NP_TreeDataRepository&gt;().GetNP_TreeData_DeepCopyBBValuesOnly(nPDataId);</span><br><span class="line">	。。。</span><br><span class="line">    <span class="comment">//配置节点数据</span></span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> nodeDateBase <span class="keyword">in</span> npDataSupportor.NpDataSupportorBase.NP_DataSupportorDic)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">switch</span> (nodeDateBase.Value.NodeType)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">case</span> NodeType.Task:</span><br><span class="line">                nodeDateBase.Value.CreateTask(<span class="built_in">unit</span>.Id, tempTree);</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> NodeType.Decorator:</span><br><span class="line">                nodeDateBase.Value.CreateDecoratorNode(<span class="built_in">unit</span>.Id, tempTree,</span><br><span class="line">                        npDataSupportor.NpDataSupportorBase.NP_DataSupportorDic[nodeDateBase.Value.LinkedIds[<span class="number">0</span>]].NP_GetNode());</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> NodeType.Composite:</span><br><span class="line">                List&lt;Node&gt; temp = <span class="keyword">new</span> List&lt;Node&gt;();</span><br><span class="line">                <span class="keyword">foreach</span> (<span class="keyword">var</span> linkedId <span class="keyword">in</span> nodeDateBase.Value.LinkedIds)</span><br><span class="line">                &#123;</span><br><span class="line">                    temp.Add(npDataSupportor.NpDataSupportorBase.NP_DataSupportorDic[linkedId].NP_GetNode());</span><br><span class="line">                &#125;</span><br><span class="line">                nodeDateBase.Value.CreateComposite(temp.ToArray());</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	。。。</span><br><span class="line">    <span class="comment">//配置黑板数据</span></span><br><span class="line">    Dictionary&lt;<span class="built_in">string</span>, ANP_BBValue&gt; bbvaluesManager = tempTree.GetBlackboard().GetDatas();</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> bbValues <span class="keyword">in</span> npDataSupportor.NpDataSupportorBase.NP_BBValueManager)</span><br><span class="line">    &#123;</span><br><span class="line">        bbvaluesManager.Add(bbValues.Key, bbValues.Value);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> tempTree;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当然，上述流程一些地方还可以再做优化，比如CreateNpRuntimeTree中switch创建的节点，就可以进行池化，进一步降低消耗，再比如深拷贝出来的黑板数据也可以做一下池化，用完之后直接根据原始数据重置一下，可以再复用，等等</p>
+<h3 id="技能配置浏览器"><a class="markdownIt-Anchor" href="#技能配置浏览器"></a> 技能配置浏览器</h3>
+<p>为了满足技能的数据预览和导出需求，我还制作了一个技能配置浏览器，可以直观的查看，搜索，操作项目中所有的技能配置，功能也如下图所示，一目了然：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210529164444.png" alt="image-20210529164438150" /></p>
+<h2 id="技能和buff数据设计"><a class="markdownIt-Anchor" href="#技能和buff数据设计"></a> 技能和Buff数据设计</h2>
+<p>这部分的数据处理和行为树差不多，所以对于数据的序列化和反序列化部分不会讲的太详细（事实上此类工具的开发在数据划分形式上都差不多，分好Editor和Runtime就行了），这里只是简单说一下Buff数据结构和配置流程，对于更加详细的Buff系统思考和设计，我会单独出一篇文章来说明</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210218164201.png" alt="技能系统设计" /></p>
+<p>其中比较有意思的地方是我利用连线来表述Buff之间的关系，比如一个BindStateBuff节点 A后面连了一个FlashDamageBuff节点 B和另一个BindStateBuff节点 C，这个BindStateBuff节点 C后面连了另一个FlashDamageBuff节点 D，这样，在导出数据的时候，点一下Canvas上的“自动配置所有结点数据”，就会自动将相关Buff的Id注册。在运行时添加A Buff的时候，就会连锁添加B,C,D这三个Buff。这样就实现了直观，有序，可控的Buff组合。</p>
+<p>以BindStateBuff Node的处理连线数据(注册相连Buff的Id)为例，代码如下：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">AutoAddLinkedBuffs</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    BindStateBuffData bindStateBuffData = SkillBuffBases.BuffData <span class="keyword">as</span> BindStateBuffData;</span><br><span class="line">    <span class="keyword">if</span> (bindStateBuffData.OriBuff == <span class="literal">null</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        bindStateBuffData.OriBuff = <span class="keyword">new</span> List&lt;VTD_BuffInfo&gt;();</span><br><span class="line">    &#125;</span><br><span class="line">	。。。</span><br><span class="line">    bindStateBuffData.OriBuff.Clear();</span><br><span class="line">    <span class="keyword">foreach</span> (<span class="keyword">var</span> connection <span class="keyword">in</span> <span class="keyword">this</span>.connectionPorts)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//只有出方向的端口才是添加LinkedBuffId的地方</span></span><br><span class="line">        <span class="keyword">if</span> (connection.direction == Direction.Out)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">foreach</span> (<span class="keyword">var</span> connectTagrets <span class="keyword">in</span> connection.connections)</span><br><span class="line">            &#123;</span><br><span class="line">                BuffNodeBase targetNode = (connectTagrets.body <span class="keyword">as</span> BuffNodeBase);</span><br><span class="line">                <span class="keyword">if</span> (targetNode != <span class="literal">null</span>)</span><br><span class="line">                &#123;</span><br><span class="line">                    bindStateBuffData.OriBuff.Add(<span class="keyword">new</span> VTD_BuffInfo()</span><br><span class="line">                    &#123;</span><br><span class="line">                        BuffNodeId = targetNode.Skill_GetNodeData().NodeId</span><br><span class="line">                    &#125;);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">			。。。</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="技能编辑器致命痛点分析与解决方案黑板数据仓库"><a class="markdownIt-Anchor" href="#技能编辑器致命痛点分析与解决方案黑板数据仓库"></a> 技能编辑器致命痛点分析与解决方案（黑板数据仓库）</h2>
+<p>我们都知道Excel数据表的一大优点就是数据直观，方便批量修改，但是这却是技能编辑器的短肋，因为我们打开一个技能的Canvas的时候，看到的就是这个技能的数据，而且对于技能编辑器而言，更加直观的是逻辑，而不是数据，那么在需要对大量技能的数据进行整理的时候（比如Id，事件名，特效名，动画名的整理和修改），弊病就暴露无遗了。</p>
+<p>我们充分发挥了技能编辑器逻辑直观的优势，但是却没有做到扬长避短，所以我们需要给出一种两全其美的方案，结合技能编辑器和Excel两者的优点。</p>
+<p>我给出的答案是利用行为树的黑板数据仓库，这个模块主要有三个重要的地方</p>
+<ul>
+<li>解决数据赋值时的GC问题（因为黑板默认数据存储类型是System.Object），我之前写过一篇文章：<a href="https://www.lfzxb.top/blackboard-0gc-write/">实现行为树黑板模块0GC赋值功能</a></li>
+<li>解决在编辑器中填写字符串/Id容易出错的问题</li>
+<li>支持自动/手动从Excel表读取的数据来更新黑板数据仓库中的数据，</li>
+<li>提供<strong>引用机制</strong>，黑板数据仓库更新后，在技能Canvas中已填充的数据会自动更新</li>
+</ul>
+<h3 id="解决在编辑器中填写字符串id容易出错的问题"><a class="markdownIt-Anchor" href="#解决在编辑器中填写字符串id容易出错的问题"></a> 解决在编辑器中填写字符串/Id容易出错的问题</h3>
+<p>对于第二点，我们先来分析一下问题的来源，在给节点填充数据的时候，往往会涉及一些字符串和Id的填写，这些个东西就算填错了，导出数据的时候也不会报错，也就不好找到错的地方，所以需要尽量降低出错的可能性，解决方案也很简单，<strong>将此Canvas所有的数据汇总到一个黑板数据仓库里，封装数据类型，做好键值对映射，最后利用Odin来实现下拉框的形式的数据填充，最大限度的减少出错成本。</strong></p>
+<p>这里以两个最具代表性的例子来解释说明（实际上专门为黑板相关节点配置的数据也是类似Id的形式来处理的）：事件（string）和Id（long）</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217153713.png" alt="image-20210217153713347" /></p>
+<p>先来看事件的封装，因为事件名往往都是顾名思义的字符串，所以这里直接一个string就行了</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">ETModel</span></span><br><span class="line">&#123;</span><br><span class="line">    [<span class="meta">HideReferenceObjectPicker</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">struct</span> VTD_EventId</span><br><span class="line">    &#123;</span><br><span class="line">        [<span class="meta">ValueDropdown(<span class="meta-string">&quot;GetEventId&quot;</span>)</span>]</span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">string</span> Value;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//因为我们Runtime的时候不需要这些Editor下的功能，所以用宏包起来</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> UNITY_EDITOR</span></span><br><span class="line">        <span class="function"><span class="keyword">private</span> IEnumerable&lt;<span class="built_in">string</span>&gt; <span class="title">GetEventId</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">    		<span class="comment">//读取当前的技能Canvas</span></span><br><span class="line">            UnityEngine.Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(UnityEngine.PlayerPrefs.GetString(<span class="string">&quot;LastCanvasPath&quot;</span>));</span><br><span class="line">            <span class="keyword">if</span> (subAssets != <span class="literal">null</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">foreach</span> (<span class="keyword">var</span> subAsset <span class="keyword">in</span> subAssets)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="comment">//取到存储黑板数据的SO文件，并且返回结果值，用于给ValueDropdown绘制下拉列表内容</span></span><br><span class="line">                    <span class="keyword">if</span> (subAsset <span class="keyword">is</span> NPBehaveCanvasDataManager npBehaveCanvasDataManager)</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">return</span> npBehaveCanvasDataManager.EventValues;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效果如下</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217154102.png" alt="image-20210217154101957" /></p>
+<p>再来看看Id的封装，因为Id只是一个数字，辨识度不是很高，所以我们要做一层string映射</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">ETModel</span></span><br><span class="line">&#123;</span><br><span class="line">    [<span class="meta">HideReferenceObjectPicker</span>]</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">struct</span> VTD_Id</span><br><span class="line">    &#123;</span><br><span class="line">        [<span class="meta">LabelText(<span class="meta-string">&quot;此节点ID在数据仓库中的Key&quot;</span>)</span>]</span><br><span class="line">        [<span class="meta">ValueDropdown(<span class="meta-string">&quot;GetIdKey&quot;</span>)</span>]</span><br><span class="line">        [<span class="meta">OnValueChanged(<span class="meta-string">&quot;ApplayId&quot;</span>)</span>]</span><br><span class="line">        [<span class="meta">BsonIgnore</span>]</span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">string</span> IdKey;</span><br><span class="line"></span><br><span class="line">        [<span class="meta">LabelText(<span class="meta-string">&quot;Id&quot;</span>)</span>]</span><br><span class="line">        [<span class="meta">InfoBox(<span class="meta-string">&quot;无法对其直接赋值，需要在CanvasDataManager中Ids中注册键值对，然后选择NodeIdKey的值&quot;</span>)</span>]</span><br><span class="line">        [<span class="meta">ReadOnly</span>]</span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">long</span> Value;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">if</span> UNITY_EDITOR</span></span><br><span class="line">        <span class="function"><span class="keyword">private</span> IEnumerable&lt;<span class="built_in">string</span>&gt; <span class="title">GetIdKey</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="built_in">string</span> path = UnityEngine.PlayerPrefs.GetString(<span class="string">&quot;LastCanvasPath&quot;</span>);</span><br><span class="line"></span><br><span class="line">            UnityEngine.Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(path);</span><br><span class="line">            <span class="keyword">if</span> (subAssets != <span class="literal">null</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">foreach</span> (<span class="keyword">var</span> subAsset <span class="keyword">in</span> subAssets)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">if</span> (subAsset <span class="keyword">is</span> NPBehaveCanvasDataManager npBehaveCanvasDataManager)</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">return</span> npBehaveCanvasDataManager.Ids.Keys;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="literal">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">ApplayId</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>        &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">string</span>.IsNullOrEmpty(IdKey))</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="built_in">string</span> path = UnityEngine.PlayerPrefs.GetString(<span class="string">&quot;LastCanvasPath&quot;</span>);</span><br><span class="line"></span><br><span class="line">            UnityEngine.Object[] subAssets = AssetDatabase.LoadAllAssetsAtPath(path);</span><br><span class="line">            <span class="keyword">if</span> (subAssets != <span class="literal">null</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">foreach</span> (<span class="keyword">var</span> subAsset <span class="keyword">in</span> subAssets)</span><br><span class="line">                &#123;</span><br><span class="line">                    <span class="keyword">if</span> (subAsset <span class="keyword">is</span> NPBehaveCanvasDataManager npBehaveCanvasDataManager)</span><br><span class="line">                    &#123;</span><br><span class="line">                        <span class="keyword">if</span> (npBehaveCanvasDataManager.Ids.TryGetValue(IdKey, <span class="keyword">out</span> <span class="keyword">var</span> targetId))</span><br><span class="line">                        &#123;</span><br><span class="line">                            Value = targetId;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>效果如下：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217154508.png" alt="image-20210217154508221" /></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217154524.png" alt="image-20210217154524326" /></p>
+<p>以第二张图选择结果为例</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217154632.png" alt="image-20210217154632827" /></p>
+<p>这样一来，我们就可以直接以下拉框的形式配置数据了</p>
+<h3 id="其他"><a class="markdownIt-Anchor" href="#其他"></a> 其他</h3>
+<p>对于第三点和第四点，其实我还没做（懒狗怎么说，懒狗），但是其实也简单，多一层黑板数据仓库到Excel表的映射，做几个Dic维护一下数据的引用，就行了，相信聪明的你一定能理解的。</p>
+<h3 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h3>
+<p>经过这些处理后，我们就可以把所有的数据都反映到这个简单直观的黑板数据仓库上面来，并且有从黑板数据仓库到Excel表的映射后我们基本上只需要在Excel那边编辑修改具体的数据就行了，非常的有人情味，策划大哥友好度++。</p>
+<h2 id="demo解析"><a class="markdownIt-Anchor" href="#demo解析"></a> Demo解析</h2>
+<p>说了这么多，是时候拿出真东西给带伙康康了，这里以诺克萨斯之手（简称诺手）的Q技能和被动为例（更加详细的技能介绍和视频演示可以前往 <a target="_blank" rel="noopener" href="http://www.op.gg/champion/darius/statistics/top">诺手的OPGG界面</a>，点击技能图标即可观看技能演示）</p>
+<p>诺手被动介绍：在德莱厄斯用斧刃对敌人造成伤害时，敌人会流血,在5秒里持续受到物理伤害，最多叠加5次。只要有一名敌方英雄身上的【出血】效果叠到最大层数，德莱厄斯就会获得【诺克萨斯之力】，持续5秒，获得额外攻击力，并对命中的敌人施加最大层数的【出血】效果。</p>
+<p>诺手Q技能介绍：在短暂的延迟后，德莱厄斯环绕自身挥舞斧头，打击附近的敌人。被斧刃（技能指示器外环）命中的敌人会受到物理伤害。被斧柄（技能指示器内环）命中的敌人只会受到前者35%的伤害(不会施加【出血】效果)。德莱厄斯每用斧刃命中一名敌方英雄，就会治疗自身12%的已损失生命值(最大值：36%)。</p>
+<p>先放个成品视频：</p>
+<h3 id="被动"><a class="markdownIt-Anchor" href="#被动"></a> 被动</h3>
+<p>先来分析被动技能，可以看出由诺手Q技能外圈击中的敌人会被上一层流血Buff，一旦有一个敌人身上有5层流血Buff，诺手就会获得攻击力，并且下一次Q技能外圈击中的敌人会附加满层的流血效果，很明显需要进行事件的分发和订阅（这里的事件分发和订阅有两个含义，一个是行为树黑板的事件，一个是Buff系统中的Buff事件，行为树的事件只存在于行为树区域（在这里就是“技能逻辑块”），Buff系统的事件只存在于Buff区域（在这里就是Buff数据块）），然后深入分析一下，其实我们需要创建的Buff比表面上的多，因为诺手本身就要添加一个监听Buff，用于监听有没有英雄身上的流血Buff达到5层，还要考虑到客户端那边的流血特效的同步，所以还得有一个同步Buff，往客户端同步Buff信息逻辑块</p>
+<h4 id="服务端"><a class="markdownIt-Anchor" href="#服务端"></a> 服务端</h4>
+<p>先来看服务端这边的行为树</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217193342.png" alt="image-20210217193342146" /></p>
+<p>行为树逻辑块比较简单，就是首次获得被动的时候进行监听Buff（用于监听有没有英雄身上的流血Buff达到5层）的添加，然后就是特定事件（普攻，Q技能外圈）触发的时候进行流血Buff的添加，当然了，Buff添加的目标也是由普攻，Q技能外圈所提供的对象</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217195119.png" alt="image-20210217195119183" /></p>
+<p>注意一下最左边的节点，可以保证我们的行为树在没接收到事件的情况下会一直“卡”在这个节点上，从而最小化性能消耗</p>
+<p>比较复杂的是Buff数据图这边</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217194412.png" alt="image-20210217194412004" /></p>
+<p>最上面的那个Buff节点，就是由我们行为树区域的“宏行为节点：为目标添加流血Buff”添加的，它在添加的时候会抛出一个事件</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217195321.png" alt="image-20210217195321425" /></p>
+<p>而这个事件会被两个监听Buff监听</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217195520.png" alt="image-20210217195520478" /></p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217195603.png" alt="image-20210217195603683" /></p>
+<p>就这样通过事件的传递，完成了整个技能机制的开发，经过这个技能的分析，大家应该理解了行为树和Buff图的运行机制，限于篇幅问题，下面不会再说的这么详细</p>
+<h4 id="客户端"><a class="markdownIt-Anchor" href="#客户端"></a> 客户端</h4>
+<p>然后就是客户端这边，客户端这边的被动技能Canvas就要简单许多了，因为没有那么复杂的逻辑，老规矩，先看行为树区域</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217200435.png" alt="image-20210217200435563" /></p>
+<p>主要就是根据从服务器那边获取的数据来添加流血Buff和血怒Buff，并且通过行为树控制更加细层次的逻辑，比如Buff没到5层就不会播放血怒特效，注意，这里的Buff都是用来播放特效的Buff，请不要惊讶，在我的设计思路里，就是万物皆Buff的，譬如服务端的那个“同步Buff信息”Buff结点，这样做的好处是可以高度统一技能系统的功能开发，把尽可能多的逻辑以可视化的形式表现出来</p>
+<p>然后是Buff数据块这边，因为Buff之间没什么联系，所以就是一个个单独的Buff节点，作用也是顾名思义</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217201739.png" alt="image-20210217201739839" /></p>
+<h3 id="q技能"><a class="markdownIt-Anchor" href="#q技能"></a> Q技能</h3>
+<p>Q技能相对于被动的技能流程就会复杂很多了，毕竟他是一个主动技能，而且还会生成一个碰撞体，这个碰撞体还会有一个行为树</p>
+<p>这部分开始之前要先说明一个特殊的东西——<strong>技能的描述结点</strong>，他描述了技能的所有信息，包括伤害，消耗，释放方式，目标，加成等，放Excel表吧，感觉与技能编辑器割裂有点严重，毕竟技能编辑器的一些节点需要频繁使用技能描述节点的信息，比如消耗，伤害等，但是把它放技能编辑器里又有点格格不入的感觉，可能我哪天突然就想通了，就知道怎么处理了，无伤大雅</p>
+<h4 id="服务端-2"><a class="markdownIt-Anchor" href="#服务端-2"></a> 服务端</h4>
+<p>老规矩，先来看服务端，首先是它的行为树区域</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217202140.png" alt="image-20210217202140083" /></p>
+<p>一个屏幕都快放不下了，大家将就着看吧，需要注意的是以右下角那个红框，它生成了Q技能的碰撞体，我们会专门给这个碰撞体做一个行为树，当然了这里的这个碰撞体逻辑比较简单，判断一下碰撞到的敌人距离圆心的距离就行了，有点大材小用的感觉，但是这里是为了演示嘛，最后留意一下最左边的那个子树分支，是用来和这个生成的Q技能碰撞体行为树互动的</p>
+<p>然后是它的Buff数据区域，是零散的Buff节点，因为各个Buff彼此之间没有联系</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217202728.png" alt="image-20210217202728880" /></p>
+<p>然后我们就可来看这个碰撞体的行为树了</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217202838.png" alt="image-20210217202837877" /></p>
+<p>因为它本身就是个AI，所以就没做技能逻辑区和Buff数据区的划分了，逻辑也是一目了然，需要注意的是从左往右第三棵子树的宏行为节点，他会往我们被动行为树和Q技能行为树的黑板发送事件，更新数据，从而激活相应的子树分支，这样就完成了Q技能，Q技能产生的碰撞体与被动三者之间的互动，那么第三棵子树激活的事件，就是由我们碰撞系统发出的，会有类似这样的代码</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//通过设置黑板数据来激活子树</span></span><br><span class="line">skillCanvas.GetBlackboard().Set(<span class="string">&quot;Darius_QOutIsHitUnit&quot;</span>, <span class="literal">true</span>);</span><br><span class="line"><span class="comment">//将碰撞到的对象Id传入黑板</span></span><br><span class="line">skillCanvas.GetBlackboard().Get&lt;List&lt;<span class="built_in">long</span>&gt;&gt;(<span class="string">&quot;Darius_QOutHitUnitIds&quot;</span>)?.Add(collisionBelongToUnit.Id);</span><br></pre></td></tr></table></figure>
+<h4 id="客户端-2"><a class="markdownIt-Anchor" href="#客户端-2"></a> 客户端</h4>
+<p>Q技能的客户端部分，也比较简单，就是根据服务器发来的数据进行动画，特效的播放</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210217203212.png" alt="image-20210217203212410" /></p>
+<h2 id="未来展望与开发计划"><a class="markdownIt-Anchor" href="#未来展望与开发计划"></a> 未来展望与开发计划</h2>
+<p>本文虽然实现了一个基于节点的技能编辑器，但仍然有许多地方需要改善：</p>
+<ul>
+<li>技能配置导出二进制文件大小需要优化，由于我们需要运行时重建行为树，所以许多地方只需要一个标识即可，而不是把整个类序列化，会有很多冗余数据</li>
+<li>黑板数据模块提到的一些待办事项</li>
+<li>编辑器UI界面优化，但不准备花大力气美化，因为即将更换新的可视化方案，目前已经做了一些UI优化，可去项目网址查看效果</li>
+</ul>
+<p>除此之外，个人心中也还有许多想法待实装，具体来说：</p>
+<ul>
+<li>接入一个Timeline编辑器（暂定Slate），使用其制作精确帧控制的部分，例如上面例子中的Q技能延迟0.5s才生成碰撞体，应当是放在某一特定帧才触发，这样一是方便策划所见即所得，二是为后续的状态帧同步的方案打下数据基础，而行为树也不会被弃用，因为其逻辑控制能力要比Timeline强大的多，所以其继续担任逻辑控制的角色。这样行为树+Timeline结合的方式应当是比较无懈可击的一个方案了，因为其兼顾了“帧”的概念，适用范围就不仅仅是Moba这一类型了，它可以用来开发ACT这种要求极高的帧控制和精确度的游戏类型，甚至是守望先锋这种半MOBA半FPS游戏也是可以适用的。</li>
+<li>使用GraphView作为可视化方案替代Node_Editor_Framework，毕竟官方背书 + 未来趋势。</li>
+</ul>
+<h2 id="后记"><a class="markdownIt-Anchor" href="#后记"></a> 后记</h2>
+<p>本文讲述了技能编辑器从可视化技术选型到最终落地的全部开发过程，为了便于读者理解，部分代码是经过裁剪过的，甚至是一些重要部分都没有放代码，这是出于篇幅考虑权衡出来的决定，想查看原代码的可以直接去我的开源项目查看。其实也不用特地去看代码，代码谁都会写，最主要的是思路，有了思路，代码就是体力活罢了。</p>
+<p>至此我们已经有了一个简洁，易用的技能编辑器，之后就可以进行其他模块的开发了。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/nkgmoba-visualnodeeditor-skill/">https://www.lfzxb.top/nkgmoba-visualnodeeditor-skill/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">烟雨迷离半世殇的成长之路</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F/">技能系统</a><a class="post-meta__tags" href="/tags/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE/">个人项目</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E8%83%BD%E7%BC%96%E8%BE%91%E5%99%A8/">技能编辑器</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/nkgmoba-totaltabs/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">基于行为树的MOBA技能系统：总目录</div></div></a></div><div class="next-post pull-right"><a href="/usual-vfx-in-game/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210507194108.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">常见游戏特效学习与实现</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/nkg-moba-release-with-overflow/" title="NKGMoba技能系统联网Demo（内存泄漏尊享版）"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210322104031.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-22</div><div class="title">NKGMoba技能系统联网Demo（内存泄漏尊享版）</div></div></a></div><div><a href="/nkgmoba-animsystem/" title="基于行为树的MOBA技能系统：动画系统"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">基于行为树的MOBA技能系统：动画系统</div></div></a></div><div><a href="/nkgmoba-buffsystem/" title="基于行为树的MOBA技能系统：Buff系统"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">基于行为树的MOBA技能系统：Buff系统</div></div></a></div><div><a href="/nkgmoba-collisionsystem/" title="基于行为树的MOBA技能系统：碰撞系统"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">基于行为树的MOBA技能系统：碰撞系统</div></div></a></div><div><a href="/nkgmoba-numsystem/" title="基于行为树的MOBA技能系统：数值系统"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">基于行为树的MOBA技能系统：数值系统</div></div></a></div><div><a href="/nkgmoba-skillandnetwork/" title="基于行为树的MOBA技能系统：技能系统与网络同步"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210601142659.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-06-01</div><div class="title">基于行为树的MOBA技能系统：技能系统与网络同步</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="twikoo-wrap"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text"> 前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E8%A7%86%E5%8C%96%E6%8F%92%E4%BB%B6%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B"><span class="toc-number">2.</span> <span class="toc-text"> 可视化插件技术选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%8C%E4%B8%BA%E6%A0%91%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B"><span class="toc-number">3.</span> <span class="toc-text"> 行为树技术选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%8C%E4%B8%BA%E6%A0%91%E7%9A%84%E5%8F%AF%E8%A7%86%E5%8C%96%E4%B8%8E%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%87%BA"><span class="toc-number">4.</span> <span class="toc-text"> 行为树的可视化与数据导出</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E9%85%8D%E7%BD%AE%E6%B5%8F%E8%A7%88%E5%99%A8"><span class="toc-number">4.1.</span> <span class="toc-text"> 技能配置浏览器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E5%92%8Cbuff%E6%95%B0%E6%8D%AE%E8%AE%BE%E8%AE%A1"><span class="toc-number">5.</span> <span class="toc-text"> 技能和Buff数据设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E7%BC%96%E8%BE%91%E5%99%A8%E8%87%B4%E5%91%BD%E7%97%9B%E7%82%B9%E5%88%86%E6%9E%90%E4%B8%8E%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88%E9%BB%91%E6%9D%BF%E6%95%B0%E6%8D%AE%E4%BB%93%E5%BA%93"><span class="toc-number">6.</span> <span class="toc-text"> 技能编辑器致命痛点分析与解决方案（黑板数据仓库）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A3%E5%86%B3%E5%9C%A8%E7%BC%96%E8%BE%91%E5%99%A8%E4%B8%AD%E5%A1%AB%E5%86%99%E5%AD%97%E7%AC%A6%E4%B8%B2id%E5%AE%B9%E6%98%93%E5%87%BA%E9%94%99%E7%9A%84%E9%97%AE%E9%A2%98"><span class="toc-number">6.1.</span> <span class="toc-text"> 解决在编辑器中填写字符串&#x2F;Id容易出错的问题</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">6.2.</span> <span class="toc-text"> 其他</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">6.3.</span> <span class="toc-text"> 总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#demo%E8%A7%A3%E6%9E%90"><span class="toc-number">7.</span> <span class="toc-text"> Demo解析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A2%AB%E5%8A%A8"><span class="toc-number">7.1.</span> <span class="toc-text"> 被动</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF"><span class="toc-number">7.1.1.</span> <span class="toc-text"> 服务端</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">7.1.2.</span> <span class="toc-text"> 客户端</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#q%E6%8A%80%E8%83%BD"><span class="toc-number">7.2.</span> <span class="toc-text"> Q技能</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF-2"><span class="toc-number">7.2.1.</span> <span class="toc-text"> 服务端</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF-2"><span class="toc-number">7.2.2.</span> <span class="toc-text"> 客户端</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AA%E6%9D%A5%E5%B1%95%E6%9C%9B%E4%B8%8E%E5%BC%80%E5%8F%91%E8%AE%A1%E5%88%92"><span class="toc-number">8.</span> <span class="toc-text"> 未来展望与开发计划</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">9.</span> <span class="toc-text"> 后记</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_2/20210509112635.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2021 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20210126215735.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>(()=>{
+  const $countDom = document.getElementById('twikoo-count')
+  const init = () => {
+    let initData = {
+      el: '#twikoo-wrap',
+      envId: 'twikoo-4gsr2cmdebe58feb',
+      region: ''
+    }
+
+    if (false) {
+      const otherData = false
+      initData = Object.assign(initData, otherData)
+    }
+    
+    twikoo.init(initData)
+  }
+
+  const getCount = () => {
+    twikoo.getCommentsCount({
+      envId: 'twikoo-4gsr2cmdebe58feb',
+      urls: [window.location.pathname],
+      includeReply: false
+    }).then(function (res) {
+      $countDom.innerText = res[0].count
+    }).catch(function (err) {
+      console.error(err);
+    });
+  }
+
+  const loadTwikoo = (bool = false) => {
+    if (typeof twikoo === 'object') {
+      init()
+      bool && $countDom && setTimeout(getCount,0)
+    } else {
+      getScript('https://cdn.jsdelivr.net/npm/twikoo/dist/twikoo.all.min.js').then(()=> {
+        init()
+        bool && $countDom && setTimeout(getCount,0)
+      })
+    }
+  }
+
+  if ('Twikoo' === 'Twikoo' || !true) {
+    if (true) btf.loadComment(document.getElementById('twikoo-wrap'), loadTwikoo)
+    else loadTwikoo(true)
+  } else {
+    window.loadOtherComment = () => {
+      loadTwikoo()
+    }
+  }
+})()</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
