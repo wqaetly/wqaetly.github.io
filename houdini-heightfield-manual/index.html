@@ -1,0 +1,652 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Houdini HeightField手册 | 登峰造极者，殊途亦同归。</title><meta name="keywords" content="PCG,Houdini,HeightField"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="Houdini中HeightField相关节点在地形生成中占据了非常重要的地位，虽然可以在Houdini里右键节点-Helper查看详细的官方文档，但未对整个HeightField系统有一个宏观认识的情况下，也不知道要用哪些节点。所以单独开篇文章来记录常用的HeightField几点以及使用心得 （但HeightField手册又何必只是HeightField手册^ ^        _）  基础">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Houdini HeightField手册">
+<meta property="og:url" content="https://www.lfzxb.top/houdini-heightfield-manual/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="Houdini中HeightField相关节点在地形生成中占据了非常重要的地位，虽然可以在Houdini里右键节点-Helper查看详细的官方文档，但未对整个HeightField系统有一个宏观认识的情况下，也不知道要用哪些节点。所以单独开篇文章来记录常用的HeightField几点以及使用心得 （但HeightField手册又何必只是HeightField手册^ ^        _）  基础">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp">
+<meta property="article:published_time" content="2023-07-22T00:00:00.000Z">
+<meta property="article:modified_time" content="2023-08-06T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="PCG">
+<meta property="article:tag" content="Houdini">
+<meta property="article:tag" content="HeightField">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/houdini-heightfield-manual/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2023-08-06 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">217</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">158</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">50</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">登峰造极者，殊途亦同归。</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Houdini HeightField手册</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-07-22T00:00:00.000Z" title="发表于 2023-07-22 00:00:00">2023-07-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-08-06T00:00:00.000Z" title="更新于 2023-08-06 00:00:00">2023-08-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/DCC/">DCC</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/DCC/Houdini/">Houdini</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">5.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<p>Houdini中HeightField相关节点在地形生成中占据了非常重要的地位，虽然可以在Houdini里右键节点-Helper查看详细的官方文档，但未对整个HeightField系统有一个宏观认识的情况下，也不知道要用哪些节点。所以单独开篇文章来记录常用的HeightField几点以及使用心得</p>
+<p>（但HeightField手册又何必只是HeightField手册^ ^        _）</p>
+<h1 id="基础高度场操作"><a class="markdownIt-Anchor" href="#基础高度场操作"></a> 基础高度场操作</h1>
+<h2 id="heightfield"><a class="markdownIt-Anchor" href="#heightfield"></a> HeightField</h2>
+<p>基础的高度场节点，用于指定高度场的大小，细分/模拟粒度等基础信息</p>
+<p>这个节点用于生成两个 2D volume 基元：height体积和mask体积，具有给定的分辨率和初始值，这些基元可以由其他地形节点进行修改。</p>
+<p><strong>height体积</strong> 是一个 2D 网格，表示地图上每个点的地形距离地面平面的距离（这些值可以为负）。</p>
+<p><strong>mask体积</strong> 可以用作其他地形工具的“mask”输入。它指定了地形节点的效果应该应用于哪些区域：mask值为 0 的区域不受节点影响，掩模值为 1 的区域完全受节点影响。地形节点允许你绘制mask或从地形信息中生成mask（例如，阴影落在哪里，或低于某个高度的区域）。</p>
+<p>如果将这个节点的输出几何体连接到地形节点的第一个输入，它将对高度体积进行操作。如果将这个节点的输出连接到地形节点的“mask”输入，它将使用mask体积来缩放效果。</p>
+<p><strong>注意：</strong> 应该将 Houdini 单位视为米，当你输入比例和初始高度时。高度场工具和 Houdini 动力学假定单位为米。</p>
+<ul>
+<li><strong>Orientation</strong>：2D 体积在世界空间中的初始轴对齐方式。默认设置为 ZX，与“地面”平面对齐。</li>
+<li><strong>Sampling</strong>：体素中心应该位于给定大小的何处，相对于给定大小的中心。当 Height Field Convert 转换为多边形时，这些是生成的点的位置。</li>
+<li><strong>Initial Height</strong>：height体积的初始值，单位为米。默认值为 0。</li>
+<li><strong>Initial Mask</strong>：mask体积的初始值。默认值为 0。</li>
+<li><strong>Division Mode</strong>：将体积分辨率设置为sample数或grid距离。
+<ul>
+<li><strong>By Axis</strong>：按轴细分</li>
+<li><strong>By Size</strong>：按大小细分</li>
+</ul>
+</li>
+<li><strong>Grid Samples</strong>：当 Division Mode 为“By Axis”时，每个轴上的网格点数。</li>
+<li><strong>Grid Spacing</strong>：当 Division Mode 为“By Size”时，网格点之间的距离，单位为米。</li>
+<li><strong>Uniform Scale</strong>：缩放体素的大小。</li>
+<li><strong>Size</strong>：体素的宽度和高度，单位为米。</li>
+<li><strong>Center</strong>：体素的中心位置，以世界空间为单位。</li>
+</ul>
+<p>需要注意的是，Houdini的HeightField边缘部分会把 <code>1/2</code> 的Grid单位留空，比如我们一个32x32的HeightField，Grid Space为1时，那么边缘0.5位置都是空的，为2时，边缘1位置都是空的，图示如下：</p>
+<p>橙色线是HeightField的真实边缘，而右边mesh是真正渲染的体素区域，Grid Spacing为2，所以相隔了1单位</p>
+<p>这也是为什么我们对地形切分的时候，要预留出一些长度出来</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202310291600422.png" alt="image-20231029160033325" /></p>
+<h2 id="heightfield-pattern"><a class="markdownIt-Anchor" href="#heightfield-pattern"></a> HeightField Pattern</h2>
+<p>提供一些基础的高度场形变模板，例如阶梯状，星形等，并且可以在此基础上进行扭曲操作</p>
+<h2 id="heightfield-noise"><a class="markdownIt-Anchor" href="#heightfield-noise"></a> HeightField Noise</h2>
+<p>对高度场赋予基于噪声的形变，内置很多噪声类型，通常用于快速生成基础地形，并且可以在此基础上进行扭曲操作</p>
+<h3 id="amplitude波幅"><a class="markdownIt-Anchor" href="#amplitude波幅"></a> Amplitude（波幅）</h3>
+<p>指的是该节点用于控制地形高度的噪声或变动的幅度。该参数影响噪声对地形的影响程度，从而决定了地形表面上山峰、河流、山谷等细节的大小和强度。通过调整该参数，您可以控制噪声对地形高度的影响程度。较小的值将导致轻微的地形变化，而较大的值将产生更强烈的高度变化。</p>
+<h3 id="element-size元素尺寸"><a class="markdownIt-Anchor" href="#element-size元素尺寸"></a> Element Size（元素尺寸）</h3>
+<p>用于控制噪声的频率或细节级别。它影响噪声在地形上的变化频率，从而决定了噪声产生的特征大小和密度。</p>
+<p><strong>性能影响</strong>：较小的元素大小将产生更多的噪声细节，因此可能会增加渲染或模拟的计算负担。较大的元素大小可以用于加快计算速度，但可能会牺牲一些细节。</p>
+<h3 id="noise-setting噪声设置"><a class="markdownIt-Anchor" href="#noise-setting噪声设置"></a> Noise Setting（噪声设置）</h3>
+<ol>
+<li><strong>Fractal</strong>：决定是否在较大的噪声上进行多次迭代，每次迭代会添加较小规模的噪声。这样的效果被称为分形噪声。
+<ul>
+<li><strong>None</strong>：
+<ul>
+<li>选择None类型时，HeightField Fractal节点不会添加任何额外的噪声到基本噪声上。</li>
+<li>这将产生一个简单的噪声效果，地形将呈现较为平滑的表面。</li>
+</ul>
+</li>
+<li><strong>Standard</strong>：
+<ul>
+<li>Standard类型会在基本噪声上添加伪随机噪声。</li>
+<li>这是最常用的分形类型，通过添加随机性的噪声，可以在地形上生成自然的起伏和细节。</li>
+</ul>
+</li>
+<li><strong>Terrain</strong>：
+<ul>
+<li>Terrain类型与Standard类型相似，也会在基本噪声上添加噪声，但会在山谷（低处）中抑制噪声。</li>
+<li>这种类型产生的地形看起来更像真实的地形，因为山谷地区通常会更平缓。</li>
+</ul>
+</li>
+<li><strong>Hybrid Terrain</strong>：
+<ul>
+<li>Hybrid Terrain类型是在Terrain类型基础上增加了更多的尖锐噪声。</li>
+<li>这种类型会在地形的山谷中产生更锐利的特征，使地形看起来更加多样和复杂。</li>
+</ul>
+</li>
+<li><strong>Flow</strong>：
+<ul>
+<li>Flow类型可以用于模拟流动效果，如水流或火焰。</li>
+<li>当选择Flow类型时，可以使用Flow Rotation参数来控制“涡旋”的旋转程度。</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Max Octaves</strong>（最大迭代次数）：限制分形噪声的迭代次数，即迭代的层数。</li>
+<li><strong>Lacunarity</strong>（等差增量率）：分形迭代之间的频率增量，决定细节级别的变化。注意，可以使用负值。</li>
+<li><strong>Roughness</strong>（粗糙度）：分形噪声的粗糙度，决定噪声的细腻程度。</li>
+<li><strong>Flow Rotation</strong>（流动旋转）：在噪声类型为&quot;Flow&quot;时，控制“涡旋”的旋转程度（0到1之间）。&quot;Flow&quot;类型噪声可以用于创建流动效果。</li>
+</ol>
+<h3 id="post-processing后处理"><a class="markdownIt-Anchor" href="#post-processing后处理"></a> Post Processing（后处理）</h3>
+<ol>
+<li><strong>Fold（折叠）</strong>：
+<ul>
+<li>Fold选项会将噪声输出的值限制为绝对值。</li>
+<li>这意味着所有的噪声值都将变成正数，消除了负数值的影响。</li>
+</ul>
+</li>
+<li><strong>Complement（取反）</strong>：
+<ul>
+<li>Complement选项会将噪声输出的值进行颠倒，即输出值等于 1 减去噪声值。</li>
+<li>这将产生一个与原始噪声相反的地形效果。</li>
+</ul>
+</li>
+<li><strong>Gain（增益）</strong>：
+<ul>
+<li>Gain选项用于增加或减小噪声输出的对比度，参数范围是从 0 到 1 之间。</li>
+<li>较小的Gain值会降低噪声的对比度，使地形变得平缓。</li>
+<li>较大的Gain值会增加噪声的对比度，使地形变得更陡峭和波动。</li>
+</ul>
+</li>
+<li><strong>Bias（偏置）</strong>：
+<ul>
+<li>Bias选项用于将噪声输出向上或向下移动，参数范围是从 0 到 1 之间。</li>
+<li>较小的Bias值会将噪声输出向下偏置，使地形更加平坦。</li>
+<li>较大的Bias值会将噪声输出向上偏置，使地形更加陡峭。</li>
+</ul>
+</li>
+<li><strong>Clipping Minimum（下截断）</strong>：
+<ul>
+<li>Clipping Minimum选项用于限制噪声输出的最小值。任何小于该值的噪声都会被截断。</li>
+<li>这将产生一个在某个最小高度以下没有变化的地形，即地形被剪切在某个最小高度上。</li>
+</ul>
+</li>
+<li><strong>Clipping Maximum（上截断）</strong>：
+<ul>
+<li>Clipping Maximum选项用于限制噪声输出的最大值。任何大于该值的噪声都会被截断。</li>
+<li>这将产生一个在某个最大高度以上没有变化的地形，即地形被剪切在某个最大高度上。</li>
+</ul>
+</li>
+</ol>
+<p>通过在HeightField Fractal节点的Post Processing参数中选择不同的处理选项，您可以进一步调整噪声输出，控制地形的对比度、形态和范围，从而得到更精确地满足需求的地形效果。</p>
+<h3 id="distortion扭曲"><a class="markdownIt-Anchor" href="#distortion扭曲"></a> Distortion（扭曲）</h3>
+<ol>
+<li><strong>Enable Lattice Warp</strong>（启用格点变形）：
+<ul>
+<li>当启用该选项时，HeightField Fractal节点会在标准噪声上添加“stringiness”或“wiriness”（细长或蜿蜒）效果。</li>
+<li>这将增加噪声的复杂性，使地形具有更加曲折的特征。</li>
+</ul>
+</li>
+<li><strong>Accumulate Lattice Warp</strong>（累积格点变形）：
+<ul>
+<li>当格点变形开启时，启用此选项将在每次迭代（音阶）添加分形噪声时累积变形效果。</li>
+<li>这使得格点变形效果在不同迭代层次上叠加，增强了细节和复杂性。</li>
+</ul>
+</li>
+<li><strong>Lattice Warp</strong>（格点变形强度）：
+<ul>
+<li>该参数控制添加到噪声上的“stringiness”或“wiriness”的强度。</li>
+<li>较高的格点变形强度将产生更强烈的细长效果，而较低的强度将减少该效果。</li>
+</ul>
+</li>
+<li><strong>Freq</strong>（频率）：
+<ul>
+<li>该参数控制“stringiness”或“wiriness”的频率，即细长的特征的数量。</li>
+<li>较高的频率将产生更多、更密集的细长特征，而较低的频率将产生较少、较宽松的特征。</li>
+</ul>
+</li>
+<li><strong>Enable Gradient Warp</strong>（启用梯度变形）：
+<ul>
+<li>当启用该选项时，HeightField Fractal节点会通过加宽噪声的峰谷来改变噪声形状。</li>
+<li>这将增加地形的细节，使地形具有更加复杂的起伏。</li>
+</ul>
+</li>
+<li><strong>Accumulate Gradient Warp</strong>（累积梯度变形）：
+<ul>
+<li>当梯度变形开启时，启用此选项将在每次迭代（音阶）添加分形噪声时累积梯度变形效果。</li>
+<li>这使得梯度变形效果在不同迭代层次上叠加，增强了细节和复杂性。</li>
+</ul>
+</li>
+<li><strong>Gradient Warp</strong>（梯度变形强度）：
+<ul>
+<li>该参数控制加宽噪声峰谷的强度。</li>
+<li>较高的梯度变形强度将使噪声峰谷更加宽广，而较低的强度将减少该效果。</li>
+</ul>
+</li>
+</ol>
+<h2 id="heightfield-project"><a class="markdownIt-Anchor" href="#heightfield-project"></a> HeightField Project</h2>
+<p>将一个几何图形投影到高度场上</p>
+<h2 id="heightfield-blur"><a class="markdownIt-Anchor" href="#heightfield-blur"></a> HeightField Blur</h2>
+<p>对高度场进行模糊处理，使其更加平滑</p>
+<h2 id="heightfield-remap"><a class="markdownIt-Anchor" href="#heightfield-remap"></a> HeightField Remap</h2>
+<p>重映射高度场的数值，通常用于控制和修改指定数值的范围</p>
+<h2 id="heightfield-distort"><a class="markdownIt-Anchor" href="#heightfield-distort"></a> HeightField Distort</h2>
+<p>对高度场的指定数值执行扭曲操作</p>
+<p>与 “Heightfield Noise” 节点不同。“Heightfield Noise” 节点用于将高度值上下变化，而 “HeightField Displace” 节点则通过将现有值通过噪声场进行迁移，将它们移动到新的位置。这类似于像Photoshop中的滤镜会通过扭曲现有像素来改变图像的方式。</p>
+<h4 id="扭曲图层distort-layers"><a class="markdownIt-Anchor" href="#扭曲图层distort-layers"></a> 扭曲图层（Distort Layers）</h4>
+<p>指定要操作的图层模式，通常为高度或 * （全部）。</p>
+<h4 id="蒙版图层mask-layer"><a class="markdownIt-Anchor" href="#蒙版图层mask-layer"></a> 蒙版图层（Mask Layer）</h4>
+<p>如果将蒙版体积连接到此节点的第二个输入，这将指定要用于掩盖此节点效果的第二个输入中的哪个体积，通常为蒙版。单击“添加蒙版绘制”按钮可直接在视口中绘制蒙版（这会自动在第二个输入中添加一个绘制节点）。</p>
+<h4 id="螺旋噪声curl-noise"><a class="markdownIt-Anchor" href="#螺旋噪声curl-noise"></a> 螺旋噪声（Curl Noise）</h4>
+<p>使用螺旋噪声创建扭曲效果。在较大的振幅下，这可以创建有趣的螺旋特征。如果关闭此选项，则节点使用抗锯齿噪声。</p>
+<h4 id="振幅amplitude"><a class="markdownIt-Anchor" href="#振幅amplitude"></a> 振幅（Amplitude）</h4>
+<p>扭曲的程度。较大的值会更大程度地移动、拉伸和旋转现有特征。在使用较大的振幅值时，应考虑增加子步骤。否则，整个大尺度变化会一次应用，可能会造成混乱。</p>
+<h4 id="元素大小element-size"><a class="markdownIt-Anchor" href="#元素大小element-size"></a> 元素大小（Element Size）</h4>
+<p>最低频噪声波峰之间的距离。</p>
+<h4 id="元素缩放element-scale"><a class="markdownIt-Anchor" href="#元素缩放element-scale"></a> 元素缩放（Element Scale）</h4>
+<p>在三个主轴上的各向异性缩放噪声。</p>
+<h4 id="偏移offset"><a class="markdownIt-Anchor" href="#偏移offset"></a> 偏移（Offset）</h4>
+<p>噪声函数的世界空间偏移。</p>
+<h4 id="粗糙度roughness"><a class="markdownIt-Anchor" href="#粗糙度roughness"></a> 粗糙度（Roughness）</h4>
+<p>分形粗糙度。</p>
+<h4 id="最大迭代次数max-octaves"><a class="markdownIt-Anchor" href="#最大迭代次数max-octaves"></a> 最大迭代次数（Max Octaves）</h4>
+<p>要添加到基本噪声输出的扭曲迭代次数。添加的迭代次数越多，输出越“详细”。</p>
+<h4 id="子步进数substeps"><a class="markdownIt-Anchor" href="#子步进数substeps"></a> 子步进数（Substeps）</h4>
+<p>将总期望振幅按此数量分割，并逐步应用。这允许更细微的细节和较小的变化，但速度较慢。通常，随着振幅的增加，您通常会增加子步骤，以防止大尺度变化造成混乱。</p>
+<h2 id="heightfield-tile-split"><a class="markdownIt-Anchor" href="#heightfield-tile-split"></a> HeightField Tile Split</h2>
+<p>对HeightField按tile进行拆分</p>
+<ol>
+<li><strong>Voxel Padding（体素填充）：</strong> 在tile边界上添加的重叠区域的大小，以体素为单位。当你将tile拆分处理时，可以通过添加一些额外的体素来确保tile之间有重叠，以防止显示上的裂缝或其他问题。</li>
+<li><strong>Tile Lower Overlap（tile负方向重叠）：</strong> 当提取tile时，在负方向上，每个tile将以这么多体素的重叠区域与其相邻的tile重叠。</li>
+<li><strong>Tile Upper Overlap（tile正方向重叠）：</strong> 当提取tile时，在正方向上，每个tile将以这么多体素的重叠区域与其相邻的tile重叠。</li>
+</ol>
+<p>上述类型的区别就是，Voxel Padding是四方向全填充重叠体素，而Tile Lower/Upper Overlap是指定某个方向填充</p>
+<p>注意，以上的正负方向是由tile切分后结果index决定的，例如3*3分块后，中间的tile，正方向为5，7tile，负方向为0，3tile</p>
+<p>这些参数用于控制在使用&quot;Houdini Height Field Tile Split&quot;节点时，tile之间如何重叠以及如何在拼接tile时保持合适的重叠区域。通过调整这些参数，你可以在处理高度场数据时获得更好的结果，确保在分割和拼接tile时不会出现不连续或不匹配的情况。</p>
+<p>需要注意的是Tile Upper Overlap默认就给了1，因为我们上面提到了HeightField边缘部分会把 <code>1/2</code> 的Grid单位留空，所以默认留了一位，如果Tile Upper Overlap为0，分割的tile是有缝隙的</p>
+<p>一般情况下重叠区域不需要，也不能给太多，因为通过HeightField Tile Splice拼接的时候，对于重叠的体素部分，是直接连接的，并没有任何混合插值处理，所以默认情况下，留出1体素重叠量给HeightField Tile Splice即可</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308162358787.png" alt="image-20230816235832676" /></p>
+<h2 id="heightfield-tile-splice"><a class="markdownIt-Anchor" href="#heightfield-tile-splice"></a> HeightField Tile Splice</h2>
+<p>寻思半天也没寻思出来这玩意应该怎么用，直到我把两个tile merge到一起，然后连接到这个节点，才打开新世界大门。。。，不过官方也没有演示如何通过HeightField Tile Splice将分割好的tile拼接在一起，下面是将所有tile重新拼接到一起的一个示例：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308220001028.png" alt="image-20230822000140821" /></p>
+<p>其中Heightfield_tilesplit1节点的Tile Number Channel需要为</p>
+<figure class="highlight handlebars"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="xml">detail(&#x27;../foreach_count1&#x27;, &quot;iteration&quot;, 0)</span></span><br></pre></td></tr></table></figure>
+<p>即取得foreach_count1节点的名为iteration的detail值</p>
+<p>最终将所有结果Merge起来，通过HeightField TileSplice节点进行无缝拼接</p>
+<h1 id="特定高度场效果模拟"><a class="markdownIt-Anchor" href="#特定高度场效果模拟"></a> 特定高度场效果模拟</h1>
+<h2 id="heightfield-terrace"><a class="markdownIt-Anchor" href="#heightfield-terrace"></a> HeightField Terrace</h2>
+<p>将高度场的指定高度范围的高度变化处理成梯田的形式</p>
+<h2 id="heightfield-erode"><a class="markdownIt-Anchor" href="#heightfield-erode"></a> HeightField Erode</h2>
+<p>高度场侵蚀模拟，可以模拟雨水，风力，热力等自然侵蚀，包含非常多的参数供调整</p>
+<h2 id="heightfield-slump"><a class="markdownIt-Anchor" href="#heightfield-slump"></a> HeightField Slump</h2>
+<p>高度场沉积模拟，可以模拟地形的沉积效果（例如四面环山的坑洼之地长年累月沉积成平坦的盆地），用于描述泥土，岩石在外力作用下的自然沉淀效果</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png" alt="HeightField FlowField和HeightField Slump共同作用下的结果" /></p>
+<h1 id="高度场中的mask数据操作"><a class="markdownIt-Anchor" href="#高度场中的mask数据操作"></a> 高度场中的Mask数据操作</h1>
+<p>上述内容大部分都是在操作高度场中的Height数据，但高度场还有一个重要数据：Mask</p>
+<h2 id="heightfield-masknoise"><a class="markdownIt-Anchor" href="#heightfield-masknoise"></a> HeightField MaskNoise</h2>
+<p>对高度场的指定Mask赋予基于噪声的形变</p>
+<h2 id="heightfield-maskblur"><a class="markdownIt-Anchor" href="#heightfield-maskblur"></a> HeightField MaskBlur</h2>
+<p>对高度场的制定Mask进行模糊处理，使其更加平滑</p>
+<h2 id="heightfield-maskbyfeature"><a class="markdownIt-Anchor" href="#heightfield-maskbyfeature"></a> HeightField MaskByFeature</h2>
+<p>为Mask提供多种基于地形的操作方式，常用于隔离山峰和山谷、确定覆盖雪的区域以及植被可以生长的区域</p>
+<h2 id="heightfield-maskbyobject"><a class="markdownIt-Anchor" href="#heightfield-maskbyobject"></a> HeightField MaskByObject</h2>
+<p>基于几何图形的投影确定一个Mask，并可以与当前已有的Mask（Input）做交互，例如相加，相减等</p>
+<h4 id="combine-with-existing"><a class="markdownIt-Anchor" href="#combine-with-existing"></a> Combine with Existing</h4>
+<ul>
+<li><strong>Replace</strong>: 清除现有蒙版并用新蒙版替换。</li>
+<li><strong>Add</strong>: 将此蒙版中的值添加到任何现有蒙版中。</li>
+<li><strong>Subtract</strong>: 从任何现有蒙版中减去此蒙版中的值。</li>
+<li><strong>Difference</strong>: 将蒙版值设置为旧蒙版与此蒙版之间的差异。</li>
+<li><strong>Multiply</strong>: 将旧蒙版的值乘以此蒙版中的值。这可能对“缩放”现有值并保留空白区域很有用。</li>
+<li><strong>Maximum</strong>: 将蒙版值设置为旧蒙版和此蒙版中的最大值。</li>
+<li><strong>Minimum</strong>: 将蒙版值设置为旧蒙版和此蒙版中的最小值。</li>
+<li><strong>Blend</strong>: 通过一定的混合量混合旧蒙版和此蒙版。</li>
+</ul>
+<p><strong>混合量</strong>: 在“Combine with Existing”为“Blend”的情况下，用于混合旧蒙版与您绘制内容的量。值为0保留现有蒙版，值为1用新蒙版替换，值为0.5在旧蒙版和新蒙版之间均匀混合。</p>
+<h4 id="method"><a class="markdownIt-Anchor" href="#method"></a> Method</h4>
+<ul>
+<li><strong>Project</strong>: 假设第二个输入是表面几何体，将其“投影”到地形上以创建蒙版。</li>
+<li><strong>Fog Volume</strong>: 假设第二个输入是雾体体积，在与地形相交的位置创建蒙版。</li>
+<li><strong>SDF Volume</strong>: 假设第二个输入是SDF体积，在与地形相交的位置创建蒙版。</li>
+</ul>
+<h4 id="masking-by-geometry"><a class="markdownIt-Anchor" href="#masking-by-geometry"></a> Masking by Geometry</h4>
+<p>控制在投影模式下，将几何体投影到地形的方向。</p>
+<ul>
+<li><strong>Either Side</strong>: 如果几何体在地形的上方或下方，高度场将被遮罩。</li>
+<li><strong>Above Heightfield</strong>: 如果几何体在高度场上方，即几何体将向下投影到地形上，高度场将被遮罩。</li>
+<li><strong>Below Heightfield</strong>: 如果几何体在高度场下方，即几何体将向上投影到地形上，高度场将被遮罩。</li>
+</ul>
+<p>以下是使用Markdown格式排版的内容：</p>
+<h4 id="最大距离"><a class="markdownIt-Anchor" href="#最大距离"></a> 最大距离</h4>
+<ul>
+<li>当方法为“project”时，在判断投影未命中高度场之前的最大投影距离。</li>
+</ul>
+<h4 id="密度"><a class="markdownIt-Anchor" href="#密度"></a> 密度</h4>
+<ul>
+<li>几何体投影/相交时设置蒙版层的值。</li>
+</ul>
+<h4 id="模糊方法"><a class="markdownIt-Anchor" href="#模糊方法"></a> 模糊方法</h4>
+<p>控制如何模糊蒙版边缘。仅当模糊半径大于0时可见。</p>
+<ul>
+<li><strong>模糊</strong>: 高斯模糊。</li>
+<li><strong>盒状模糊</strong>: 更快速的模糊。</li>
+<li><strong>扩展</strong>: 不进行模糊，扩展绘制的形状。</li>
+<li><strong>收缩</strong>: 不进行模糊，收缩绘制的形状。</li>
+</ul>
+<h4 id="模糊半径"><a class="markdownIt-Anchor" href="#模糊半径"></a> 模糊半径</h4>
+<p>模糊/扩展/收缩填充形状边缘的程度（取决于模糊方法）。值为0没有效果。</p>
+<h4 id="超采样"><a class="markdownIt-Anchor" href="#超采样"></a> 超采样</h4>
+<p>在投影时，发送额外的光线，这些光线会被随机扰动（“抖动”），并使用指定的光线合并器（Ray Combiner）进行组合。当模型存在小间隙或孔时，光线可能会错过，这时超采样很有用。</p>
+<h4 id="样本数"><a class="markdownIt-Anchor" href="#样本数"></a> 样本数</h4>
+<p>要发送的样本光线数量。如果设置为大于1，将从当前体素的中心发送一条光线，而额外光线的起始点将散布在中心周围。这些碰撞返回的距离按照Ray Combiner指定的方式进行组合。仅当Jitter值不为0时，此效果可见。</p>
+<h4 id="抖动"><a class="markdownIt-Anchor" href="#抖动"></a> 抖动</h4>
+<p>控制额外光线可以变化的程度，以体素为单位进行指定。抖动值为1意味着额外光线可以与当前体素的中心相隔多达1个体素，而抖动值为0.5指定光线与中心只相隔半个体素。抖动值为0没有效果。</p>
+<h4 id="光线合并器"><a class="markdownIt-Anchor" href="#光线合并器"></a> 光线合并器</h4>
+<p>控制如何将每条光线的碰撞距离合并为单个距离。</p>
+<ul>
+<li><strong>平均</strong>: 平均距离以创建最终距离。</li>
+<li><strong>中位数</strong>: 最终距离为中位数距离。这通常可以很好地平滑掉模型间隙造成的尖峰。</li>
+<li><strong>最短距离</strong>: 最短光线决定最终距离。</li>
+<li><strong>最长距离</strong>: 最长光线决定最终距离。</li>
+</ul>
+<h4 id="种子"><a class="markdownIt-Anchor" href="#种子"></a> 种子</h4>
+<p>设置随机数生成器的种子。不同的种子会产生不同的光线集，因此可以调整以最小化由间隙和孔造成的尖峰。</p>
+<h2 id="heightfield-maskclear"><a class="markdownIt-Anchor" href="#heightfield-maskclear"></a> HeightField MaskClear</h2>
+<p>清除指定Mask</p>
+<h1 id="实用节点"><a class="markdownIt-Anchor" href="#实用节点"></a> 实用节点</h1>
+<h2 id="heightfield-resample"><a class="markdownIt-Anchor" href="#heightfield-resample"></a> HeightField Resample</h2>
+<p>重采样高度场，用于更改细分大小</p>
+<h2 id="heightfield-visualize"><a class="markdownIt-Anchor" href="#heightfield-visualize"></a> HeightField Visualize</h2>
+<p>可视化高度场</p>
+<h2 id="heightfield-layer"><a class="markdownIt-Anchor" href="#heightfield-layer"></a> HeightField Layer</h2>
+<p>指定两个高度场数据操作</p>
+<h2 id="heightfield-scatter"><a class="markdownIt-Anchor" href="#heightfield-scatter"></a> HeightField Scatter</h2>
+<p>对高度场进行撒点操作，提供很多操作参数，可以精确控制撒点区域</p>
+<h2 id="heightfield-output"><a class="markdownIt-Anchor" href="#heightfield-output"></a> HeightField Output</h2>
+<p>将HeightField进行导出，有以下几个注意点：</p>
+<ul>
+<li>如果一个heightField存在多个Volume，此节点只会处理第一个<img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308300026449.png" alt="image-20230830002559370" />,所以要么通过HeightField Splice进行Merge，要么就分Tile导出</li>
+<li>在进行导出的时候，需要确保Houdini当前帧数正确，否则会出现导出结果为空的情况，例如帧数为0</li>
+</ul>
+<h1 id="其他"><a class="markdownIt-Anchor" href="#其他"></a> 其他</h1>
+<p>Q：对于Houdini中一些非常耗时的模拟流程，有什么办法将其缓存，而不是每次打开Houdini都进行模拟吗？</p>
+<p>A：File Cache 节点</p>
+<hr />
+<p>Q：如何查看节点提供给Python脚本调用的API及其内部实现</p>
+<p>A：右键节点-Edit Extra Sections Source Code，即可查看源代码，不过这些API一般是没法通过Python直接调用的，例如FileCache的Save To Disk按钮，是点击后通过回调单独调用一个python脚本实现的，所以通过hou.node(node_name)获取节点实例后是没法调用相关API的，只能手动将实现复制一份到自定义Python节点中</p>
+<hr />
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/houdini-heightfield-manual/">https://www.lfzxb.top/houdini-heightfield-manual/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/PCG/">PCG</a><a class="post-meta__tags" href="/tags/Houdini/">Houdini</a><a class="post-meta__tags" href="/tags/HeightField/">HeightField</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/houdini-procedural-dependency-graph-manual/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308102330018.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Houdini Procedural Dependency Graph（PDG）手册</div></div></a></div><div class="next-post pull-right"><a href="/projects-terrian-pcg/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">ProjectS中的地形系统-Procedural Content Generation（PCG）</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/houdini-procedural-dependency-graph-manual/" title="Houdini Procedural Dependency Graph（PDG）手册"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308102330018.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-08-10</div><div class="title">Houdini Procedural Dependency Graph（PDG）手册</div></div></a></div><div><a href="/projects-gpu-driven/" title="ProjectS中的GPU Driven"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-05-22</div><div class="title">ProjectS中的GPU Driven</div></div></a></div><div><a href="/projects-terrian-shading/" title="ProjectS中的地形系统-Terrian Shading（Material Id）"><img class="cover" data-lazy-src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/img/default.jpg" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-03-06</div><div class="title">ProjectS中的地形系统-Terrian Shading（Material Id）</div></div></a></div><div><a href="/projects-terrian-pcg/" title="ProjectS中的地形系统-Procedural Content Generation（PCG）"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-07-22</div><div class="title">ProjectS中的地形系统-Procedural Content Generation（PCG）</div></div></a></div><div><a href="/projects-terrian-rendering/" title="ProjectS中的地形系统-Terrian Rendering"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202403020046066.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-06-19</div><div class="title">ProjectS中的地形系统-Terrian Rendering</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E9%AB%98%E5%BA%A6%E5%9C%BA%E6%93%8D%E4%BD%9C"><span class="toc-number">1.</span> <span class="toc-text"> 基础高度场操作</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield"><span class="toc-number">1.1.</span> <span class="toc-text"> HeightField</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-pattern"><span class="toc-number">1.2.</span> <span class="toc-text"> HeightField Pattern</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-noise"><span class="toc-number">1.3.</span> <span class="toc-text"> HeightField Noise</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#amplitude%E6%B3%A2%E5%B9%85"><span class="toc-number">1.3.1.</span> <span class="toc-text"> Amplitude（波幅）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#element-size%E5%85%83%E7%B4%A0%E5%B0%BA%E5%AF%B8"><span class="toc-number">1.3.2.</span> <span class="toc-text"> Element Size（元素尺寸）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#noise-setting%E5%99%AA%E5%A3%B0%E8%AE%BE%E7%BD%AE"><span class="toc-number">1.3.3.</span> <span class="toc-text"> Noise Setting（噪声设置）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#post-processing%E5%90%8E%E5%A4%84%E7%90%86"><span class="toc-number">1.3.4.</span> <span class="toc-text"> Post Processing（后处理）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#distortion%E6%89%AD%E6%9B%B2"><span class="toc-number">1.3.5.</span> <span class="toc-text"> Distortion（扭曲）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-project"><span class="toc-number">1.4.</span> <span class="toc-text"> HeightField Project</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-blur"><span class="toc-number">1.5.</span> <span class="toc-text"> HeightField Blur</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-remap"><span class="toc-number">1.6.</span> <span class="toc-text"> HeightField Remap</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-distort"><span class="toc-number">1.7.</span> <span class="toc-text"> HeightField Distort</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%89%AD%E6%9B%B2%E5%9B%BE%E5%B1%82distort-layers"><span class="toc-number">1.7.0.1.</span> <span class="toc-text"> 扭曲图层（Distort Layers）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%92%99%E7%89%88%E5%9B%BE%E5%B1%82mask-layer"><span class="toc-number">1.7.0.2.</span> <span class="toc-text"> 蒙版图层（Mask Layer）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%9E%BA%E6%97%8B%E5%99%AA%E5%A3%B0curl-noise"><span class="toc-number">1.7.0.3.</span> <span class="toc-text"> 螺旋噪声（Curl Noise）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8C%AF%E5%B9%85amplitude"><span class="toc-number">1.7.0.4.</span> <span class="toc-text"> 振幅（Amplitude）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%83%E7%B4%A0%E5%A4%A7%E5%B0%8Felement-size"><span class="toc-number">1.7.0.5.</span> <span class="toc-text"> 元素大小（Element Size）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%83%E7%B4%A0%E7%BC%A9%E6%94%BEelement-scale"><span class="toc-number">1.7.0.6.</span> <span class="toc-text"> 元素缩放（Element Scale）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%81%8F%E7%A7%BBoffset"><span class="toc-number">1.7.0.7.</span> <span class="toc-text"> 偏移（Offset）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%B2%97%E7%B3%99%E5%BA%A6roughness"><span class="toc-number">1.7.0.8.</span> <span class="toc-text"> 粗糙度（Roughness）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%80%E5%A4%A7%E8%BF%AD%E4%BB%A3%E6%AC%A1%E6%95%B0max-octaves"><span class="toc-number">1.7.0.9.</span> <span class="toc-text"> 最大迭代次数（Max Octaves）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AD%90%E6%AD%A5%E8%BF%9B%E6%95%B0substeps"><span class="toc-number">1.7.0.10.</span> <span class="toc-text"> 子步进数（Substeps）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-tile-split"><span class="toc-number">1.8.</span> <span class="toc-text"> HeightField Tile Split</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-tile-splice"><span class="toc-number">1.9.</span> <span class="toc-text"> HeightField Tile Splice</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%89%B9%E5%AE%9A%E9%AB%98%E5%BA%A6%E5%9C%BA%E6%95%88%E6%9E%9C%E6%A8%A1%E6%8B%9F"><span class="toc-number">2.</span> <span class="toc-text"> 特定高度场效果模拟</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-terrace"><span class="toc-number">2.1.</span> <span class="toc-text"> HeightField Terrace</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-erode"><span class="toc-number">2.2.</span> <span class="toc-text"> HeightField Erode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-slump"><span class="toc-number">2.3.</span> <span class="toc-text"> HeightField Slump</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E9%AB%98%E5%BA%A6%E5%9C%BA%E4%B8%AD%E7%9A%84mask%E6%95%B0%E6%8D%AE%E6%93%8D%E4%BD%9C"><span class="toc-number">3.</span> <span class="toc-text"> 高度场中的Mask数据操作</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-masknoise"><span class="toc-number">3.1.</span> <span class="toc-text"> HeightField MaskNoise</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-maskblur"><span class="toc-number">3.2.</span> <span class="toc-text"> HeightField MaskBlur</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-maskbyfeature"><span class="toc-number">3.3.</span> <span class="toc-text"> HeightField MaskByFeature</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-maskbyobject"><span class="toc-number">3.4.</span> <span class="toc-text"> HeightField MaskByObject</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#combine-with-existing"><span class="toc-number">3.4.0.1.</span> <span class="toc-text"> Combine with Existing</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#method"><span class="toc-number">3.4.0.2.</span> <span class="toc-text"> Method</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#masking-by-geometry"><span class="toc-number">3.4.0.3.</span> <span class="toc-text"> Masking by Geometry</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%80%E5%A4%A7%E8%B7%9D%E7%A6%BB"><span class="toc-number">3.4.0.4.</span> <span class="toc-text"> 最大距离</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AF%86%E5%BA%A6"><span class="toc-number">3.4.0.5.</span> <span class="toc-text"> 密度</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E6%96%B9%E6%B3%95"><span class="toc-number">3.4.0.6.</span> <span class="toc-text"> 模糊方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A8%A1%E7%B3%8A%E5%8D%8A%E5%BE%84"><span class="toc-number">3.4.0.7.</span> <span class="toc-text"> 模糊半径</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%B6%85%E9%87%87%E6%A0%B7"><span class="toc-number">3.4.0.8.</span> <span class="toc-text"> 超采样</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%B7%E6%9C%AC%E6%95%B0"><span class="toc-number">3.4.0.9.</span> <span class="toc-text"> 样本数</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8A%96%E5%8A%A8"><span class="toc-number">3.4.0.10.</span> <span class="toc-text"> 抖动</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%89%E7%BA%BF%E5%90%88%E5%B9%B6%E5%99%A8"><span class="toc-number">3.4.0.11.</span> <span class="toc-text"> 光线合并器</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A7%8D%E5%AD%90"><span class="toc-number">3.4.0.12.</span> <span class="toc-text"> 种子</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-maskclear"><span class="toc-number">3.5.</span> <span class="toc-text"> HeightField MaskClear</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E7%94%A8%E8%8A%82%E7%82%B9"><span class="toc-number">4.</span> <span class="toc-text"> 实用节点</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-resample"><span class="toc-number">4.1.</span> <span class="toc-text"> HeightField Resample</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-visualize"><span class="toc-number">4.2.</span> <span class="toc-text"> HeightField Visualize</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-layer"><span class="toc-number">4.3.</span> <span class="toc-text"> HeightField Layer</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-scatter"><span class="toc-number">4.4.</span> <span class="toc-text"> HeightField Scatter</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#heightfield-output"><span class="toc-number">4.5.</span> <span class="toc-text"> HeightField Output</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">5.</span> <span class="toc-text"> 其他</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2024 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"><script>(() => {
+  document.querySelectorAll('#article-container span.katex-display').forEach(item => {
+    btf.wrap(item, 'div', '', 'katex-wrap')
+  })
+})()</script><script>function addGitalkSource () {
+  const ele = document.createElement('link')
+  ele.rel = 'stylesheet'
+  ele.href= 'https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css'
+  document.getElementsByTagName('head')[0].appendChild(ele)
+}
+
+function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      id: 'b85cc997e0ebd42f4d20c016fdd42c46',
+      language: 'zh-CN',
+      perPage: 10,
+      distractionFreeMode: true,
+      pagerDirection: 'last',
+      createIssueManually: false,
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token"
+    })
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    addGitalkSource()
+    getScript('https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.innerHTML= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !true) {
+  if (true) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>

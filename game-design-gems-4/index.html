@@ -1,0 +1,421 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>游戏设计精粹《四》 | 登峰造极者，殊途亦同归。</title><meta name="keywords" content="游戏设计"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="游戏设计精粹《总目录》  游戏系统设计的基石：体验树 文章摘要个人总结介绍的是**体验树理论，它是分析游戏系统设计好坏的理论工具，它能将系统设计所带给玩家的体验量化、可视化，以此检视系统是否设计得足够好玩。**这个理论从诞生至今，已快20年，发展出了一整套完整、分支庞大的系统设计理论。 以经典的俄罗斯方块为例：  玩家具备初始的技能，玩家通过这些技能观察和认识游戏规则，并根据规则认知构建出来的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="游戏设计精粹《四》">
+<meta property="og:url" content="https://www.lfzxb.top/game-design-gems-4/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="游戏设计精粹《总目录》  游戏系统设计的基石：体验树 文章摘要个人总结介绍的是**体验树理论，它是分析游戏系统设计好坏的理论工具，它能将系统设计所带给玩家的体验量化、可视化，以此检视系统是否设计得足够好玩。**这个理论从诞生至今，已快20年，发展出了一整套完整、分支庞大的系统设计理论。 以经典的俄罗斯方块为例：  玩家具备初始的技能，玩家通过这些技能观察和认识游戏规则，并根据规则认知构建出来的">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp">
+<meta property="article:published_time" content="2022-05-31T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-11-19T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="游戏设计">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/game-design-gems-4/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2022-11-19 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">217</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">158</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">50</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">登峰造极者，殊途亦同归。</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">游戏设计精粹《四》</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-05-31T00:00:00.000Z" title="发表于 2022-05-31 00:00:00">2022-05-31</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-11-19T00:00:00.000Z" title="更新于 2022-11-19 00:00:00">2022-11-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">游戏设计</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/%E5%AD%A6%E4%B9%A0%E6%80%BB%E7%BB%93/">学习总结</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">5.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<h1 id="游戏设计精粹总目录"><a class="markdownIt-Anchor" href="#游戏设计精粹总目录"></a> <a href="https://www.lfzxb.top/game-desgin-gems-total/">游戏设计精粹《总目录》</a></h1>
+<h1 id="游戏系统设计的基石体验树"><a class="markdownIt-Anchor" href="#游戏系统设计的基石体验树"></a> <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/508415952">游戏系统设计的基石：体验树</a></h1>
+<div class="tabs" id="游戏系统设计的基石：体验树"><ul class="nav-tabs"><li class="tab active"><button type="button" data-href="#游戏系统设计的基石：体验树-1">文章摘要</button></li><li class="tab"><button type="button" data-href="#游戏系统设计的基石：体验树-2">个人总结</button></li></ul><div class="tab-contents"><div class="tab-item-content active" id="游戏系统设计的基石：体验树-1"><p>介绍的是**体验树理论，它是分析游戏系统设计好坏的理论工具，它能将系统设计所带给玩家的体验量化、可视化，以此检视系统是否设计得足够好玩。**这个理论从诞生至今，已快20年，发展出了一整套完整、分支庞大的系统设计理论。</p>
+<p>以经典的俄罗斯方块为例：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202206041914608.png" alt="image-20220604191411439" /></p>
+<p>玩家具备初始的技能，玩家通过这些技能观察和认识游戏规则，并根据规则认知构建出来的认知模型，处理面临的问题，解决问题，验证想法，在过程中获得乐趣。</p>
+<p>体验树理论可以进行各个方向的拓展，如果把体验树中各个方格进行拓展，就形成了**“输入-反馈-认知”基元**，如果把时间加进去，就能通过各个基元完整形成的时间，从而确定游戏卡点。如果将整个体验树放于直角坐标系中，横轴代表复杂度，纵轴代表游戏深度，就形成了**“复杂度-深度”体验模型**，复杂度越低，深度越深，代表游戏越好玩。</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div><div class="tab-item-content" id="游戏系统设计的基石：体验树-2"><p>介绍了一套将游戏中所有系统平铺，展开，然后通过节点可视化出来的的理论体系，并以此为基础提供游戏是否足够好玩的评判标准。在进行游戏系统设计的时候可以酌情参考这种做法。</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div></div>
+<h1 id="noita中涌现式设计与gameplay的冲突处理"><a class="markdownIt-Anchor" href="#noita中涌现式设计与gameplay的冲突处理"></a> <a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1hN411Z7i2?spm_id_from=333.337.search-card.all.click">Noita中涌现式设计与GamePlay的冲突处理</a></h1>
+<div class="tabs" id="noita中涌现式设计与gameplay的冲突处理"><ul class="nav-tabs"><li class="tab active"><button type="button" data-href="#noita中涌现式设计与gameplay的冲突处理-1">文章摘要</button></li><li class="tab"><button type="button" data-href="#noita中涌现式设计与gameplay的冲突处理-2">个人总结</button></li></ul><div class="tab-contents"><div class="tab-item-content active" id="noita中涌现式设计与gameplay的冲突处理-1"><p>作者在视频中提出了一个问题：它是否能够创造出有趣的Gameplay？</p>
+<p>一个游戏系统最好能成为一个在各要素相互影响下，玩家介入时，能产生有意义，有趣的结果，能不断涌现出玩法的永动机</p>
+<p>但涌现式的设计很有可能会破坏整个游戏的Gameplay，比如Noita的早期的设计原型之一是玩家在一个大房子里，随着玩家的探索，房子总会成为一片毫无意义的废墟，在这种情况下，想构造出有趣的Gameplay基本上是不可能</p>
+<p>作者的解决方案是<code>局部最大化，即把好的东西最大化，把坏的东西最小化，尽可能平衡涌现式混沌与稳固的Gameplay之间的平衡</code></p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div><div class="tab-item-content" id="noita中涌现式设计与gameplay的冲突处理-2"><p>之前一直认为涌现式设计百利而无一害，直到被这个作者点醒，在进行游戏设计时需要注意规避涌现式设计隐含的陷阱</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div></div>
+<h1 id="桜井政博-masahiro-sakurai产生和提高游戏的乐趣的规律是2017"><a class="markdownIt-Anchor" href="#桜井政博-masahiro-sakurai产生和提高游戏的乐趣的规律是2017"></a> <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/574068809">桜井政博 Masahiro Sakurai：产生和提高游戏的乐趣的规律是？（2017）</a></h1>
+<div class="tabs" id="桜井政博-masahiro-sakurai：产生和提高游戏的乐趣的规律是？（2017）"><ul class="nav-tabs"><li class="tab active"><button type="button" data-href="#桜井政博-masahiro-sakurai：产生和提高游戏的乐趣的规律是？（2017）-1">文章摘要</button></li><li class="tab"><button type="button" data-href="#桜井政博-masahiro-sakurai：产生和提高游戏的乐趣的规律是？（2017）-2">个人总结</button></li></ul><div class="tab-contents"><div class="tab-item-content active" id="桜井政博-masahiro-sakurai：产生和提高游戏的乐趣的规律是？（2017）-1"><p>让我给游戏性意译的话，那应该是「博弈」。换而言之，就是「风险与回报( risk and return )」。</p>
+<p>※国外的说法是「<strong>风险与奖励</strong>( risk and reward )」</p>
+<ul>
+<li>「风险」是指，简而言之即「玩家不喜欢的和没有好处的，碰到后会判定为失误的因素」。</li>
+<li>「回报」是指「能够排除风险的，或是让关卡向前推进的，对玩家来说是有好处的事物，或者是为了得到它的过程」。</li>
+</ul>
+<p><code>冒着风险，获取回报！这就是游戏的本质</code></p>
+<p>有一个与「游戏性」意思很接近的词。那就是「策略」。如果说「游戏性」是冒着风险获得回报所带来的乐趣的话，那么「<code>策略」就是指控制风险获得回报的方法</code>。想办法降低风险以更有利地前进。这就是「策略」。</p>
+<p><strong>游戏中最大的风险和最大的回报只有一纸之隔</strong>，这个设计很厉害。我们必须让「风险和回报」在<strong>游戏中一边变动一边保持平衡。</strong></p>
+<p>让风险在达到最大限度时转换为回报是一种乐趣，要是风险与回报可以两面一体般相会契合的话，乐趣会从中产生。一个很好的例子就是超级马里奥中的乌龟可以被玩家踩成龟壳（必须是近距离的踩踏，稍有不慎就会命丧当场），然后踢出去，清理所有路径上的敌人。</p>
+<p>对于格斗游戏而言，给每种攻击赋予具有特征的优缺点，让「博弈」从中产生出来吧！格斗游戏并不是单纯地由拳击、踢击、必杀技构成。如果不能动并且只能打出一种拳击的话，那就谈不上有「博弈」。只是在按按钮罢了。左右移动产生了距离的概念。跳跃产生了立体攻防的概念。如果只有攻击和防守的话，就不会有太多的「博弈」，但是如果加上<strong>投技的话，「博弈」的范围会大大增加。</strong></p>
+<p><code>好游戏能让玩家自然的调整风险，新手选用低风险低回报玩法，熟悉后选用高风险高回报玩法</code>，一款好游戏能让玩家自然地调整风险。低风险获得低回报，高风险获得高回报。这最终会建立出一个谁都能享受其中的游戏。</p>
+<p><code>「博弈」、「风险与回报」以及「策略」才是游戏的本质。但这并不包含所有游戏的乐趣。游戏并不是那么肤浅的东西！</code>比如GalGame，本身没有太多的游戏性，但让玩家阅读故事的乐趣也很不错</p>
+<p>提高游戏性的话，一般性就会下降。以前的对战格斗游戏，用非常小众的机制减少了客人。如果再加深「博弈」的话，马上就会出现跟不上的客人。如果你想让游戏受众更广泛的话，你最好考虑让它变得更随性。《星之卡比》和《任天堂明星大乱斗》都是这样做的。游戏性高不一定是正义的。但是，一般性越高的游戏，对游戏的评价等也有变得乱七八糟的倾向……同样，我也认为仅仅追求一般性并不是正确的。不管是以前还是现在，需要思考的事情会发生各种各样的变化。正在开发游戏或者说打算开发游戏的诸位，让我们一起努力吧。</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div><div class="tab-item-content" id="桜井政博-masahiro-sakurai：产生和提高游戏的乐趣的规律是？（2017）-2"><p>相当精彩的游戏本质分享文章，不但阐明了博弈，风险和回报的重要性，最后还抛出了风险和回报并非游戏的全部论点，让读者理解游戏本质的同时不至于过分极端的对游戏定义进行一刀切</p>
+<p>更难能可贵的是，作者还提出了用户才是设计游戏时最应该优先考虑的因素，即使开发很辛苦，也要为了让玩家享受我们的游戏而努力。如果大多数用户都玩得开心的话，那就再好不过了。现在有太多的开发者一意孤行，只当是做游戏给自己玩，完全没有考虑玩家的感受，收到玩家批评的时候还尤为委屈，并愤愤不平，我们在进行游戏设计的时候不能陷入夜郎自大，一意孤行的死胡同，否则一切都是无用功</p>
+<p>分享中多次提及博弈的重要性，博弈本身也和风险回报息息相关，甚至可以称之为风险和回报的起源，这一点即使是在当今的游戏设计领域也是屡试不爽，例如这两年火爆的永劫无间，游戏核心就是简单的石头剪刀布，却能带给玩家无穷的博弈空间，从而让玩家感受乐趣</p>
+<p>在日益浮躁的社会风气下，高风险高回报的内容受众不会特别受广大游戏玩家的欢迎，著名的几个魂系列游戏，黑暗之魂，埃尔登法环，只狼等都是在追求高风险高回报，这些游戏的受众就只有喜欢魂系的玩家，对于更广大的玩家来说，这种高风险高回报的设计还是有些过于强人所难了，所以如果不是要做种类特殊的游戏的话，可以考虑适当追求低风险，高回报，保留游戏性的同时能让更多玩家享受游戏的乐趣</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div></div>
+<h1 id="mda-框架一种游戏设计和游戏研究的形式化方法-mda-a-formal-approach-to-game-design-and-game-research-2004"><a class="markdownIt-Anchor" href="#mda-框架一种游戏设计和游戏研究的形式化方法-mda-a-formal-approach-to-game-design-and-game-research-2004"></a> <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/575977333">MDA 框架：一种游戏设计和游戏研究的形式化方法 MDA: A Formal Approach to Game Design and Game Research (2004)</a></h1>
+<div class="tabs" id="mda-框架：一种游戏设计和游戏研究的形式化方法-mda:-a-formal-approach-to-game-design-and-game-research-(2004)"><ul class="nav-tabs"><li class="tab active"><button type="button" data-href="#mda-框架：一种游戏设计和游戏研究的形式化方法-mda:-a-formal-approach-to-game-design-and-game-research-(2004)-1">文章摘要</button></li><li class="tab"><button type="button" data-href="#mda-框架：一种游戏设计和游戏研究的形式化方法-mda:-a-formal-approach-to-game-design-and-game-research-(2004)-2">个人总结</button></li></ul><div class="tab-contents"><div class="tab-item-content active" id="mda-框架：一种游戏设计和游戏研究的形式化方法-mda:-a-formal-approach-to-game-design-and-game-research-(2004)-1"><p>在本文中，我们介绍了 MDA 框架（机制（Mechanics），动态（Dynamics），美感（Aesthetics）的缩写），该框架是作为2001-2004年圣何塞游戏开发者大会（the Game Developers Conference）的游戏设计和调整工作坊（Game Design and Tuning Workshop）的一部分提出的。</p>
+<p>MDA 是一种关于游戏的理解范式——它试图在游戏设计和开发﹑游戏批评（game criticism）和技术游戏研究之间架起桥梁，弥合裂隙。我们相信这种方法论将有助于开发者、学者和研究者，开展更高效清晰的迭代过程，使广泛类别的游戏设计方法和游戏人工制品更易分解，研究和设计。</p>
+<p>游戏是由设计师/开发者团队创造的，并由玩家消费。它们被购买、使用，并最终像其他大多数消耗品一样被抛弃。</p>
+<p>游戏与其他娱乐产品（如书籍、音乐、电影和戏剧）的区别在于，它们的消费是相对不可预测的（unpredictable）。在游玩过程中发生的一连串事件以及这些事件的结果，在产品完成时是未知的。</p>
+<p>MDA 框架通过将游戏的消费过程，形式化为不同的组成部分：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202211191509069.png" alt="image-20221119150050724" /></p>
+<p>并建立起它们的设计对应部分：</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202211191509951.png" alt="image-20221119150956926" /></p>
+<ul>
+<li>**机制（Mechanics）**描述了在数据表示和算法层面，游戏的特定组成部分。</li>
+<li>**动态（Dynamics）**描述了机制依据玩家输入，和其他机制彼此的输出，随时间推移的，运行时行为（run-time behavior）。</li>
+<li><strong>美感（Aesthetics）</strong> 描述了当玩家与游戏系统交互时，所被唤起的预想的情感反应（desirable emotional responses）。（校注：如果考虑到美感在此的翻译过于拗口，或许简化可理解为游戏的玩家体验、美感体验或美感体验）</li>
+</ul>
+<p>此框架基础的想法是：游戏是更像人工制品（more like artifacts）而非媒体。据此，我们的意思是，游戏的内容是它的行为（behavior）——而非从其中朝向玩家传输出的媒体。</p>
+<p>将游戏视为被设计的人工制品（games as designed artifacts），有助于将其框定为通过互动而建立行为的系统。它支持在所有研究和开发的层面上，进行更清晰明确的设计选择和分析。</p>
+<h3 id="mda-详解-mda-in-detail"><a class="markdownIt-Anchor" href="#mda-详解-mda-in-detail"></a> <strong>MDA 详解 MDA in Detail</strong></h3>
+<p>MDA 框架的每个组成部分都可以被看作是观察游戏的「透镜」（lens）或「方法」（view）——相互独立的，但有因果地关联。（LeBlanc,2004b）</p>
+<p>从设计者的视角来看，机制产生了动态的系统行为，而转而又产生了特殊的审美体验（aesthetic experiences）。从玩家的视角来看，美感设定了基调（set），而其诞生于可观察的动态，以及最终的，可运作的机制（operable mechanics）之中。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202211191510809.png" alt="image-20221119151059781" /></p>
+<p>在进行游戏相关工作的过程中，同时以设计者和玩家的视角进行考虑是有帮助的。它可以帮助我们观察到：即使是一个层面上的微小变化，也会连带影响（cascade）到其他层面。此外，玩家视角则会促进以体验驱动（experience-driven）的设计（而非特性驱动 feature-driven）。</p>
+<p>因此，我们的考察从讨论美感开始，之后延续到动态，以根本的机制结束。</p>
+<h4 id="美感-aesthetics"><a class="markdownIt-Anchor" href="#美感-aesthetics"></a> <strong>美感</strong> <strong>Aesthetics</strong></h4>
+<p>是什么让一个游戏「好玩」？当我们发现一种特定类型的乐趣时，我们如何认识它？谈论游戏和玩是困难的，因为我们使用的词汇相对是有限制的。</p>
+<p>在描述游戏的美感时，我们希望跳出「乐趣」和「游戏玩法」这样的词语，走向一种更加有方向的词汇。包括但不限于这里列出的分类：</p>
+<ol>
+<li><strong>感知Sensation</strong> 游戏作为感官愉悦 Game as sense-pleasure</li>
+<li><strong>幻想Fantasy</strong> 游戏作为假信 Game as make-believe</li>
+<li><strong>叙事Narrative</strong> 游戏作为戏剧 Game as drama</li>
+<li><strong>挑战Challenge</strong> 游戏作为越障训练 Game as obstacle course</li>
+<li><strong>交际Fellowship</strong> 游戏作为社会化框架 Game as social framework</li>
+<li><strong>探索Discovery</strong> 游戏作为未知领域 Game as uncharted territory</li>
+<li><strong>表达Expression</strong> 游戏作为自我探索 Game as self-discovery</li>
+<li><strong>忘我Submission</strong> 游戏作为消遣 Game as pastime</li>
+</ol>
+<p>（校注：Submission 这个词语比较微妙，带有一点被动含义，但也并非贬义，与一些游戏设计师朋友（Zack，Jing，Nik）交流后认为是一种「投入的，把自己放进一个状态下的一种日常的放松和消遣中，没事玩玩」，有设计师举例 Desert Golfing，考虑后去除掉 屈从中的贬义含义，标识一种跟随游戏系统动态而投身其中，随波逐流摇曳之感，也译作屈从，忘我，投身，顺从，投入等）</p>
+<p>例如，想想看哑谜猜字游戏（Charades），《雷神之锤》（Quake），《模拟人生》（The Sims）和《最终幻想》（Final Fantasy）这些游戏。虽然每个游戏本身都很「有乐趣」，但考虑创造它们各自玩家体验的美感成分会更有参考价值：</p>
+<ul>
+<li><strong>哑谜猜字</strong>：交际 、表达、挑战。</li>
+<li><strong>雷神之锤</strong>：挑战，感知，竞争，幻想。</li>
+<li><strong>模拟人生</strong>：探索，幻想，表达，叙述。</li>
+<li><strong>最终幻想</strong>：幻想，叙述，表达，发现，挑战，忘我。</li>
+</ul>
+<p>在这里我们看到，每个游戏都在不同程度上追求多重体验目标。《哑谜猜字》强调的是交际而非挑战;《雷神之锤》将挑战作为玩法的主要元素。虽然没有游戏的「大统一理论」或公式来详细说明如何搭配这些元素会产生「乐趣」，但这种分类法帮助我们描述游戏，阐明不同的游戏如何，以及为何会吸引不同的玩家，或在不同的时间中吸引相同的玩家。</p>
+<h5 id="美感模型-aesthetic-models"><a class="markdownIt-Anchor" href="#美感模型-aesthetic-models"></a> <strong>美感模型</strong> <strong>Aesthetic Models</strong></h5>
+<p>使用像指南针一样的美感的词汇表﹐我们可以定义游戏玩法的模型。这些模型帮助我们描述游戏的动态和机制。</p>
+<p>例如：《哑谜猜字》和《雷神之锤》都是竞争性的。当这些游戏中的各个团队或玩家为击败对方而全情投入时，它们就成功了。这要求玩家有对手（《哑谜猜字》中是团队竞争；《雷神之锤》中是玩家与计算机对手的竞争），并且各方都想赢。很容易看出，对抗性比赛和对输赢的明确反馈对竞争性游戏来说至关重要的。如果玩家不知道明确的获胜条件，或者觉得自己不可能获胜，那游戏便会一下子变得无趣。</p>
+<h4 id="动态模型-dynamic-models"><a class="markdownIt-Anchor" href="#动态模型-dynamic-models"></a> <strong>动态模型</strong> <strong>Dynamic Models</strong></h4>
+<p>动态的运作创造了审美体验。例如，挑战（challenge）是由时间压力和对抗比赛这些事物所创造的。交际（fellowship）则可通过设定成员（团队）之间必须共享信息，或提供难以单独获胜的条件（例如夺取一个敌人基地）来进行鼓励。</p>
+<p>表达（expression）来自于鼓励个人用户留下他们的记号︰比如说，用于购买、打造或赚取游戏道具，用于设计、构建和修改关卡或世界，以及用于创建个性化、独特角色的系统。戏剧性张力（dramatic tension）则来源于鼓励紧张关系的上升﹑释放和结束的动态过程。</p>
+<p>和美感一样，我们希望我们对动态的讨论尽可能具体。通过开发预测和描述游戏动态的模型，我们可以避免一些常见的设计陷阱。</p>
+<p>例如，2个六面骰子的模型将帮助我们确定在《大富翁》游戏中，考虑到各种掷骰子的概率的情况下﹐玩家在棋盘上前进的平均时间。我们同样也可以识别出玩法中的反馈系统（feedback system），而来确定特定的状态或变化是如何影响有游戏玩法状态的（state of gameplay）。在《大富翁》中，随着领先者或领先团队变得越来越富有，他们可以通过提高效益（effectiveness）来惩罚其他玩家，劣势玩家会变得越来越穷。</p>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202211191528065.png" alt="image-20221119152819031" /></p>
+<p>随着差距的扩大﹐只有少数（有时只有一个）玩家真正投入其中。此时戏剧性的张力和玩家能动性（agency）就会丧失。</p>
+<p>利用我们对美感和动态的理解，我们可以想象出修补《大富翁》的方法——要么奖励落后玩家，让他们与优势玩家保持一个合理的距离，要么让富有玩家更难取得进展。当然，这可能会影响游戏对现实中的垄断实践的再现——而现实并不总是充满「乐趣」。</p>
+<h4 id="机制-mechanics"><a class="markdownIt-Anchor" href="#机制-mechanics"></a> <strong>机制</strong> <strong>Mechanics</strong></h4>
+<p>机制是给玩家在游戏背景中提供的各种行动（actions），行为（behaviors）和控制（control）的机制。这些机制与游戏的内容（关卡、资产等等）一同支撑起整体游戏玩法的动态。</p>
+<p>例如，纸牌游戏的机制包括洗牌﹑回合（trick）的发牌与下注，而从中可以产生像虚张声势（bluffing）这样的动态。而射击游戏的机制包括武器、弹药和出生点，这有时会产生像是蹲点（camping，校注：指固定不动在某个墙后的点位等人出现）和狙击（sniping）这样的情况。高尔夫球的机制包括球、球杆、沙坑和水障，这有时会产生出球杆断裂或击球入水的情况。</p>
+<p>调整游戏的机制有助于我们对游戏的整体动态进行精细调整（fine-tune）。以大富翁为例，帮助落后玩家的机制，可以被设定为对贫穷玩家的发放奖金或「补贴」，以及对富有玩家的惩罚或「税收」吗，也许也可以是在穿过出发点广场，离开监狱或行使垄断权而超过一定的价值门槛时进行计算。通过将这些改动应用到游戏基本规则上，我们或许能够让落后玩家能更长时间的继续维持竞争感和兴趣。</p>
+<p>另一个解决这种《大富翁》长时间游玩而缺乏紧张感的办法，则是添加一些机制来增加时间压力并加速游戏。或许可以通过随时间而征收固定税率税收（这样人们就消费更快）来消耗资源，将所有垄断的花费翻倍（这样玩家就会迅速分化），或者随机分配一定价值门槛下的所有资产。</p>
+<h5 id="调整打磨-tuning"><a class="markdownIt-Anchor" href="#调整打磨-tuning"></a> <strong>调整打磨</strong> <strong>Tuning</strong></h5>
+<p>显然，我们对于《大富翁》分析的最后一步涉及游戏测试和调整打磨。通过迭代式的罚款的数值、税率或奖惩的门槛，我们可以调整和打磨《大富翁》的游戏玩法，直到它达到平衡。</p>
+<p>在调整时，我们的美感词汇和模型帮助我们明确设计目标，讨论游戏的缺陷，并在调整过程中度量我们的进展。如果我们版本《大富翁》的税收需要复杂的计算，我们可能会因为让玩家更难追踪现金价值，而从而破坏他们的投资意识，最终影响整体进度或竞争排名。</p>
+<p>同样，我们的动态模型帮助我们精准定位问题的来源。比如，使用 D6 模型，我们可以评估对棋盘大小或布局的更改，进而确定更改将如何延长或缩短游戏的时长。</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div><div class="tab-item-content" id="mda-框架：一种游戏设计和游戏研究的形式化方法-mda:-a-formal-approach-to-game-design-and-game-research-(2004)-2"><p>MDA方法可以简单的总结为 游戏机制 + 游戏运行&amp;&amp;玩家参与 =&gt; 游戏美感 的公式</p>
+<p>MDA的意义在于我们可以通过这个公式来预估我们所设计的游戏各个机制在玩家和游戏本身运行的参与下，会达成怎样的一种效果，并且由这个最终效果反向去修正一些机制设计，从而让游戏更加合理，有趣</p><button type="button" class="tab-to-top" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div></div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/game-design-gems-4/">https://www.lfzxb.top/game-design-gems-4/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1/">游戏设计</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/projects-desgin/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">代号ProjectS企划案</div></div></a></div><div class="next-post pull-right"><a href="/game-design-gems-3/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">游戏设计精粹《三》</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/game-desgin-gems-total/" title="游戏设计精粹《总目录》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-10-22</div><div class="title">游戏设计精粹《总目录》</div></div></a></div><div><a href="/game-design-gems-5/" title="游戏设计精粹《五》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2023-01-21</div><div class="title">游戏设计精粹《五》</div></div></a></div><div><a href="/game-design-gems-0/" title="游戏设计精粹《零》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-10-22</div><div class="title">游戏设计精粹《零》</div></div></a></div><div><a href="/game-design-gems-1/" title="游戏设计精粹《一》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-01-14</div><div class="title">游戏设计精粹《一》</div></div></a></div><div><a href="/game-design-gems-2/" title="游戏设计精粹《二》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-02-14</div><div class="title">游戏设计精粹《二》</div></div></a></div><div><a href="/game-design-gems-3/" title="游戏设计精粹《三》"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-03-25</div><div class="title">游戏设计精粹《三》</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1%E7%B2%BE%E7%B2%B9%E6%80%BB%E7%9B%AE%E5%BD%95"><span class="toc-number">1.</span> <span class="toc-text"> 游戏设计精粹《总目录》</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B8%B8%E6%88%8F%E7%B3%BB%E7%BB%9F%E8%AE%BE%E8%AE%A1%E7%9A%84%E5%9F%BA%E7%9F%B3%E4%BD%93%E9%AA%8C%E6%A0%91"><span class="toc-number">2.</span> <span class="toc-text"> 游戏系统设计的基石：体验树</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#noita%E4%B8%AD%E6%B6%8C%E7%8E%B0%E5%BC%8F%E8%AE%BE%E8%AE%A1%E4%B8%8Egameplay%E7%9A%84%E5%86%B2%E7%AA%81%E5%A4%84%E7%90%86"><span class="toc-number">3.</span> <span class="toc-text"> Noita中涌现式设计与GamePlay的冲突处理</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A1%9C%E4%BA%95%E6%94%BF%E5%8D%9A-masahiro-sakurai%E4%BA%A7%E7%94%9F%E5%92%8C%E6%8F%90%E9%AB%98%E6%B8%B8%E6%88%8F%E7%9A%84%E4%B9%90%E8%B6%A3%E7%9A%84%E8%A7%84%E5%BE%8B%E6%98%AF2017"><span class="toc-number">4.</span> <span class="toc-text"> 桜井政博 Masahiro Sakurai：产生和提高游戏的乐趣的规律是？（2017）</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#mda-%E6%A1%86%E6%9E%B6%E4%B8%80%E7%A7%8D%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1%E5%92%8C%E6%B8%B8%E6%88%8F%E7%A0%94%E7%A9%B6%E7%9A%84%E5%BD%A2%E5%BC%8F%E5%8C%96%E6%96%B9%E6%B3%95-mda-a-formal-approach-to-game-design-and-game-research-2004"><span class="toc-number">5.</span> <span class="toc-text"> MDA 框架：一种游戏设计和游戏研究的形式化方法 MDA: A Formal Approach to Game Design and Game Research (2004)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#mda-%E8%AF%A6%E8%A7%A3-mda-in-detail"><span class="toc-number">5.0.1.</span> <span class="toc-text"> MDA 详解 MDA in Detail</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BE%8E%E6%84%9F-aesthetics"><span class="toc-number">5.0.1.1.</span> <span class="toc-text"> 美感 Aesthetics</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%BE%8E%E6%84%9F%E6%A8%A1%E5%9E%8B-aesthetic-models"><span class="toc-number">5.0.1.1.1.</span> <span class="toc-text"> 美感模型 Aesthetic Models</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8A%A8%E6%80%81%E6%A8%A1%E5%9E%8B-dynamic-models"><span class="toc-number">5.0.1.2.</span> <span class="toc-text"> 动态模型 Dynamic Models</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%BA%E5%88%B6-mechanics"><span class="toc-number">5.0.1.3.</span> <span class="toc-text"> 机制 Mechanics</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E8%B0%83%E6%95%B4%E6%89%93%E7%A3%A8-tuning"><span class="toc-number">5.0.1.3.1.</span> <span class="toc-text"> 调整打磨 Tuning</span></a></li></ol></li></ol></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2024 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>function addGitalkSource () {
+  const ele = document.createElement('link')
+  ele.rel = 'stylesheet'
+  ele.href= 'https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css'
+  document.getElementsByTagName('head')[0].appendChild(ele)
+}
+
+function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      id: 'f562188e9b91919832a05da994216470',
+      language: 'zh-CN',
+      perPage: 10,
+      distractionFreeMode: true,
+      pagerDirection: 'last',
+      createIssueManually: false,
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token"
+    })
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    addGitalkSource()
+    getScript('https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.innerHTML= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !true) {
+  if (true) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
