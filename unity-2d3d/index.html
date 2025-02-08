@@ -1,0 +1,338 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unity拖动2D和3D物体 | 登峰造极者，殊途亦同归。</title><meta name="keywords" content="Unity技术"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="&#x2F;* 首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。 Description 描述 The current mouse position in pixel coordinates. (Read Only) 在屏幕坐标空间当前鼠标的位置（只读）。 The bottom-left of the screen or window is">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity拖动2D和3D物体">
+<meta property="og:url" content="https://www.lfzxb.top/unity-2d3d/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="&#x2F;* 首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。 Description 描述 The current mouse position in pixel coordinates. (Read Only) 在屏幕坐标空间当前鼠标的位置（只读）。 The bottom-left of the screen or window is">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-2d3d/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: false,
+  postUpdate: '2021-02-04 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">228</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">164</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">51</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">登峰造极者，殊途亦同归。</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Unity拖动2D和3D物体</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">608</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<p>/*<br />
+首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。<br />
+Description 描述<br />
+The current mouse position in pixel coordinates. (Read Only)</p>
+<p>在屏幕坐标空间当前鼠标的位置（只读）。</p>
+<p>The bottom-left of the screen or window is at (0, 0). The top-right of the screen or window is at (Screen.width, Screen.height).</p>
+<p>屏幕或窗口的左下角是坐标系的（0,0）坐标。右上角的坐标是（屏幕宽度值，屏幕高度值）。</p>
+<p>*/</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这里用于2D场景物体的移动，可以参考一下。</span></span><br><span class="line"><span class="keyword">private</span> <span class="built_in">bool</span> isMouseDown;</span><br><span class="line"><span class="keyword">private</span> Vector3 lastMousePosition = Vector3.zero;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">TwoDMove</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (Input.GetMouseButtonDown(<span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        isMouseDown = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (Input.GetMouseButtonUp(<span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        isMouseDown = <span class="literal">false</span>;</span><br><span class="line">        lastMousePosition = Vector3.zero;<span class="comment">//这里要归零，不然会有漂移效果</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (isMouseDown)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (lastMousePosition != Vector3.zero)</span><br><span class="line">        &#123;</span><br><span class="line">            Vector3 offset = Camera.main.ScreenToWorldPoint(Input.mousePosition) - lastMousePosition;</span><br><span class="line">            transform.position += offset;</span><br><span class="line">        &#125;</span><br><span class="line">        lastMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这里是使用Ray射线来控制物体移动，可是由于射线本身检测速率的限制，并不适合持续的跟踪移动。具体效果各位读者试试便知。</span></span><br><span class="line">  <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">RayMove</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>  &#123;</span><br><span class="line">      Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);</span><br><span class="line">      RaycastHit hit;</span><br><span class="line">      <span class="keyword">if</span> (isMouseDown)</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">if</span> (Physics.Raycast(ray, <span class="keyword">out</span> hit))</span><br><span class="line">          &#123;</span><br><span class="line">              Vector3 offset = Input.mousePosition;</span><br><span class="line">              hit.transform.position = <span class="keyword">new</span> Vector3(hit.point.x, hit.point.y, hit.transform.position.z);</span><br><span class="line">              Debug.DrawLine(ray.origin, hit.point);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> 这里是3D物体的移动，注意坐标系的转换即可。</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">//注意世界坐标系转化为屏幕坐标系，Z轴是不变的</span></span><br><span class="line">  <span class="function">IEnumerator <span class="title">OnMouseDown</span>(<span class="params"></span>)</span></span><br><span class="line"><span class="function"></span>      &#123;</span><br><span class="line">          <span class="comment">//将物体由世界坐标系转化为屏幕坐标系，由vector3 结构体变量ScreenSpace存储，以用来明确屏幕坐标系Z轴的位置</span></span><br><span class="line">          Vector3 ScreenSpace = Camera.main.WorldToScreenPoint(transform.position);</span><br><span class="line">          <span class="comment">//完成了两个步骤，1由于鼠标的坐标系是2维的，需要转化成3维的世界坐标系，2只有三维的情况下才能来计算鼠标位置与物体的距离，offset即是距离</span></span><br><span class="line">          Vector3 offset = transform.position - Camera.main.ScreenToWorldPoint(<span class="keyword">new</span> Vector3(Input.mousePosition.x, Input.mousePosition.y, ScreenSpace.z));</span><br><span class="line">          Debug.Log(<span class="string">&quot;down&quot;</span>);</span><br><span class="line">          <span class="comment">//当鼠标左键按下时</span></span><br><span class="line">          <span class="keyword">while</span> (Input.GetMouseButton(<span class="number">0</span>))</span><br><span class="line">          &#123;</span><br><span class="line">              <span class="comment">//得到现在鼠标的2维坐标系位置</span></span><br><span class="line">              Vector3 curScreenSpace = <span class="keyword">new</span> Vector3(Input.mousePosition.x, Input.mousePosition.y, ScreenSpace.z);</span><br><span class="line">              <span class="comment">//将当前鼠标的2维位置转化成三维的位置，再加上鼠标的移动量</span></span><br><span class="line">              Vector3 CurPosition = Camera.main.ScreenToWorldPoint(curScreenSpace) + offset;</span><br><span class="line">              <span class="comment">//CurPosition就是物体应该的移动向量赋给transform的position属性</span></span><br><span class="line">              transform.position = CurPosition;</span><br><span class="line">              <span class="function"><span class="keyword">yield</span> <span class="keyword">return</span> <span class="keyword">new</span> <span class="title">WaitForFixedUpdate</span>(<span class="params"></span>)</span>;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-2d3d/">https://www.lfzxb.top/unity-2d3d/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/ui-handbar-perspectivecamera-offset-solution/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/01/QQ截图20200123130210.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">解决血条在透视相机下的偏移</div></div></a></div><div class="next-post pull-right"><a href="/unity-base-ab-hotfix/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ截图20191126220128.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">AssetBundle热更新完整工作流与知识点解析</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/a-visual-tool-for-npbahave/" title="为NPBehave而生的可视化编辑器介绍"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/01/QQ截图20200125144426.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">为NPBehave而生的可视化编辑器介绍</div></div></a></div><div><a href="/achieve-lol-attack-speed/" title="理解并实现LOL中的攻速机制"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907003938.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">理解并实现LOL中的攻速机制</div></div></a></div><div><a href="/blackboard-0gc-write/" title="实现行为树黑板模块0GC赋值功能"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">实现行为树黑板模块0GC赋值功能</div></div></a></div><div><a href="/box2d-advance/" title="Box2D篇：进阶知识整合（刚体操作，碰撞处理）"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190706131958.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Box2D篇：进阶知识整合（刚体操作，碰撞处理）</div></div></a></div><div><a href="/box2d-baseknowledge/" title="Box2D篇：基础知识整合"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190705163811.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">Box2D篇：基础知识整合</div></div></a></div><div><a href="/box2d-collisionrelationvisualeditor/" title="Box2D篇：碰撞关系可视化编辑器"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190801215422.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-08-01</div><div class="title">Box2D篇：碰撞关系可视化编辑器</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-info-avatar is-center"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/><div class="author-info__name">烟雨迷离半世殇</div><div class="author-info__description">愿天下心诚剑士人人可剑开天门！</div></div><div class="card-info-data"><div class="card-info-data-item is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">228</div></a></div><div class="card-info-data-item is-center"><a href="/tags/"><div class="headline">标签</div><div class="length-num">164</div></a></div><div class="card-info-data-item is-center"><a href="/categories/"><div class="headline">分类</div><div class="length-num">51</div></a></div></div><div class="card-info-social-icons is-center"><a class="social-icon" href="https://gitee.com/NKG_admin" target="_blank" title="Gitee"><i class="iconfont icon-mayun"></i></a><a class="social-icon" href="https://github.com/wqaetly" target="_blank" title="Github"><i class="iconfont icon-github"></i></a><a class="social-icon" href="https://space.bilibili.com/33595745" target="_blank" title="Bilibili"><i class="iconfont icon-bilibili-line"></i></a><a class="social-icon" href="https://music.163.com/#/user/home?id=286997681" target="_blank" title="网易云音乐"><i class="iconfont icon-wangyiyunyinle"></i></a><a class="social-icon" href="https://www.zhihu.com/people/gu-gao-de-wang-1" target="_blank" title="知乎"><i class="iconfont icon-zhihu"></i></a><a class="social-icon" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=QHF3d3hxc3lzcnEAMTFuIy8t" target="_blank" title="QQ邮箱"><i class="iconfont icon-youxiang"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn card-announcement-animation"></i><span>公告</span></div><div class="announcement_content">换了新的评论系统Gittalk，蛋疼的是每个文章都要我手动点一下才能允许看客们评论。。。如果有评论的需求，通过邮箱联系我即可。</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/ne-zha-nao-hai/" title="因为我们都还年轻，不知天高地厚"><img data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202502082324176.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="因为我们都还年轻，不知天高地厚"/></a><div class="content"><a class="title" href="/ne-zha-nao-hai/" title="因为我们都还年轻，不知天高地厚">因为我们都还年轻，不知天高地厚</a><time datetime="2025-02-09T00:00:00.000Z" title="更新于 2025-02-09 00:00:00">2025-02-09</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/adaptive-virtual-texture-rendering-in-far-cry-4/" title="Adaptive Virtual Texture Rendering in Far Cry 4"><img data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250130155113039.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Adaptive Virtual Texture Rendering in Far Cry 4"/></a><div class="content"><a class="title" href="/adaptive-virtual-texture-rendering-in-far-cry-4/" title="Adaptive Virtual Texture Rendering in Far Cry 4">Adaptive Virtual Texture Rendering in Far Cry 4</a><time datetime="2025-01-31T00:00:00.000Z" title="更新于 2025-01-31 00:00:00">2025-01-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/color-pipeline/" title="颜色管线精粹"><img data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250126195238973.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="颜色管线精粹"/></a><div class="content"><a class="title" href="/color-pipeline/" title="颜色管线精粹">颜色管线精粹</a><time datetime="2025-01-28T00:00:00.000Z" title="更新于 2025-01-28 00:00:00">2025-01-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2024-total/" title="2024个人年度总结"><img data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202412222310582.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="2024个人年度总结"/></a><div class="content"><a class="title" href="/2024-total/" title="2024个人年度总结">2024个人年度总结</a><time datetime="2024-12-22T00:00:00.000Z" title="更新于 2024-12-22 00:00:00">2024-12-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/projects-terrian-shading/" title="ProjectS中的地形系统-Terrian Shading（Material Id）"><img data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202410061425447.gif!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="ProjectS中的地形系统-Terrian Shading（Material Id）"/></a><div class="content"><a class="title" href="/projects-terrian-shading/" title="ProjectS中的地形系统-Terrian Shading（Material Id）">ProjectS中的地形系统-Terrian Shading（Material Id）</a><time datetime="2024-10-05T00:00:00.000Z" title="更新于 2024-10-05 00:00:00">2024-10-05</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2025 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>function addGitalkSource () {
+  const ele = document.createElement('link')
+  ele.rel = 'stylesheet'
+  ele.href= 'https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css'
+  document.getElementsByTagName('head')[0].appendChild(ele)
+}
+
+function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      id: '63b910d7e9e4a8e5b55f7d3924bc37cd',
+      language: 'zh-CN',
+      perPage: 10,
+      distractionFreeMode: true,
+      pagerDirection: 'last',
+      createIssueManually: false,
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token"
+    })
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    addGitalkSource()
+    getScript('https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.innerHTML= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !true) {
+  if (true) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
