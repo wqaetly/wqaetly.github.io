@@ -1,0 +1,372 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>对于C++/C#中的i++，++i性能问题探究（汇编分析） | 登峰造极者，殊途亦同归。</title><meta name="keywords" content="C++,C#,汇编"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="前言 这阵子在看面经，里面有一道题，C中的i和i哪个效率更高。说实话，看到这道题当场就蒙了，平时用C#写项目都是怎么高兴怎么来，到C这里还有这一说了？ 不懂就看答案，答案给出的是++i性能更高，理由是i++会有一次临时变量的分配消耗，存储初始i值用来返回，而++i则直接返回i+1后的值。 嗯，看上去很有道理，但是咱也不知道到底实现是不是这样的啊，看汇编去。  C++汇编分析  环境  C++环">
+<meta property="og:type" content="article">
+<meta property="og:title" content="对于C++&#x2F;C#中的i++，++i性能问题探究（汇编分析）">
+<meta property="og:url" content="https://www.lfzxb.top/analyze-c-csharp-i-add-add-or-add-add-i/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 这阵子在看面经，里面有一道题，C中的i和i哪个效率更高。说实话，看到这道题当场就蒙了，平时用C#写项目都是怎么高兴怎么来，到C这里还有这一说了？ 不懂就看答案，答案给出的是++i性能更高，理由是i++会有一次临时变量的分配消耗，存储初始i值用来返回，而++i则直接返回i+1后的值。 嗯，看上去很有道理，但是咱也不知道到底实现是不是这样的啊，看汇编去。  C++汇编分析  环境  C++环">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp">
+<meta property="article:published_time" content="2020-02-03T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-02-03T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="C++">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="汇编">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/analyze-c-csharp-i-add-add-or-add-add-i/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2020-02-03 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">229</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">164</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">51</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">登峰造极者，殊途亦同归。</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">对于C++/C#中的i++，++i性能问题探究（汇编分析）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-02-03T00:00:00.000Z" title="发表于 2020-02-03 00:00:00">2020-02-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-02-03T00:00:00.000Z" title="更新于 2020-02-03 00:00:00">2020-02-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E6%9D%82%E8%B0%88/">杂谈</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<h2 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h2>
+<p>这阵子在看面经，里面有一道题，C<ins>中的i</ins>和<ins>i哪个效率更高。说实话，看到这道题当场就蒙了，平时用C#写项目都是怎么高兴怎么来，到C</ins>这里还有这一说了？ 不懂就看答案，答案给出的是++i性能更高，理由是<code>i++会有一次临时变量的分配消耗，存储初始i值用来返回，而++i则直接返回i+1后的值。</code> 嗯，看上去很有道理，但是咱也不知道到底实现是不是这样的啊，看汇编去。</p>
+<h2 id="c汇编分析"><a class="markdownIt-Anchor" href="#c汇编分析"></a> C++汇编分析</h2>
+<h3 id="环境"><a class="markdownIt-Anchor" href="#环境"></a> 环境</h3>
+<ul>
+<li>C++环境：MinGW64 w64 3.4</li>
+<li>CMake：Bundled 3.15.3</li>
+<li>Debugger：MinGW-w64 GDB 7.8.1</li>
+<li>IDE：CLion 2019.3.3</li>
+<li>汇编语法：标准的GAS AT&amp;T语法</li>
+<li>优化等级 O0（无优化）</li>
+</ul>
+<h3 id="前提分析"><a class="markdownIt-Anchor" href="#前提分析"></a> 前提分析</h3>
+<p>C<ins>只在早期的时候借助C编译器把自己翻译成汇编语言，很久之前就有了自己的编译器，所以直接反编译得到的就是C</ins>的汇编代码。</p>
+<h3 id="测试用例"><a class="markdownIt-Anchor" href="#测试用例"></a> 测试用例</h3>
+<p>源代码</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">0</span>;</span><br><span class="line">    i++;</span><br><span class="line">    ++i;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>汇编代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function main():</span><br><span class="line">   0x0000000000401530 &lt;+0&gt;: push   %rbp&#x2F;&#x2F;入栈，堆栈基指针</span><br><span class="line">   0x0000000000401531 &lt;+1&gt;: mov    %rsp,%rbp&#x2F;&#x2F;建立被调用者函数的对栈框架</span><br><span class="line">   0x0000000000401534 &lt;+4&gt;: sub    $0x30,%rsp&#x2F;&#x2F;栈顶指针减去48，也就是向下扩充</span><br><span class="line">   0x0000000000401538 &lt;+8&gt;: callq  0x402100 &lt;__main&gt;</span><br><span class="line">   0x000000000040153d &lt;+13&gt;:    movl   $0x0,-0x4(%rbp)&#x2F;&#x2F;设置栈底指针往下4位的寄存器值为0（i）</span><br><span class="line"></span><br><span class="line">   0x0000000000401544 &lt;+20&gt;:    addl   $0x1,-0x4(%rbp)&#x2F;&#x2F;i++</span><br><span class="line">&#x3D;&gt; 0x0000000000401548 &lt;+24&gt;:    addl   $0x1,-0x4(%rbp)&#x2F;&#x2F;++i</span><br><span class="line"></span><br><span class="line">   0x000000000040154c &lt;+28&gt;:    mov    $0x0,%eax&#x2F;&#x2F;归零通用寄存器</span><br><span class="line">   0x0000000000401551 &lt;+33&gt;:    add    $0x30,%rsp&#x2F;&#x2F;重置栈顶指针</span><br><span class="line">   0x0000000000401555 &lt;+37&gt;:    pop    %rbp&#x2F;&#x2F;出栈</span><br><span class="line">   0x0000000000401556 &lt;+38&gt;:    retq   &#x2F;&#x2F;栈顶的返回地址弹出到IP，然后按照IP此时指示的指令地址继续执行程序</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></table></figure>
+<p>我们可以看到，只是两种自增写法都只是单纯的+1操作，没有任何区别。 难道是因为没有赋值对象？ 我又添加了赋值对象，源代码变成这样：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i = <span class="number">0</span>, j = <span class="number">0</span>;</span><br><span class="line">    j = i++;</span><br><span class="line">    j = ++i;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>增加赋值对象后的汇编代码是这样</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">Dump of assembler code for function main():</span><br><span class="line">   0x0000000000401530 &lt;+0&gt;: push   %rbp&#x2F;&#x2F;入栈，堆栈基指针</span><br><span class="line">   0x0000000000401531 &lt;+1&gt;: mov    %rsp,%rbp&#x2F;&#x2F;建立被调用者函数的对栈框架</span><br><span class="line">   0x0000000000401534 &lt;+4&gt;: sub    $0x30,%rsp&#x2F;&#x2F;栈顶指针减去48，也就是向下扩充</span><br><span class="line">   0x0000000000401538 &lt;+8&gt;: callq  0x402110 &lt;__main&gt;</span><br><span class="line"></span><br><span class="line">   0x000000000040153d &lt;+13&gt;:    movl   $0x0,-0x4(%rbp)&#x2F;&#x2F;设置栈底指针往下4位的寄存器值为0（i）</span><br><span class="line">   0x0000000000401544 &lt;+20&gt;:    movl   $0x0,-0x8(%rbp)&#x2F;&#x2F;设置栈底指针往下8位的寄存器值为0（j）</span><br><span class="line"></span><br><span class="line">   &#x2F;&#x2F;下面的ax后缀都是使用的同一个寄存器，只是高位和低位的区别</span><br><span class="line">   0x000000000040154b &lt;+27&gt;:    mov    -0x4(%rbp),%eax&#x2F;&#x2F;i++：寄存器eax低32位存储当前i值</span><br><span class="line">   0x000000000040154e &lt;+30&gt;:    lea    0x1(%rax),%edx&#x2F;&#x2F;i++：寄存器rax高64位+1（也就是i+1），并把值地址赋给edx寄存器</span><br><span class="line">   0x0000000000401551 &lt;+33&gt;:    mov    %edx,-0x4(%rbp)&#x2F;&#x2F;i++：把i+1赋值给i</span><br><span class="line">   0x0000000000401554 &lt;+36&gt;:    mov    %eax,-0x8(%rbp)&#x2F;&#x2F;j&#x3D;i++：把eax的值（原始i值）赋值给j</span><br><span class="line"></span><br><span class="line">&#x3D;&gt; 0x0000000000401557 &lt;+39&gt;:    addl   $0x1,-0x4(%rbp)&#x2F;&#x2F;i&#x3D;i+1</span><br><span class="line">   0x000000000040155b &lt;+43&gt;:    mov    -0x4(%rbp),%eax&#x2F;&#x2F;把i的值赋值给通用寄存器</span><br><span class="line">   0x000000000040155e &lt;+46&gt;:    mov    %eax,-0x8(%rbp)&#x2F;&#x2F;把通用寄存器的值赋值给j</span><br><span class="line"></span><br><span class="line">   0x0000000000401561 &lt;+49&gt;:    mov    $0x0,%eax&#x2F;&#x2F;归零通用寄存器</span><br><span class="line">   0x0000000000401566 &lt;+54&gt;:    add    $0x30,%rsp&#x2F;&#x2F;重置栈顶指针</span><br><span class="line">   0x000000000040156a &lt;+58&gt;:    pop    %rbp&#x2F;&#x2F;出栈</span><br><span class="line">   0x000000000040156b &lt;+59&gt;:    retq   &#x2F;&#x2F;栈顶的返回地址弹出到IP，然后按照IP此时指示的指令地址继续执行程序</span><br><span class="line">End of assembler dump.</span><br></pre></td></tr></table></figure>
+<p>对比可以发现，j=i++;与j=++i;差别就是，前者需要一次数据传送，一次地址赋值才能完成相对的一个ADD操作，但是后者只做了一次算术运算——add就达成了。所以硬要说差距的话，就是对比一次数据传送+地址赋值的效率是否高于一次加法运算。 但是我们也看到，第一版的代码里都是使用了add运算，所以是不是可以推断在<code>需要使用i++/++i值的情况下确实++i的性能比i++要强</code>呢？</p>
+<h2 id="c汇编分析-2"><a class="markdownIt-Anchor" href="#c汇编分析-2"></a> C#汇编分析</h2>
+<h3 id="环境-2"><a class="markdownIt-Anchor" href="#环境-2"></a> 环境</h3>
+<ul>
+<li>.Net Framework 4.7.2</li>
+<li>IDE：Rider 2019.3.3</li>
+<li>汇编语法：IL</li>
+</ul>
+<h3 id="前提分析-2"><a class="markdownIt-Anchor" href="#前提分析-2"></a> 前提分析</h3>
+<p>C#源代码会被编译器编译成IL代码，运行时会被CLR（公共语言运行时）翻译成汇编语言运行。其实IL在语言的位置和汇编也差不多了，但是要比汇编高级一些，IL对汇编语言做了一些封装，就是这些封装让IL代码可读性高了很多。我们这里直接看IL代码就可以了。 也就是说，在jit编译IL到汇编的时候，是有可能再次优化的！ 但是我一时间找不到看C#汇编的方法，所以我们这里直接看IL代码就可以了。(说到底还是条懒狗) 要查看一个编译好的IL代码，一般需要ILDasm.exe来对PE文件进行反编译了。 !{ILDasm界面}(<a target="_blank" rel="noopener" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ%E6%88%AA%E5%9B%BE20200203210854.png!webp">https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200203210854.png!webp</a>) 但是Rider中内置了一个IL Viewer工具，可以实时查看IL代码，所以就不需要那么麻烦了（起飞）。</p>
+<h3 id="测试用例-2"><a class="markdownIt-Anchor" href="#测试用例-2"></a> 测试用例</h3>
+<p>一样的，先看看不赋值版本的 源代码</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">int</span> i = <span class="number">0</span>;</span><br><span class="line">    i++;</span><br><span class="line">    ++i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>IL代码</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br></pre></td><td class="code"><pre><span class="line">.<span class="keyword">class</span> <span class="keyword">private</span> auto ansi beforefieldinit</span><br><span class="line">  Program</span><br><span class="line">    extends [mscorlib]System.Object</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">  .method <span class="keyword">private</span> hidebysig <span class="keyword">static</span> <span class="keyword">void</span></span><br><span class="line">    Main(</span><br><span class="line">      <span class="built_in">string</span>[] args</span><br><span class="line">    ) cil managed</span><br><span class="line">  &#123;</span><br><span class="line">    .entrypoint</span><br><span class="line">    .maxstack <span class="number">2</span></span><br><span class="line">    .<span class="function">locals <span class="title">init</span> (<span class="params"></span></span></span><br><span class="line"><span class="function"><span class="params">      [<span class="number">0</span>] int32 i//初始化内存快</span></span></span><br><span class="line"><span class="function"><span class="params">    </span>)</span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">    <span class="comment">// [8 5 - 8 6]</span></span></span><br><span class="line"><span class="function">    IL_0000: nop</span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">    <span class="comment">// [9 9 - 9 19]</span></span></span><br><span class="line"><span class="function">    IL_0001: ldc.i4.0<span class="comment">//把0推送到计算堆栈上</span></span></span><br><span class="line"><span class="function">    IL_0002: stloc.0      <span class="comment">// i//从计算堆栈顶部弹出值并存储到0索引处</span></span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">    <span class="comment">// [10 9 - 10 13]</span></span></span><br><span class="line"><span class="function">    IL_0003: ldloc.0      <span class="comment">// i//把0索引处的局部变量加载到计算堆栈上</span></span></span><br><span class="line"><span class="function">    IL_0004: ldc.i4.1<span class="comment">//把1推送到计算堆栈上</span></span></span><br><span class="line"><span class="function">    IL_0005: <span class="keyword">add</span><span class="comment">//把上面两个值相加并推送到计算堆栈上</span></span></span><br><span class="line"><span class="function">    IL_0006: stloc.0      <span class="comment">// i//从计算堆栈顶部弹出值并存储到0索引处</span></span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">    <span class="comment">// [11 9 - 11 13]</span></span></span><br><span class="line"><span class="function">    IL_0007: ldloc.0      <span class="comment">// i</span></span></span><br><span class="line"><span class="function">    IL_0008: ldc.i4.1</span></span><br><span class="line"><span class="function">    IL_0009: <span class="keyword">add</span></span></span><br><span class="line"><span class="function">    IL_000a: stloc.0      <span class="comment">// i</span></span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">    <span class="comment">// [12 5 - 12 6]</span></span></span><br><span class="line"><span class="function">    IL_000b: ret</span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">  &#125; <span class="comment">// end of method Program::Main</span></span></span><br><span class="line"><span class="function"><span class="comment">//</span></span></span><br><span class="line"><span class="function">  .method <span class="keyword">public</span> hidebysig specialname rtspecialname instance <span class="keyword">void</span></span></span><br><span class="line"><span class="function">    .<span class="title">ctor</span>(<span class="params"></span>) cil managed</span></span><br><span class="line"><span class="function"></span>  &#123;</span><br><span class="line">    .maxstack <span class="number">8</span></span><br><span class="line"><span class="comment">//</span></span><br><span class="line">    IL_0000: ldarg<span class="number">.0</span>      <span class="comment">// this</span></span><br><span class="line">    IL_0001: call         instance void [mscorlib]System.Object::.ctor()</span><br><span class="line">    IL_0006: nop</span><br><span class="line">    IL_0007: ret</span><br><span class="line"><span class="comment">//</span></span><br><span class="line">  &#125; <span class="comment">// end of method Program::.ctor</span></span><br><span class="line">&#125; <span class="comment">// end of class Program</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>可以看到对于i++/++i生成的IL代码连顺序都没有变。。。 再看看有赋值类型的 C#源代码</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] args</span>)</span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="built_in">int</span> i = <span class="number">0</span>, j = <span class="number">0</span>;</span><br><span class="line">    j = i++;</span><br><span class="line">    j = ++i;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>IL代码</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line">.class private auto ansi beforefieldinit</span><br><span class="line">  Program</span><br><span class="line">    extends [mscorlib]System.Object</span><br><span class="line">&#123;</span><br><span class="line"></span><br><span class="line">  .method private hidebysig static void</span><br><span class="line">    Main(</span><br><span class="line">      string[] args</span><br><span class="line">    ) cil managed</span><br><span class="line">  &#123;</span><br><span class="line">    .entrypoint</span><br><span class="line">    .maxstack 3</span><br><span class="line">    .locals init (&#x2F;&#x2F;初始化内存快</span><br><span class="line">      [0] int32 i,</span><br><span class="line">      [1] int32 j</span><br><span class="line">    )</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [8 5 - 8 6]</span><br><span class="line">    IL_0000: nop</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [9 9 - 9 18]</span><br><span class="line">    IL_0001: ldc.i4.0</span><br><span class="line">    IL_0002: stloc.0      &#x2F;&#x2F; i</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [9 20 - 9 25]</span><br><span class="line">    IL_0003: ldc.i4.0</span><br><span class="line">    IL_0004: stloc.1      &#x2F;&#x2F; j</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [10 9 - 10 17]</span><br><span class="line">    IL_0005: ldloc.0      &#x2F;&#x2F; i</span><br><span class="line">    IL_0006: dup&#x2F;&#x2F;复制计算堆栈上当前最顶端的值，然后将副本推送到计算堆栈上</span><br><span class="line">    IL_0007: ldc.i4.1</span><br><span class="line">    IL_0008: add</span><br><span class="line">    IL_0009: stloc.0      &#x2F;&#x2F; i</span><br><span class="line">    IL_000a: stloc.1      &#x2F;&#x2F; j</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [11 9 - 11 17]</span><br><span class="line">    IL_000b: ldloc.0      &#x2F;&#x2F; i</span><br><span class="line">    IL_000c: ldc.i4.1</span><br><span class="line">    IL_000d: add</span><br><span class="line">    IL_000e: dup</span><br><span class="line">    IL_000f: stloc.0      &#x2F;&#x2F; i</span><br><span class="line">    IL_0010: stloc.1      &#x2F;&#x2F; j</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">    &#x2F;&#x2F; [12 5 - 12 6]</span><br><span class="line">    IL_0011: ret</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">  &#125; &#x2F;&#x2F; end of method Program::Main</span><br><span class="line">&#x2F;&#x2F;</span><br><span class="line">  .method public hidebysig specialname rtspecialname instance void</span><br><span class="line">    .ctor() cil managed</span><br><span class="line">  &#123;</span><br><span class="line">    .maxstack 8</span><br><span class="line"></span><br><span class="line">    IL_0000: ldarg.0      &#x2F;&#x2F; this</span><br><span class="line">    IL_0001: call         instance void [mscorlib]System.Object::.ctor()</span><br><span class="line">    IL_0006: nop</span><br><span class="line">    IL_0007: ret</span><br><span class="line"></span><br><span class="line">  &#125; &#x2F;&#x2F; end of method Program::.ctor</span><br><span class="line">&#125; &#x2F;&#x2F; end of class Program</span><br></pre></td></tr></table></figure>
+<p>可以看到IL层的C#对于i++/<ins>i这种自增操作一视同仁，基本就可以得出C#i</ins>与++i性能没有差异。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/analyze-c-csharp-i-add-add-or-add-add-i/">https://www.lfzxb.top/analyze-c-csharp-i-add-add-or-add-add-i/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C++</a><a class="post-meta__tags" href="/tags/C/">C#</a><a class="post-meta__tags" href="/tags/%E6%B1%87%E7%BC%96/">汇编</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2020-2-3/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907130924.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">2020.2.3日记</div></div></a></div><div class="next-post pull-right"><a href="/chaos-consider-and-talk-to-game-replay-design/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200201153702.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">对于游戏中的回放系统设计架构的畅想</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/explore-how-much-memory-size-of-valuetype-and-referencetype-in-csharp/" title="探索C#中值类型/引用类型为空时所占用的内存大小"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200208225348.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">探索C#中值类型/引用类型为空时所占用的内存大小</div></div></a></div><div><a href="/cpp-recastnavigation-to-unity-or-server/" title="接入Recastnavigation寻路到ET5.0"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920155011.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2020-02-01</div><div class="title">接入Recastnavigation寻路到ET5.0</div></div></a></div><div><a href="/recastnavigation-and-et-to-linux/" title="构建recastnavigation并部署服务端到Linux"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120924.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-03-20</div><div class="title">构建recastnavigation并部署服务端到Linux</div></div></a></div><div><a href="/c-dic/" title="C#篇：对字典引用内容的探究"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190723105243.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2019-07-23</div><div class="title">C#篇：对字典引用内容的探究</div></div></a></div><div><a href="/unitask_reademe_cn/" title="UniTask中文文档"><img class="cover" data-lazy-src="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2022-07-16</div><div class="title">UniTask中文文档</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text"> 前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c%E6%B1%87%E7%BC%96%E5%88%86%E6%9E%90"><span class="toc-number">2.</span> <span class="toc-text"> C++汇编分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83"><span class="toc-number">2.1.</span> <span class="toc-text"> 环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E6%8F%90%E5%88%86%E6%9E%90"><span class="toc-number">2.2.</span> <span class="toc-text"> 前提分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B"><span class="toc-number">2.3.</span> <span class="toc-text"> 测试用例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#c%E6%B1%87%E7%BC%96%E5%88%86%E6%9E%90-2"><span class="toc-number">3.</span> <span class="toc-text"> C#汇编分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83-2"><span class="toc-number">3.1.</span> <span class="toc-text"> 环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E6%8F%90%E5%88%86%E6%9E%90-2"><span class="toc-number">3.2.</span> <span class="toc-text"> 前提分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%8B%E8%AF%95%E7%94%A8%E4%BE%8B-2"><span class="toc-number">3.3.</span> <span class="toc-text"> 测试用例</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2025 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>function addGitalkSource () {
+  const ele = document.createElement('link')
+  ele.rel = 'stylesheet'
+  ele.href= 'https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css'
+  document.getElementsByTagName('head')[0].appendChild(ele)
+}
+
+function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      id: '1105762d21aec046b6e3670a22465474',
+      language: 'zh-CN',
+      perPage: 10,
+      distractionFreeMode: true,
+      pagerDirection: 'last',
+      createIssueManually: false,
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token"
+    })
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    addGitalkSource()
+    getScript('https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.innerHTML= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !true) {
+  if (true) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
