@@ -1,0 +1,400 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unity Shader入门精要学习笔记：渲染流水线 | 登峰造极者，殊途亦同归。</title><meta name="keywords" content="图形渲染"><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><meta name="description" content="前言 本系列博客记录学习《Unity Shader入门精要》（冯乐乐著）中的笔记和感悟。  渲染流水线  综述 渲染流水线的最终目的在于生成或者说是渲染一张二维纹理。  什么是渲染流水线 渲染流水线的任务在于：从一系列的的顶点数据，纹理等信息出发，把这些信息最终转换成一张人眼可以看到的图像。而这个工作通常是由CPU和GPU共同完成的。 渲染流程分为三个阶段：  应用阶段 主要提供渲染图元（点，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity Shader入门精要学习笔记：渲染流水线">
+<meta property="og:url" content="https://www.lfzxb.top/shader-render-pipeline/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 本系列博客记录学习《Unity Shader入门精要》（冯乐乐著）中的笔记和感悟。  渲染流水线  综述 渲染流水线的最终目的在于生成或者说是渲染一张二维纹理。  什么是渲染流水线 渲染流水线的任务在于：从一系列的的顶点数据，纹理等信息出发，把这些信息最终转换成一张人眼可以看到的图像。而这个工作通常是由CPU和GPU共同完成的。 渲染流程分为三个阶段：  应用阶段 主要提供渲染图元（点，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20191009225439.png!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="图形渲染">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20191009225439.png!webp"><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/shader-render-pipeline/"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="preconnect" href="//zz.bdstatic.com"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="manifest" href="/image/pwa/manifest.json"/><link rel="apple-touch-icon" sizes="180x180" href="/image/pwa/apple-touch-icon.png"/><link rel="icon" type="image/png" sizes="32x32" href="/image/pwa/32.png"/><link rel="icon" type="image/png" sizes="16x16" href="/image/pwa/16.png"/><link rel="mask-icon" href="/image/pwa/safari-pinned-tab.svg" color="#5bbad5"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlighjs","highlightCopy":true,"highlightLang":true},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#121212","position":"bottom-left"},
+  source: {
+    jQuery: 'https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js',
+    justifiedGallery: {
+      js: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/js/jquery.justifiedGallery.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/justifiedGallery/dist/css/justifiedGallery.min.css'
+    },
+    fancybox: {
+      js: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js',
+      css: 'https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.css'
+    }
+  },
+  isPhotoFigcaption: true,
+  islazyload: true,
+  isanchor: false
+};
+
+var saveToLocal = {
+  set: function setWithExpiry(key, value, ttl) {
+    const now = new Date()
+    const expiryDay = ttl * 86400000
+    const item = {
+      value: value,
+      expiry: now.getTime() + expiryDay,
+    }
+    localStorage.setItem(key, JSON.stringify(item))
+  },
+
+  get: function getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key)
+
+    if (!itemStr) {
+      return undefined
+    }
+    const item = JSON.parse(itemStr)
+    const now = new Date()
+
+    if (now.getTime() > item.expiry) {
+      localStorage.removeItem(key)
+      return undefined
+    }
+    return item.value
+  }
+}
+
+// https://stackoverflow.com/questions/16839698/jquery-getscript-alternative-in-native-javascript
+const getScript = url => new Promise((resolve, reject) => {
+  const script = document.createElement('script')
+  script.src = url
+  script.async = true
+  script.onerror = reject
+  script.onload = script.onreadystatechange = function() {
+    const loadState = this.readyState
+    if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+    script.onload = script.onreadystatechange = null
+    resolve()
+  }
+  document.head.appendChild(script)
+})</script><script id="config_change">var GLOBAL_CONFIG_SITE = { 
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2021-02-04 00:00:00'
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
+
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(function () {  window.activateDarkMode = function () {
+    document.documentElement.setAttribute('data-theme', 'dark')
+    if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+    }
+  }
+  window.activateLightMode = function () {
+    document.documentElement.setAttribute('data-theme', 'light')
+   if (document.querySelector('meta[name="theme-color"]') !== null) {
+      document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+    }
+  }
+  const autoChangeMode = 'false'
+  const t = saveToLocal.get('theme')
+  if (autoChangeMode === '1') {
+    const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+    const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+    const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
+    if (t === undefined) {
+      if (isLightMode) activateLightMode()
+      else if (isDarkMode) activateDarkMode()
+      else if (isNotSpecified || hasNoSupport) {
+        const now = new Date()
+        const hour = now.getHours()
+        const isNight = hour <= 6 || hour >= 18
+        isNight ? activateDarkMode() : activateLightMode()
+      }
+      window.matchMedia('(prefers-color-scheme: dark)').addListener(function (e) {
+        if (saveToLocal.get('theme') === undefined) {
+          e.matches ? activateDarkMode() : activateLightMode()
+        }
+      })
+    } else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else if (autoChangeMode === '2') {
+    const now = new Date()
+    const hour = now.getHours()
+    const isNight = hour <= 6 || hour >= 18
+    if (t === undefined) isNight ? activateDarkMode() : activateLightMode()
+    else if (t === 'light') activateLightMode()
+    else activateDarkMode()
+  } else {
+    if (t === 'dark') activateDarkMode()
+    else if (t === 'light') activateLightMode()
+  }const asideStatus = saveToLocal.get('aside-status')
+if (asideStatus !== undefined) {
+   if (asideStatus === 'hide') {
+     document.documentElement.classList.add('hide-aside')
+   } else {
+     document.documentElement.classList.remove('hide-aside')
+   }
+}})()</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><style>#nav #site-name { display: none;}</style><meta name="generator" content="Hexo 5.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="author-avatar"><img class="avatar-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data"><div class="data-item is-center"><div class="data-item-link"><a href="/archives/"><div class="headline">文章</div><div class="length-num">232</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/tags/"><div class="headline">标签</div><div class="length-num">168</div></a></div></div><div class="data-item is-center"><div class="data-item-link"><a href="/categories/"><div class="headline">分类</div><div class="length-num">52</div></a></div></div></div><hr/><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20191009225439.png!webp)"><nav id="nav"><span id="blog_name"><a id="site-name" href="/">登峰造极者，殊途亦同归。</a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 寻幽探胜</span></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="javascript:void(0);"><i class="fa-fw fas fa-dice-d20"></i><span> 壶里乾坤</span><i class="fas fa-chevron-down expand"></i></a><ul class="menus_item_child"><li><a class="site-page" href="/music/"><i class="fa-fw fas fa-music"></i><span> 莺声婉转</span></a></li><li><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-video"></i><span> 往昔回忆</span></a></li><li><a class="site-page" href="/artitalk/"><i class="fa-fw fas fa-coffee"></i><span> 杯酒言欢</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><a class="site-page"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">Unity Shader入门精要学习笔记：渲染流水线</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86/">理论知识</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">字数总计:</span><span class="word-count">3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><meta name="referrer" content="no-referrer" />
+<h1 id="前言"><a class="markdownIt-Anchor" href="#前言"></a> 前言</h1>
+<p>本系列博客记录学习《Unity Shader入门精要》（冯乐乐著）中的笔记和感悟。</p>
+<h1 id="渲染流水线"><a class="markdownIt-Anchor" href="#渲染流水线"></a> 渲染流水线</h1>
+<h2 id="综述"><a class="markdownIt-Anchor" href="#综述"></a> 综述</h2>
+<p>渲染流水线的最终目的在于生成或者说是渲染一张二维纹理。</p>
+<h3 id="什么是渲染流水线"><a class="markdownIt-Anchor" href="#什么是渲染流水线"></a> 什么是渲染流水线</h3>
+<p>渲染流水线的任务在于：从一系列的的顶点数据，纹理等信息出发，把这些信息最终转换成一张人眼可以看到的图像。而这个工作通常是由CPU和GPU共同完成的。 渲染流程分为三个阶段：</p>
+<h4 id="应用阶段"><a class="markdownIt-Anchor" href="#应用阶段"></a> 应用阶段</h4>
+<p>主要提供<code>渲染图元（点，线，三角面）</code>，以及<code>渲染状态（顶点片元着色器，光源属性，材质等）</code>，我们开发者在这一阶段有绝对控制权。</p>
+<h4 id="几何阶段"><a class="markdownIt-Anchor" href="#几何阶段"></a> 几何阶段</h4>
+<p>处理所有和我们要绘制的几何相关的事情（例如应用阶段提供的渲染图元），决定需要绘制的图元，如何绘制图元，在哪里绘制图元。这一阶段在GPU进行。 一个重要任务是把顶点坐标变换到屏幕空间中，再交给光栅器进行处理。 这一阶段会输出屏幕空间的二维顶点坐标，每个顶点对应的深度值，着色等相关信息，并传递给下一个阶段。</p>
+<h4 id="光栅化阶段"><a class="markdownIt-Anchor" href="#光栅化阶段"></a> 光栅化阶段</h4>
+<p>使用几何阶段传递的数据来产生屏幕上的像素，并渲染出最后的图像。 这一阶段也是在GPU上运行。 光栅化的主要任务是决定每个渲染图元中的哪些像素应该被绘制在屏幕上，他需要对上一个阶段得到的逐顶点数据（例如纹理坐标，顶点颜色等）进行插值，然后进行逐像素处理。</p>
+<h2 id="cpu与gpu之间的通信"><a class="markdownIt-Anchor" href="#cpu与gpu之间的通信"></a> CPU与GPU之间的通信</h2>
+<p>在渲染流水线的应用阶段可细分为三个阶段 1. 把数据加载到显存中 2. 设置渲染状态 3. 调用Draw Call</p>
+<h3 id="把数据加载到显存中"><a class="markdownIt-Anchor" href="#把数据加载到显存中"></a> 把数据加载到显存中</h3>
+<p>所有渲染所需数据都需要经历<code>硬盘——系统内存——显存</code>这一阶段。</p>
+<h3 id="设置渲染状态"><a class="markdownIt-Anchor" href="#设置渲染状态"></a> 设置渲染状态</h3>
+<p>渲染状态定义了场景中的网格是怎样被渲染的。例如，使用哪个顶点片元着色器，光源属性，材质等。如果不对渲染状态进行更改，那么所有网格都将使用同一种渲染状态。 完成以上工作后，CPU就需要调用一个渲染命令——<code>Draw Call</code>告诉GPU进行渲染。</p>
+<h3 id="调用draw-call"><a class="markdownIt-Anchor" href="#调用draw-call"></a> 调用Draw Call</h3>
+<p>Draw Call是一个命令，发起方是CPU，接收方是GPU。这个命令仅仅会指向一个需要被渲染的图元列表（不包含顶点片元着色器，光源属性，材质等信息）。 当GPU收到Draw Call，就会根据渲染状态和所有接受到的顶点数据进行计算。最终输出成屏幕上显示的像素。而这个过程，就是GPU流水线。</p>
+<h2 id="gpu流水线"><a class="markdownIt-Anchor" href="#gpu流水线"></a> GPU流水线</h2>
+<p>当GPU从CPU那里得到渲染命令（Draw Call）后就会进行一系列流水线操作，最终把图元渲染到屏幕上。</p>
+<h3 id="概述"><a class="markdownIt-Anchor" href="#概述"></a> 概述</h3>
+<h4 id="几何阶段-2"><a class="markdownIt-Anchor" href="#几何阶段-2"></a> 几何阶段</h4>
+<p>GPU的渲染流水线接收顶点数据作为输入。这些顶点数据是由<code>应用阶段</code>加载到显存中，再由Draw Call指定的。这些数据随后被传递给<code>顶点着色器</code>。 <code>PS：一般是顶点-&gt;图元-&gt;片元-&gt;像素的流程</code> <strong><code>顶点着色器（Vertex Shader）</code></strong>：完全可编程，通常用于实现顶点的空间变换，顶点着色等功能。 <strong><code>曲面细分着色器（Tessellation Shader）</code></strong>：用于细分图元。 <strong><code>几何着色器（Geometry Shader）</code></strong>：可用于执行<code>逐图元（Per-Primitive）</code>的着色操作，或者用于产生更多的图元。 接下来是<code>裁剪（Clipping）</code>，目的是将那些不在摄像机视野内的顶点裁剪掉，并提出某些三角图元的面片。 几何阶段的最后一个阶段是<code>屏幕映射（Screen Mapping）</code>，负责把每个图元的坐标转换到屏幕坐标系中。</p>
+<h4 id="光栅化阶段-2"><a class="markdownIt-Anchor" href="#光栅化阶段-2"></a> 光栅化阶段</h4>
+<p>光栅化阶段中的三角形设置和三角形遍历也是固定函数。 **<code>片元着色器（Triangle Traversal）</code>**是完全可编程的它用于实现<code>逐片元（Per-FragmentOperations）</code>的着色操作</p>
+<h3 id="顶点着色器"><a class="markdownIt-Anchor" href="#顶点着色器"></a> 顶点着色器</h3>
+<p>顶点着色器（Vertex Shader）是流水线的第一个阶段，它的输入来自CPU。顶点着色器的处理单位是顶点，也就是说，<code>输入进来的每个顶点都会调用一次顶点着色器</code>。 需要完成的工作有：坐标变换和逐顶点光照，也可以输出后续阶段所需的数据。</p>
+<h4 id="坐标变换"><a class="markdownIt-Anchor" href="#坐标变换"></a> 坐标变换</h4>
+<p>对顶点的坐标进行某种变换。<code>一个最基本的顶点着色器必须完成的一个工作是：把顶点坐标从模型空间转换到齐次裁剪空间</code>。</p>
+<h4 id="计算顶点颜色"><a class="markdownIt-Anchor" href="#计算顶点颜色"></a> 计算顶点颜色</h4>
+<p>顶点着色器会对顶点位置进行坐标变换并计算顶点颜色。</p>
+<h3 id="裁剪"><a class="markdownIt-Anchor" href="#裁剪"></a> 裁剪</h3>
+<p>完全在视野内的图元就继续传递给下一个流水线阶段，完全在视野外的图元就不会继续向下传递，因为他们不需要被渲染。而那些部分在事业内的图元需要进行一个处理，这就是裁剪。</p>
+<h3 id="屏幕映射"><a class="markdownIt-Anchor" href="#屏幕映射"></a> 屏幕映射</h3>
+<p>任务是把每个图元的x和y坐标转换到屏幕坐标系。 <code>注意，OpenGL把屏幕的左下角当成最小的窗口坐标值，而DirectX则定义了屏幕左上角为最小的窗口坐标值。</code></p>
+<h3 id="三角形设置"><a class="markdownIt-Anchor" href="#三角形设置"></a> 三角形设置</h3>
+<p>由这一步开始就进入了光栅化阶段，从上一个阶段输出的信息时屏幕坐标系下的定点位置以及和它们相关的额外信息，如深度值（z坐标），法线方向，视角方向等。 光栅化阶段有两个最重要的目标：计算每个图元覆盖了哪些像素，以及为这些像素计算他们的颜色。 三角形设置：计算三角网格表示数据，并把此数据输出给下一阶段的过程</p>
+<h3 id="三角形遍历"><a class="markdownIt-Anchor" href="#三角形遍历"></a> 三角形遍历</h3>
+<p>将会检查每个像素是否被一个三角网格所覆盖。如果被覆盖就会生成一个<code>片元</code>。这个过程也叫做<code>扫描变换</code>。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20191009225439.png!webp" alt="" /> 一个片元并不是真正的像素，还包含了很多状态，这些状态计算每个像素的最终颜色。这些状态包括屏幕坐标，深度信息，顶点信息等。</p>
+<h3 id="片元着色器"><a class="markdownIt-Anchor" href="#片元着色器"></a> 片元着色器</h3>
+<p>片元着色器输入是上阶段对顶点信息插值的结果，具体来说就是从顶点着色器输出的数据插值得到的，而他的输出是一个或多个颜色值。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20191009225450.png!webp" alt="" /> 前面的光栅化阶段实际上并不会影响屏幕上的每个像素的颜色值，而是会产生一系列的数据信息，用来表述一个三角网格是怎样覆盖每个像素的。而每个片元就负责储存这样一系列数据。真正会对像素产生影响的阶段是——<code>逐片元操作</code></p>
+<h3 id="逐片元操作"><a class="markdownIt-Anchor" href="#逐片元操作"></a> 逐片元操作</h3>
+<p>这是渲染流水线的最后一步。 主要任务有 1. 决定每个片元的可见性。设计测试工作，比如深度测试，模板测试 2. 如果一个片元通过了所有测试，就需要把这个片元的颜色值和已经存储在颜色缓冲区的颜色进行合并或者说是混合。 这个阶段需要解决每个片元的可见性问题，这需要一系列测试。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190827225021.png!webp" alt="" /></p>
+<h4 id="模板测试"><a class="markdownIt-Anchor" href="#模板测试"></a> 模板测试</h4>
+<p>模板测试和我们经常听到的颜色缓冲，深度缓冲几乎是一类东西。 如果开启模板测试,GPU会先读取模板缓冲区中该偏远位置的模板值，然后将该值和读取到的参考值进行比较。更加具体的规则（取舍条件）完全可以由开发者自己定制。</p>
+<h4 id="深度测试"><a class="markdownIt-Anchor" href="#深度测试"></a> 深度测试</h4>
+<p>如果开启深度测试，GPU会把该片元的深度值和已经存在于深度缓冲区中的深度值进行比较。更加具体的规则（取舍条件）完全可以由开发者自己定制。</p>
+<h4 id="混合"><a class="markdownIt-Anchor" href="#混合"></a> 混合</h4>
+<p>关闭后片元着色器计算得到的颜色值就会直接覆盖掉颜色缓冲区中的像素值。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190827225647.png!webp" alt="" /></p>
+<h2 id="一些专业术语科普"><a class="markdownIt-Anchor" href="#一些专业术语科普"></a> 一些专业术语科普</h2>
+<h3 id="opengldirectx"><a class="markdownIt-Anchor" href="#opengldirectx"></a> OpenGL/DirectX</h3>
+<p>OpenGL和DirectX是我们访问GPU的桥梁。封装了很多编程接口，一个应用程序向这些接口发送渲染命令，这些接口会依次向显卡驱动发送渲染命令，这些显卡驱动知道如何和GPU通信，正是他们把OpenGL或DirectX的函数调用翻译成了GPU能听懂的语言，同时也负责把纹理等数据转换成GPU所支持的格式。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190827211444.png!webp" alt="" /></p>
+<h3 id="hlslglslcg"><a class="markdownIt-Anchor" href="#hlslglslcg"></a> HLSL，GLSL，CG</h3>
+<p>这三个都是编写Shader的语言。 DirectX的HLSL（High Level Shading Language），OpenGL的GLSL（OpenGL Shading Language），NVIDIA的CG（C for Grapgic）. GLSL：跨平台，但由于硬件供应商不同，编译结果可能不同 HLSL：微软控制着色器的编译，就算硬件供应商不同，同一个着色器的编译结果也是一样的。 CG：真正的跨平台，自适应平台。</p>
+<h3 id="draw-call"><a class="markdownIt-Anchor" href="#draw-call"></a> Draw Call</h3>
+<p>一个常见误区是Draw Call中造成性能问题的元凶是GPU，认为GPU上的状态切换是耗时的，其实不是的，真正拖后腿的是CPU。</p>
+<h4 id="问题cpu和gpu如何实现并行工作"><a class="markdownIt-Anchor" href="#问题cpu和gpu如何实现并行工作"></a> 问题：CPU和GPU如何实现并行工作</h4>
+<p><strong><code>命令缓冲区（Command Buffer）</code></strong> <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190827231014.png!webp" alt="" /></p>
+<h4 id="问题为什么draw-call多了会影响帧率"><a class="markdownIt-Anchor" href="#问题为什么draw-call多了会影响帧率"></a> 问题：为什么Draw Call多了会影响帧率</h4>
+<p>在每次调用Draw Call之前，CPU需要向GPU发送很多内容，包括数据，状态和命令等。CPU在这一过程中也需要完成很多工作，比如检查渲染状态。而一旦CPU完成了这些准备工作，GPU就可以开始本次渲染。GPU渲染能力是很强的，渲染200个还是2000个三角网格通常没什么太大区别，因此渲染速度往往快于CPU提交命令的速度。 <img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190827231415.png!webp" alt="" /></p>
+<h4 id="问题如何减少draw-call"><a class="markdownIt-Anchor" href="#问题如何减少draw-call"></a> 问题：如何减少Draw Call</h4>
+<p>方法之一：批处理 提交大量很小的Draw Call会造成CPU的性能瓶颈，即CPU把时间都花费在了准备Draw Call工作上了，那么一个很显然的有话想法就是把很多Draw Call合并成一个打的Draw Call，这就是批处理的思想。 由于我们需要在CPU的内存中合并网格，而合并的过程是需要消耗时间的。因此，批处理技术更加适合那些静态的物体，例如不会移动的大地，石头等。对于这些静态物体。我们只需要合并一次即可。当然，我们也可以对动态物体进行批处理。但是由于这些物体是不断运动的，因此每一帧都需要进行合并然后发给GPU，这对空间和时间都会造成一定的影响。 正常开发中，我们需要注意两点</p>
+<ul>
+<li>避免使用大量很小的网格</li>
+<li>避免使用过多的材质，尽量在不同的网格之间共用一个材质。</li>
+</ul>
+<h2 id="总结"><a class="markdownIt-Anchor" href="#总结"></a> 总结</h2>
+<p>Shader就是 - GPU流水线上一些可高度编程的阶段，而由着色器编译出来的最终代码是会在GPU上运行的。 - 有一些特定类型的着色器，如顶点着色器，片元着色器等 - 依靠着色器我们可以控制流水线中的渲染细节，例如用顶点着色器来进行顶点变换以及传递数据，用片元着色器来进行逐像素的渲染。</p>
+<h2 id="渲染流水线流程图"><a class="markdownIt-Anchor" href="#渲染流水线流程图"></a> 渲染流水线流程图</h2>
+<p><img src= "/img/loading.gif" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828000507.png!webp" alt="" /></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/shader-render-pipeline/">https://www.lfzxb.top/shader-render-pipeline/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a></div><div class="post_share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20191009225439.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/social-share.js/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/social-share.js/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i> 打赏<div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/reminiscence-once-i-grew-up-they-are-not/"><img class="prev-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">那些年我喜欢的主播——曾经的我长大了，他们却不在了</div></div></a></div><div class="next-post pull-right"><a href="/shader-unity-shader-base/"><img class="next-cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190828180847.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">Unity Shader入门精要学习笔记：Unity Shader基础</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span> 相关推荐</span></div><div class="relatedPosts-list"><div><a href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-02-20</div><div class="title">URP下基于后处理的热空气扭曲效果</div></div></a></div><div><a href="/color-pipeline/" title="颜色管线精粹"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250126195238973.png" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2025-01-20</div><div class="title">颜色管线精粹</div></div></a></div><div><a href="/early-z-test-and-late-z-test/" title="Early-Z和Late-Z规则"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907005950.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-08-14</div><div class="title">Early-Z和Late-Z规则</div></div></a></div><div><a href="/graphic-profilertools-guides/" title="常见游戏渲染Profiler工具使用指南"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211203115213.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-11-26</div><div class="title">常见游戏渲染Profiler工具使用指南</div></div></a></div><div><a href="/graphics-base-centre/" title="图形学篇：图形学基础知识汇总（中：多维变换与裁剪投影"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/06/QQ截图20190615165615.png!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">图形学篇：图形学基础知识汇总（中：多维变换与裁剪投影</div></div></a></div><div><a href="/graphics-base-up/" title="图形学篇：图形学基础知识汇总（上：基础知识和图形扫描转换及填充）"><img class="cover" data-lazy-src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" alt="cover"><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2021-01-01</div><div class="title">图形学篇：图形学基础知识汇总（上：基础知识和图形扫描转换及填充）</div></div></a></div></div></div><hr/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text"> 前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%B8%B2%E6%9F%93%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">2.</span> <span class="toc-text"> 渲染流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%BC%E8%BF%B0"><span class="toc-number">2.1.</span> <span class="toc-text"> 综述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF%E6%B8%B2%E6%9F%93%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">2.1.1.</span> <span class="toc-text"> 什么是渲染流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E9%98%B6%E6%AE%B5"><span class="toc-number">2.1.1.1.</span> <span class="toc-text"> 应用阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%A0%E4%BD%95%E9%98%B6%E6%AE%B5"><span class="toc-number">2.1.1.2.</span> <span class="toc-text"> 几何阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%89%E6%A0%85%E5%8C%96%E9%98%B6%E6%AE%B5"><span class="toc-number">2.1.1.3.</span> <span class="toc-text"> 光栅化阶段</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#cpu%E4%B8%8Egpu%E4%B9%8B%E9%97%B4%E7%9A%84%E9%80%9A%E4%BF%A1"><span class="toc-number">2.2.</span> <span class="toc-text"> CPU与GPU之间的通信</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%8A%E6%95%B0%E6%8D%AE%E5%8A%A0%E8%BD%BD%E5%88%B0%E6%98%BE%E5%AD%98%E4%B8%AD"><span class="toc-number">2.2.1.</span> <span class="toc-text"> 把数据加载到显存中</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%BE%E7%BD%AE%E6%B8%B2%E6%9F%93%E7%8A%B6%E6%80%81"><span class="toc-number">2.2.2.</span> <span class="toc-text"> 设置渲染状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B0%83%E7%94%A8draw-call"><span class="toc-number">2.2.3.</span> <span class="toc-text"> 调用Draw Call</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#gpu%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">2.3.</span> <span class="toc-text"> GPU流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A6%82%E8%BF%B0"><span class="toc-number">2.3.1.</span> <span class="toc-text"> 概述</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%87%A0%E4%BD%95%E9%98%B6%E6%AE%B5-2"><span class="toc-number">2.3.1.1.</span> <span class="toc-text"> 几何阶段</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%89%E6%A0%85%E5%8C%96%E9%98%B6%E6%AE%B5-2"><span class="toc-number">2.3.1.2.</span> <span class="toc-text"> 光栅化阶段</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8"><span class="toc-number">2.3.2.</span> <span class="toc-text"> 顶点着色器</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9D%90%E6%A0%87%E5%8F%98%E6%8D%A2"><span class="toc-number">2.3.2.1.</span> <span class="toc-text"> 坐标变换</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E9%A1%B6%E7%82%B9%E9%A2%9C%E8%89%B2"><span class="toc-number">2.3.2.2.</span> <span class="toc-text"> 计算顶点颜色</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A3%81%E5%89%AA"><span class="toc-number">2.3.3.</span> <span class="toc-text"> 裁剪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%8F%E5%B9%95%E6%98%A0%E5%B0%84"><span class="toc-number">2.3.4.</span> <span class="toc-text"> 屏幕映射</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E8%AE%BE%E7%BD%AE"><span class="toc-number">2.3.5.</span> <span class="toc-text"> 三角形设置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E8%A7%92%E5%BD%A2%E9%81%8D%E5%8E%86"><span class="toc-number">2.3.6.</span> <span class="toc-text"> 三角形遍历</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8"><span class="toc-number">2.3.7.</span> <span class="toc-text"> 片元着色器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%90%E7%89%87%E5%85%83%E6%93%8D%E4%BD%9C"><span class="toc-number">2.3.8.</span> <span class="toc-text"> 逐片元操作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A8%A1%E6%9D%BF%E6%B5%8B%E8%AF%95"><span class="toc-number">2.3.8.1.</span> <span class="toc-text"> 模板测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%B1%E5%BA%A6%E6%B5%8B%E8%AF%95"><span class="toc-number">2.3.8.2.</span> <span class="toc-text"> 深度测试</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%B7%E5%90%88"><span class="toc-number">2.3.8.3.</span> <span class="toc-text"> 混合</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E4%B8%93%E4%B8%9A%E6%9C%AF%E8%AF%AD%E7%A7%91%E6%99%AE"><span class="toc-number">2.4.</span> <span class="toc-text"> 一些专业术语科普</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#opengldirectx"><span class="toc-number">2.4.1.</span> <span class="toc-text"> OpenGL&#x2F;DirectX</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#hlslglslcg"><span class="toc-number">2.4.2.</span> <span class="toc-text"> HLSL，GLSL，CG</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#draw-call"><span class="toc-number">2.4.3.</span> <span class="toc-text"> Draw Call</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98cpu%E5%92%8Cgpu%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%B9%B6%E8%A1%8C%E5%B7%A5%E4%BD%9C"><span class="toc-number">2.4.3.1.</span> <span class="toc-text"> 问题：CPU和GPU如何实现并行工作</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E4%B8%BA%E4%BB%80%E4%B9%88draw-call%E5%A4%9A%E4%BA%86%E4%BC%9A%E5%BD%B1%E5%93%8D%E5%B8%A7%E7%8E%87"><span class="toc-number">2.4.3.2.</span> <span class="toc-text"> 问题：为什么Draw Call多了会影响帧率</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%97%AE%E9%A2%98%E5%A6%82%E4%BD%95%E5%87%8F%E5%B0%91draw-call"><span class="toc-number">2.4.3.3.</span> <span class="toc-text"> 问题：如何减少Draw Call</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">2.5.</span> <span class="toc-text"> 总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B8%B2%E6%9F%93%E6%B5%81%E6%B0%B4%E7%BA%BF%E6%B5%81%E7%A8%8B%E5%9B%BE"><span class="toc-number">2.6.</span> <span class="toc-text"> 渲染流水线流程图</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp)"><div id="footer-wrap"><div class="copyright">&copy;2018 - 2025 By 烟雨迷离半世殇</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有</br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a></br><img src = "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt = "公网安备字"/><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">簡</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside_config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="chat_btn" type="button" title="rightside.chat_btn"><i class="fas fa-sms"></i></button><a id="to_comment" href="#post-comment" title="直达评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><i class="fas fa-arrow-up"></i></button></div></div><div id="local-search"><div class="search-dialog"><div class="search-dialog__title" id="local-search-title">本地搜索</div><div id="local-input-panel"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div></div><hr/><div id="local-search-results"></div><span class="search-close-button"><i class="fas fa-times"></i></span></div><div id="search-mask"></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/vanilla-lazyload/dist/lazyload.iife.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><script src="/js/search/local-search.js"></script><div class="js-pjax"><script>function addGitalkSource () {
+  const ele = document.createElement('link')
+  ele.rel = 'stylesheet'
+  ele.href= 'https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css'
+  document.getElementsByTagName('head')[0].appendChild(ele)
+}
+
+function loadGitalk () {
+  function initGitalk () {
+    var gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      id: '2948a12b88872eee617a22b34d68e308',
+      language: 'zh-CN',
+      perPage: 10,
+      distractionFreeMode: true,
+      pagerDirection: 'last',
+      createIssueManually: false,
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token"
+    })
+    gitalk.render('gitalk-container')
+  }
+
+  if (typeof Gitalk === 'function') initGitalk()
+  else {
+    addGitalkSource()
+    getScript('https://cdn.jsdelivr.net/npm/gitalk@latest/dist/gitalk.min.js').then(initGitalk)
+  }
+}
+
+function commentCount(n){
+  let isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+  if (isCommentCount) {
+    isCommentCount.innerHTML= n
+  }
+}
+
+if ('Gitalk' === 'Gitalk' || !true) {
+  if (true) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+  else loadGitalk()
+} else {
+  function loadOtherComment () {
+    loadGitalk()
+  }
+}</script><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div><script defer="defer" id="fluttering_ribbon" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1/dist/canvas-fluttering-ribbon.min.js"></script><script>((window.gitter = {}).chat = {}).options = {
+  disableDefaultChat: true,
+};
+document.addEventListener('gitter-sidecar-ready', (e) => {
+  const GitterChat = e.detail.Chat
+  let chat
+
+  function initGitter () {
+    chat = new GitterChat({
+      room: 'YYMLBSS/community',
+      activationElement: '#chat_btn'
+    });
+  }
+
+  initGitter()
+
+  if (true) {
+    document.addEventListener('pjax:complete', () => {
+      chat.destroy()
+      initGitter()
+    })
+  }
+
+})</script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="async" defer="defer"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><script src="https://cdn.jsdelivr.net/npm/pjax/pjax.min.js"></script><script>let pjaxSelectors = [
+  'title',
+  '#config_change',
+  '#body-wrap',
+  '#rightside-config-hide',
+  '#rightside-config-show',
+  '.js-pjax'
+]
+
+if (false) {
+  pjaxSelectors.unshift('meta[property="og:image"]', 'meta[property="og:title"]', 'meta[property="og:url"]')
+}
+
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof chatBtnFn === 'function' && chatBtnFn()
+  typeof panguInit === 'function' && panguInit()
+
+  if (typeof gtag === 'function') {
+    gtag('config', '', {'page_path': window.location.pathname});
+  }
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // Analytics
+  if (false) {
+    MtaH5.pgv()
+  }
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+
+  typeof preloader === 'object' && preloader.endLoading()
+})
+
+
+document.addEventListener('pjax:send', function () {
+  typeof preloader === 'object' && preloader.initLoading()
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
+      }
+    }
+  }
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+
+})</script><script>(function(){
+  const bp = document.createElement('script');
+  const curProtocol = window.location.protocol.split(':')[0];
+  if (curProtocol === 'https') {
+    bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+  }
+  else{
+    bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+  }
+  bp.dataset.pjax = ''
+  const s = document.getElementsByTagName("script")[0];
+  s.parentNode.insertBefore(bp, s);
+})()</script></div></body></html>
