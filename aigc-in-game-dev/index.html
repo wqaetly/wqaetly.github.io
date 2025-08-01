@@ -1,0 +1,447 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>AI GC在游戏中的应用 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI GC在游戏中的应用">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-in-game-dev/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp">
+<meta property="article:published_time" content="2025-05-19T00:00:00.000Z">
+<meta property="article:modified_time" content="2025-07-22T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="Cursor">
+<meta property="article:tag" content="ComfyUI">
+<meta property="article:tag" content="Stable Diffuse">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "AI GC在游戏中的应用",
+  "url": "https://www.lfzxb.top/aigc-in-game-dev/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp",
+  "datePublished": "2025-05-19T00:00:00.000Z",
+  "dateModified": "2025-07-22T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-in-game-dev/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'AI GC在游戏中的应用',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><script>window.paceOptions = {
+  restartOnPushState: false
+}
+
+btf.addGlobalFn('pjaxSend', () => {
+  Pace.restart()
+}, 'pace_restart')
+
+</script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pace-js@latest/themes/blue/pace-theme-big-counter.css"><script src="https://cdn.jsdelivr.net/npm/pace-js/pace.min.js"></script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">235</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">174</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">52</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">AI GC在游戏中的应用</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">AI GC在游戏中的应用</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-05-19T00:00:00.000Z" title="发表于 2025-05-19 00:00:00">2025-05-19</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-07-22T00:00:00.000Z" title="更新于 2025-07-22 00:00:00">2025-07-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-in-game-dev/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2025-07-22 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>前言</h1>
+<p>AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：</p>
+<ul>
+<li>AI代码生成，<a target="_blank" rel="noopener" href="https://www.cursor.com/">Cursor</a></li>
+<li>AI文生图实践，<a target="_blank" rel="noopener" href="https://docs.comfy.org/">Comfy官网</a></li>
+</ul>
+<p>我其实两年前就在玩<a target="_blank" rel="noopener" href="https://openai.com/">OpenAI</a>了，在供应商买了API接入 <a target="_blank" rel="noopener" href="https://chatboxai.app/">Chatbox</a> 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大用</p>
+<p>当时<a target="_blank" rel="noopener" href="https://stabledifffusion.com/">Stable Diffuse</a>开源（泄漏）的时候我也本地部署了WebUI玩了下，确实有抽卡炼丹的感觉，不过没深入研究，玩了两下就放那了</p>
+<p>今年春节<a target="_blank" rel="noopener" href="https://www.deepseek.com/">DeepSeek</a>横空出世，也是赚足了眼球，我也试用了下，发现幻觉比OpenAI少很多，起码。。。他不会一直骗我，但应用还是仅限于简单的问答，没感觉对生产力有什么帮助</p>
+<p>AI代码方面也试用过 <a target="_blank" rel="noopener" href="https://github.com/features/copilot">Github Copilot</a>，讲道理感觉一般，和之前用过Chatbox问答模式生成的代码感觉差不多，没有很惊艳的感觉，顶多就是和IDE结合紧密更方便些</p>
+<p><s>前阵子也是没抱什么希望试用了下<a target="_blank" rel="noopener" href="https://www.cursor.com/">Cursor</a>，但两周时间之后，我完全变成Cursor的形状了，只能乖乖年费续上，感觉。。。就像是一年花1.5k买断了一个超级强力的大学生帮我写代码</s><br>
+Cursor已死（锁国区Claude使用），Claude当立，推荐 <a target="_blank" rel="noopener" href="https://aicodewith.com/?invitation=IQCVL6U">https://aicodewith.com/?invitation=IQCVL6U</a> ，购买699套餐，和4-5个人朋友一起拼车，基本算是无限量使用，可以加QQ群一起找人拼车：675776379</p>
+<p>再加上<a href="https://www.lfzxb.top/projecta-desgin/">ProjectA</a>基础GamePlay框架和玩法搭建完毕，开始填充内容，需要AI的协助，于是想着再用Stable Diffuse来提高生产力</p>
+<h1><s>Cursor</s></h1>
+<p><s>参考 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/1903555655404593529">https://zhuanlan.zhihu.com/p/1903555655404593529</a> 进行食用即可，目前感觉没有什么特别需要注意的地方，只要整好项目的Rules，就可以减少很多幻觉</s></p>
+<h1>Claude Code使用指南</h1>
+<p>安装<a target="_blank" rel="noopener" href="https://git-scm.com/downloads/win">Git Bash For Windows</a><br>
+安装教程： <a target="_blank" rel="noopener" href="https://aicodewith.com/dashboard/api-keys">https://aicodewith.com/dashboard/api-keys</a><br>
+最近横空出世的Kiro也是非常火热，有大佬已经反编译总结出了Kiro工作模式，我们完全可以在Cluade中享受：<br>
+将以下文件内容覆盖到CLUADE.md文件中（Cluade安装目录或者项目工程的<code>.claude</code>目录都可以），在对话时明确提及spec-driven-development规范（例如：基于CLAUDE.md中提到的spec-driven-development完成这个任务），Claude Code即可按照规范执行任务</p>
+<figure class="highlight md"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br></pre></td><td class="code"><pre><span class="line"><span class="language-xml"><span class="tag">&lt;<span class="name">explicit_instructions</span> <span class="attr">type</span>=<span class="string">"spec-driven-development.md"</span>&gt;</span></span> <span class="language-xml"><span class="tag">&lt;<span class="name">task</span> <span class="attr">name</span>=<span class="string">"Spec-Driven Development"</span>&gt;</span></span> <span class="language-xml"><span class="tag">&lt;<span class="name">task_objective</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line">总是使用中文回答，保持乐观的心态，鼓励我</span><br><span class="line">Guide users through a complete spec-driven development process that transforms a rough feature idea into a fully implemented feature. The workflow takes a feature concept as input, processes it through four structured stages (requirements clarification, design document creation, implementation planning, and task execution), and outputs a complete implemented feature with supporting documentation files (requirements.md, design.md, tasks.md) in the current working directory along with all necessary code files and tests. This workflow leverages Cline's comprehensive toolset including file operations, terminal commands, code analysis, browser integration, and MCP tools to facilitate efficient development.</span><br><span class="line"></span><br><span class="line"><span class="language-xml"><span class="tag">&lt;/<span class="name">task_objective</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="language-xml"><span class="tag">&lt;<span class="name">detailed_sequence_steps</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="section"># Spec-Driven Development Process - Detailed Sequence of Steps</span></span><br><span class="line"></span><br><span class="line"><span class="section">## Available Cline Tools for This Workflow</span></span><br><span class="line"></span><br><span class="line">This workflow utilizes Cline's comprehensive toolset throughout all phases. The following tools are available:</span><br><span class="line"></span><br><span class="line"><span class="section">### File Operations</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="code">`write_to_file`</span>: Create or overwrite files (requirements.md, design.md, tasks.md, code files)</span><br><span class="line"><span class="bullet">-</span> <span class="code">`read_file`</span>: Read existing file contents for analysis and context</span><br><span class="line"><span class="bullet">-</span> <span class="code">`replace_in_file`</span>: Make targeted edits to existing files during implementation</span><br><span class="line"><span class="bullet">-</span> <span class="code">`search_files`</span>: Search files using regex patterns to understand codebase structure</span><br><span class="line"><span class="bullet">-</span> <span class="code">`list_files`</span>: List directory contents to explore project structure</span><br><span class="line"></span><br><span class="line"><span class="section">### Terminal Operations</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="code">`execute_command`</span>: Run CLI commands (npm install, build scripts, test runners, etc.)</span><br><span class="line"><span class="bullet">-</span> <span class="code">`list_code_definition_names`</span>: List code definitions to understand existing architecture</span><br><span class="line"></span><br><span class="line"><span class="section">### Code Analysis &amp; Development</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="code">`browser_action`</span>: Test web applications, capture screenshots, inspect console logs</span><br><span class="line"><span class="bullet">-</span> <span class="code">`web_fetch`</span>: Fetch external documentation and resources for research</span><br><span class="line"></span><br><span class="line"><span class="section">### MCP Tools (if configured)</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="code">`use_mcp_tool`</span>: Use custom MCP server tools for specialized functionality</span><br><span class="line"><span class="bullet">-</span> <span class="code">`access_mcp_resource`</span>: Access MCP server resources for additional context</span><br><span class="line"></span><br><span class="line"><span class="section">### Interaction Tools</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> <span class="code">`ask_followup_question`</span>: Ask user for clarification during any phase</span><br><span class="line"><span class="bullet">-</span> <span class="code">`attempt_completion`</span>: Present final results and completion status</span><br><span class="line"></span><br><span class="line"><span class="bullet">-</span> These tools will be used strategically throughout the workflow phases to ensure comprehensive development from requirements to implementation.</span><br><span class="line"><span class="bullet">-</span> Always use Interaction Tools when you need to ask the use questions.</span><br><span class="line"></span><br><span class="line"><span class="section">## 1. Requirements Clarification</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 1.1 Initial Requirements Generation</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Ask the user for their feature idea or concept if not already provided.</span><br><span class="line"><span class="bullet">2.</span> Generate an initial set of requirements in EARS format based on the feature idea WITHOUT asking sequential questions first.</span><br><span class="line"><span class="bullet">3.</span> Create a <span class="code">`.Spec/{feature_name}/requirements.md`</span> file in the current working directory.</span><br><span class="line"><span class="bullet">4.</span> Format the requirements document with:</span><br><span class="line"><span class="bullet">   -</span> A clear introduction section that summarizes the feature</span><br><span class="line"><span class="bullet">   -</span> A hierarchical numbered list of requirements where each contains:</span><br><span class="line"><span class="bullet">     -</span> A user story in the format "As a [role], I want [feature], so that [benefit]"</span><br><span class="line"><span class="bullet">     -</span> A numbered list of acceptance criteria in EARS format (Easy Approach to Requirements Syntax)</span><br><span class="line"><span class="bullet">5.</span> Consider edge cases, user experience, technical constraints, and success criteria in the initial requirements.</span><br><span class="line"></span><br><span class="line"><span class="section">### 1.2 Requirements Refinement Loop</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> After creating the initial requirements document, ask the user: "Do the requirements look good? If so, we can move on to the design."</span><br><span class="line"><span class="bullet">2.</span> If the user requests changes or does not explicitly approve:</span><br><span class="line"><span class="bullet">   -</span> Make modifications to the requirements document based on their feedback</span><br><span class="line"><span class="bullet">   -</span> Ask for explicit approval after every iteration of edits</span><br><span class="line"><span class="bullet">3.</span> Continue the feedback-revision cycle until explicit approval is received (such as "yes", "approved", "looks good", etc.)</span><br><span class="line"><span class="bullet">4.</span> Suggest specific areas where the requirements might need clarification or expansion if needed.</span><br><span class="line"><span class="bullet">5.</span> DO NOT proceed to the design document until receiving clear approval.</span><br><span class="line"></span><br><span class="line"><span class="section">## 2. Design Document Creation</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 2.1 Research and Context Building</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Identify areas where research is needed based on the feature requirements.</span><br><span class="line"><span class="bullet">2.</span> Conduct research and build up context in the conversation thread, use <span class="code">`web_fetch`</span> if needed</span><br><span class="line"><span class="bullet">3.</span> Summarize key findings that will inform the feature design.</span><br><span class="line"><span class="bullet">4.</span> Cite sources and include relevant links in the conversation when applicable.</span><br><span class="line"></span><br><span class="line"><span class="section">### 2.2 Design Document Generation</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Create a <span class="code">`.Spec/{feature_name}/design.md`</span> file in the current working directory.</span><br><span class="line"><span class="bullet">2.</span> Incorporate research findings directly into the design process.</span><br><span class="line"><span class="bullet">3.</span> Include the following sections in the design document:</span><br><span class="line"><span class="bullet">   -</span> Overview</span><br><span class="line"><span class="bullet">   -</span> Architecture</span><br><span class="line"><span class="bullet">      -</span> ALWAYS Represent diagrmas </span><br><span class="line"><span class="bullet">   -</span> Key Flow </span><br><span class="line"><span class="bullet">      -</span> ALWAYS Represent Flow Diagrams</span><br><span class="line"><span class="bullet">   -</span> Data Models</span><br><span class="line"><span class="bullet">      -</span> ALWAYS Represent Class Diagrams </span><br><span class="line"><span class="bullet">   -</span> Components and Interfaces</span><br><span class="line"><span class="bullet">      -</span> ALWAYS Represent Class Diagrams</span><br><span class="line"><span class="bullet">   -</span> Error Handling</span><br><span class="line"><span class="bullet">   -</span> Performance Consideration</span><br><span class="line"><span class="bullet">4.</span> ALWAYS use UML Diagrams to represent designs (use Mermaid for diagrams).</span><br><span class="line"><span class="bullet">5.</span> Ensure the design addresses all feature requirements identified during the clarification process.</span><br><span class="line"><span class="bullet">6.</span> Highlight design decisions and their rationales.</span><br><span class="line"></span><br><span class="line"><span class="section">### 2.3 Design Review Loop</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> After creating the design document, ask the user: "Does the design look good? If so, we can move on to the implementation plan."</span><br><span class="line"><span class="bullet">2.</span> If the user requests changes or does not explicitly approve:</span><br><span class="line"><span class="bullet">   -</span> Make modifications to the design document based on their feedback</span><br><span class="line"><span class="bullet">   -</span> Ask for explicit approval after every iteration of edits</span><br><span class="line"><span class="bullet">3.</span> Continue the feedback-revision cycle until explicit approval is received.</span><br><span class="line"><span class="bullet">4.</span> Offer to return to feature requirements clarification if gaps are identified during design.</span><br><span class="line"><span class="bullet">5.</span> DO NOT proceed to the implementation plan until receiving clear approval.</span><br><span class="line"></span><br><span class="line"><span class="section">## 3. Implementation Planning</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 3.1 Task List Creation</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Create a <span class="code">`.Spec/{feature_name}/tasks.md`</span> file in the current working directory.</span><br><span class="line"><span class="bullet">2.</span> Convert the feature design into a series of prompts for code-generation that will implement each step in a test-driven manner.</span><br><span class="line"><span class="bullet">3.</span> Prioritize best practices, incremental progress, and early testing, ensuring no big jumps in complexity at any stage.</span><br><span class="line"><span class="bullet">4.</span> Ensure each task builds on the previous tasks, and ends with wiring things together.</span><br><span class="line"><span class="bullet">5.</span> Focus ONLY on tasks that involve writing, modifying, or testing code.</span><br><span class="line"></span><br><span class="line"><span class="section">### 3.2 Task Formatting Requirements</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Format the implementation plan as a numbered checkbox list with a maximum of two levels of hierarchy:</span><br><span class="line"><span class="bullet">   -</span> Top-level items (like epics) should be used only when needed</span><br><span class="line"><span class="bullet">   -</span> Sub-tasks should be numbered with decimal notation (e.g., 1.1, 1.2, 2.1)</span><br><span class="line"><span class="bullet">   -</span> Each item must be a checkbox</span><br><span class="line"><span class="bullet">   -</span> Simple structure is preferred</span><br><span class="line"><span class="bullet">2.</span> Ensure each task item includes:</span><br><span class="line"><span class="bullet">   -</span> A clear objective as the task description that involves writing, modifying, or testing code</span><br><span class="line"><span class="bullet">   -</span> Additional information as sub-bullets under the task</span><br><span class="line"><span class="bullet">   -</span> Specific references to requirements from the requirements document (referencing granular sub-requirements, not just user stories)</span><br><span class="line"><span class="bullet">3.</span> Ensure that the implementation plan is a series of discrete, manageable coding steps.</span><br><span class="line"><span class="bullet">4.</span> Ensure each task references specific requirements from the requirement document.</span><br><span class="line"><span class="bullet">5.</span> Assume that all context documents (feature requirements, design) will be available during implementation.</span><br><span class="line"><span class="bullet">6.</span> Ensure each step builds incrementally on previous steps.</span><br><span class="line"><span class="bullet">7.</span> Prioritize test-driven development where appropriate.</span><br><span class="line"><span class="bullet">8.</span> Ensure the plan covers all aspects of the design that can be implemented through code.</span><br><span class="line"><span class="bullet">9.</span> Sequence steps to validate core functionality early through code.</span><br><span class="line"><span class="bullet">10.</span> Ensure that all requirements are covered by the implementation tasks.</span><br><span class="line"></span><br><span class="line"><span class="section">### 3.3 Task Content Constraints</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> ONLY include tasks that can be performed by a coding agent (writing code, creating tests, etc.).</span><br><span class="line"><span class="bullet">2.</span> DO NOT include tasks related to user testing, deployment, performance metrics gathering, or other non-coding activities.</span><br><span class="line"><span class="bullet">3.</span> Focus on code implementation tasks that can be executed within the development environment.</span><br><span class="line"><span class="bullet">4.</span> Ensure each task is actionable by a coding agent by following these guidelines:</span><br><span class="line"><span class="bullet">   -</span> Tasks should involve writing, modifying, or testing specific code components</span><br><span class="line"><span class="bullet">   -</span> Tasks should specify what files or components need to be created or modified</span><br><span class="line"><span class="bullet">   -</span> Tasks should be concrete enough that a coding agent can execute them without additional clarification</span><br><span class="line"><span class="bullet">   -</span> Tasks should focus on implementation details rather than high-level concepts</span><br><span class="line"><span class="bullet">   -</span> Tasks should be scoped to specific coding activities (e.g., "Implement X function" rather than "Support X feature")</span><br><span class="line"><span class="bullet">5.</span> Explicitly avoid including the following types of non-coding tasks:</span><br><span class="line"><span class="bullet">   -</span> User acceptance testing or user feedback gathering</span><br><span class="line"><span class="bullet">   -</span> Deployment to production or staging environments</span><br><span class="line"><span class="bullet">   -</span> Performance metrics gathering or analysis</span><br><span class="line"><span class="bullet">   -</span> Running the application to test end to end flows (automated tests are acceptable)</span><br><span class="line"><span class="bullet">   -</span> User training or documentation creation</span><br><span class="line"><span class="bullet">   -</span> Business process changes or organizational changes</span><br><span class="line"><span class="bullet">   -</span> Marketing or communication activities</span><br><span class="line"><span class="bullet">   -</span> Any task that cannot be completed through writing, modifying, or testing code</span><br><span class="line"></span><br><span class="line"><span class="section">### 3.4 Implementation Plan Review Loop</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> After creating the tasks document, ask the user: "Do the tasks look good?"</span><br><span class="line"><span class="bullet">2.</span> If the user requests changes or does not explicitly approve:</span><br><span class="line"><span class="bullet">   -</span> Make modifications to the tasks document based on their feedback</span><br><span class="line"><span class="bullet">   -</span> Ask for explicit approval after every iteration of edits</span><br><span class="line"><span class="bullet">3.</span> Continue the feedback-revision cycle until explicit approval is received.</span><br><span class="line"><span class="bullet">4.</span> Offer to return to previous steps (requirements or design) if gaps are identified during implementation planning.</span><br><span class="line"><span class="bullet">5.</span> DO NOT consider the workflow complete until receiving clear approval.</span><br><span class="line"><span class="bullet">6.</span> Stop once the task document has been approved.</span><br><span class="line"></span><br><span class="line"><span class="section">## 4. Task Execution</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 4.1 Pre-Execution Setup</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> ALWAYS ensure you have read the <span class="code">`.Spec/{feature_name}/requirements.md`</span>, <span class="code">`.Spec/{feature_name}/design.md`</span> and <span class="code">`.Spec/{feature_name}/tasks.md`</span> files before executing any tasks.</span><br><span class="line"><span class="bullet">2.</span> Executing tasks without the requirements or design will lead to inaccurate implementations.</span><br><span class="line"></span><br><span class="line"><span class="section">### 4.2 Task Execution Process</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> Look at the task details in the task list.</span><br><span class="line"><span class="bullet">2.</span> If the requested task has sub-tasks, always start with the sub tasks.</span><br><span class="line"><span class="bullet">3.</span> Only focus on ONE task at a time. Do not implement functionality for other tasks.</span><br><span class="line"><span class="bullet">4.</span> Verify your implementation against any requirements specified in the task or its details.</span><br><span class="line"><span class="bullet">5.</span> Once you complete the requested task, stop and let the user review. DO NOT just proceed to the next task in the list.</span><br><span class="line"></span><br><span class="line"><span class="section">### 4.3 Task Selection and Recommendations</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> If the user doesn't specify which task they want to work on, look at the task list for that spec and make a recommendation on the next task to execute.</span><br><span class="line"><span class="bullet">2.</span> Remember, it is VERY IMPORTANT that you only execute one task at a time. Once you finish a task, stop. Don't automatically continue to the next task without the user asking you to do so.</span><br><span class="line"></span><br><span class="line"><span class="section">### 4.4 Handling Task Questions</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> The user may ask questions about tasks without wanting to execute them. Don't always start executing tasks in cases like this.</span><br><span class="line"><span class="bullet">2.</span> For example, the user may want to know what the next task is for a particular feature. In this case, just provide the information and don't start any tasks.</span><br><span class="line"></span><br><span class="line"><span class="section">## 5. Workflow Completion</span></span><br><span class="line"></span><br><span class="line"><span class="bullet">1.</span> This workflow is ONLY for creating design and planning artifacts and executing the implementation tasks.</span><br><span class="line"><span class="bullet">2.</span> DO NOT attempt to implement the feature as part of the planning workflow phases (steps 1-3).</span><br><span class="line"><span class="bullet">3.</span> Clearly communicate to the user that the planning workflow is complete once the design and planning artifacts are created.</span><br><span class="line"><span class="bullet">4.</span> Inform the user that they can begin executing tasks by referencing the tasks.md file and requesting specific task execution.</span><br><span class="line"><span class="bullet">5.</span> During task execution phase (step 4), continue until all tasks are completed or the user indicates they want to stop.</span><br><span class="line"></span><br><span class="line"><span class="language-xml"><span class="tag">&lt;/<span class="name">detailed_sequence_steps</span>&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="language-xml"><span class="tag">&lt;/<span class="name">task</span>&gt;</span></span></span><br><span class="line"><span class="language-xml"><span class="tag">&lt;/<span class="name">explicit_instructions</span>&gt;</span></span></span><br></pre></td></tr></tbody></table></figure>
+<h2 id="为Claude-Code安装MCP">为Claude Code安装MCP</h2>
+<p>一般来说MCP安装分为两步，这两步可以认为不和任何IDE，AI模型绑定的通用库安装和启动</p>
+<ol>
+<li>通过npm或python安装工具包</li>
+<li>通过命令开启服务器
+<ol>
+<li>开启后输入 mcp的包名 --config （例如ida-pro-mcp --config）即可得到具体的mcp server配置，我们需要用到这个json配置，例如</li>
+</ol>
+</li>
+</ol>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">1. { "mcpServers": { "shared-tools": { "command": "npx", "args": ["-y", "@your-team/mcp-tools"], "env": {} } } }</span><br></pre></td></tr></tbody></table></figure>
+<p>最后需要在Claude Code中配置<br>
+1和2基本所有MCP安装教程都自带了，不再多说，对于3来说，有两种方式</p>
+<ul>
+<li>全局安装MCP，修改 C:\Users\UserName.claude.json 中的mcpServers项目</li>
+<li>项目级安装MCP，项目根目录创建.mcp.json，增加mcpServers<br>
+附带一个 <a target="_blank" rel="noopener" href="https://www.52pojie.cn/thread-2032638-1-1.html">IDA MCP安装教程</a></li>
+</ul>
+<h2 id="项目UI设计图快速生成">项目UI设计图快速生成</h2>
+<p>由于Web前端数据非常多，几乎所有AI模型在Web开发这一块都非常强劲，那么利用这一点，我们可以使用AI来生成项目的UI设计示意图，下面这个项目是我花了3个小时，纯AI开发的UI设计图，可交互体验：</p>
+<p><a target="_blank" rel="noopener" href="https://github.com/wqaetly/ProjectB_UI_Design">https://github.com/wqaetly/ProjectB_UI_Design</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png" alt="4FDA52954D8E3196B4433D93B9D403BB" loading='lazy'></p>
+<h1>ComfyUI</h1>
+<p>之所以选择ComfyUI是因为之前WebUI的形式虽然简单，但调控起来不直观，不方便，还是这种节点式的更方便</p>
+<p>推荐直接 <a target="_blank" rel="noopener" href="https://www.comfy.org/zh-cn/download">官网</a> 下载，他会自动安装所有需要的组件以及拓展，开箱即用，如果初始化过程中网络异常，要科学上网，注意，安装的时候要在C盘，否则可能会有BUG</p>
+<p>推荐正式开始使用前过一遍<a target="_blank" rel="noopener" href="https://docs.comfy.org/get_started/introduction">官方文档</a>，不要去买课，纯纯智商税，没有比官网讲得更好的</p>
+<h2 id="KSampler">KSampler</h2>
+<p>我说白了，我白说了，不懂得问DeepSeek</p>
+<p>在 ComfyUI 的 <strong>KSample 节点</strong>中，<code>sampler_name</code> 参数控制生成图像时使用的采样算法。以下是常见选项及其含义和特点：</p>
+<hr>
+<h3 id="📌-常用采样器解析">📌 常用采样器解析</h3>
+<ol>
+<li>
+<p><strong><code>euler</code></strong></p>
+<ul>
+<li><strong>Euler 方法</strong>：基础的 ODE 求解器，简单快速，适合低步数（如 20-30 步）。</li>
+<li>特点：生成结果较平滑，但可能细节不足。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>euler_ancestral</code></strong></p>
+<ul>
+<li><strong>带祖先采样的 Euler</strong>：每一步依赖前一步结果，随机性更强。</li>
+<li>特点：图像多样性高，但收敛性不稳定，步数较少时可能更好。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>dpmpp_2s</code></strong> 和 <strong><code>dpmpp_2m</code></strong></p>
+<ul>
+<li><strong>DPM++ 二阶方法</strong>：改进的扩散模型求解器，平衡速度和质量。
+<ul>
+<li><code>2s</code>：单步二阶，适合快速生成（约 20 步）。</li>
+<li><code>2m</code>：多步二阶，质量更高（推荐 20-30 步）。</li>
+</ul>
+</li>
+<li>特点：<code>dpmpp_2m</code> 是当前主流选择，效率和效果俱佳。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>ddim</code></strong></p>
+<ul>
+<li><strong>去噪扩散隐式模型</strong>：确定性采样，结果可复现。</li>
+<li>特点：适合图像到图像转换（如 img2img），需较少步数（10-15 步）。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>uni_pc</code></strong></p>
+<ul>
+<li><strong>UniPC 方法</strong>：基于校正器的采样器，2023 年新算法。</li>
+<li>特点：低步数（5-10 步）即可生成可用结果，速度快。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>heun</code></strong></p>
+<ul>
+<li><strong>Heun 二阶方法</strong>：Euler 的改进版，计算量更大。</li>
+<li>特点：步数多时质量高，但速度较慢。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>lms</code></strong></p>
+<ul>
+<li><strong>线性多步法</strong>：通过历史步骤加速收敛。</li>
+<li>特点：适合中高步数（30+），结果稳定但可能显保守。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h3 id="🔍-其他采样器">🔍 其他采样器</h3>
+<ul>
+<li><strong><code>dpm2</code>/<code>dpm2_ancestral</code></strong>：二阶 DPM，需更多步数（40+），质量高但速度慢。</li>
+<li><strong><code>ddpm</code></strong>：原始扩散模型采样器，需 50-100 步，已逐渐被替代。</li>
+<li><strong><code>dpm_fast</code>/<code>dpm_adaptive</code></strong>：自适应调整步数，前者快但粗糙，后者精准但慢。</li>
+</ul>
+<hr>
+<h3 id="🎯-推荐场景">🎯 推荐场景</h3>
+<ul>
+<li><strong>快速生成</strong>：<code>dpmpp_2m</code>（20-30步）或 <code>uni_pc</code>（5-10步）。</li>
+<li><strong>高质量输出</strong>：<code>dpmpp_2m</code>（30+步）或 <code>heun</code>（40+步）。</li>
+<li><strong>可控性（如 img2img）</strong>：<code>ddim</code> 或 <code>euler</code>。</li>
+<li><strong>实验新方法</strong>：<code>uni_pc</code> 或 <code>dpmpp_3m_sde</code>（需更多显存）。</li>
+</ul>
+<hr>
+<h3 id="📝-注意事项">📝 注意事项</h3>
+<ul>
+<li>部分采样器（如 <code>dpm_adaptive</code>）会忽略 <code>steps</code> 参数，自动调整步数。</li>
+<li><strong>祖先采样器</strong>（含 <code>_ancestral</code> 后缀）的随机性强，相同参数可能输出差异较大。</li>
+<li>效果受 <code>cfg_scale</code>、<code>denoise</code> 等参数影响，需配合调整。</li>
+</ul>
+<h2 id="FAQ">FAQ</h2>
+<h3 id="从网上下载的checkpoint模型执行时有conv-in-weight相关报错">从网上下载的checkpoint模型执行时有conv_in.weight相关报错</h3>
+<p>是因为新版ComfyUI强制要求safetensors后缀的模型，而网上下载的有可能是ckpt后缀的，这时候需要修改代码 <code>C:\Users\YOURNAME\AppData\Local\Programs\@comfyorgcomfyui-electron\resources\ComfyUI\comfy\utils.py</code></p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//ALWAYS_SAFE_LOAD = <span class="literal">False</span> </span><br><span class="line">ALWAYS_SAFE_LOAD = TRUE</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="提示词从哪来？">提示词从哪来？</h3>
+<p>当然是从DeepSeek问啦</p>
+<h1>参考</h1>
+<p><a target="_blank" rel="noopener" href="https://aicodewith.com/?invitation=IQCVL6U">Claude中转站</a><br>
+<a target="_blank" rel="noopener" href="https://docs.comfy.org/">Comfy官网</a></p>
+<p>模型下载 <a target="_blank" rel="noopener" href="https://huggingface.co/">huggingface.co</a>, <a target="_blank" rel="noopener" href="https://civitai.com/home">civitai.green</a></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-in-game-dev/">https://www.lfzxb.top/aigc-in-game-dev/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/Cursor/">Cursor</a><a class="post-meta__tags" href="/tags/ComfyUI/">ComfyUI</a><a class="post-meta__tags" href="/tags/Stable-Diffuse/">Stable Diffuse</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>想吃fvcking crazy thrusday</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/load-store-action-and-memoryless/" title="现代图形API中的Load Store Action和MemoryLess"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250627181805423.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">现代图形API中的Load Store Action和MemoryLess</div></div><div class="info-2"><div class="info-item-1">前言 现代图形 API 给用户开放了愈来愈多的底层接口，让用户更好的优化渲染性能，而对于移动端来说，内存和带宽是非常重要的指标，本文就是对 Load Store Action（以下简称 LSA）和 MemoryLess 这几个重要的性能优化项进行总结提炼 Load Store Action Vulkan 和 Metal 这两个图形 API 都显式开放了 LSA 设置，而 OpenGL 则可以通过特定的指令来设置 LSA，一般游戏引擎 Unity 和 UE 都已经在 RHI 层封装好了，只需要在业务层进行统一设置即可 那么 LSA 到底是什么 LSA 介绍 Load/Store Actions 是图形 API 中在 RenderPass 切换的时候，指定如何处理图像内容的操作  从 SystemMemory 拷贝数据到 TileMemory 是 Load Action。 从 TileMemory 拷贝数据到 SystemMemory 是 Store Action。也称为 Resolve。 OpenGLES 中可以通过 glInvalidateFramebuffer 来规避上述 Lo...</div></div></div></a><a class="pagination-related" href="/software-share/" title="个人常用软件分享"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406301645370.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">个人常用软件分享</div></div><div class="info-2"><div class="info-item-1">留个备份，也给大家当个参考 日常 WizTree 目前来讲最好用的硬盘空间占用预览工具，够快，够美观 process-explorer 进程管理器，可以方便查看进程情况，经常用来dump命令行参数 clumsy 弱网测试工具 WPS 基巴来的微软Excel打开的时间都可以给他马上香了 还是看看远方的WPS吧，Words，PPT，PDF，Excel全都有了 processon 画图功能还可以，主要还是可以在线分享，个人已入永久会员，推荐 翻译插件 可以使用免费的谷歌翻译，也可以选择AI的API，嵌入式翻译网页中的外文，非常好用，而且支持PDF，PPT的文档翻译 游戏白嫖 推荐体验后上车哦 BandiZip 最好用的解压缩软件 Q-Dir Windows的残疾文件夹浏览救星 PDF24 Creator PDF工具箱，基本上所有功能都有 PotPlayer 强大免费的视频播放器，几乎支持所有格式，而且可以逐帧播放视频 RMT 易用性和可定制性极高的挂机脚本自动化软件，且开源免费 工作学习 博客工具 Obsidian 多年以来个人一直使用Typora，了解黑曜石之后发现完全可以替代Typ...</div></div></div></a></nav><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">Cursor</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">Claude Code使用指南</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BAClaude-Code%E5%AE%89%E8%A3%85MCP"><span class="toc-number">3.1.</span> <span class="toc-text">为Claude Code安装MCP</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AEUI%E8%AE%BE%E8%AE%A1%E5%9B%BE%E5%BF%AB%E9%80%9F%E7%94%9F%E6%88%90"><span class="toc-number">3.2.</span> <span class="toc-text">项目UI设计图快速生成</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">ComfyUI</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#KSampler"><span class="toc-number">4.1.</span> <span class="toc-text">KSampler</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%93%8C-%E5%B8%B8%E7%94%A8%E9%87%87%E6%A0%B7%E5%99%A8%E8%A7%A3%E6%9E%90"><span class="toc-number">4.1.1.</span> <span class="toc-text">📌 常用采样器解析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%94%8D-%E5%85%B6%E4%BB%96%E9%87%87%E6%A0%B7%E5%99%A8"><span class="toc-number">4.1.2.</span> <span class="toc-text">🔍 其他采样器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%8E%AF-%E6%8E%A8%E8%8D%90%E5%9C%BA%E6%99%AF"><span class="toc-number">4.1.3.</span> <span class="toc-text">🎯 推荐场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%93%9D-%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="toc-number">4.1.4.</span> <span class="toc-text">📝 注意事项</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#FAQ"><span class="toc-number">4.2.</span> <span class="toc-text">FAQ</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E7%BD%91%E4%B8%8A%E4%B8%8B%E8%BD%BD%E7%9A%84checkpoint%E6%A8%A1%E5%9E%8B%E6%89%A7%E8%A1%8C%E6%97%B6%E6%9C%89conv-in-weight%E7%9B%B8%E5%85%B3%E6%8A%A5%E9%94%99"><span class="toc-number">4.2.1.</span> <span class="toc-text">从网上下载的checkpoint模型执行时有conv_in.weight相关报错</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%90%E7%A4%BA%E8%AF%8D%E4%BB%8E%E5%93%AA%E6%9D%A5%EF%BC%9F"><span class="toc-number">4.2.2.</span> <span class="toc-text">提示词从哪来？</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©2025 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.4.1</a></span></div><div class="footer_custom_text">2018-2021 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '2b139aa34d20f47107ee592171bb9f80'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script id="canvas_nest" defer="defer" color="62, 134, 246" opacity="0.85" zindex="-1" count="99" mobile="false" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/dist/canvas-nest.min.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>
