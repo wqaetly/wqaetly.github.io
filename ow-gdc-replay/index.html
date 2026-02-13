@@ -1,0 +1,643 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现">
+<meta property="og:url" content="https://www.lfzxb.top/ow-gdc-replay/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp">
+<meta property="article:published_time" content="2021-02-24T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-24T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="网络同步">
+<meta property="article:tag" content="文献翻译">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="GDC分享">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现",
+  "url": "https://www.lfzxb.top/ow-gdc-replay/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp",
+  "datePublished": "2021-02-24T00:00:00.000Z",
+  "dateModified": "2021-02-24T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/ow-gdc-replay/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-24T00:00:00.000Z" title="发表于 2021-02-24 00:00:00">2021-02-24</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-24T00:00:00.000Z" title="更新于 2021-02-24 00:00:00">2021-02-24</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">13.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>39分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/ow-gdc-replay/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-24 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。</p>
+<p>重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。</p>
+<p>全系列链接：<a href="https://www.lfzxb.top/ow-gdc-share-table-of-contents/">《守望先锋》GDC2017技术分享精粹重制版总目录</a></p>
+<p>原视频链接：<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=W4oZq4tn57w&amp;ab_channel=GDC">https://www.youtube.com/watch?v=W4oZq4tn57w&amp;ab_channel=GDC</a></p>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/W4oZq4tn57w" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<h2 id="设计目标">设计目标</h2>
+<p>那么回放系统的概要设计(high level design)目标是什么呢？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120535.png!webp" alt="image-20210907120535460" loading='lazy'></p>
+<p>这次分享的标题就预示着必须给出答案，对吧？概要需求是创建一个单一的中央系统，能够支持阵亡镜头、全场最佳和亮眼表现，除此之外我们还特别需要能够生成录像文件，在开发期间可以用来做内部调试。</p>
+<p>下面开始深入介绍每个议题。</p>
+<p>每次玩家死亡时，游戏里就会显示临死前几秒钟的――大部分情况是以凶手（killer）视角来看的――死因及死亡过程。阵亡镜头可以帮助玩家理解他们是怎么死的，以及为什么会死，有一定的教学作用。</p>
+<p>上面展示的视频例子（狂鼠被半藏杀死的例子）中，可以看到死亡过程中的几个关键节点，玩家死亡时有3件值得注意的事：玩家尸体布偶化(ragdoll，也叫布娃娃，专用术语，全称Ragdoll physics，是用在电子游戏的物理引擎中代替传统静态动画的可变性角色动画系统)，方便判断死亡方式（译注：估计说的是炸死、摔死还是射死等）；游戏镜头朝向凶手；凶手轮廓描边，即使隔着墙也可以看见，从而使你查看得更加清楚（译注：这一点在视频中没有得到展示）。</p>
+<p>我们会以淡入的方式进入阵亡镜头，展示死前一段时间以及死后几秒钟的画面。你能看见自己的尸体布偶，然后明白自己是怎么死的。</p>
+<h2 id="网络同步模型概览">网络同步模型概览</h2>
+<p>闲话少说，咱们接着讲网络同步，主要包括设计回放系统的常规模型，以及如何交互。</p>
+<p>回放系统不可避免地要受限于模拟（simulation，游戏逻辑 渲染）模块和网络模块。</p>
+<p>Glenn Fiedler(译注，TitanFall的开发)那个很棒的系列博客（译注，该系列博客地址<a target="_blank" rel="noopener" href="http://gafferongames.com/networking-for-game-programmers/">http://gafferongames.com/networking-for-game-programmers/</a> ），早已经把网络同步机制总结为三类了：</p>
+<ul>
+<li>确定性帧同步(deterministic lockstep)，常用于竞速游戏或者星际争霸2、魔兽争霸2这样的即时战略游戏；</li>
+<li>快照插值(snapshot interpolation)，FPS经典同步模型，《Quake》最早采用，后续众多FPS在之上做了改进；</li>
+<li>状态同步(state synchronization)，有点像是快照插值的改进版，也是Overwatch所采用的。</li>
+</ul>
+<p>注意我的幻灯片下方列出了一些参考文章，正是这些文章启发了我们，设计出了我们自己的同步策略：</p>
+<ul>
+<li>GDC2015 Physics for Game Programmers : Networking for Physics Programmers</li>
+<li>I Shot You First: Networking the Gameplay of HALO: REACH[David Aldridge]</li>
+<li>The TRIBES Engine Networking Model [Mark Frohnmayer]</li>
+</ul>
+<h3 id="确定性帧同步">确定性帧同步</h3>
+<p>快速浏览一下这些技术。第一个是确定性帧同步，左边有4个客户端，都连接到同一个服务器上。服务器也可以由其中的一个客户端来兼任。简单起见我们假定有个专属的某某云服务器。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120647.png!webp" alt="image-20210907120647399" loading='lazy'></p>
+<p>客户端接收玩家输入并上报给服务器，服务器在接收到全部输入以前，保持锁定当前帧。当全部客户端的输入都上报完成时，服务器才开始模拟游戏进程。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120659.png!webp" alt="image-20210907120659651" loading='lazy'></p>
+<p>处理好全部输入以后，服务器批量打包所有指令，并转发给全部客户端。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120711.png!webp" alt="image-20210907120711190" loading='lazy'></p>
+<p>然后客户端基于刚刚收到的转发指令，开始各自模拟游戏过程。代码处理得当的话，每个客户端都会得到相同的结果，看上去很美妙。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120722.png!webp" alt="image-20210907120722159" loading='lazy'></p>
+<p>基于帧同步实现一个回放系统很方便，只需要记录整个输入流即可实现回放。而且输入通常很容易压缩，所以数据量也不大。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120731.png!webp" alt="image-20210907120731157" loading='lazy'></p>
+<p>确定性帧同步，虽然架构简单，但是也有一些缺陷。它的模拟过程需要严格一致，同一帧内，相同的输入集合在每个客户端必须产生同样的输出才行。</p>
+<p>如果做不到这一点，客户端之间就会产生不同步，会对当前处于何种状态各执一词。例如对浮点数依赖程度很高，而浮点数运算很难做到严格一致，尤其在不同的平台架构下更是如此。 一个简单的打印驱动失灵，就能在中断控制器上改掉浮点数精度设置，从而使模拟过程偏离轨道。而且这一点的确会发生。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120744.png!webp" alt="image-20210907120744246" loading='lazy'></p>
+<p>维护一个确定性的模拟过程，除了代码逻辑上的工作以外，还有一个问题就是多玩家联网时产生的。</p>
+<p>“等待全部玩家的输入”意味着，任何一个停滞的玩家都会破坏模拟过程的及时性。游戏里玩家数量越多，这个风险越高。简单计算一下，假设一个5分钟时间的游戏，每个玩家卡顿的概率是2%，4个玩家就会有8%的可能性，玩家多达12个时，已经是22%了。</p>
+<p>我本应该画个图表来说明这一切的。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120757.png!webp" alt="image-20210907120757623" loading='lazy'></p>
+<p>上述缺陷都是可以克服的。 通过遵守合适的编程规范就可以开发出并维护一个确定性模拟系统的，我们开发过很多这样的游戏，这样做绝对可行。 或者可以耍点小聪明来隐藏缺失玩家输入引起的卡顿，例如你可以用倒带法(rewind)重新模拟或者维护一个预测(predict)窗口。</p>
+<p>Overwatch最终没有选择确定性帧同步方案，原因如下：首先，我们不希望程序员和策划的因为偶现的不确定性而产生心理负担；除此之外，要支持中途加入游戏也不简单。模拟操作本身就已经很耗了，如果5分钟的游戏过程，每次都需要重头开始模拟的话，计算量太大。</p>
+<p>最后，实现一个阵亡镜头也会很困难，因为需要客户端快照以及快播机制。按理说如果游戏支持录像文件的话，快播自然就能做到，不过Overwatch并没有这一点。</p>
+<h3 id="快照同步">快照同步</h3>
+<p>那么下一个选项就是“快照同步”了，与确定性帧同步相类似，也是客户端接受玩家输入然后上报给服务器。然而，这个模型里的服务器是可以忽略某个玩家输入缺失而继续向前模拟的。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120818.png!webp" alt="image-20210907120817991" loading='lazy'></p>
+<p>这里不会转发输入操作给全体客户端，取而代之的是服务器模拟游戏世界，不停地生成整个世界状态的瞬时快照。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120835.png!webp" alt="image-20210907120835337" loading='lazy'></p>
+<p>然后服务器会把快照下发给客户端。客户端根据这些快照来更新各自的世界状态，通常会用“插值”方法在两个相邻的快照间做平滑（译注，关于插值，可以参考Source引擎，解释的比较权威）。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120850.png!webp" alt="image-20210907120850594" loading='lazy'></p>
+<p>这种方式运作良好，概念也很简单，同时避免了帧同步模型中的确定性和卡顿问题。事实上，稍加改造，再结合一些压缩，就能得到一个比较可靠地模型了。</p>
+<p>差异计算过程比较耗费资源，你可以分摊快照成本或者“增量”（Delta，下文中会多次出现，并直接用英文单词）压缩，这样对于多个客户端来说，只需要处理一次就好了。</p>
+<p>如果你担心有人作弊，你就需要维护一些客户端不应该看见的对象的实时数据，然后只下发客户端能看见的东西。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120859.png!webp" alt="image-20210907120859188" loading='lazy'></p>
+<p>基于快照同步实现回放系统的话，十分简便。从一个完整世界状态开始，更新每帧时添加差异就好了。广义上讲，这个方案就是依赖新技术的游戏客户端如何播放录像文件的问题。客户端要做的仅仅是把网络游戏数据序列化到硬盘上。</p>
+<p>这套架构实现阵亡镜头同样很简单。 你已经有全量的快照了，对吧？所以只需要维护一个环形缓冲区，保存过去时间点到当前时间之间的世界状态历史，然后重播就行了。注意到我把这里快照（图片）的大小做成不同（译注：指的是上图中Replay Stream线上的4副图）的，你可以图片大近似想象成每一帧的序列化数据尺寸。有一些帧变化的少，所以尺寸就小。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120908.png!webp" alt="image-20210907120908072" loading='lazy'></p>
+<p>这个例子里，我同样使用了不同尺寸的管道（代表数据量的多少）。快照尺寸就相当于快照同步模型的阿喀琉斯之踵，它限制了在每一帧内，世界状态变化的程度和次数。需要同步的东西越多，初始快照尺寸就越大。帧与帧之间变化越多，Delta就越大。变化越多意味着需要的比特位就越多，而比特位需要消耗宝贵的带宽资源。</p>
+<p>对于一个高频互动的游戏，如果想要在低带宽环境下正常运作，最终能依靠的就只剩几种主流的同步模式了。</p>
+<h3 id="状态同步">状态同步</h3>
+<p>基于状态的同步。 这一页幻灯片与之前的一模一样，客户端上报输入，服务器执行模拟。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120917.png!webp" alt="image-20210907120917349" loading='lazy'></p>
+<p>与快照同步模型相反，服务器不会为全体客户端生成单一更新，而是给每个玩家发送纯手工定制、公平贸易换来的、原生态的数据包（众笑）。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121019.png!webp" alt="image-20210907121019665" loading='lazy'></p>
+<p>那么，当我们谈论“世界状态”(world state)时，是在谈论什么呢？</p>
+<p>我想说的是，任何用来表达游戏世界所需的必要状态。可以想象一个代表个体位移、旋转、血量、动画参数和武器发射状态等等的分类数据表。在快照同步模型中，客户端会收到全部状态数据并“原子化”执行一遍。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121027.png!webp" alt="image-20210907121027893" loading='lazy'></p>
+<p>基于状态的序列化，会把世界快照分解成更小的、原子的数据块。因为每个客户端收到的数据都是订制的，我们可以基于客户端相关性来设置更新的优先顺序。这样就能够基于客户端的实测带宽来智能调整数据流了。</p>
+<p>上图的例子里，有个客户端收到1个数据包同时包含了大锤和法拉的更新信息。另一个客户端则收到了2个数据包，其中1个是大锤，然后1个是法拉的信息。这里最重要的一点就是对象可以独立更新，每个客户端的数据都是分别订制的。</p>
+<p>客户端网络状况参差不齐的情况下，这种模型就是最灵活的，不过实现起来也是最复杂的。这就是Overwatch的实现方式。</p>
+<p>现在咱们深入了解一下Overwatch里是如何做到稳定的网络同步的，以及回放系统在这个同步范式下是如何实现的。</p>
+<h2 id="专业术语介绍">专业术语介绍</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121055.png!webp" alt="image-20210907121055346" loading='lazy'></p>
+<p>先介绍几个术语，Overwatch使用的是ECS架构：实体是由组件组成的，由System负责更新（译注：关于ECS请读者参考另外一篇分享：GDC2017 Overwatch Gameplay Architecture and Netcode）。</p>
+<p>有些System是序列化过程的参与者(participants)，它们负责同步游戏的某些方面(aspect)给接收者(receivers)或者复制目标(replication targets)。接受者一般就是需要接收数据的活跃玩家或者观战者(spectator)。最后，复制目标会收到关于其他实体的更新消息。</p>
+<p>通常我会把这一切简言之为：参与者把网络相关实体数据打包并发给接收者，这些实体就叫“主体”(subject)。</p>
+<p>顺便给我的同事们打个广告，如果你对Overwatch游戏架构、网络同步的其他方面也感兴趣的话，Tim Ford和Dan Reid的分享刚好与我的互补。他们的已经结束，可以在GDCVault.com上收看（译注：另外一篇GDC2017 Networking Scripted Weapons and Abilities in Overwatch在此）。</p>
+<h2 id="状态同步的具体示例">状态同步的具体示例</h2>
+<h3 id="基础机制">基础机制</h3>
+<p>下面来个具体点的例子，假定你正在控制法拉（Overwatch英雄之一）你跳了一下然后飞起来准备低空轰炸，这个消息是如何发给其他玩家的呢？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121111.png!webp" alt="image-20210907121111548" loading='lazy'></p>
+<p>当你开心地按下按钮，客户端预测就开始了，同时(译注：原文是then，但其实这个操作不需要考虑前后顺序的)把这个命令上报给服务器。</p>
+<p>服务器收到连同你在内全部玩家的输入后，一个经过”官方批准”的模拟过程就开始了：一些实体移动了；一些英雄倒下了；抛射物爆炸了，简直就像开Party一样，美妙极了。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121119.png!webp" alt="image-20210907121119390" loading='lazy'></p>
+<p>最终的每个变化和事件，我们统称为Delta，例如”位置变化”就是个(服务器上的)Delta。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121129.png!webp" alt="image-20210907121129018" loading='lazy'></p>
+<p>在服务器端，我们会累积所有对象状态的变化，然后保存在一个临时的“每帧脏数据集合”(per frame dirty set)里。可以简单地认为它就是个字面意义的数学概念的集合，包含所有在那一帧发生改变的实体的ID。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121137.png!webp" alt="image-20210907121136902" loading='lazy'></p>
+<p>那如何把这些状态转发给客户端呢？我们对每个已连接的客户端也维护了一个“脏集合”(译注：应该指的是C1, C2…作者没有交代这些集合是如何生成的，不过从下文的C1=C1-P可以推测出来)。这一页幻灯片右上方的F是当前帧脏集合。每帧结束时，所有接收者的脏集合会与帧脏集F合并（还是数学上的并集概念），这样数据打包时就可以只包含那些该客户端真正需要的实体集合了。在帧结束时，这些操作都做完以后，帧的脏集会被清空，下次更新(tick)时，一切重头开始。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121146.png!webp" alt="image-20210907121146779" loading='lazy'></p>
+<p>在同一个更新周期(tick)的后期，脏状态（译注：C1,C2…）会被序列化成一个数据包，通过“网线”（这个年代到处都是网线）发给接收客户端。</p>
+<p>数据一旦被序列化，就会从脏集合中移除(C1=C1-P)。带宽是稀缺资源，所以我们不会使用原生的状态数据，而是维护了一个经客户端确认收到的状态数据的历史记录，这样就可以进行“增量编码”来改进带宽使用模型，也就是减少带宽的占用。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121155.png!webp" alt="image-20210907121155786" loading='lazy'></p>
+<p>对于大多数帧，我们都有足够的带宽来序列化所有数据。即使不够也没关系，这个例子里，只更新了法拉的状态，因为客户端带宽不足，无法容纳大锤的数据了。无论如何，接收者脏集合都会把它保存下来，最终会在将来的某个时刻成功序列化到某个下行包里。</p>
+<p>这就是状态同步模型的一大优点，可以基于带宽质量来调整下行数据大小。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121207.png!webp" alt="image-20210907121207258" loading='lazy'></p>
+<p>网络协议我们用的是定制的UDP。众所周知，UDP是不可靠协议，意思是说一个数据包可能会成功达到目的地，也可能到达2次，或者乱序到达。这都没关系，我们自己设计的协议可以感知丢包并在必要时重传脏数据。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121214.png!webp" alt="image-20210907121214594" loading='lazy'></p>
+<p>丢包发生时，只需要简单的把这个数据包合并回脏状态集合，留待将来重传即可。在未来的包里，我们可以把法拉移动这件事，连同该帧其他事件一起重传，例如大锤开盾。</p>
+<p>注意， 如果在首次移动包发送完与收到丢包通知之间，法拉再次移动了，那么无需重传旧状态，我们会把新的移动状态序列化到旧状态数据里。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121224.png!webp" alt="image-20210907121224122" loading='lazy'></p>
+<h3 id="新玩家进入游戏的追帧">新玩家进入游戏的追帧</h3>
+<p>现在聊一下新加入游戏的玩家，是如何追赶上最新的世界状态的。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121231.png!webp" alt="image-20210907121231682" loading='lazy'></p>
+<p>我们在服务器上维护了一个“永久”(lifetime)脏状态集合L，是个全量的脏状态集合s。也就是服务器上所有曾经变脏的状态的“全集”。接下来的事情，你肯定能猜到。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp" alt="image-20210907121241664" loading='lazy'></p>
+<p>你猜对了，新玩家连上后，我们会把它的初始脏状态集合设置为“永久”脏集合L，这里的设置就是字面意义上的赋值。正常的打包流程最终会把所有变化都下发给这个客户端直到它赶上最新的进度。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121249.png!webp" alt="image-20210907121249250" loading='lazy'></p>
+<p>一切都很顺利，但是差点忘了， 我们是要做“回放”而我却一直在讲网络序列化。可以把回放数据流近似的认为就是正常游戏的网络数据流，仅仅是接收者有点区别而已，回放系统的接收者叫做“回放快照接收者“（replay snapshot receiver）。</p>
+<p>所以实现回放系统的一个方式（并非最好，后面马上优化）就是，在每一帧都保存一个完整世界的瞬时状态快照。</p>
+<h2 id="回放系统">回放系统</h2>
+<p>UDP包大小 是有MTU限制的，然而回放流却没有这个限制，每一帧可达几百上千K字节，直到内存耗尽。</p>
+<h3 id="恰好合适的全量快照">恰好合适的全量快照</h3>
+<p>但是我们如何保证每次都能得到恰好合适的全量快照呢？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121302.png!webp" alt="image-20210907121302115" loading='lazy'></p>
+<p>很容易，假装发给回放快照接收者的每个包都丢了就行，然后把永久脏集合重新复制发给回放接收者。这样就可以保证每个快照上每一帧上的每个实体都是脏的。但是就像我上面提示过的，这样做太浪费了。</p>
+<p>曾经提到过网络系统是有增量编码的，所以可以基于先前已确认的状态来优化网络流量。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121310.png!webp" alt="image-20210907121310545" loading='lazy'></p>
+<p>我们又弄了第二个回放接收者，Delta接收者D。这个接收者从不丢弃假想包，每次更新都只包含上一帧到现在的变化。所以基本上直接复制帧脏集然后序列化即可。</p>
+<p>现在合起来看一下。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121325.png!webp" alt="image-20210907121325406" loading='lazy'></p>
+<p>帧的结尾，我们会把新的永久脏状态集合赋值给回放快照目标。同样也会把每帧脏集合序列化给回放Delta目标。然后马上就会有个问题出现：这些数据最终都去哪了？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121334.png!webp" alt="image-20210907121334254" loading='lazy'></p>
+<p>客户端正常接收者是通过网络包进行的，而回放数据需要通过别的途径。我们维护了两个连续的缓冲区，一个是给快照，一个给Delta。每一帧都会记录这两个缓冲区的偏移和尺寸。</p>
+<p>这些连续的缓冲区在整局游戏运行期间都会存在，因为策划可能需要游戏开始到现在的一卷全场最佳镜头(reel，一段连续的影像，无法直译，下文只好统称为“卷”)。</p>
+<p>实际看来，每个缓冲区每分钟需要1M的内存，而每帧记录快照所需的内存量比一分钟1M要多得多。所以我们把快照频率降低为每秒1个。</p>
+<p>你们中可能有些人想知道Delta的更新频率。服务器的频率是以62.5赫兹(16ms每帧)更新的，死亡重播和回放系统如果都运行在这个频率会使内存和带宽消耗达到3倍之多，所以我们把Delta的频率降低到20Hz（注：即服务端会以60hz的频率更新要发往客户端的Delta，并且会以20hz的频率往客户端发送这个Delta，高帧率模拟+记录来保证计算结果更加准确，低帧率发包可以节约宝贵的带宽）。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121341.png!webp" alt="image-20210907121341126" loading='lazy'></p>
+<p>现在我们终于可以生成回放“卷”（replay reel ，译注：reel这里强调是“卷”）了，这是客户端所需的核心驱动数据。策划同学想要生成阵亡镜头或者全场最佳的时候，他们请求一个“卷”即可。这些”卷”由一个快照加上一系列递增的Delta组成。</p>
+<h3 id="生成回放卷">生成回放卷</h3>
+<p>要生成”卷”，就要找到”卷”所需开始时间之前的最近的那个快照，然后不停添加Delta直到”卷”的截止时间。这里输出缓冲区的生成也很高效，就是2次内存拷贝而已。</p>
+<p>缓冲区会被压缩，添加一些元数据，然后发给客户端。阵亡镜头，亮眼表现和全场最佳都是用的这套机制，而且都是通过这一个System支撑的。</p>
+<p>如果这时候你开始怀疑这到底还是不是快照同步了，你绝对是正确的。这是有意而为的。两个World都运转良好：基于状态的模型的十分灵活，可以基于客户端网络质量动态调整；快照同步用于回放”卷”时也带来了简洁性。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121351.png!webp" alt="image-20210907121351286" loading='lazy'></p>
+<p>现在”卷”已经生产，需要发送给客户端了。为了方便传输，”卷”会被切分为MTU大小的多个片段，然后通过我们开发的BlockTransferSystem在网络上传输。BlockTransferSystem会考虑到网络状况，只有在带宽充足的情况下才会发送。</p>
+<h3 id="发送给客户端">发送给客户端</h3>
+<p>当然，玩家死亡期间除了盯着凶手，发怒以外什么也做不了，这一点也让我们松了口气。因为他们太全神贯注了，根本不会注意到因为传输大块数据而引起的微小抖动。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121357.png!webp" alt="image-20210907121357870" loading='lazy'></p>
+<p>最后看一下同步的API长什么样。这里省略了一些参数；另外返回值应该是枚举而不是整形值，但是用来说明问题已经足够了。</p>
+<p>System通常会通过一个内部的通用序列化函数来实现网络参与者和回放参与者两个接口，这两个API的差异很小。例如：网络参与者API会限制带宽，上面已经讲过很多次了。而回放参与者API则完全不用担心这一点。所以很多情况下，回放接口会自行调用含有带宽限制的内部函数，来设置一些永远都达不到的阈值。</p>
+<p>网络和回放接口共享序列化策略带来的结果就是，网络复制所节省下的每个字节，在回放系统里也是如此。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121405.png!webp" alt="image-20210907121405544" loading='lazy'></p>
+<p>这两个接口是每个接收者，针对每个相关Subject（译注：之前有提到，网络相关实体，就是Subject）分别调用一次的。基本就是每个接收者都遍历一次完整的脏集合了。</p>
+<p>如果所有的参与者都认为他们对于某个Subject没有需要序列化的数据了，那就可以安全的把这个实体从接收者脏集合中删除了。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121413.png!webp" alt="image-20210907121413424" loading='lazy'></p>
+<p>这些带Fixed的函数，给参与者提供了一个机会，去同步那些与实体无关的信息，在网络侧，就包括带外控制消息和握手之类的操作。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121420.png!webp" alt="image-20210907121420591" loading='lazy'></p>
+<p>由于采用了不可靠协议，每个参与网络同步的System，对于每个数据包都需要接受一个ACK或者NACK消息，来判断是否收到或者丢失。</p>
+<p>我们就是靠之前已经确认收到过的状态，结合内部帧压缩来增量的发送更新。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121430.png!webp" alt="image-20210907121429903" loading='lazy'></p>
+<p>另一方面，回放参与者完全不需要收包确认和丢包通知，因为它们从不“丢”包。取而代之的是在序列化过程开始前和结束后使用一对回调函数。如果要举例说明，如何在完成回放帧的序列化之后立即使用这些函数，那就是，对所有来自Delta接收者的内部序列化状态立即ACK，对所有快照接收者上的数据立即NACK。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121438.png!webp" alt="image-20210907121438814" loading='lazy'></p>
+<p>上图是发送数据给网络接收者的API使用的简化版用例。对于该接收者的每个参与者，都执行 Fixed调用，然后获取到该接收者的脏Subject集合，并允许每个System都参与到Subject的序列化过程。</p>
+<p>这个例子忽略了很多技术细节，而这些细节几乎可以拿出来单独开设分享议题了，包括：脏状态追踪，相关性，优先级，过滤，带宽模型，丢包与确认，以及其他能单独分享的技术。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121445.png!webp" alt="image-20210907121445730" loading='lazy'></p>
+<p>回放Before和After的API调用例子。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121453.png!webp" alt="image-20210907121453264" loading='lazy'></p>
+<p>现在回头看一下参与者API，大家可能会有疑问，为什么这些System的设计没有基于组件，而是基于实体 ，而一个良好的ECS架构实现应该是基于组件的。起初我们的同步API确实是基于组件的，例如MovementSystem简单遍历所有Mover组件然后序列化即可。不幸的是，这种范式有些潜在的关联，假如带宽受限会发生什么呢？通过组件序列化意味着一个System就有可能扼杀其他System序列化能力。除此之外还增加了同一实体被多个包更新的可能性。所以我们团队的实用主义者在这个案例中，从纯粹的ECS转向了非纯ECS，而且是完全可以接受的，也是为了更好地玩家体验。</p>
+<h3 id="挑战">挑战</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121501.png!webp!webp" alt="image-20210907121501114" loading='lazy'></p>
+<p>好了，上面讲过的都是干货，现在来点好玩的：挑战和躺坑。如果说之前讲的是“如何做”，那么现在讲的就是“何时”与“何地”，而“为什么”，最开始我就说过了。</p>
+<p>首先，何时下发阵亡镜头的”卷”？阵亡镜头有几个固定时间点：死亡、重生。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121508.png!webp" alt="image-20210907121508679" loading='lazy'></p>
+<p>这两个点之间的距离是由重生定时器控制的，不同的地图、游戏模式、是否加时及所有策划可以配置的情况下，这个定时器的值都不同。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121513.png!webp" alt="image-20210907121513567" loading='lazy'></p>
+<p>为了使得阵亡镜头看起来更合理，下发数据时需要比死亡那一刻再超前一点点，这样看起来就没那么突兀了，避免出现一脸懵bi的情况下突然被人爆头。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121520.png!webp" alt="image-20210907121520232" loading='lazy'></p>
+<p>另外，我们也不想在玩家死亡的那一瞬间就突然停止回放，那样会很突兀，因为你的大脑需要一些时间来处理上下文，最好能看到死亡后几秒钟内周围都发生了什么，看着尸体布偶化，然后再从死亡的痛苦中恢复过来。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121526.png!webp" alt="image-20210907121526622" loading='lazy'></p>
+<p>现在这幻灯片越来越拥挤了。</p>
+<p>在死后的尾声阶段，和重生之间，才需要观看阵亡镜头，对吧？这本来就是要开发阵亡镜头系统的真正原因。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121537.png!webp" alt="image-20210907121537758" loading='lazy'></p>
+<p>所以这里只剩下一个很小的时间窗口，可以让我们把回放数据发下去。大概是半秒钟左右的时间。然而在低带宽条件下，半秒钟是不够传输数据的。<br>
+这些情况也进一步地促使我们开发团队节省带宽。事实再一次证明，我们用来减少带宽消耗的所有努力，同时也减少了回放数据的大小。实践中，我们严格遵守这个纪律，最终实现了一个可靠的阵亡镜头体验，即使低带宽高丢包的网络环境下也是如此。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121545.png!webp" alt="image-20210907121544907" loading='lazy'></p>
+<p>这里我们还有另外一种选择，与其一次性传输大块数据，不如分开成几次：死亡时立即发送死前(pre-death)数据，之后再陆续下发增量Delta数据。<br>
+这个方法会需要一些工程上的折衷，总带宽消耗会变大，因为没办法对整个“卷”进行压缩了。另外还需要一些控制逻辑：即使收到阵亡镜头的第一个数据块也不能立即开始播放，因为数据还不足够，有可能引起回放镜头卡顿，没人想要这种体验。</p>
+<p>所有困难都是可以克服的，我们也不一定非要这样做，不过这也是选项之一。</p>
+<p>哦，这部分是我的最爱：可打断的阵亡镜头。“复活”是个麻烦事，因为我们已经把“卷”发给客户端了，客户端也开始播放了。但是因为回放随时可能被取消或者打断，所以我们不能完全销毁live世界的状态，也不能停止接收live的网络数据，因为live的游戏脚本可能会需要根据这些数据控制UI、特效，触发事件来表明你被“复活”了。</p>
+<p>我们没有使用快照同步模型，所以没办法保持住整个世界的状态，我们没做过类似的游戏，也从来没有实现过。</p>
+<p>回放可能立即就会被打断，怎么办呢？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121558.png!webp" alt="image-20210907121558780" loading='lazy'></p>
+<p>我之前提到过Overwatch的游戏架构用的是ECS，于是乎我有了一个想法，为什么不弄一个独立的”域”(domain)来实现回放呢？或者用Overwatch的术语来说，一个独立的EntityAdmin。通过这两个不相干的ECS域，我们可以把回放和live环境隔离开来。</p>
+<p>最后问了一圈，从工程师到团队领导，到技术总监，我基本可以确定在我们这个游戏项目中，CPU绝对不会成为瓶颈。不过这也可能是错的，我的意思是，永远不会成为计算密集型(sim-bound，可以参考CPU Bound和I/O Bound的定义)程序，看起来是那么的明智。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121607.png!webp" alt="image-20210907121607767" loading='lazy'></p>
+<p>而且对于我们来说这是一个清理旧架构中设计不合理部分的机会，例如对全局变量和静态变量的内部依赖。有了两个完全不相关的域以后，所有的参数都需要限制在域的范围内，所以借此机会整理代码也不错。</p>
+<p>大概花了几周的时间，我们把所有东西都隔离了，并且有了两个域(Domain)，一个做实时游戏，一个做回放。在这个模型里，实时游戏数据来自网络，直接进入实时渲染的世界里。而来自回放的数据块直接进入了回放模块。进入阵亡镜头时，实际上两个域的数据都在同时处理。</p>
+<p>这一页的视频里会演示一个简单的阵亡镜头。回放开始时会有一个黑色淡入效果，这代表我们停止运行实时游戏，转而渲染回放域，等到回放结束时又会转移回去。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121620.png!webp" alt="image-20210907121620582" loading='lazy'></p>
+<p>总得来说执行“域”的实验很成功，或许是过于成功了，所以我们就在想，既然2个域是ok的，那为什么不搞4个呢？</p>
+<p>实际上这并不是一点代价都没有的，我的意思是说，我们需要实现一套机制，可以在过渡时，供域之间进行协调、通信。现在大部分域内部冲突都依赖于EntityAdmin这个全局管理器，通过脚本化行为来协调何时进入何域。</p>
+<p>那么这个额外的模拟过程的代价又是什么呢？我们最终还是计算密集型的了，尤其是在主机和低端PC机上。多域模型带来了这个额外负载，但它绝不是唯一一个打破性能预算的系统。有了回放系统以后，我们就可以用录像文件来做整体性能优化。</p>
+<p>录像文件使得我们可以直接在主机上发布60帧的FPS游戏，也在低端PC机上达到了性能目标。</p>
+<p>就像《辛普森一家》里说的：回放系统，既是性能问题的罪魁祸首，也是救世良方（译注，原剧台词：To Alcohol! The cause of… and solution to… all of life’s problems.）。</p>
+<h3 id="遇到的坑">遇到的坑</h3>
+<p>继续讲下打磨过程，这一部分最后才讲，也是我最喜欢的一个话题。</p>
+<p>先说炮台吧，对于我们来说，炮台击杀敌人是个棘手问题。建造炮台的玩家会得到击杀奖励。炮台杀人的时候，主人可能已经在半个地图以外了。更糟的是，主人在这时候被干掉了。</p>
+<p>下面就是一个托比昂的炮台拿到全场最佳的例子，炮台杀人无数，咱们可以数一下它杀了几个。</p>
+<p>一个。</p>
+<p>两个（注意视频里托比昂死在了悬崖边上）。</p>
+<p>三个（众笑，因为这时候托比昂的尸体已经掉到悬崖中部了）</p>
+<p>真的很滑稽，这段视频是从beta版来的，那时候我们还没修复这个bug呢。后来我们就不再把全场最佳送给死掉的英雄了，也就解决了这个问题。(译注，守望先锋最初的版本确实有这类全场最佳镜头，也是十分搞笑)</p>
+<p>所以，托比昂视角的阵亡镜头（译注：感觉这里有点问题，作者强调的应该是全场最佳），只有在他自己而非炮台杀人时才有意义。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121719.png!webp" alt="image-20210907121718879" loading='lazy'></p>
+<p>那么该如何处理（炮台击杀时的阵亡镜头）呢？基本上是脚本硬编码的。我们最初调整了炮台的阵亡镜头角度，使它看起来是真的站在炮台的视角看的。但不幸的是，炮台是由AI控制的，而不是一个真实的玩家，并没有用第一人称视角在那里打枪。更重要的是，炮台AI与真人瞄准的方式也是完全不同的。</p>
+<p>通过创建一个基于炮台动画骨骼的定制化摄像机，我们解决了这个问题。从那个骨骼位置后方一点，发射出一个由点组成的环，来得到稳定的视角。这种处理方式对于秩序之光的炮台（哨兵炮）尤其有用，因为它们很小，经常被放在天花板上，或者角落里、墙上。另外让炮台和受害者都处于画面中也是很重要的。</p>
+<p>下面的视频展示了一个炮台摄像机的例子。注意玩家死亡时，尸体布偶化，摄像机自动对准凶手。阵亡镜头期间，摄像机会追踪玩家，他从角落里一露头，就可以看见炮台把他打到人事不省。</p>
+<p>这里你还会有个额外收获，可视化的摄像机位置调试信息。这里绘制了一些绿色的点，表示摄像机的朝向，用来在阵亡镜头期间，保证炮台始终位于画面中央的。</p>
+<p>最后的提示是关于debug功能的，即使是在回放过程中也依然可用。如果发现bug了，同样可以依赖脚本系统的调试功能去解决。</p>
+<p>你应该能注意到摄像机目标位置会有一些插值。可能还有些其他的被掩盖了，但是这些就是基本原理了</p>
+<p>下面是一个炮台摄像机未能按照预期工作的例子，发行版本也是如此。可以看见死亡发生时摄像机再次指向了凶手。但是这个例子里，阵亡镜头里的摄像机没有成功地把炮台聚焦到画面中央。</p>
+<p>如果你注意到那些天花板上的龙骨，就知道摄像机的位置没办法更好了，实在没办法。</p>
+<p>除了炮台以外，还有其他几种情况，需要我们来实现定制化的阵亡镜头。</p>
+<p>当你跌出地图边缘时，我们会解除摄像机绑定，然后追踪你的布偶直到沃斯卡亚的冰河里。</p>
+<p>如果是因为有人把你推下去，我们就会转而从他的视角回放死亡过程。</p>
+<p>说实话我挺讨厌被推下去的。Alright, and I really hate like this.</p>
+<p>半藏的神龙之魂，有同样的炮台问题。他甚至可以从重生室里放大，然后他的龙可以飞跃整个地图直到干掉你，然而半藏的本尊还在重生室里潇洒呢。</p>
+<p>在这种情况下显示来自凶手视角的阵亡镜头显然没什么意义，取而代之的是我们使用了一个第三人称视角的摄像机去追踪龙的飞行过程，直到杀死你的那一刻 。</p>
+<p>实际上还有好几种需要定制的阵亡镜头，但是没时间全部覆盖到了。上面讲的是最常见的几种，对每一种情况进行打磨都使得阵亡镜头的体验更好，可以减少玩家突然被弄死时的困惑。</p>
+<p>好吧，插值提示(interpolation hinting)。从服务器的角度来看，进攻者永远都是在“过去”采取行动的，如果没有额外提示的话，客户端播放阵亡镜头时，就会看到准星瞄的永远都是目标后方，这样不好，会导致论坛上很多投诉。</p>
+<p>为了修复这个问题，我们在回放系统里记录了每个玩家的插值延迟提示，然后在客户端播放回放期间，把这个和插值延迟缓冲区集成到了一起。这样就保证了阵亡镜头可以准确显示服务器端进攻者的瞄准动作。</p>
+<p>接下来我会用“时间缩放”的方式来连续播放两个阵亡镜头过程(内部回放文件支持这么做)。重点观察开火反冲(recoil)那一刻士兵76的位置。Overwatch里，武器的操作是不会有任何延迟的，一旦你扣下扳机，立马就能看到开火特效和其他相关的表现，包括爆炸、拖尾等。</p>
+<p>结果就是，因为客户端帧率的粒度较低，你能看见一点点偏离。但是开火反冲却是由该帧脚本精确控制的。</p>
+<p>在爆头的瞬间，（从视频中可以看出）目标刚好处于准星的位置，完美。</p>
+<p>再看看同样的情况下，没用插值的表现（译注，从视频上来看，这种情况下，目标已经越过准星了，弹道和击杀提示才出现）。</p>
+<h3 id="快进">快进</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121845.png!webp" alt="image-20210907121845026" loading='lazy'></p>
+<p>好吧，现在讲一下”快进”(fast forwarding)。前面已经说了每秒钟记录一次快照，而死后还有2秒的收尾过程（译注：正如前面讲的，摄像机对准凶手，再看看周围环境的变化）。会发生什么呢？如果所需“卷”开始之前最近的一次快照，超前了整整1秒的话（译注：也就是说，“卷”开始时，该快照刚好结束），收尾过程会被截短只剩下1秒，完全不够你用来思考世界的。</p>
+<p>解决方案就是把回放过程快进到“卷”开始的时间。这是个很小的工作，却很重要，保证了阵亡镜头体验的一贯性。</p>
+<p>此处没有视频举例。</p>
+<h3 id="服务器步进">服务器步进</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121851.png!webp" alt="image-20210907121851482" loading='lazy'></p>
+<p>服务器超载时会落后1到2帧然后再赶上来。这种情况下，当前模拟的帧可能得不到所需要的时长了。如果此时客户端执行回放的话，它能得到的帧数就会比预期要少，实际表现就是回放结束的很突兀。</p>
+<p>解决方案也很直接，我们在beta版 的客户端采用更高的帧率。同时记录客户端期望时长和服务器实际时长，这样的话就可以在期望的时间窗口内完成回放。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121857.png!webp" alt="image-20210907121856953" loading='lazy'></p>
+<p>游戏中大多数消息都是针对单个玩家的，回放系统只需要其中的一部分消息，观战者也有同样的问题，不是所有发给指定客户端的消息都应该分发给观战者。</p>
+<p>为了实现这一点，我们把每个游戏消息都加上注释，来指定它是否需要被包含到回放或者观战数据流当中。然后在把这些消息委托给适当的接收者。</p>
+<p>客户端实际回放期间，我们会过滤掉那些不是发给当前主体的消息。</p>
+<p>如果没有这些打磨的话，“卷”里就会缺失受击提示、命中确认、UI变化和一些语音对话。这些处理帮我们改善了回放的体验。</p>
+<h3 id="未来的工作">未来的工作</h3>
+<h4 id="提高Delta录制频率">提高Delta录制频率</h4>
+<p>之前有提到过，我们的Delta刷新频率是20HZ，这基本上是精确度期望值对带宽消耗妥协的结果。顶级玩家可以做到（也的确这么做了）在快速旋转的同时进行射击，但我们当前的频率达不到那么精确。</p>
+<p>一个办法就是在回放数据里增加一些朝向提示，就像插值提示那样。另外一个办法就是加快Delta录制频率，使之能够配合当前上下行包的频率。这两个方法都会使得带宽与存储空间的消耗急剧增长。玩家移动的数据包约占到总带宽的一半。</p>
+<p>那为什么这会是个问题呢？这里我找了一个游戏高手，人非常好，在录制完成最终的视频以前，一遍一遍地尝试爆我的头。他有一手绝活，你可以看见准星经过爆头点。但是因为没有更细粒度的Delta更新，我们只能用插值填满这50毫秒的范围。</p>
+<p>这是实时录像，他真的有那么厉害！This is real-time, yeah he’s that good.</p>
+<p>慢动作(slo-mo)再看一遍，“I have so much to live for her”(译注：一句歌词，作者哼唱起来了~~~)。</p>
+<p>注意，准星虽然经过了头的位置，但是这里就能看出增加Delta的重要性了（译注：视频中弹道已经明显偏离准星位置了，就是因为Delta的频率不够高所致）。</p>
+<h4 id="优化回放文件">优化回放文件</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121916.png!webp" alt="image-20210907121916620" loading='lazy'></p>
+<p>快进，倒带，拖放 （scrub，随意指定开始位置去播放）。当前的回放文件，只在起始处有一个快照，所以它其实就是一个普通的基于输入的回放机制，你唯一能做的就是从头向后顺序播放。</p>
+<p>正因为如此，就不可能支持拖放，快进也是通过从头开始快速播放实现的，而且倒带实现方式也不咋地，真正想用这个功能的人一定很失望，因为还是从头快速播放到你想要的位置之前多少秒钟。</p>
+<p>目前都是团队内部在使用，但是不能排除将来会发布的特性会用到这些。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121928.png!webp" alt="image-20210907121928426" loading='lazy'></p>
+<p>这一页给出了一个简洁的修复方式：插入更多快照！</p>
+<p>考虑到目前快照的尺寸，我们大概可以在回放文件里增加几个10秒钟粒度的快照，在不用对文件尺寸做过多妥协的情况下，至少可以以10秒钟的步幅做快进。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121942.png!webp" alt="image-20210907121942267" loading='lazy'></p>
+<p>如果我们真的在回放文件增加那些快照，会有一个额外的好处：可扩展的观战功能。增加一个代理或者服务器，与实时游戏服务器独立开来，专门接收带Delta的回放快照即可。越来越多的玩家都想要在诸如锦标赛之类的比赛中实时观战，只需要下发快照给这些玩家，然后不断塞Delta数据流给他们就行了。所有这一切都发生在一个隔离的服务器上，完全不用担心实时游戏服务器过载什么的，这一点非常非常重要。</p>
+<p>增加一点缓冲区，画几个UI再加上可扩展的观战功能，这事就成了。当初设计这组内部功能时，真是太明智了。</p>
+<p>尽管后来发现，我其实没那么聪明，这个点子也绝非原创。它的实现方式与Valve公司的那个叫做“Source TV”的观战系统如出一辙，我猜Dota2的游戏内观战也是基于这个架构的。</p>
+<h4 id="给玩家用的回放">给玩家用的回放</h4>
+<p>最后，如果不谈一下把回放系统开发给玩家使用，那就太过分了。玩家需要回放，而我们希望玩家开心，做到以下几点就够了。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907122006.png!webp" alt="image-20210907122006224" loading='lazy'></p>
+<p>老实说，最大的阻碍就是找到一种方法来保留全部回放数据。</p>
+<p>根据当前帧率，一周的回放文件大约需要200TB的存储空间，这还是压缩后的。不幸的是，压缩需要消耗CPU资源，而CPU是我们当前最大的瓶颈。</p>
+<p>除此之外，这200T数据也不是需要永久保存的。我们现在正在研究如何在存储需求和留存(retention)需要之间做权衡，以使得这个功能尽快上线。</p>
+<p>我们希望可以允许玩家保存一段合理的时间内，把回放文件保存在他们自己的机器上。我们也考虑过允许玩家在比赛结束时下载回放文件，但是那样会增加本已捉襟见肘的服务器带宽资源，所以也行不通。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907122013.png!webp" alt="image-20210907122013137" loading='lazy'></p>
+<p>谈到留存，就不可避免的提到补丁和序列化兼容性问题。为了能够序列化，网络和回放数据的结构定义，都依赖于资源定义。如果补丁中含有任何与stream有关的东西，都会使得回放文件失效。</p>
+<p>从2016年5月游戏发布到2016年12月份，我们打了大概22个补丁。也就带来了22个潜在的不兼容的可能性，谁都不希望看到。</p>
+<p>所以我们的客户端必须支持加载上一个补丁版本的资源的能力，这样才能正确播放回放文件。这也意味着，如果硬盘上没有所需资源，就要从网络上下载。还要支持某种形式的新旧版本资源覆盖。从CDN按需下载，显示进度条，需求越列越多。</p>
+<p>我们到现在还在想象这个功能应该做成什么样，但是这多少会给你们一些信息，了解我们正在克服哪些阻碍，突破什么边界。</p>
+<h2 id="总结">总结</h2>
+<p>快要结束了，现在回顾一下。</p>
+<p>回放系统很酷，上面的例子已经展示了我们影院级的回放镜头支持。</p>
+<p>耶，子弹时间！想象一下，把这个功能和一些时间压缩、暂停技术相结合，就能得到类似电影《黑客帝国》中的子弹时间。在我们游戏玩法预告里，大量的采用了这个功能。所以这里取消暂停，旋转一下摄像机，这样就有了一个更好的角度。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907122024.png!webp" alt="image-20210907122024768" loading='lazy'></p>
+<p>到目前为止都学到了哪些知识呢？设计网络同步模型时就考虑到回放的需求；不相关的执行域提供了更大的灵活性和隔离性；网络带宽优化重于回放文件尺寸优化，能省一个字节就省一个字节；社区都很喜欢分享亮眼表现和全场最佳，能在Reddit和其他论坛上看到这些分享，感觉真的很棒。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907122033.png!webp" alt="image-20210907122033782" loading='lazy'></p>
+<p>如果你在开发时不支持回放文件，那就太悲惨了。你应该说服你的工程师，或者如果你自己就是工程师的话，你真的应该先实现这个功能，对于debug来说太有用了。回放文件对于性能分析也很有用。可以提早优化，使得游戏可以运行于任何硬件。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907122040.png!webp" alt="image-20210907122040636" loading='lazy'></p>
+<p>学到的教训。更多的域意味着更多的负载。这一点绝对有些意外，让人头疼，在域之间平滑过渡，就需要大量人力开发。我们做了很多工作去保证，无论什么背景场景，场景更新都保持在一个低频模式，以减少CPU的消耗。</p>
+<p>服务器定制的序列化很昂贵，定制越多，优化就越多。如果你决定采用这种方式的话，就要对困难有所准备。</p>
+<p>最后一件事，你或许已经注意到幻灯片里的API与发行版本用的很相似。所以，一定要尽早开发同步模式，这样的话API会干净很多。</p>
+<p>就这么多了！（掌声）现在是提问时间，看起来我们还有9分钟。</p>
+<h2 id="问答环节">问答环节</h2>
+<p><strong>Q: 游戏里有很多可破坏对象，那么记录快照时会记录多少呢？全部嘛？</strong><br>
+A: 是个好问题，破坏是个很有趣的玩法。游戏刚上线时，可破坏物还不是实体，我遍历了所有的实体序列化后发现，大约是3个月前，偷偷上线了一些改变。推翻了以前的想法，因为有太多的变化了，使得快照尺寸变得很大。所以我们只记录了从“未破坏”到“破坏”，一个bit就够了。我们用一个可破坏的bitmap来代替之前基于地图的数据结构。这个bitmap可以全量同步，总共200个字节。每次有变化发生时，用8个bit来表示变化范围，这样就优化了很多。</p>
+<p><strong>Q: 星际2里也有回放系统，你们用到了吗？有什么坑嘛？</strong><br>
+A: 星际2是基于帧同步的，它们的回放系统是每次都从头开始，然后快进的方式，同时也实现了回放文件的保存功能。<br>
+因为我们并不是帧同步的，大部分原因我在一开始就讲过了。玩家一多，缺点更明显。我们确实跟星际2的团队聊过，正是因为它们的建议，才有了我们最终的这个方案。</p>
+<p><strong>Q: 你做了基于组件的序列化，试过按照时间粒度进行序列化嘛？例如你之前提到过的旋转的例子，有得到什么好处嘛？</strong><br>
+A: 事物的时间准则非常有趣，我们现在对带宽的使用已经很小心了，没必要再把什么东西从包里剔出。一般来讲发生在一帧内的变化，都能用一个包就装下，所以我们没必要做什么会引起麻烦的修改了，那样做就有点过头了。<br>
+事实上完全可以这么做，也很简单，我的包里含有全部序列化数据，如果我们再增加一些动态物品或者其他什么东西的话，就有必要考虑了。</p>
+<p><strong>Q: 我这里有个很特殊的问题，我会尽量解释的清楚一些。我调整了准星，然后我注意到在回放里面，无论是谁打你，都没有采用本地玩家设置，所以我想是不是忽略本地设置了，但是我很好奇为什么只有回放是这样子的？</strong><br>
+A: 从我的角度看，什么时候用哪个准星，这是个设计问题。如果策划想在回放里使用玩家本地准星设置，那我们就会在回放系统里包含进来。比如说在锦标赛里提供这个功能。<br>
+事实上我们现在没有这么做的技术原因就是那个执行域没有你的设置信息。</p>
+<p><strong>Q: 说到基于物理的模拟，像尸体布偶或者禅亚塔的佛珠掉到地上，你们是用物理引擎重新模拟还是用了关键帧动画？</strong><br>
+A: 客户端和服务器物理模拟过程是分开的。像禅亚塔的佛珠、头发和布偶，都是只在客户端处理的。我们不是像《光环》那样做的。我们确实尝试去同步布偶的数据，所以你可以射穿布偶，在我们的引擎里这不是个问题，取决于是否优化。只是增加一些带宽消耗而已，完全能实现。</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/ow-gdc-replay/">https://www.lfzxb.top/ow-gdc-replay/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/">网络同步</a><a class="post-meta__tags" href="/tags/%E6%96%87%E7%8C%AE%E7%BF%BB%E8%AF%91/">文献翻译</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/GDC%E5%88%86%E4%BA%AB/">GDC分享</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/ow-gdc-gameplay-architecture-and-netcode/" title="《守望先锋》架构设计和网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907113243.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">《守望先锋》架构设计和网络同步</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC  ECS ECS概述 哈喽，大家好，这次的分享是关于《守望先锋》（译注：下文统一简称为Overwatch）游戏架构设计和网络部分。老规矩，手机调成静音；离开时记得填写调查问卷；换下半藏，赶紧推车！（众笑） 我是Tim Ford，是暴雪公司Overwatch开发团队老大。自从2013年夏季项目启动以来就在这个团队了。在那之前，我在《Titan》项目组，不过这次分享跟Titan没有半毛钱关系。（众笑） 这次分享的一些技术，是用来降低不停增长的...</div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/ow-gdc-leading-principles/" title="《守望先锋》GDC 2017技术分享视频内容大纲"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20220201204924.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-01</div><div class="info-item-2">《守望先锋》GDC 2017技术分享视频内容大纲</div></div><div class="info-2"><div class="info-item-1">前言 最近开坑了一个状态帧同步战斗系统视频教程，总共有5个视频  其中第一个和最后一个都好说，我自己乱吹就可以了，但是中间三个重量级比较难处理，我的计划是实时录制原GDC视频 + 分享自己的理解和思路，原视频的平均时长都在一个小时左右，如果直接莽上去很有可能在讲解的时候思路断掉，所以我需要针对他们梳理出一个大纲来理清楚讲解思路，顺带方便大家自己在学习守望先锋GDC视频的时候有针对性的去了解自己需要了解的部分。 《守望先锋》架构设计和网络同步 原视频链接  视频内容大纲 00 : 00 - 1 : 00 ：守望先锋游戏与开发团队介绍 1 : 00 - 7 : 15：ECS概念介绍与守望先锋中使用ECS的示例 7 : 15 - 8 : 07：ECS VS OOP，核心问题还是庞大工程中引用和解耦问题。传统OOP中，抛开常知的继承炼狱问题不谈，一个类既是数据又是逻辑，那么当一个类会与多个不同的类进行交互的时候，就会面对如何拆解数据和逻辑提供给相对应的类的问题，如果选择不拆，那么就需要面对越来越庞大的类，如果拆了，那么一些只有其他类才需要用到的数据和逻辑就应当被其他类在Update或者其...</div></div></div></a><a class="pagination-related" href="/ow-gdc-gameplay-architecture-and-netcode/" title="《守望先锋》架构设计和网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907113243.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-25</div><div class="info-item-2">《守望先锋》架构设计和网络同步</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC  ECS ECS概述 哈喽，大家好，这次的分享是关于《守望先锋》（译注：下文统一简称为Overwatch）游戏架构设计和网络部分。老规矩，手机调成静音；离开时记得填写调查问卷；换下半藏，赶紧推车！（众笑） 我是Tim Ford，是暴雪公司Overwatch开发团队老大。自从2013年夏季项目启动以来就在这个团队了。在那之前，我在《Titan》项目组，不过这次分享跟Titan没有半毛钱关系。（众笑） 这次分享的一些技术，是用来降低不停增长的...</div></div></div></a><a class="pagination-related" href="/ow-gdc-share-table-of-contents/" title="《守望先锋》GDC2017技术分享精粹重制版总目录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-01</div><div class="info-item-2">《守望先锋》GDC2017技术分享精粹重制版总目录</div></div><div class="info-2"><div class="info-item-1">本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和技能系统PDF，一些必要的地方我录制了Gif图，方便观看。 《守望先锋》GDC 2017技术分享视频内容大纲 《守望先锋》架构设计和网络同步 原视频链接  《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现 原视频链接  《守望先锋》网络脚本化的武器和技能系统 原视频链接  </div></div></div></a><a class="pagination-related" href="/ow-gdc-weapon-and-skillsystem/" title="《守望先锋》网络脚本化的武器和技能系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-25</div><div class="info-item-2">《守望先锋》网络脚本化的武器和技能系统</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原PDF链接：本文部分图片如果想查看高清大图，可前往 《守望先锋》中网络脚本化的武器和技能系统 PDF 下载PDF 原视频链接：https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC  嗨，大家好，我叫 Dan Reed, 是暴雪娱乐的游戏工程师（gameplay engineer，译注：游戏机制工程师，或者游戏工程师，都可以），今天主要跟大家分享《守望先锋》（后面统一用Overwatch表示）中的网络脚本化的武器和技能系统。 那么这里先简单介绍下我在Overwatch中的主要工作。   Statescript脚本系统，这也是今...</div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/context-steering-behavior-driven-steering-at-the-macro-scale/" title="（译）上下文转向行为驱动的AI移动策略（Context Steering）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-02-02</div><div class="info-item-2">（译）上下文转向行为驱动的AI移动策略（Context Steering）</div></div><div class="info-2"><div class="info-item-1">本文是对GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale 进行的中文翻译 译文 介绍 在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。 然而，转向行为并不适合用于某些类型的游戏。当玩家能够挑选并监控单个实体时，避免碰撞和自然的移动就变得非常重要。为了实现这一目标可能会导致行为组件的膨胀并变得紧耦合，实体运动逻辑也会变得脆弱和难以维护。 在本章中，我们将概述如何识别那些转向行为不太适合的游戏，并提出一种针对这些问题的新方法，它被称之为上下文转向行为（Context Steering）。上下文转向行为（Context Steering Monobehaviours）是小巧的和无状态的（StateLess），并提供任何行为本身所期望的运动约束。当上下文转向行为用于取代游戏F1 2011上的原转向行为时，代码库减少了4000行，但AI在避免碰撞、超车和执行其他有趣的行为方面表现得...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E7%9B%AE%E6%A0%87"><span class="toc-number">2.</span> <span class="toc-text">设计目标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5%E6%A8%A1%E5%9E%8B%E6%A6%82%E8%A7%88"><span class="toc-number">3.</span> <span class="toc-text">网络同步模型概览</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%E5%B8%A7%E5%90%8C%E6%AD%A5"><span class="toc-number">3.1.</span> <span class="toc-text">确定性帧同步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E5%90%8C%E6%AD%A5"><span class="toc-number">3.2.</span> <span class="toc-text">快照同步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5"><span class="toc-number">3.3.</span> <span class="toc-text">状态同步</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%93%E4%B8%9A%E6%9C%AF%E8%AF%AD%E4%BB%8B%E7%BB%8D"><span class="toc-number">4.</span> <span class="toc-text">专业术语介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5%E7%9A%84%E5%85%B7%E4%BD%93%E7%A4%BA%E4%BE%8B"><span class="toc-number">5.</span> <span class="toc-text">状态同步的具体示例</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E6%9C%BA%E5%88%B6"><span class="toc-number">5.1.</span> <span class="toc-text">基础机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B0%E7%8E%A9%E5%AE%B6%E8%BF%9B%E5%85%A5%E6%B8%B8%E6%88%8F%E7%9A%84%E8%BF%BD%E5%B8%A7"><span class="toc-number">5.2.</span> <span class="toc-text">新玩家进入游戏的追帧</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9E%E6%94%BE%E7%B3%BB%E7%BB%9F"><span class="toc-number">6.</span> <span class="toc-text">回放系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%81%B0%E5%A5%BD%E5%90%88%E9%80%82%E7%9A%84%E5%85%A8%E9%87%8F%E5%BF%AB%E7%85%A7"><span class="toc-number">6.1.</span> <span class="toc-text">恰好合适的全量快照</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E6%88%90%E5%9B%9E%E6%94%BE%E5%8D%B7"><span class="toc-number">6.2.</span> <span class="toc-text">生成回放卷</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%91%E9%80%81%E7%BB%99%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">6.3.</span> <span class="toc-text">发送给客户端</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8C%91%E6%88%98"><span class="toc-number">6.4.</span> <span class="toc-text">挑战</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%81%87%E5%88%B0%E7%9A%84%E5%9D%91"><span class="toc-number">6.5.</span> <span class="toc-text">遇到的坑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E8%BF%9B"><span class="toc-number">6.6.</span> <span class="toc-text">快进</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%AD%A5%E8%BF%9B"><span class="toc-number">6.7.</span> <span class="toc-text">服务器步进</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AA%E6%9D%A5%E7%9A%84%E5%B7%A5%E4%BD%9C"><span class="toc-number">6.8.</span> <span class="toc-text">未来的工作</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%8F%90%E9%AB%98Delta%E5%BD%95%E5%88%B6%E9%A2%91%E7%8E%87"><span class="toc-number">6.8.1.</span> <span class="toc-text">提高Delta录制频率</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%E5%9B%9E%E6%94%BE%E6%96%87%E4%BB%B6"><span class="toc-number">6.8.2.</span> <span class="toc-text">优化回放文件</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%BB%99%E7%8E%A9%E5%AE%B6%E7%94%A8%E7%9A%84%E5%9B%9E%E6%94%BE"><span class="toc-number">6.8.3.</span> <span class="toc-text">给玩家用的回放</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">7.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E7%AD%94%E7%8E%AF%E8%8A%82"><span class="toc-number">8.</span> <span class="toc-text">问答环节</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '6b1217991e110c4a6ad56ce6cd0353c7'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

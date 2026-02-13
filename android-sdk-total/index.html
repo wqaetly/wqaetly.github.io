@@ -1,0 +1,526 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Android SDK总结 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="希望看到这篇文章的各位永远不会处理Android SDK相关的工作内容，谷歌，我真是超丝你的梦啊！ 基础概念 JDK (Java Development Kit) JDK 是Java开发工具包，它是开发Java应用程序的基础工具集。JDK包含了Java编译器（javac）、Java运行时环境（JRE）、标准类库以及各种开发工具。   用途: 用于编写、编译和运行Java程序。   组成  Java">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android SDK总结">
+<meta property="og:url" content="https://www.lfzxb.top/android-sdk-total/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="希望看到这篇文章的各位永远不会处理Android SDK相关的工作内容，谷歌，我真是超丝你的梦啊！ 基础概念 JDK (Java Development Kit) JDK 是Java开发工具包，它是开发Java应用程序的基础工具集。JDK包含了Java编译器（javac）、Java运行时环境（JRE）、标准类库以及各种开发工具。   用途: 用于编写、编译和运行Java程序。   组成  Java">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2024-08-07T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-08-07T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Android">
+<meta property="article:tag" content="SDK">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Android SDK总结",
+  "url": "https://www.lfzxb.top/android-sdk-total/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2024-08-07T00:00:00.000Z",
+  "dateModified": "2024-08-07T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/android-sdk-total/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Android SDK总结',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Android SDK总结</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Android SDK总结</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-08-07T00:00:00.000Z" title="发表于 2024-08-07 00:00:00">2024-08-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-08-07T00:00:00.000Z" title="更新于 2024-08-07 00:00:00">2024-08-07</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>12分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/android-sdk-total/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2024-08-07 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>希望看到这篇文章的各位永远不会处理Android SDK相关的工作内容，谷歌，我真是超丝你的梦啊！</p>
+<h1>基础概念</h1>
+<h2 id="JDK-Java-Development-Kit">JDK (Java Development Kit)</h2>
+<p><strong>JDK</strong> 是Java开发工具包，它是开发Java应用程序的基础工具集。JDK包含了Java编译器（<code>javac</code>）、Java运行时环境（JRE）、标准类库以及各种开发工具。</p>
+<ul>
+<li>
+<p><strong>用途</strong>: 用于编写、编译和运行Java程序。</p>
+</li>
+<li>
+<p>组成</p>
+<ul>
+<li><strong>Java编译器（javac）</strong>: 将Java源代码编译成字节码。</li>
+<li><strong>Java运行时环境（JRE）</strong>: 包含Java虚拟机（JVM）和标准类库，用于运行Java程序。</li>
+<li><strong>开发工具</strong>: 如调试器、文档生成器等。</li>
+</ul>
+</li>
+</ul>
+<h3 id="OpenJDK">OpenJDK</h3>
+<p>顾名思义，JDK的开源版本，由 Oracle 主导并由 Java 社区共同开发和维护。OpenJDK 是 JDK 的开源实现，遵循 GPL（GNU General Public License）许可证。</p>
+<p>Unity的安卓就是基于此</p>
+<h2 id="SDK-Software-Development-Kit">SDK (Software Development Kit)</h2>
+<p><strong>SDK</strong> 是软件开发工具包，Android SDK是专门用于开发Android应用程序的工具集。它包含了开发Android应用所需的所有工具和库。</p>
+<ul>
+<li><strong>用途</strong>: 用于开发、调试和测试Android应用程序。</li>
+</ul>
+<h3 id="SDK-Platform">SDK Platform</h3>
+<p>即我们最常见的Android 28,29,30此类说明</p>
+<ul>
+<li><strong>API Libraries</strong>: 提供了 Android 平台的核心 API 和类库，开发者可以使用这些 API 来构建应用程序。</li>
+<li><strong>System Images</strong>: 用于在 Android 模拟器中运行不同版本的 Android 系统。</li>
+</ul>
+<h3 id="SDK-Tools">SDK Tools</h3>
+<ul>
+<li><strong>Android SDK Tools</strong>: 包含了基本的开发工具，如 <code>adb</code>（Android Debug Bridge）、<code>fastboot</code> 等。</li>
+<li><strong>Android SDK Platform-Tools</strong>: 包含了与 Android 平台相关的工具，如 <code>adb</code>、<code>dmtracedump</code>、<code>sqlite3</code> 等。</li>
+<li><strong>Android SDK Build-Tools</strong>: 包含了构建应用程序所需的工具，如 <code>aapt</code>、<code>dx</code>、<code>zipalign</code>、<code>apksigner</code> 等。
+<ul>
+<li>最多关注的就是Build-Tools，他是构建安卓的基石，值得一提的是，往往最经常出问题的就是因为Build-Tools版本和SDK Platform之间各种版本问题</li>
+</ul>
+</li>
+</ul>
+<h3 id="SDK-Manager">SDK Manager</h3>
+<ul>
+<li><strong>SDK Manager</strong>: 用于下载和管理 Android SDK 组件的工具。你可以通过 SDK Manager 安装不同版本的 SDK Platform、Build-Tools等。</li>
+</ul>
+<p><code>尤其需要注意的是，在各个平台中，需要使用各自的Android Studio来下载和配置SDK，不要跨平台复制下载好的SDK包，否则会有各种问题</code></p>
+<h3 id="compileSdkVersion-buildToolsVersion">compileSdkVersion &amp;&amp; buildToolsVersion</h3>
+<p><code>compileSdkVersion</code> 指定了编译应用程序时使用的Android SDK版本。它决定了你可以使用哪些API和功能。以下是一些关键点：</p>
+<ul>
+<li><strong>API Level</strong>: <code>compileSdkVersion</code> 是一个整数，表示Android API级别。例如，<code>compileSdkVersion 30</code> 表示使用API Level 30（Android 11）进行编译。</li>
+<li><strong>编译时检查</strong>: 这个版本决定了编译器在编译时可以访问的API。如果你使用了高于这个版本的API，编译器会报错。</li>
+<li><strong>不影响运行时</strong>: <code>compileSdkVersion</code> 只影响编译时的API可用性，不影响应用程序的运行时行为。运行时行为由 <code>minSdkVersion</code> 和 <code>targetSdkVersion</code> 决定。</li>
+</ul>
+<p><code>buildToolsVersion</code> 指定了构建工具的版本，这些工具包括 <code>aapt</code>、<code>dx</code>、<code>zipalign</code> 等。构建工具用于将你的代码、资源和库打包成一个APK文件。以下是一些关键点：</p>
+<ul>
+<li><strong>版本号</strong>: <code>buildToolsVersion</code> 是一个字符串，表示构建工具的版本号。例如，<code>buildToolsVersion "30.0.3"</code>。</li>
+<li><strong>工具链</strong>: 这个版本决定了使用哪个版本的构建工具链来构建你的应用程序。</li>
+<li><strong>兼容性</strong>: 通常，<code>buildToolsVersion</code> 应该与 <code>compileSdkVersion</code> 保持一致或使用最新的构建工具版本，以确保兼容性和获得最新的功能和修复。</li>
+</ul>
+<p>关系和最佳实践</p>
+<ul>
+<li><strong>同步更新</strong>: 通常情况下，<code>compileSdkVersion</code> 和 <code>buildToolsVersion</code> 应该同步更新，以确保使用最新的API和构建工具。（但是如果实在构建不通过，也可以尝试不同的组合，例如较低的buildToolsVersion（32）来构建较高的compileSdkVersion（33））</li>
+<li><strong>向后兼容</strong>: 虽然你可以使用较新的 <code>buildToolsVersion</code> 来构建较旧的 <code>compileSdkVersion</code>，但为了获得最佳兼容性和性能，建议保持它们的一致性。</li>
+<li><strong>定期更新</strong>: 定期更新 <code>compileSdkVersion</code> 和 <code>buildToolsVersion</code> 可以确保你使用最新的API和工具，获得最新的功能和修复。</li>
+</ul>
+<h2 id="AndroidManifest-xml-MainActivity-java">AndroidManifest.xml &amp;&amp; MainActivity.java</h2>
+<p><code>AndroidManifest.xml</code> 文件是 Android 应用的配置文件，定义了应用的基本信息、权限、组件和其他配置。它位于 <code>Assets/Plugins/Android</code> 目录下（如果你需要自定义它）。</p>
+<h4 id="主要内容和用途">主要内容和用途</h4>
+<ul>
+<li><strong>应用信息</strong>: 包括应用的包名、版本号、图标、主题等。</li>
+<li><strong>权限声明</strong>: 定义应用需要的权限，如访问网络、读取存储等。</li>
+<li><strong>组件声明</strong>: 定义应用的四大组件（Activity、Service、BroadcastReceiver、ContentProvider）。</li>
+<li><strong>Intent 过滤器</strong>: 定义哪些 Intent 可以启动哪些组件。</li>
+<li><strong>其他配置</strong>: 如硬件特性、最小 SDK 版本、目标 SDK 版本等。</li>
+</ul>
+<figure class="highlight xml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">manifest</span> <span class="attr">xmlns:android</span>=<span class="string">"http://schemas.android.com/apk/res/android"</span></span></span><br><span class="line"><span class="tag">    <span class="attr">package</span>=<span class="string">"com.example.myapp"</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">application</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:allowBackup</span>=<span class="string">"true"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:icon</span>=<span class="string">"@mipmap/ic_launcher"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:label</span>=<span class="string">"@string/app_name"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:roundIcon</span>=<span class="string">"@mipmap/ic_launcher_round"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:supportsRtl</span>=<span class="string">"true"</span></span></span><br><span class="line"><span class="tag">        <span class="attr">android:theme</span>=<span class="string">"@style/AppTheme"</span>&gt;</span></span><br><span class="line">        </span><br><span class="line">        <span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">".MainActivity"</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.MAIN"</span> /&gt;</span></span><br><span class="line">                <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.LAUNCHER"</span> /&gt;</span></span><br><span class="line">            <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br><span class="line">        </span><br><span class="line">    <span class="tag">&lt;/<span class="name">application</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-permission</span> <span class="attr">android:name</span>=<span class="string">"android.permission.INTERNET"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">uses-permission</span> <span class="attr">android:name</span>=<span class="string">"android.permission.ACCESS_NETWORK_STATE"</span> /&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;/<span class="name">manifest</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+<p><code>MainActivity</code> 是 Android 应用的主入口点，通常是用户启动应用时首先看到的界面。在 Unity 中，<code>MainActivity</code> 通常由 Unity 自动生成和管理，但你可以通过自定义 <code>MainActivity</code> 来扩展其功能。</p>
+<h4 id="activity属性">activity属性</h4>
+<p>在 <code>AndroidManifest.xml</code> 文件中，<code>&lt;activity&gt;</code> 元素用于声明应用中的一个活动（Activity）。活动是 Android 应用的基本组件之一，通常表示一个单独的用户界面屏幕。每个活动都需要在 <code>AndroidManifest.xml</code> 文件中进行声明，以便系统知道它的存在，并能够正确地启动和管理它。</p>
+<h5 id="android-name">android:name</h5>
+<p>指定活动的类名。可以是全限定类名（例如 <code>com.example.myapp.MainActivity</code>），也可以是相对类名（例如 <code>.MainActivity</code>），相对类名会自动解析为应用包名下的类。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity android:name=".MainActivity" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="android-label">android:label</h5>
+<p>指定活动的标签，通常用于显示在用户界面上，例如在任务管理器中显示的活动名称。可以直接指定字符串，也可以引用资源文件中的字符串。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity android:label="@string/app_name" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="android-theme">android:theme</h5>
+<p>指定活动的主题，覆盖应用的全局主题。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity android:theme="@style/CustomTheme" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="android-configChanges">android:configChanges</h5>
+<p>指定活动在配置变化（如屏幕旋转、语言更改）时不重新创建，而是调用 <code>onConfigurationChanged</code> 方法。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity android:configChanges="orientation|screenSize" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="android-launchMode">android:launchMode</h5>
+<p>指定活动的启动模式，控制活动在任务栈中的行为。常见的值包括：</p>
+<ul>
+<li><code>standard</code>: 默认模式，每次启动活动都会创建一个新的实例。</li>
+<li><code>singleTop</code>: 如果活动已经位于任务栈的顶部，则重用该实例，否则创建新的实例。</li>
+<li><code>singleTask</code>: 如果活动已经存在于任务栈中，则重用该实例，并清除其上的所有活动。</li>
+<li><code>singleInstance</code>: 创建一个单独的任务栈来管理该活动的实例。</li>
+</ul>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity android:launchMode="singleTop" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="Intent-Filter">Intent Filter</h5>
+<p><code>&lt;intent-filter&gt;</code> 元素用于声明活动可以响应的 Intent。它包含 <code>&lt;action&gt;</code> 和 <code>&lt;category&gt;</code> 元素，用于指定活动可以处理的操作和类别。</p>
+<h5 id="action"><action></action></h5>
+<p>指定活动可以处理的操作。常见的操作包括 <code>android.intent.action.MAIN</code>（主入口）和 <code>android.intent.action.VIEW</code>（查看操作）。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;action android:name="android.intent.action.MAIN" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="category"><category></category></h5>
+<p>指定活动的类别。常见的类别包括 <code>android.intent.category.LAUNCHER</code>（启动器）和 <code>android.intent.category.DEFAULT</code>（默认类别）。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;category android:name="android.intent.category.LAUNCHER" /&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h5 id="示例">示例</h5>
+<p>以下是一个完整的 <code>&lt;activity&gt;</code> 元素示例，展示了如何声明一个主活动，并配置其标签、主题、启动模式和 Intent 过滤器：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">&lt;activity</span><br><span class="line">    android:name=".MainActivity"</span><br><span class="line">    android:label="@string/app_name"</span><br><span class="line">    android:theme="@style/CustomTheme"</span><br><span class="line">    android:launchMode="singleTop"</span><br><span class="line">    android:configChanges="orientation|screenSize"&gt;</span><br><span class="line">    &lt;intent-filter&gt;</span><br><span class="line">        &lt;action android:name="android.intent.action.MAIN" /&gt;</span><br><span class="line">        &lt;category android:name="android.intent.category.LAUNCHER" /&gt;</span><br><span class="line">    &lt;/intent-filter&gt;</span><br><span class="line">&lt;/activity&gt;</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="自定义-MainActivity">自定义 MainActivity</h4>
+<p>如果你需要自定义 <code>MainActivity</code>，可以在 <code>Assets/Plugins/Android</code> 目录下创建一个自定义的 <code>MainActivity</code> 类，并在 <code>AndroidManifest.xml</code> 中引用它。</p>
+<figure class="highlight java"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> com.example.myapp;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> android.os.Bundle;</span><br><span class="line"><span class="keyword">import</span> com.unity3d.player.UnityPlayerActivity;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MainActivity</span> <span class="keyword">extends</span> <span class="title class_">UnityPlayerActivity</span> {</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">onCreate</span><span class="params">(Bundle savedInstanceState)</span> {</span><br><span class="line">        <span class="built_in">super</span>.onCreate(savedInstanceState);</span><br><span class="line">        <span class="comment">// 在这里添加你的自定义代码</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在 <code>AndroidManifest.xml</code> 中引用自定义的 <code>MainActivity</code>：</p>
+<figure class="highlight xml"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">activity</span> <span class="attr">android:name</span>=<span class="string">"com.example.myapp.MainActivity"</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">intent-filter</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">action</span> <span class="attr">android:name</span>=<span class="string">"android.intent.action.MAIN"</span> /&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">category</span> <span class="attr">android:name</span>=<span class="string">"android.intent.category.LAUNCHER"</span> /&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">intent-filter</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">activity</span>&gt;</span></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="Unity-与-Android-的集成">Unity 与 Android 的集成</h3>
+<ul>
+<li><strong>自动生成</strong>: Unity 在构建 Android 项目时，会自动生成 <code>AndroidManifest.xml</code> 和 <code>MainActivity</code> 文件。如果你不需要自定义这些文件，Unity 会使用默认配置。</li>
+<li><strong>自定义</strong>: 如果你需要自定义 <code>AndroidManifest.xml</code> 或 <code>MainActivity</code>，可以在 <code>Assets/Plugins/Android</code> 目录下创建这些文件。Unity 会在构建时使用你提供的自定义文件。</li>
+</ul>
+<h3 id="常见用途">常见用途</h3>
+<ul>
+<li><strong>添加权限</strong>: 在 <code>AndroidManifest.xml</code> 中添加应用需要的权限。</li>
+<li><strong>自定义启动界面</strong>: 通过自定义 <code>MainActivity</code>，你可以在应用启动时执行特定的操作，如显示启动画面、初始化第三方 SDK 等。</li>
+<li><strong>配置应用特性</strong>: 在 <code>AndroidManifest.xml</code> 中配置应用的特性，如支持的屏幕方向、硬件特性等。</li>
+</ul>
+<h2 id="Gradle">Gradle</h2>
+<p><strong>Gradle</strong> 是一个开源的构建自动化工具，专门用于项目的构建、依赖管理和部署。它是Android项目的默认构建工具。</p>
+<p>我们经常看到的各种以gradle作为后缀的文件就是Gradle的描述文件</p>
+<ul>
+<li>
+<p><strong>用途</strong>: 用于自动化构建过程，包括编译代码、打包APK、运行测试、管理依赖等。</p>
+</li>
+<li>
+<p>特点</p>
+<ul>
+<li><strong>灵活性</strong>: 支持多种语言和平台，具有高度的可配置性。</li>
+<li><strong>依赖管理</strong>: 通过Maven或Ivy仓库管理项目依赖。</li>
+<li><strong>插件系统</strong>: 通过插件扩展功能，如Android插件、Java插件等。</li>
+</ul>
+</li>
+</ul>
+<h3 id="android属性">android属性</h3>
+<p>在 Gradle 构建系统中，<code>android</code> 属性块是用于配置 Android 项目的核心部分。它定义了项目的基本信息、构建类型、产品风味、签名配置等。以下是对 <code>android</code> 属性块的详细解释和示例：</p>
+<p><code>android</code> 属性块通常位于项目的 <code>build.gradle</code> 文件中，通常是模块级别的 <code>build.gradle</code> 文件（例如 <code>app/build.gradle</code>）。</p>
+<figure class="highlight gradle"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">android {</span><br><span class="line">    <span class="comment">// 配置 Android 项目的基本信息</span></span><br><span class="line">    compileSdkVersion <span class="number">30</span></span><br><span class="line">    defaultConfig {</span><br><span class="line">        applicationId <span class="string">"com.example.myapp"</span></span><br><span class="line">        minSdkVersion <span class="number">16</span></span><br><span class="line">        targetSdkVersion <span class="number">30</span></span><br><span class="line">        versionCode <span class="number">1</span></span><br><span class="line">        versionName <span class="string">"1.0"</span></span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 配置构建类型</span></span><br><span class="line">    buildTypes {</span><br><span class="line">        release {</span><br><span class="line">            minifyEnabled <span class="keyword">false</span></span><br><span class="line">            proguardFiles getDefaultProguardFile(<span class="string">'proguard-android-optimize.txt'</span>), <span class="string">'proguard-rules.pro'</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 配置产品风味</span></span><br><span class="line">    flavorDimensions <span class="string">"version"</span></span><br><span class="line">    productFlavors {</span><br><span class="line">        free {</span><br><span class="line">            dimension <span class="string">"version"</span></span><br><span class="line">            applicationIdSuffix <span class="string">".free"</span></span><br><span class="line">            versionNameSuffix <span class="string">"-free"</span></span><br><span class="line">        }</span><br><span class="line">        paid {</span><br><span class="line">            dimension <span class="string">"version"</span></span><br><span class="line">            applicationIdSuffix <span class="string">".paid"</span></span><br><span class="line">            versionNameSuffix <span class="string">"-paid"</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 配置签名</span></span><br><span class="line">    signingConfigs {</span><br><span class="line">        release {</span><br><span class="line">            keyAlias <span class="string">'myKeyAlias'</span></span><br><span class="line">            keyPassword <span class="string">'myKeyPassword'</span></span><br><span class="line">            storeFile <span class="keyword">file</span>(<span class="string">'myKeystore.jks'</span>)</span><br><span class="line">            storePassword <span class="string">'myStorePassword'</span></span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 其他配置</span></span><br><span class="line">    buildFeatures {</span><br><span class="line">        viewBinding <span class="keyword">true</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="NDK-Native-Development-Kit">NDK (Native Development Kit)</h2>
+<p><strong>NDK</strong> 是本地开发工具包，允许开发者使用C和C++编写Android应用程序的部分代码。NDK提供了编译本地代码的工具和库。</p>
+<ul>
+<li>
+<p><strong>用途</strong>: 用于编写高性能的本地代码，如游戏引擎、图像处理、音频处理等。</p>
+</li>
+<li>
+<p>组成</p>
+<ul>
+<li><strong>编译工具链</strong>: 如GCC或Clang编译器，用于编译C/C++代码。</li>
+<li><strong>本地库</strong>: 提供了Android平台的本地API，如OpenGL、OpenSL ES等。</li>
+<li><strong>构建工具</strong>: 如ndk-build、CMake等，用于构建本地代码。</li>
+</ul>
+</li>
+</ul>
+<h1>常见问题</h1>
+<h2 id="Could-not-determine-the-dependencies-of-task-‘-unityLibrary-compileReleaseJavaWithJavac’">Could not determine the dependencies of task ‘:unityLibrary:compileReleaseJavaWithJavac’.</h2>
+<p>一般而言下一行就会说明具体的报错原因，搜索解决即可</p>
+<p>如果显示Cannot query the value of this provider because it has no value available.，那么就需要注意在gradle文件中定义的<code>compileSdkVersion &amp;&amp; buildToolsVersion</code>对应的<code>SDK Platform &amp;&amp; Build-Tools</code>版本版本是否已经通过SDK Manager下载（建议通过Android Studio拉起并下载）</p>
+<p>如果确定都已下载，则尝试将版本调整为一致，例如compileSdkVersion为34，buildToolsVersion也调整34.0.0</p>
+<p>如果还不行，就需要挨个版本调整并尝试Build，直到可以正常出包，和算命一样的</p>
+<p>一般而言即可解决</p>
+<h2 id="Plugin-with-id-‘com-xxx-xxx’-not-found">Plugin with id ‘<a target="_blank" rel="noopener" href="http://com.xxx.xxx">com.xxx.xxx</a>’ not found</h2>
+<p>一般而言都是缺少了依赖<br>
+在settingsTemplate.gradle文件里的buildscript中添加对应classpath依赖即可，例如</p>
+<figure class="highlight cmd"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">buildscript {</span><br><span class="line">    repositories {</span><br><span class="line">        google()</span><br><span class="line">        jcenter()</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    dependencies {</span><br><span class="line">        classpath 'com.xxx.xxx:<span class="number">4</span>.<span class="number">3</span>.<span class="number">3</span>'</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h1>总结</h1>
+<p>大家可以看到，SDK接入过程中有茫茫多的配置需要留意，稍不留神就会给出完全不相干的报错，让人摸不到头脑</p>
+<p>如果从报错看不出任何信息，不妨尝试提高或降低compileSdkVersion的版本，往往能解决问题</p>
+<p>祝大家在安卓算命届有自己的一席之地</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/android-sdk-total/">https://www.lfzxb.top/android-sdk-total/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Android/">Android</a><a class="post-meta__tags" href="/tags/SDK/">SDK</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/projects-texel-density/" title="ProjectS中的纹素密度规划"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202410020056284.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">ProjectS中的纹素密度规划</div></div><div class="info-2"><div class="info-item-1">很长一段时间里，我都对游戏中各种贴图的分辨率规范认知处于一种混沌的状态，比如离镜头远的给1024分辨率，离镜头近的给2048分辨率，大物体给2048分辨率，小物体给512分辨率等等，也就是纯凭感觉，虽然不科学，但it works！ 直到某天刷知乎看到了关于此类问题的讨论和技术分享，方才恍然大悟  浅谈容易被忽视的纹素密度（Texel Density) 我该给一个3D物体用多大的贴图？——游戏工程中快速确定物体贴图分辨率的实践方法  本篇文章是对ProjectS中纹素密度选择的过程总结，以及相关工具分享 Mipmap验证工具制作 源代码来自我该给一个3D物体用多大的贴图？——游戏工程中快速确定物体贴图分辨率的实践方法，做了一些优化整理 内容也很简单，就是手动将对应分辨率的基元mipmap写入纹理中，具体优化为：  支持0-7级的mipmap指定，生成对应的纹理，实际上7级的时候纹理大小已经来到8192分辨率了，再高也没必要  0代表只生成一张64分辨率的纹理，仅有mip0 1代表生成一张128分辨率的纹理，mip1为64 2代表生成一张256分辨率的纹理，mip1为128，mip2...</div></div></div></a><a class="pagination-related" href="/zzz-yihuan-to-furture-of-acgn/" title="截至《绝区零》来聊聊二次元游戏的未来"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202407220025147.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">截至《绝区零》来聊聊二次元游戏的未来</div></div><div class="info-2"><div class="info-item-1">序 今年来的主流二次元游戏属实给了我很多惊喜，先是鸣潮，后是绝区零，还有前些天的异环 那么为什么这篇文章是截至绝区零呢？因为在我看来，绝区零是一个相当具有里程碑意义的作品。 画风 冷色调才能接住更深刻成熟的故事 崩坏三于2016.10公测，那年我17岁，匆匆玩过，只觉得动画小人跳来跳去的挺有意思，但也仅此而已，过于可爱和幼态的画风让我对游戏内的各种日常提不起兴趣  2017年的夏天，我接触了《Fate Stay Night》，忽然明白这种赛璐璐+真实感+冷色调的二次元画风才能承担的起那些相对严肃，成熟的故事，倘若把Fate的画风换成崩坏三那种清新，明艳的，即便是HF线中黑Saber对士郎说出“士郎，我是第一次，如此恨你”的时候，我想我也会相当出戏，因为明艳的画风让我感觉这是在过家家，没有生离死别的氛围感。  对于这一点，我在看过《86不存在的战区》之后更加深信不疑 直到今年，距离2016年，跨越了整整8个年头，我也来到25岁这个分水岭一般的年纪，也更加喜欢偏成熟，严肃的作品，因为相比于欢快，明艳的作品，它们能带给我更多的思考和感动 期间《原神》，《幻塔》，《星穹铁道》，《鸣潮》等...</div></div></div></a></nav><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">基础概念</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#JDK-Java-Development-Kit"><span class="toc-number">1.1.</span> <span class="toc-text">JDK (Java Development Kit)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#OpenJDK"><span class="toc-number">1.1.1.</span> <span class="toc-text">OpenJDK</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SDK-Software-Development-Kit"><span class="toc-number">1.2.</span> <span class="toc-text">SDK (Software Development Kit)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SDK-Platform"><span class="toc-number">1.2.1.</span> <span class="toc-text">SDK Platform</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SDK-Tools"><span class="toc-number">1.2.2.</span> <span class="toc-text">SDK Tools</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SDK-Manager"><span class="toc-number">1.2.3.</span> <span class="toc-text">SDK Manager</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#compileSdkVersion-buildToolsVersion"><span class="toc-number">1.2.4.</span> <span class="toc-text">compileSdkVersion &amp;&amp; buildToolsVersion</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AndroidManifest-xml-MainActivity-java"><span class="toc-number">1.3.</span> <span class="toc-text">AndroidManifest.xml &amp;&amp; MainActivity.java</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%BB%E8%A6%81%E5%86%85%E5%AE%B9%E5%92%8C%E7%94%A8%E9%80%94"><span class="toc-number">1.3.0.1.</span> <span class="toc-text">主要内容和用途</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#activity%E5%B1%9E%E6%80%A7"><span class="toc-number">1.3.0.2.</span> <span class="toc-text">activity属性</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#android-name"><span class="toc-number">1.3.0.2.1.</span> <span class="toc-text">android:name</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#android-label"><span class="toc-number">1.3.0.2.2.</span> <span class="toc-text">android:label</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#android-theme"><span class="toc-number">1.3.0.2.3.</span> <span class="toc-text">android:theme</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#android-configChanges"><span class="toc-number">1.3.0.2.4.</span> <span class="toc-text">android:configChanges</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#android-launchMode"><span class="toc-number">1.3.0.2.5.</span> <span class="toc-text">android:launchMode</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#Intent-Filter"><span class="toc-number">1.3.0.2.6.</span> <span class="toc-text">Intent Filter</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#action"><span class="toc-number">1.3.0.2.7.</span> <span class="toc-text"></span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#category"><span class="toc-number">1.3.0.2.8.</span> <span class="toc-text"></span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E7%A4%BA%E4%BE%8B"><span class="toc-number">1.3.0.2.9.</span> <span class="toc-text">示例</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89-MainActivity"><span class="toc-number">1.3.0.3.</span> <span class="toc-text">自定义 MainActivity</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unity-%E4%B8%8E-Android-%E7%9A%84%E9%9B%86%E6%88%90"><span class="toc-number">1.3.1.</span> <span class="toc-text">Unity 与 Android 的集成</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E7%94%A8%E9%80%94"><span class="toc-number">1.3.2.</span> <span class="toc-text">常见用途</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Gradle"><span class="toc-number">1.4.</span> <span class="toc-text">Gradle</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#android%E5%B1%9E%E6%80%A7"><span class="toc-number">1.4.1.</span> <span class="toc-text">android属性</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NDK-Native-Development-Kit"><span class="toc-number">1.5.</span> <span class="toc-text">NDK (Native Development Kit)</span></a></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Could-not-determine-the-dependencies-of-task-%E2%80%98-unityLibrary-compileReleaseJavaWithJavac%E2%80%99"><span class="toc-number">2.1.</span> <span class="toc-text">Could not determine the dependencies of task ‘:unityLibrary:compileReleaseJavaWithJavac’.</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Plugin-with-id-%E2%80%98com-xxx-xxx%E2%80%99-not-found"><span class="toc-number">2.2.</span> <span class="toc-text">Plugin with id ‘com.xxx.xxx’ not found</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'bd221ff40dd14490563dab721b683a57'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>（译）Terrain Rendering in Far Cry 5 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文是对https://www.gdcvault.com/play/1025480/Terrain-Rendering-in-Far-Cry 进行的中文翻译，翻译动机是PPT涵括了ProjectS的GPU Driven系统所有功能模块，需要学习下工业流程 大纲  地形渲染：渲染地形，将部分转移到GPU管线中  基础知识 GPU管线   着色：对上一步渲染的地形进行着色 悬崖着色：针对悬崖做的着色方">
+<meta property="og:type" content="article">
+<meta property="og:title" content="（译）Terrain Rendering in Far Cry 5">
+<meta property="og:url" content="https://www.lfzxb.top/terrain-rendering-in-far-cry5/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文是对https://www.gdcvault.com/play/1025480/Terrain-Rendering-in-Far-Cry 进行的中文翻译，翻译动机是PPT涵括了ProjectS的GPU Driven系统所有功能模块，需要学习下工业流程 大纲  地形渲染：渲染地形，将部分转移到GPU管线中  基础知识 GPU管线   着色：对上一步渲染的地形进行着色 悬崖着色：针对悬崖做的着色方">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272208173.png">
+<meta property="article:published_time" content="2023-05-27T00:00:00.000Z">
+<meta property="article:modified_time" content="2023-05-27T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GPU Driven">
+<meta property="article:tag" content="Terrain Render">
+<meta property="article:tag" content="GDC">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272208173.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "（译）Terrain Rendering in Far Cry 5",
+  "url": "https://www.lfzxb.top/terrain-rendering-in-far-cry5/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272208173.png",
+  "datePublished": "2023-05-27T00:00:00.000Z",
+  "dateModified": "2023-05-27T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/terrain-rendering-in-far-cry5/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '（译）Terrain Rendering in Far Cry 5',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272208173.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">（译）Terrain Rendering in Far Cry 5</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">（译）Terrain Rendering in Far Cry 5</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-05-27T00:00:00.000Z" title="发表于 2023-05-27 00:00:00">2023-05-27</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-05-27T00:00:00.000Z" title="更新于 2023-05-27 00:00:00">2023-05-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/GPU-Driven/">GPU Driven</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/terrain-rendering-in-far-cry5/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2023-05-27 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>本文是对<a target="_blank" rel="noopener" href="https://www.gdcvault.com/play/1025480/Terrain-Rendering-in-Far-Cry">https://www.gdcvault.com/play/1025480/Terrain-Rendering-in-Far-Cry</a> 进行的中文翻译，翻译动机是PPT涵括了<a href="https://www.lfzxb.top/projects-gpu-driven/">ProjectS的GPU Driven系统</a>所有功能模块，需要学习下工业流程</p>
+<h1>大纲</h1>
+<ul>
+<li>地形渲染：渲染地形，将部分转移到GPU管线中
+<ul>
+<li>基础知识</li>
+<li>GPU管线</li>
+</ul>
+</li>
+<li>着色：对上一步渲染的地形进行着色</li>
+<li>悬崖着色：针对悬崖做的着色方案和优化</li>
+<li>高级地形：将基础地形和其他几何结合</li>
+<li>屏幕空间着色：在一个屏幕空间的Pass对地形进行着色</li>
+<li>基于地形的特效：使用GPU上的地形数据来增强对其他资产的渲染，如树木、草和岩石</li>
+</ul>
+<h1>地形渲染</h1>
+<h2 id="地形渲染基础">地形渲染基础</h2>
+<h3 id="流程概述">流程概述</h3>
+<p>一个简单且GPU友好的方式来渲染一个小区域的地形步骤如下：</p>
+<p>首先渲染一个Mesh，作为地形的最小单位。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272217351.png" alt="image-20230527221722318" loading='lazy'></p>
+<p>在VS中采样高度图，来改变顶点位置</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272219232.png" alt="image-20230527221916197" loading='lazy'></p>
+<p>使用一张albedo贴图在PS中进行着色，作为地形基础色</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272219208.png" alt="image-20230527221947169" loading='lazy'></p>
+<p>计算光照时再用一张normal贴图</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272220557.png" alt="法线图预览" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272221868.png" alt="最终效果" loading='lazy'></p>
+<p>使用四叉树来划分地形区域，整个世界构成item粒度从小到大依次为（LOD0）：</p>
+<ul>
+<li>Patch（Tile）：单个Grid，原分辨率<code>16*16</code>，0.5m为单位</li>
+<li>Node：四叉树节点，由<code>8*8 = 64</code>个Patch组成</li>
+<li>Sector：构成地形的区块，<code>64m*64m</code>，在LOD0时，正好对应一个Node，对应64个Patch</li>
+<li>World：整个地形，<code>160*160</code>个Sector，共计<code>10km*10km</code></li>
+<li>Terrain Resolution：地形分辨率，以0.5m为单位来确定地形信息</li>
+</ul>
+<p>但这数以百万计的Tile不能直接被渲染，否则性能太差了，所以需要LOD，我们把2km*2km的Tile作为最低的LOD等级（值越大，LOD等级越低，LOD5 &lt; LOD0），依据地块距离玩家的距离进行LOD等级的递减，这样最终渲染的时候，只需要渲染几百个Tile即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272223170.png" alt="image-20230527222305137" loading='lazy'></p>
+<p>所以我们的世界是由成千上万个四叉树节点组成的。每个四叉树节点携带的信息如下：</p>
+<ul>
+<li>高度图，R16_UNORM，<code>129x129</code></li>
+<li>世界空间的法线图，可以认为z为正，并且同时把光滑度信息（smoothess）以及高光遮蔽信息（specular occlusion计算AO）压缩进去（PS：不太懂这是什么神奇原理），以获取更加写实的效果，BC3，<code>132x132</code></li>
+<li>Albedo基础色，使用1bit深度的Alpha通道，用于记录哪些地方被挖洞，BC1 <code>132x132</code></li>
+</ul>
+<p>当然还会存一些其他的贴图信息，稍后会讲解。</p>
+<p>当我们加载一个四叉树节点时，这些贴图会被加载到Texture Altases（TextureArray）中，这意味着在知道所有四叉树节点的引用的贴图在Texture Atlases中的位置情况下， 我们可以得到所有贴图数据</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272231307.png" alt="image-20230527223152276" loading='lazy'></p>
+<p>下面是地形渲染的具体流程</p>
+<ol>
+<li>对四叉树数据做流式传输</li>
+<li>每帧遍历更新的四叉树，并选中合适的四叉树节点</li>
+<li>在提交地形Patch组进行渲染之前，对每个视图的渲染阶段进行剔除和批处理</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272311289.png" alt="image-20230527231121263" loading='lazy'></p>
+<h3 id="流式四叉树">流式四叉树</h3>
+<p>距离玩家最近的LOD等级最高，优先加载</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280819644.png" alt="红色代表LOD0，每个格子是LOD单位" loading='lazy'></p>
+<p>下一个等级的LOD1覆盖范围将会是LOD0的两倍左右</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280822200.png" alt="image-20230528082200174" loading='lazy'></p>
+<p>最低等级的LOD会覆盖整个地形，会保持常驻</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280822419.png" alt="image-20230528082232393" loading='lazy'></p>
+<p>结合起来就象是这样</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280822085.png" alt="image-20230528082254057" loading='lazy'></p>
+<p>但是因为我们是流式异步传输的，所以任何节点的状态都可能是为完成的，所以在应用的时候可能会变成这样</p>
+<p>为了方便演示，这里只演示了3级LOD，实际上FarCry5使用了6级LOD，也就对应6级四叉树节点</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280823814.png" alt="image-20230528082353784" loading='lazy'></p>
+<h3 id="遍历四叉树">遍历四叉树</h3>
+<p>一个节点需要被渲染需要满足以下条件</p>
+<p>从根节点遍历整个四叉树，并且当一个节点所有子节点都被加载，且想要增加这个节点的细节等级时，需要细分节点</p>
+<p>如果按照上述规则处理的话，我们最终得到的四叉树是这样</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280828558.png" alt="image-20230528082816533" loading='lazy'></p>
+<p>此外，我们只想渲染在相机内可见的节点，那么四叉树会变成这样</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280829753.png" alt="image-20230528082917727" loading='lazy'></p>
+<h3 id="不同节点等级使用不同shader进行着色">不同节点等级使用不同shader进行着色</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280830955.png" alt="需要注意的是，即使不在同一等级的LOD，也会因为Shader Group的划分策略而使用同一种Shader" loading='lazy'></p>
+<h2 id="GPU管线">GPU管线</h2>
+<p>上述流程很多部分可以让GPU去运算</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280833729.png" alt="重CPU" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280833601.png" alt="重GPU" loading='lazy'></p>
+<p>将这套流程转换到GPU的动机如下</p>
+<ul>
+<li>这些数据只被GPU使用</li>
+<li>减少CPU消耗</li>
+<li>减少GPU消耗
+<ul>
+<li>因为可以通过四叉树提前完成最大程度的顶点剔除，从而避免可能的顶点带宽Bound，最终提高性能</li>
+</ul>
+</li>
+<li>在GPU数据结构中拥有很多地形数据的好处是，其余需要访问地形数据的模块会更加方便，例如GI，Instance（草，树，岩石等），Shader</li>
+</ul>
+<p>但需要注意的是，我们在CPU端仍然有一些地形的数据结构，他被用于Gameplay，例如判断地形高度和材质查询</p>
+<h3 id="GPU数据结构">GPU数据结构</h3>
+<ul>
+<li>地形四叉树
+<ul>
+<li>常驻的，在加载/卸载节点的时候会进行更新</li>
+</ul>
+</li>
+<li>地形节点列表
+<ul>
+<li>这些节点产生于四叉树的遍历行为</li>
+<li>每帧只Build一次</li>
+</ul>
+</li>
+<li>地形LOD Map
+<ul>
+<li>LOD几何体被用于世界中每个Sector上</li>
+<li>每帧从地形节点列表Build一次</li>
+</ul>
+</li>
+<li>可见的渲染Patch列表
+<ul>
+<li>裁剪后的节点列表，最终用于渲染</li>
+<li>每帧Build一次</li>
+</ul>
+</li>
+</ul>
+<h4 id="地形四叉树">地形四叉树</h4>
+<p>地形四叉树模块由两个GPU对象构成</p>
+<ul>
+<li>四叉树纹理，被手动mip用于索引四叉树节点（<code>PS：其实这倒不是必须的，只要有个机制能完成四叉树节点到Node Description Buff的映射即可</code>）</li>
+<li>NodeDescription Buffer，存储当前帧加载的节点</li>
+</ul>
+<p>首先我们有一个手动分级（mipmap）的纹理，在Mip0是160x160的，并且6个四叉树节点等级都有一个不同的miplevel，这样一来，四叉树中每个节点都可以在这个纹理中找到对应纹素</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280850788.png" alt="image-20230528085022760" loading='lazy'></p>
+<p>这个纹理是16bit(UINT)深度的单通道的，用于索引NodeDescription Buffer中的节点，每个节点信息有最高，最低的地形高度，以及其使用的贴图Id</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305280922409.png" alt="image-20230528092210375" loading='lazy'></p>
+<h4 id="地形节点列表">地形节点列表</h4>
+<p>即上一步提到的NodeDescription Buffer，是四叉树中所有节点的列表，其内容通过每帧遍历四叉树进行更新，可以通过Compute Shader计算每个LOD等级的节点信息，并进行填充</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281241025.png" alt="image-20230528124150003" loading='lazy'></p>
+<p>下面是具体的处理细节</p>
+<p>先从最低级的LOD开始，把所有节点填充到一个Temp Buffer A中</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281243633.png" alt="image-20230528124324604" loading='lazy'></p>
+<p>然后我们会对这些节点进行细分，读取原来的Temp Buffer A，并将其输出为两个Buffer，一个是Temp Buffer B，另一个是Final Result Buffer</p>
+<p>对于Temp Buffer A中的每个节点，我们会判断其是否会被细分</p>
+<ul>
+<li>如果会，我们将会将细分的子节点加入Temp Buffer B中</li>
+<li>如果不会，则直接将节点加入Final Result Buffer</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281301308.png" alt="image-20230528130127277" loading='lazy'></p>
+<p>红框节点只有右上角的上级LOD被加载，所以不再进行细分，直接加入Final Result Buffer</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281312904.png" alt="image-20230528131245870" loading='lazy'></p>
+<p>红框节点所有节点都被加载了，加入细分列表，准备在下一次处理时进行更细粒度的细分</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281313408.png" alt="image-20230528131337376" loading='lazy'></p>
+<p>红框节点所有节点都被加载了，但我们决定不再继续细分它，因为它已经满足了需求，在Far Cry5中，这个标准是基于地块与相机的距离来处理的，此外，还会考虑每个节点的LOD偏差，来强制使一些地块使用更高级的LOD</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281314881.png" alt="image-20230528131417846" loading='lazy'></p>
+<p>计算完成A缓冲区后，已经得到了两个额外的缓冲区数据，这些数据被用于后续的处理，下一步，我们会将B缓冲区和A缓冲区互换，随后再对B缓冲区进行计算</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281317678.png" alt="image-20230528131715648" loading='lazy'></p>
+<p>重复执行上述操作，即可得到Final Result Buffer</p>
+<h4 id="地形LOD-Map">地形LOD Map</h4>
+<p>每帧都会完全填充一个8bit的RT，它包含了世界中每个Sector的LOD等级信息，我们需要这个信息，只为了一件事，那就是在不同LOD等级的Sector相接处进行缝隙修复，对于不存在地形的区域，存0即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281323119.png" alt="image-20230528132308093" loading='lazy'></p>
+<p>对于内容的填充，我们只需要遍历上一步的地形四叉树列表即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281326557.png" alt="image-20230528132637528" loading='lazy'></p>
+<p>在使用Compute Shader填充LOD Map时，需要使用Sector Count，而不是Node Count作为Thread Count，因为会造成大量数据在一个Thread中被填充，浪费了并行性。举个例子，因为基于NodeCount来处理，在最低级的LOD6上，每个Thread要写入<code>2^6^2 = 32^2</code>个值，而基于Sector Count，再通过地形节点列表拉取数据，可以让每个线程只写入1个数值即可</p>
+<ul>
+<li>Node Count作为Thread count，Thread数量少，单个Thread写入数据多</li>
+<li>Sector Count作为Thread count，Thread数量多，单个Thread写入数据少</li>
+</ul>
+<h4 id="可见的渲染Patch列表">可见的渲染Patch列表</h4>
+<p>它只是一个缓冲区，包含我们想要在DrawInstance中渲染的地形Patch列表。该缓冲区带有一个间接的args缓冲区来驱动绘制调用。Patch结构本身包含世界位置和大小，以及应该采样的地形四叉树纹理的地图集位置。每个Patch都将被渲染为一个16x16的网格（但网格分辨率会根据LOD等级不同而不同，例如LOD0是0.5m，LOD1是1m）。我们将通过获取地形节点列表中的所有四叉树节点来创建Patch列表，将它们分解成更小的Patch，并剔除我们不需要渲染的Patch。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281336147.png" alt="image-20230528133639122" loading='lazy'></p>
+<p>每个节点被细分为8x8个Patch，每个Patch可以当成一个16x16的grids进行渲染，对于每个Patch，我们需要进行以下操作</p>
+<ul>
+<li>相机视锥体剔除</li>
+<li>可见性遮蔽剔除</li>
+<li>背面剔除</li>
+<li>计算并打包LOD数据到Patch Data</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281342773.png" alt="image-20230528134203745" loading='lazy'></p>
+<h3 id="GPU-Culling">GPU Culling</h3>
+<p>遵循<a target="_blank" rel="noopener" href="https://advances.realtimerendering.com/s2015/aaltonenhaar_siggraph2015_combined_final_footer_220dpi.pptx">Advances in Real-TimeRendering in Games</a>的做法，使用子分辨率的保守深度缓冲区来对地形几何进行裁剪，生成深度缓冲区的不同miplevel，用以不同大小的对象对比深度</p>
+<p>在剔除Pass里，我们会做以下操作</p>
+<ul>
+<li>获取地形Patch包围盒</li>
+<li>找到他们在屏幕上的投影区域</li>
+<li>在mip中找到一个或多个覆盖了此区域的</li>
+<li>进行深度测试并保守剔除</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281357489.png" alt="image-20230528135720461" loading='lazy'></p>
+<h3 id="背面剔除">背面剔除</h3>
+<p>接下来，我们将删除任何可以被背面剔除的Patch，因为它们所有的面背对摄像机，没有被渲染的必要。</p>
+<p>这要求我们在离线数据构建步骤中构建和存储关于每个Patch的信息。在这个离线步骤中，我们找到一个Patch中每个三角形的世界空间法线。然后我们找到一个球体上包含所有这些法线的最小圆，我们可以把它想象成一个圆锥。我们将一个节点中每个8x8 Patch的锥体存储为8x8纹理的texel。纹理在锥体的中心保持法线，以及由锥体对应的半角。参见寻找法线的最小边界球。我们使用BC3纹理来存储法线和角度。法线存储在两个颜色通道中，而sin（角度）存储在alpha通道中。这可能会导致精度问题，所以我们必须允许一些不利因素进行保守测试。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281401257.png" alt="image-20230528140113226" loading='lazy'></p>
+<p>在运行时，我们对Patch锥纹理贴图进行采样，并对摄像机方向进行测试，看看是否可以剔除补丁。请参见[Shirmun]关于此技术的原始描述。不幸的是，它没有想象的仅仅是一个dot计算那么简单，因为相机锥体投射出的射线在整个Patch中都不同。为了保守一些，我们需要根据相机的方向检查到Patch的边界框的每个角落</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281403183.png" alt="image-20230528140305154" loading='lazy'></p>
+<h3 id="LOD转换">LOD转换</h3>
+<p>每个Patch都存储一个打包的LOD信息。是16位的：对于4个方向，每个方向用4个bit来标识LOD差值</p>
+<p>在Culling过程中，我们通过采样每个Patch周围的LOD图来填充这个值。此值稍后将在顶点着色器中读取，以缝合网格。</p>
+<p>例如，这里我们看到一个Patch，它位于角落或LOD发生变化的Sector。我们上面的LOD delta为1。右边的LOD delta为2。左边和下面可能在同一个Sector中，所以没有LOD差值</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281404203.png" alt="image-20230528140416175" loading='lazy'></p>
+<h3 id="整个GPU管线耗时">整个GPU管线耗时</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281409965.png" alt="image-20230528140913936" loading='lazy'></p>
+<h3 id="顶点着色">顶点着色</h3>
+<p>我们使用一个DrawInstancedIndirect来渲染这些Patch，顶点的位置来自Patch信息，顶点高度来自高度图采样，我们需要处理mesh接缝以及挖洞情况</p>
+<h4 id="LOD-Mesh接缝">LOD Mesh接缝</h4>
+<p>当两个相邻的Patch位于不同LOD的Node中时，我们需要确保所有顶点都进行缝合，这样就不会看到不同LOD之间的接缝问题了</p>
+<p>通过读取在筛选过程中创建的LOD打包数据，我们知道一个补丁连接到较低LOD补丁。在顶点着色器中，我们可以简单地将Patch边缘的顶点变形为所需的细分级别上最近的顶点。这里我们看到一个LOD偏差，所以我们焊接每对顶点。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281439434.gif!webp" alt="the-last" loading='lazy'></p>
+<h3 id="地形孔洞">地形孔洞</h3>
+<p>我们保存地形空洞到一个1bit的BC1 alpha albedo贴图上</p>
+<p>我们可以使用在投影位置返回NaN的技巧，在顶点着色器中挑选顶点。输出投影位置的NaN并没有在图形api中特别记录，但所有的GPU硬件似乎都支持这一点。与使用像素着色器丢弃或为带有孔的Patch构建独特的几何图形相比，这是非常简单和廉价的。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281442611.png" alt="image-20230528144201574" loading='lazy'></p>
+<p>剔除一个顶点将会同时剔除与其相连的顶点，这使得一个孔的分辨率只能是地形分辨率的一半。但是我们的平面设计师可以在他们的半米地形上开1米的洞。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281444441.png" alt="image-20230528144438416" loading='lazy'></p>
+<h1>着色</h1>
+<h2 id="地形着色">地形着色</h2>
+<p>地形有了，现在我们该对它进行着色了，<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=JIQ_YVwUONA&amp;pp=ygUaIEdob3N0IFJlY29uIFdpbGRsYW5kcyBHREM%3D">幽灵荒野行动GDC</a>，这里会做一个简短的总结</p>
+<p>请记住，每个四叉树节点都携带一个纹理索引。我们已经提及了高度图，法线图，Albedo。还有：</p>
+<ul>
+<li>Patch Cone纹理（用于我们前面提及的背面剔除）</li>
+<li>Color modulation纹理</li>
+<li>Splat图</li>
+</ul>
+<p>正如我提到的，这些纹理在运行时都被加载到图集中。完整格式细节是：</p>
+<ul>
+<li>高度图（R16_UNORM，129x129）</li>
+<li>世界空间法线图（我们可以假设正z也包平滑和镜面遮挡）（BC3 132x132）</li>
+<li>Albedo图（BC1 132x132）</li>
+<li>Color modulation（BC1 132x132）</li>
+<li>Splat图（R8_UNORM 65x65）</li>
+<li>Patch Cone（BC3 8x8）</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305281453614.png" alt="image-20230528145331583" loading='lazy'></p>
+<p>远的着色可以直接使用Albedo图/法线图。对于近处的着色，我们需要使用splat映射。</p>
+<p>这个splat纹理是一个8位格式的纹理，索引了我们绘制到世界中的地表材质</p>
+<p>splat纹理可以引用256种材质，尽管在《孤岛惊魂5》上，我们实际上只有~150的地形材质。</p>
+<p>材质包含对存储在纹理数组中的一组细节纹理的索引。我们有3个典型的PBR纹理类型的数组，并且纹理是动态流式的，因为它们是被splat映射引用的。</p>
+<p>该材质还包含一组参数，定义方向/瓷砖/地形是否可以燃烧等。</p>
+<p>细节纹理的分辨率：</p>
+<ul>
+<li>Albedo（BC1,1024x1024）</li>
+<li>法线/平滑度/镜面遮挡（BC3,1024x1024）</li>
+<li>高度/颜色Mask（BC1,512x512）</li>
+</ul>
+<p>注意，由于内存限制，每个细节纹理类型中只有32个可以一次加载到内存中（~70MB的内存）。四叉树引用的纹理的流由我们的流依赖系统处理。但是世界建设团队必须小心地管理每个生物群落的材质，以保持在他们的32个纹理预算之内。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282007588.png" alt="image-20230528200711550" loading='lazy'></p>
+<p>当我们想渲染一个地形像素时</p>
+<ol>
+<li>获取像素在Tile中的本地坐标。</li>
+<li>使用它来查找splat纹理，以得到我们的材质ID。</li>
+<li>使用材质ID获取材质描述（其中包括要采样的详细纹理）。</li>
+<li>我们使用基于世界坐标的材质平铺和旋转的uv来采样相关的细节纹理。</li>
+<li>这为我们提供了我们可以用于着色的最终材质数据。</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282008450.png" alt="image-20230528200806404" loading='lazy'></p>
+<p>然而，我们的地形位置可能会映射到4个splat纹素的某些点。所以我们需要采样的不是1个，而是4个周围的材质。我们使用由材质的高度进行双线性系数修正在Shader中混合了4个结果，即：</p>
+<p><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mtable rowspacing="0.25em" columnalign="right left" columnspacing="0em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>t</mi><mo stretchy="false">(</mo><mi>u</mi><mo separator="true">,</mo><mi>v</mi><mo stretchy="false">)</mo></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mtext>lerp</mtext><mo fence="true" stretchy="true" minsize="1.2em" maxsize="1.2em">(</mo><mtext>lerp</mtext><mo stretchy="false">(</mo><msub><mi>t</mi><mn>0</mn></msub><mo separator="true">,</mo><msub><mi>t</mi><mn>1</mn></msub><mo separator="true">,</mo><mi>u</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mtext>lerp</mtext><mo stretchy="false">(</mo><msub><mi>t</mi><mn>2</mn></msub><mo separator="true">,</mo><msub><mi>t</mi><mn>3</mn></msub><mo separator="true">,</mo><mi>u</mi><mo stretchy="false">)</mo><mo separator="true">,</mo><mi>v</mi><mo fence="true" stretchy="true" minsize="1.2em" maxsize="1.2em">)</mo></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow></mrow></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="true"><mrow><mrow></mrow><mo>=</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>u</mi><mo stretchy="false">)</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>v</mi><mo stretchy="false">)</mo><msub><mi>t</mi><mn>0</mn></msub><mo>+</mo><mi>u</mi><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>v</mi><mo stretchy="false">)</mo><msub><mi>t</mi><mn>1</mn></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>u</mi><mo stretchy="false">)</mo><mi>v</mi><msub><mi>t</mi><mn>2</mn></msub><mo>+</mo><mi>u</mi><mi>v</mi><msub><mi>t</mi><mn>3</mn></msub></mrow></mstyle></mtd></mtr></mtable><annotation encoding="application/x-tex">\begin{aligned}     t(u, v) &amp;= \text{lerp}\bigl(\text{lerp}(t_0, t_1, u), \text{lerp}(t_2, t_3, u), v\bigr) \\         &amp;= (1-u)(1-v) t_0 + u(1-v) t_1 + (1-u)v t_2 + uv t_3 \end{aligned}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:3.01em;vertical-align:-1.255em;"></span><span class="mord"><span class="mtable"><span class="col-align-r"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.755em;"><span style="top:-3.905em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="mopen">(</span><span class="mord mathnormal">u</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mclose">)</span></span></span><span style="top:-2.405em;"><span class="pstrut" style="height:3em;"></span><span class="mord"></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.255em;"><span></span></span></span></span></span><span class="col-align-l"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.755em;"><span style="top:-3.905em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord text"><span class="mord">lerp</span></span><span class="mopen"><span class="delimsizing size1">(</span></span><span class="mord text"><span class="mord">lerp</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">u</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord text"><span class="mord">lerp</span></span><span class="mopen">(</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal">u</span><span class="mclose">)</span><span class="mpunct">,</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mclose"><span class="delimsizing size1">)</span></span></span></span><span style="top:-2.405em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">u</span><span class="mclose">)</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">u</span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mclose">)</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal">u</span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.03588em;">v</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">2</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathnormal" style="margin-right:0.03588em;">uv</span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3011em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight">3</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.255em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202409170004942.png" alt="Bilinear interpolation of four neighboring texels 来自 https://www.reedbeta.com/blog/quadrilateral-interpolation-part-2/" loading='lazy'></p>
+<p>这意味着每个地形像素需要采样16个纹理，以计算最终的材质结果。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282013987.png" alt="image-20230528201313953" loading='lazy'></p>
+<h2 id="Virtual-Texturing">Virtual Texturing</h2>
+<p>我们可以看到，基于splat映射进行的材质采样是昂贵的。我们可以通过将结果缓存到一个虚拟纹理中来节省一些性能。我们的地形虚拟纹理系统在GDC 2015的<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=SVPMhGteeuE&amp;t=316s&amp;ab_channel=GDC">Far Cry 4自适应虚拟纹理演示</a>中描述过</p>
+<p>虚拟纹理允许我们模拟覆盖了地形的极大的纹理。我们只存储在当前时间需要采样的纹理部分。缓存的纹理数据被存储在物理纹理中的Pages中。如果我们想在一个位置获得地形材质，我们首先在Page Table纹理中查找相应的位置。会返回物理纹理的Page。然后我们对物理纹理进行采样获取最终结果。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282045439.png" alt="image-20230528204552396" loading='lazy'></p>
+<p>这让我们只需要进行4次采样即可完成地形纹素的着色</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282047662.png" alt="image-20230528204715637" loading='lazy'></p>
+<h3 id="虚拟纹理Page渲染">虚拟纹理Page渲染</h3>
+<ul>
+<li>通过Splat纹理进行这些被缓存的纹理Page渲染</li>
+<li>我们每帧渲染6个虚拟纹理Page
+<ul>
+<li>1Page = 256x256纹素 + 4纹素边框</li>
+</ul>
+</li>
+<li>利用Compute Shader将其压缩为BC格式
+<ul>
+<li>2xBC1（Albedo/Smoothness/Specular Occlusion）</li>
+<li>1xBC3（法线贴图）</li>
+</ul>
+</li>
+<li>当渲染下一个Page时，将会异步计算压缩过程</li>
+<li>GPU耗时每帧需要控制在1ms内</li>
+</ul>
+<p>我们总是需要跟踪需要更新的纹理Page。所以当我们渲染地形时，我们也会把请求的页面写给一个绑定的UAV。</p>
+<p>然后，我们读取CPU上请求的页面，以确定下一个要呈现的页面的优先级。</p>
+<p>UAV是1/8大小的RT，以保持CPU读回成本低。我们在64帧里抖动屏幕空间的采样位置，以确保我们随着时间的推移收集所有渲染的Page id。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282053301.png" alt="image-20230528205352273" loading='lazy'></p>
+<p>由于我们使用虚拟纹理，我们可以以很少的额外成本合成多层道路和贴花。您可以在这个屏幕截图中看到可视化的结果。道路贴花在地形纹理上渲染，还有一些其他的贴花效果</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282055645.png" alt="image-20230528205536599" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305282055991.png" alt="image-20230528205543937" loading='lazy'></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/terrain-rendering-in-far-cry5/">https://www.lfzxb.top/terrain-rendering-in-far-cry5/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GPU-Driven/">GPU Driven</a><a class="post-meta__tags" href="/tags/Terrain-Render/">Terrain Render</a><a class="post-meta__tags" href="/tags/GDC/">GDC</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202305272208173.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/diablo_4/" title="《暗黑破坏神4》游玩有感"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202306120010941.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">《暗黑破坏神4》游玩有感</div></div><div class="info-2"><div class="info-item-1">还是最喜欢这个拜念三归，地狱的压迫感拉满！   最近玩了暗黑破坏神4，感触颇多 技能Build 技能Build其实没什么好说的，依旧是基础技能+符文系统完善Build，但相较于恐怖黎明的星座，流放之路的技能树+升华，暗黑4的理解成本和玩家友好程度更加出色。它的巅峰系统居然是可以旋转的。。。，这意味着玩家可以不用太过拘泥于设计好的巅峰树，而是能最大限度地按照自己的意愿去体验整个系统 之前在内测时体验过所有角色，感觉到暗黑4是想让玩家尽可能的把手参与到战斗中，而不是进个图，几个buff一加，技能一开，直接跑跑跑完事，虽然说增加了一些上手难度，但确实是能让玩家更用心的去体验战斗的刺激。很合我胃口，毕竟我玩剑圣的，哈哈（顺带吐槽，狗曰的一如既往对平A近战不友好，各种暴毙 玩了这么多暗黑Like作品，技能流派来来回回就那么回事，什么双持+AOE剑圣，大风车，召唤平推流，万剑齐发。。。其实这类游戏发展到这种地步，Build上很难再做出让人眼前一亮的设计了，就像LOL最近新出的英雄，就是基于各种技能元素，缝来缝去，然后得到一个全新风格的英雄，不是说不好，反而是相当健康的一种发展模式，能让玩家在...</div></div></div></a><a class="pagination-related" href="/projects-gpu-driven/" title="ProjectS中的GPU Driven"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">ProjectS中的GPU Driven</div></div><div class="info-2"><div class="info-item-1">架构 前阵子敲定了ProjectS GI方案的大体架构，但只对着那几个Cube可看不出落地效果，也没法做针对性的优化，所以准备启动地形相关的开发工作 立项之时就考虑到美术成本问题，所以采用程序化生成作为构建ProjectS世界的主要手段，程序化生成意味着大量重复instance和大地形，这时候就得利用GPU Driven来作为整个PCG系统的底层支柱之一了，我们常说的GPU Driven包括以下几个方面 地形渲染 制作  Houdini 生成高度图+Mask VS 直接生成Mesh  Houdini生成高度图+Mask方案对于Houdini来说更加轻量，不需要处理地形Mesh 直接生成最终Mesh可以离线对Mesh做处理，包括岩壁重展UV，LOD计算等 但对于ProjectS来说，没有太特殊的需求对Mesh做处理，一些岩壁拉伸问题也可以通过处理贴图渲染进行解决，最终选用高度图方案    渲染  DrawInstanceIndirectly通用Quad Mesh + LOD + 高度图采样 实现地形渲染 VS Mesh Cluster Rendering + LOD 实现地形渲染 ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/adaptive-virtual-texture-rendering-in-far-cry-4/" title="Adaptive Virtual Texture Rendering in Far Cry 4"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250130155113039.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-01-31</div><div class="info-item-2">Adaptive Virtual Texture Rendering in Far Cry 4</div></div><div class="info-2"><div class="info-item-1">差不多该动手实现ProjectS中地形的RVT了，所以整理一波学习资料，依旧是以FarCry为主体 注意本文中同样的词汇在不同上下文中有不同的意思，以RVT为例，在Procedural Virtual Textures部分，RVT代表Procedural Virtual Textures，但在Adaptive Virtual Textures部分，RVT则代表Adaptive Virtual Textures，基于历史发展，简单排列下术语  VT：Virtual Texture，包含SVT（Mega-Texture），RVT（Procedural Virtual Textures，经典RVT），AVT（Adaptive Virtual Textures，Far Cry4提出的改良版RVT） Page：VT的其中一部分，其实叫Tile会更加合理一些，可以理解为VT是由一个个Page组成的，也是我们渲染到RT上的最小单位 Indirection Texture：VT和真实RT映射表，也叫Page Table Physical Texture Cache：最终用于渲染的的RenderT...</div></div></div></a><a class="pagination-related" href="/ghost-recon-wildlands-terrain-technology-and-tools/" title="（译）Ghost Recon Wildlands Terrain Technology And Tools"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202405102201618.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-09-16</div><div class="info-item-2">（译）Ghost Recon Wildlands Terrain Technology And Tools</div></div><div class="info-2"><div class="info-item-1">本文是对https://www.gdcvault.com/play/1024029/-Ghost-Recon-Wildlands-Terrain 进行的中文翻译  大纲 《幽灵行动：荒野》是育碧迄今为止制作的最大动作冒险开放世界游戏，32km x 32km 游戏设定在玻利维亚，我们在游戏中有很多多样性，11 个完全不同的生物群落 湖泊、河流和溪流覆盖了 16 平方公里的表面 道路：超过 600 公里的道路，甚至更多的小径 一条贯穿整个游戏世界的完整铁路网络 游戏中有 200 多个特定位置：营地、地标、前哨站和 58 个完全程序生成的村庄  第一个原型 地形工具 地形渲染的所有细节 程序化工具  第一个原型 https://vimeo.com/207479227 《幽灵行动：未来战士》之后，我们开始尝试更大的地形。 使用真实世界数据，我们使用世界机器优化了 DEM 文件。然后使用 Houdini 创建了一些工具来：   自动创建具有 LOD 的tile网格。   定义一种splat mask，根据坡度、海拔、粗糙度和来自 worldMachine 的其他mask（如flowmap）...</div></div></div></a><a class="pagination-related" href="/projects-terrian-pcg/" title="ProjectS中的地形系统-Procedural Content Generation（PCG）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-06-23</div><div class="info-item-2">ProjectS中的地形系统-Procedural Content Generation（PCG）</div></div><div class="info-2"><div class="info-item-1">本篇文章是对ProjectS中地形PCG模块的总结，可能需要一些前置知识，可以前往本文的 参考 部分进行相关引用 先明确下项目需求  20km x 20km的世界大小 大多数地貌为起伏幅度较小的平原 需要分tile编辑，预览 需要导出LOD高度图 支持植被和物件Instance的纹理生成和手工修改 需要一个工具统筹管理整个PCG管线，并实时查看每一步的结果  最终选择Houdini作为目标软件，因为Houdini作为一款相当成熟的PCG向的DCC软件，提供了相当多地形创建，编辑和工作流工具，应对我这个个人项目的简单地形PCG工作自然不成问题 项目概览 项目结构如下：   terrian_pdg：地形PDG模块，组织整个地形的PCG流程 terrian_sop：地形PCG中用到的所有SOP集合，大部分都导出成了HDA，供PDG使用  PDG流程 我在学习和解构一个对象的时候习惯从宏观看起，大概掌握每个环节的功能，有个全局的概念，再看具体细节的时候不会有一头雾水的感觉，所以我们从PDG开始看起  整个流程非常的直观  创建地形骨架 拆分地形 根据地形编号查找hda文件，如果存在则进行...</div></div></div></a><a class="pagination-related" href="/projects-terrian-rendering/" title="ProjectS中的地形系统-Terrian Rendering"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202403020046066.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-03-02</div><div class="info-item-2">ProjectS中的地形系统-Terrian Rendering</div></div><div class="info-2"><div class="info-item-1">地形系统思路来自 ProjectS中的GPU Driven 架构 首先明确ProjectS的世界大小，目前暂定整个世界面积为 20.48km * 20.48km ，实际上可以再大很多，但考虑到资源量级以及对于世界内容的填充需要颇费心思，暂定这么大了  既然地形分了LOD，那么纹理自然也要根据LOD进行区分  LOD0的Node对应的纹理信息（高度纹理，Material Id纹理等）分辨率为128*128，覆盖区域为64m*64m即一个纹素对应0.5m，已经很可以了，再高点画质就要比原神好了 LOD1的Node纹理分辨率为128*128，但覆盖区域为128m*128m LOD2的Node纹理分辨率为128*128，覆盖区域为256m*256m LOD3的Node纹理分辨率为128*128，覆盖区域为512m*512m LOD4的Node纹理分辨率为128*128，覆盖区域为1024m*1024m LOD5的Node纹理分辨率为128*128，覆盖区域为2048m*2048m  这也就意味着我们需要对整个世界做六种不同覆盖区域的纹理，可以理解为Mipmap，不同的LOD Node采样...</div></div></div></a><a class="pagination-related" href="/projects-terrian-shading/" title="ProjectS中的地形系统-Terrian Shading（Material Id）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202410061425447.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-10-05</div><div class="info-item-2">ProjectS中的地形系统-Terrian Shading（Material Id）</div></div><div class="info-2"><div class="info-item-1">地形系统思路来自 ProjectS中的GPU Driven 前言 再来回顾下传统地表材质与我们定好的方案之间的对比：  传统Weight Blend方案：通过纹理 + Mask图实现多纹理混合渲染  每多一张纹理贴图，就要多一份遮罩数据。 由于每点的mask总和为1，所以改变一层需要动到其他所有层的数据，耦合度太高，不方面大规模修改迭代。 编辑器在处理edit layer时，由于需要全局的归一化操作，所以会让上层的layer表现非常奇怪。 随着edit layer的增加，内存和操作延时也会是个问题。 渲染时由于每个地块使用的weightmap各不相同，所以加大了合批处理的难度。   Material Id方案：确保每个点只有一种纹理贴图的情况下，通过一张Material Id图控制，最后通过双线性插值混合平滑，这里的材质不是指材质球，而是指一个数据结构，其中包含材质参数，贴图索引以及其他信息  优点是这张MaterialId，它相当于一个间接的索引，每个值表示一张纹理图。8位的单通道materialID图就足以支持超过200种纹理图。它的大小可控，不会随着纹理数量的增加而增加。同...</div></div></div></a><a class="pagination-related" href="/projects-gpu-driven/" title="ProjectS中的GPU Driven"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-05-22</div><div class="info-item-2">ProjectS中的GPU Driven</div></div><div class="info-2"><div class="info-item-1">架构 前阵子敲定了ProjectS GI方案的大体架构，但只对着那几个Cube可看不出落地效果，也没法做针对性的优化，所以准备启动地形相关的开发工作 立项之时就考虑到美术成本问题，所以采用程序化生成作为构建ProjectS世界的主要手段，程序化生成意味着大量重复instance和大地形，这时候就得利用GPU Driven来作为整个PCG系统的底层支柱之一了，我们常说的GPU Driven包括以下几个方面 地形渲染 制作  Houdini 生成高度图+Mask VS 直接生成Mesh  Houdini生成高度图+Mask方案对于Houdini来说更加轻量，不需要处理地形Mesh 直接生成最终Mesh可以离线对Mesh做处理，包括岩壁重展UV，LOD计算等 但对于ProjectS来说，没有太特殊的需求对Mesh做处理，一些岩壁拉伸问题也可以通过处理贴图渲染进行解决，最终选用高度图方案    渲染  DrawInstanceIndirectly通用Quad Mesh + LOD + 高度图采样 实现地形渲染 VS Mesh Cluster Rendering + LOD 实现地形渲染 ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">大纲</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">地形渲染</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E6%B8%B2%E6%9F%93%E5%9F%BA%E7%A1%80"><span class="toc-number">2.1.</span> <span class="toc-text">地形渲染基础</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B%E6%A6%82%E8%BF%B0"><span class="toc-number">2.1.1.</span> <span class="toc-text">流程概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%81%E5%BC%8F%E5%9B%9B%E5%8F%89%E6%A0%91"><span class="toc-number">2.1.2.</span> <span class="toc-text">流式四叉树</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%81%8D%E5%8E%86%E5%9B%9B%E5%8F%89%E6%A0%91"><span class="toc-number">2.1.3.</span> <span class="toc-text">遍历四叉树</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8D%E5%90%8C%E8%8A%82%E7%82%B9%E7%AD%89%E7%BA%A7%E4%BD%BF%E7%94%A8%E4%B8%8D%E5%90%8Cshader%E8%BF%9B%E8%A1%8C%E7%9D%80%E8%89%B2"><span class="toc-number">2.1.4.</span> <span class="toc-text">不同节点等级使用不同shader进行着色</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GPU%E7%AE%A1%E7%BA%BF"><span class="toc-number">2.2.</span> <span class="toc-text">GPU管线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GPU%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84"><span class="toc-number">2.2.1.</span> <span class="toc-text">GPU数据结构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E5%9B%9B%E5%8F%89%E6%A0%91"><span class="toc-number">2.2.1.1.</span> <span class="toc-text">地形四叉树</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E8%8A%82%E7%82%B9%E5%88%97%E8%A1%A8"><span class="toc-number">2.2.1.2.</span> <span class="toc-text">地形节点列表</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2LOD-Map"><span class="toc-number">2.2.1.3.</span> <span class="toc-text">地形LOD Map</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8F%AF%E8%A7%81%E7%9A%84%E6%B8%B2%E6%9F%93Patch%E5%88%97%E8%A1%A8"><span class="toc-number">2.2.1.4.</span> <span class="toc-text">可见的渲染Patch列表</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#GPU-Culling"><span class="toc-number">2.2.2.</span> <span class="toc-text">GPU Culling</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%83%8C%E9%9D%A2%E5%89%94%E9%99%A4"><span class="toc-number">2.2.3.</span> <span class="toc-text">背面剔除</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#LOD%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.2.4.</span> <span class="toc-text">LOD转换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B4%E4%B8%AAGPU%E7%AE%A1%E7%BA%BF%E8%80%97%E6%97%B6"><span class="toc-number">2.2.5.</span> <span class="toc-text">整个GPU管线耗时</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2"><span class="toc-number">2.2.6.</span> <span class="toc-text">顶点着色</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#LOD-Mesh%E6%8E%A5%E7%BC%9D"><span class="toc-number">2.2.6.1.</span> <span class="toc-text">LOD Mesh接缝</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E5%AD%94%E6%B4%9E"><span class="toc-number">2.2.7.</span> <span class="toc-text">地形孔洞</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">着色</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E7%9D%80%E8%89%B2"><span class="toc-number">3.1.</span> <span class="toc-text">地形着色</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Virtual-Texturing"><span class="toc-number">3.2.</span> <span class="toc-text">Virtual Texturing</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%99%9A%E6%8B%9F%E7%BA%B9%E7%90%86Page%E6%B8%B2%E6%9F%93"><span class="toc-number">3.2.1.</span> <span class="toc-text">虚拟纹理Page渲染</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'dd309e4b9470165e203747d96cbb3d06'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

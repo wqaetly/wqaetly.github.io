@@ -1,0 +1,352 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>《守望先锋》GDC2017技术分享精粹重制版总目录 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《守望先锋》GDC2017技术分享精粹重制版总目录">
+<meta property="og:url" content="https://www.lfzxb.top/ow-gdc-share-table-of-contents/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp">
+<meta property="article:published_time" content="2021-02-26T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-02-01T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="网络同步">
+<meta property="article:tag" content="文献翻译">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="GDC分享">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "《守望先锋》GDC2017技术分享精粹重制版总目录",
+  "url": "https://www.lfzxb.top/ow-gdc-share-table-of-contents/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp",
+  "datePublished": "2021-02-26T00:00:00.000Z",
+  "dateModified": "2022-02-01T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/ow-gdc-share-table-of-contents/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '《守望先锋》GDC2017技术分享精粹重制版总目录',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">《守望先锋》GDC2017技术分享精粹重制版总目录</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">《守望先锋》GDC2017技术分享精粹重制版总目录</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-26T00:00:00.000Z" title="发表于 2021-02-26 00:00:00">2021-02-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-02-01T00:00:00.000Z" title="更新于 2022-02-01 00:00:00">2022-02-01</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">271</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>1分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/ow-gdc-share-table-of-contents/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2022-02-01 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><div class="note info modern"><p>本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括</p>
+</div>
+<p>《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。</p>
+<p>重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和技能系统PDF，一些必要的地方我录制了Gif图，方便观看。</p>
+<h2 id="《守望先锋》GDC-2017技术分享视频内容大纲"><a href="https://www.lfzxb.top/ow-gdc-leading-principles">《守望先锋》GDC 2017技术分享视频内容大纲</a></h2>
+<h2 id="《守望先锋》架构设计和网络同步"><a href="https://www.lfzxb.top/ow-gdc-gameplay-architecture-and-netcode/">《守望先锋》架构设计和网络同步</a></h2>
+<h3 id="原视频链接"><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC">原视频链接</a></h3>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/W3aieHjyNvw" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<h2 id="《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现"><a href="https://www.lfzxb.top/ow-gdc-replay/">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</a></h2>
+<h3 id="原视频链接-2"><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=W4oZq4tn57w&amp;ab_channel=GDC">原视频链接</a></h3>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/W4oZq4tn57w" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<h2 id="《守望先锋》网络脚本化的武器和技能系统"><a href="https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/">《守望先锋》网络脚本化的武器和技能系统</a></h2>
+<h3 id="原视频链接-3"><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC">原视频链接</a></h3>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/ScyZjcjTlA4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/ow-gdc-share-table-of-contents/">https://www.lfzxb.top/ow-gdc-share-table-of-contents/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/">网络同步</a><a class="post-meta__tags" href="/tags/%E6%96%87%E7%8C%AE%E7%BF%BB%E8%AF%91/">文献翻译</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/GDC%E5%88%86%E4%BA%AB/">GDC分享</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/srp-batcher-speed-up-your-rendering/" title="(译)SRP Batcher Speed up your rendering!"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">(译)SRP Batcher Speed up your rendering!</div></div><div class="info-2"><div class="info-item-1">推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频： https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/ 本文翻译自：SRP Batcher: Speed up your rendering! 和 https://docs.unity3d.com/Manual/SRPBatcher.html  在2018，我们介绍了一个被称为SRP的高度自定义的渲染技术，一个被称为SRP Batcher新的引擎底层Loop就是这个技术的一部分，SRP Batcher可以在渲染时加速你的CPU 1.2到4倍（这取决于你的场景）。让我们看看如何这个功能的最佳实践吧！   上面那个视频显示了Unity渲染时最坏的一个场景：每个对象都是动态的，并且使用不同的材质（材质的颜色或者贴图等属性不同），所以尽管非常多相同的Mesh，但是在渲染时每个Mesh都会被当成不同的Mesh进行渲染（所以无法使用GPU Instance优化技术）。这个场景使用SRP Batcher在PS4平台上可以加速4倍（这个视频是PC的，渲染API是DX11） 注意...</div></div></div></a><a class="pagination-related" href="/ow-gdc-weapon-and-skillsystem/" title="《守望先锋》网络脚本化的武器和技能系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">《守望先锋》网络脚本化的武器和技能系统</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原PDF链接：本文部分图片如果想查看高清大图，可前往 《守望先锋》中网络脚本化的武器和技能系统 PDF 下载PDF 原视频链接：https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC  嗨，大家好，我叫 Dan Reed, 是暴雪娱乐的游戏工程师（gameplay engineer，译注：游戏机制工程师，或者游戏工程师，都可以），今天主要跟大家分享《守望先锋》（后面统一用Overwatch表示）中的网络脚本化的武器和技能系统。 那么这里先简单介绍下我在Overwatch中的主要工作。   Statescript脚本系统，这也是今...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/ow-gdc-leading-principles/" title="《守望先锋》GDC 2017技术分享视频内容大纲"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20220201204924.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-01</div><div class="info-item-2">《守望先锋》GDC 2017技术分享视频内容大纲</div></div><div class="info-2"><div class="info-item-1">前言 最近开坑了一个状态帧同步战斗系统视频教程，总共有5个视频  其中第一个和最后一个都好说，我自己乱吹就可以了，但是中间三个重量级比较难处理，我的计划是实时录制原GDC视频 + 分享自己的理解和思路，原视频的平均时长都在一个小时左右，如果直接莽上去很有可能在讲解的时候思路断掉，所以我需要针对他们梳理出一个大纲来理清楚讲解思路，顺带方便大家自己在学习守望先锋GDC视频的时候有针对性的去了解自己需要了解的部分。 《守望先锋》架构设计和网络同步 原视频链接  视频内容大纲 00 : 00 - 1 : 00 ：守望先锋游戏与开发团队介绍 1 : 00 - 7 : 15：ECS概念介绍与守望先锋中使用ECS的示例 7 : 15 - 8 : 07：ECS VS OOP，核心问题还是庞大工程中引用和解耦问题。传统OOP中，抛开常知的继承炼狱问题不谈，一个类既是数据又是逻辑，那么当一个类会与多个不同的类进行交互的时候，就会面对如何拆解数据和逻辑提供给相对应的类的问题，如果选择不拆，那么就需要面对越来越庞大的类，如果拆了，那么一些只有其他类才需要用到的数据和逻辑就应当被其他类在Update或者其...</div></div></div></a><a class="pagination-related" href="/ow-gdc-gameplay-architecture-and-netcode/" title="《守望先锋》架构设计和网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907113243.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-25</div><div class="info-item-2">《守望先锋》架构设计和网络同步</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC  ECS ECS概述 哈喽，大家好，这次的分享是关于《守望先锋》（译注：下文统一简称为Overwatch）游戏架构设计和网络部分。老规矩，手机调成静音；离开时记得填写调查问卷；换下半藏，赶紧推车！（众笑） 我是Tim Ford，是暴雪公司Overwatch开发团队老大。自从2013年夏季项目启动以来就在这个团队了。在那之前，我在《Titan》项目组，不过这次分享跟Titan没有半毛钱关系。（众笑） 这次分享的一些技术，是用来降低不停增长的...</div></div></div></a><a class="pagination-related" href="/ow-gdc-replay/" title="《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-24</div><div class="info-item-2">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W4oZq4tn57w&amp;ab_channel=GDC  设计目标 那么回放系统的概要设计(high level design)目标是什么呢？  这次分享的标题就预示着必须给出答案，对吧？概要需求是创建一个单一的中央系统，能够支持阵亡镜头、全场最佳和亮眼表现，除此之外我们还特别需要能够生成录像文件，在开发期间可以用来做内部调试。 下面开始深入介绍每个议题。 每次玩家死亡时，游戏里就会显示临死前几秒钟的――大部分情况是以凶手（killer）视角来看的――死因及死亡过程。阵亡镜头可以帮助玩家理解他们是怎么死的，以及为什么...</div></div></div></a><a class="pagination-related" href="/ow-gdc-weapon-and-skillsystem/" title="《守望先锋》网络脚本化的武器和技能系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-25</div><div class="info-item-2">《守望先锋》网络脚本化的武器和技能系统</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原PDF链接：本文部分图片如果想查看高清大图，可前往 《守望先锋》中网络脚本化的武器和技能系统 PDF 下载PDF 原视频链接：https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC  嗨，大家好，我叫 Dan Reed, 是暴雪娱乐的游戏工程师（gameplay engineer，译注：游戏机制工程师，或者游戏工程师，都可以），今天主要跟大家分享《守望先锋》（后面统一用Overwatch表示）中的网络脚本化的武器和技能系统。 那么这里先简单介绍下我在Overwatch中的主要工作。   Statescript脚本系统，这也是今...</div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/context-steering-behavior-driven-steering-at-the-macro-scale/" title="（译）上下文转向行为驱动的AI移动策略（Context Steering）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-02-02</div><div class="info-item-2">（译）上下文转向行为驱动的AI移动策略（Context Steering）</div></div><div class="info-2"><div class="info-item-1">本文是对GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale 进行的中文翻译 译文 介绍 在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。 然而，转向行为并不适合用于某些类型的游戏。当玩家能够挑选并监控单个实体时，避免碰撞和自然的移动就变得非常重要。为了实现这一目标可能会导致行为组件的膨胀并变得紧耦合，实体运动逻辑也会变得脆弱和难以维护。 在本章中，我们将概述如何识别那些转向行为不太适合的游戏，并提出一种针对这些问题的新方法，它被称之为上下文转向行为（Context Steering）。上下文转向行为（Context Steering Monobehaviours）是小巧的和无状态的（StateLess），并提供任何行为本身所期望的运动约束。当上下文转向行为用于取代游戏F1 2011上的原转向行为时，代码库减少了4000行，但AI在避免碰撞、超车和执行其他有趣的行为方面表现得...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E3%80%8A%E5%AE%88%E6%9C%9B%E5%85%88%E9%94%8B%E3%80%8BGDC-2017%E6%8A%80%E6%9C%AF%E5%88%86%E4%BA%AB%E8%A7%86%E9%A2%91%E5%86%85%E5%AE%B9%E5%A4%A7%E7%BA%B2"><span class="toc-number">1.</span> <span class="toc-text">《守望先锋》GDC 2017技术分享视频内容大纲</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E3%80%8A%E5%AE%88%E6%9C%9B%E5%85%88%E9%94%8B%E3%80%8B%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E5%92%8C%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5"><span class="toc-number">2.</span> <span class="toc-text">《守望先锋》架构设计和网络同步</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E8%A7%86%E9%A2%91%E9%93%BE%E6%8E%A5"><span class="toc-number">2.1.</span> <span class="toc-text">原视频链接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E3%80%8A%E5%AE%88%E6%9C%9B%E5%85%88%E9%94%8B%E3%80%8B%E5%9B%9E%E6%94%BE%E6%8A%80%E6%9C%AF-%E9%98%B5%E4%BA%A1%E9%95%9C%E5%A4%B4%E3%80%81%E5%85%A8%E5%9C%BA%E6%9C%80%E4%BD%B3%E5%92%8C%E4%BA%AE%E7%9C%BC%E8%A1%A8%E7%8E%B0"><span class="toc-number">3.</span> <span class="toc-text">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E8%A7%86%E9%A2%91%E9%93%BE%E6%8E%A5-2"><span class="toc-number">3.1.</span> <span class="toc-text">原视频链接</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E3%80%8A%E5%AE%88%E6%9C%9B%E5%85%88%E9%94%8B%E3%80%8B%E7%BD%91%E7%BB%9C%E8%84%9A%E6%9C%AC%E5%8C%96%E7%9A%84%E6%AD%A6%E5%99%A8%E5%92%8C%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F"><span class="toc-number">4.</span> <span class="toc-text">《守望先锋》网络脚本化的武器和技能系统</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8E%9F%E8%A7%86%E9%A2%91%E9%93%BE%E6%8E%A5-3"><span class="toc-number">4.1.</span> <span class="toc-text">原视频链接</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '9caa41d54b17325e937576db5f7b3fa8'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

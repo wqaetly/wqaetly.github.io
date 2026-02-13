@@ -1,0 +1,466 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity DOTS：ECS拓展内容 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Sync points synchronization poin（sync point）是程序执行中的一个点，它等待到目前为止已调度的所有job的完成。同步点会限制您一段时间内使用Job System中所有可用工作线程的能力。因此，通常应避免同步点。 Structural changes(结构变化) 同步点是由 您在任何其他job正在操作components时不能安全执行自己的操作所引起的。ECS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity DOTS：ECS拓展内容">
+<meta property="og:url" content="https://www.lfzxb.top/unity-dots-extension/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="Sync points synchronization poin（sync point）是程序执行中的一个点，它等待到目前为止已调度的所有job的完成。同步点会限制您一段时间内使用Job System中所有可用工作线程的能力。因此，通常应避免同步点。 Structural changes(结构变化) 同步点是由 您在任何其他job正在操作components时不能安全执行自己的操作所引起的。ECS">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="Unity DOTS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unity DOTS：ECS拓展内容",
+  "url": "https://www.lfzxb.top/unity-dots-extension/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-dots-extension/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity DOTS：ECS拓展内容',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Unity DOTS：ECS拓展内容</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Unity DOTS：ECS拓展内容</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>12分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unity-dots-extension/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>Sync points</h1>
+<p>synchronization poin（sync point）是程序执行中的一个点，它等待到目前为止已调度的所有job的完成。同步点会限制您一段时间内使用Job System中所有可用工作线程的能力。因此，通常应避免同步点。</p>
+<h2 id="Structural-changes-结构变化">Structural changes(结构变化)</h2>
+<p>同步点是由 您在任何其他job正在操作components时不能安全执行自己的操作所引起的。ECS中数据的结构更改是引发Sync points的主要原因。以下所有都是结构上的变化：</p>
+<ul>
+<li>创建entities</li>
+<li>删除entities</li>
+<li>向entity添加component</li>
+<li>从entity中删除component</li>
+<li>更改sharedcomponent的value</li>
+</ul>
+<p>广义上讲，任何更改entity archetype或导致chunk中entities顺序更改的操作都是结构性更改。这些结构更改只能在主线程上执行。</p>
+<p>结构更改不仅需要Sync points，而且还会使对任何component数据的所有直接引用无效。这包括<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.DynamicBuffer-1.html">DynamicBuffer的</a>实例以及提供对component（例如<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.ComponentSystemBase.html#Unity_Entities_ComponentSystemBase_GetComponentDataFromEntity_">ComponentSystemBase.GetComponentDataFromEntity）的</a>直接访问的方法的结果。</p>
+<h2 id="避免Sync-points">避免Sync points</h2>
+<p>您可以使用<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/manual/entity_command_buffer.html">entity command buffers</a>（ECB）将结构更改排入队列，而不是立即执行它们。存储在ECB中的命令可以在该帧的稍后一点执行。当执行ECB时，这会将跨帧分布的多个Sync points减少到单个Sync point。</p>
+<p>每个标准<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.ComponentSystemGroup.html">ComponentSystemGroup</a>实例都提供一个<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.EntityCommandBuffer.html">EntityCommandBufferSystem</a>作为group中更新的第一个和最后一个system。通过从这些标准ECB系统之一获取<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.EntityCommandBuffer.html">ECB</a>对象，组内的所有结构更改都发生在帧中的同一点，从而只会有一个Sync point而不是多个Sync points。ECB还允许您记录job中的结构更改。如果没有ECB，则只能在主线程上进行结构更改。（即使在主线程上，通常也比使用<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.EntityManager.html">EntityManager</a>类本身对结构进行一个接一个的更改更快的在ECB中记录命令然后回放这些命令。）</p>
+<p>如果您不能将<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.EntityCommandBuffer.html">EntityCommandBufferSystem</a>用于任务，请尝试将按system执行顺序进行结构更改的所有systems组合在一起。如果两个system都进行结构更改，则它们只有顺序更新才能产生一个同步点。</p>
+<p>有关使用EntityCommandBuffer和EntityCommandBufferSystem的更多信息，请参见<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/manual/entity_command_buffer.html">Entity Command Buffers</a>。</p>
+<h1>Write groups</h1>
+<p>常见的ECS模式是System读取一组<strong>输入</strong>components并写入另一components作为其<strong>输出</strong>。但是，在某些情况下，您可能要覆盖system的输出，并基于不同的输入集使用不同的system来更新输出components。Write groups为一个system提供了一种覆盖另一个system的机制，还不用更改另一个system。</p>
+<p>目标component类型的write group由ECS应用<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.WriteGroupAttribute.html"><code>WriteGroup</code>attribute</a>的所有其他components类型组成，并以该目标component类型作为参数。作为system创建者，您可以使用write group，以便system用户可以排除system原本会选择和处理的entities。通过这种过滤机制，system用户可以根据自己的逻辑为排除的entities更新component，同时让system在其余components上正常运行。</p>
+<p>要使用write groups，必须在system中的query上使用<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.13/api/Unity.Entities.EntityQueryOptions.html">write group filter option</a>。这会从query中排除所有具有某个component的write group中所有components的entities，这些components在query中被标记为可写。</p>
+<p>要覆盖使用write group的system，请将您自己的component类型标记为该system的输出component类型的write group的一部分。原始system将忽略具有该component的任何entity，您可以使用自己的system更新这些entities的数据。</p>
+<h2 id="Write-groups示例">Write groups示例</h2>
+<p>在此示例中，您使用外部程序包，他的功能是根据游戏中所有角色的健康状况为其进行着色。包中有两个components：<code>HealthComponent</code>和<code>ColorComponent</code>。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> HealthComponent : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> <span class="built_in">int</span> Value;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> ColorComponent : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> float4 Value;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>此外，软件包中有两个systems：</p>
+<ol>
+<li><code>ComputeColorFromHealthSystem</code>，其读取<code>HealthComponent</code>写入<code>ColorComponent</code></li>
+<li><code>RenderWithColorComponent</code>，读<code>ColorComponent</code></li>
+</ol>
+<p>为了表示玩家何时使用充能道具并且他们的角色变得无敌，您可以在角色的entity上附加一个<code>InvincibleTagComponent</code>。在这种情况下，角色的颜色应更改为单独的不同颜色，但是这个功能和上面的包中的功能不兼容。</p>
+<p>您可以创建自己的system来重写该<code>ColorComponent</code>值，但理想<code>ComputeColorFromHealthSystem</code>情况下不会为您的entity计算这个充能之后的无敌颜色，因为它会忽略具有<code>InvincibleTagComponent</code>的任何entity。当屏幕上有成千上万的玩家时，这变得更加关键。这一切的缘由就是这个外来的功能包不知道<code>InvincibleTagComponent</code>的存在导致的。这是Write groups有用的时候。当您知道计算的值将被覆盖时，它使system可以忽略query中的entities。您需要做两件事：</p>
+<ol>
+<li>
+<p><code>InvincibleTagComponent</code>必须标记为<code>ColorComponent</code>的write group的一部分：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">WriteGroup(typeof(ColorComponent))</span>]</span><br><span class="line"><span class="keyword">struct</span> InvincibleTagComponent : IComponentData {}</span><br></pre></td></tr></tbody></table></figure>
+<p><code>ColorComponent</code>的write group由所有具有<code>WriteGroup</code>attribute（参数为<code>typeof(ColorComponent)</code>）的component类型组成。</p>
+</li>
+<li>
+<p><code>ComputeColorFromHealthSystem</code>必须显式支持write groups。为此，system需要<code>EntityQueryOptions.FilterWriteGroup</code>为其所有queries指定options。</p>
+</li>
+</ol>
+<p>您可以这样实现<code>ComputeColorFromHealthSystem</code>：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">...</span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span> {</span><br><span class="line">   Entities</span><br><span class="line">      .WithName(<span class="string">"ComputeColor"</span>)</span><br><span class="line">      .WithEntityQueryOptions(EntityQueryOptions.FilterWriteGroup) <span class="comment">// support write groups</span></span><br><span class="line">      .ForEach((<span class="keyword">ref</span> ColorComponent color, <span class="keyword">in</span> HealthComponent health) =&gt; {</span><br><span class="line">         <span class="comment">// compute color here</span></span><br><span class="line">      }).ScheduleParallel();</span><br><span class="line">}</span><br><span class="line">...</span><br></pre></td></tr></tbody></table></figure>
+<p>执行此job时，将发生以下情况：</p>
+<ol>
+<li>system检测到您写入<code>ColorComponent</code>的内容，因为它是一个按引用传递的参数</li>
+<li>它查找<code>ColorComponent</code>的write group并在其中找到<code>InvincibleTagComponent</code></li>
+<li>它不会包含所有具有<code>InvincibleTagComponent</code>的entities</li>
+</ol>
+<p>好处是，这允许system基于其未知的类型排除entities。</p>
+<p>**注意：**有关更多示例，请参见<code>Unity.Transforms</code>代码，该代码对其更新的每个component（包括）使用write group<code>LocalToWorld</code>。</p>
+<h2 id="创建Write-groups">创建Write groups</h2>
+<p>要创建write group，请将<code>WriteGroup</code>attribute添加到write group中每个component类型的声明中。该<code>WriteGroup</code>attribute有一个参数，这是group中components用来更新的component类型。单个component可以是多个write group的成员。</p>
+<p>例如，如果您有一个只要有component<code>A</code>或<code>B</code>在entity上就写入component<code>W</code>的system，则<code>W</code>可以按以下方式定义write group：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> W : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> <span class="built_in">int</span> Value;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">WriteGroup(typeof(W))</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> A : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> <span class="built_in">int</span> Value;</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">WriteGroup(typeof(W))</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> B : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> <span class="built_in">int</span> Value;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>**注意：**请勿将write group（上面示例中的component<code>W</code>）的目标添加到其本身的write group中。</p>
+<h2 id="启用Write-groups过滤">启用Write groups过滤</h2>
+<p>要启用write group过滤，请在job上设置<code>FilterWriteGroups</code>标志：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AddingSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span> {</span><br><span class="line">      Entities</span><br><span class="line">         .WithEntityQueryOptions(EntityQueryOptions.FilterWriteGroup) </span><br><span class="line">         .ForEach((<span class="keyword">ref</span> W w, <span class="keyword">in</span> B b) =&gt; {</span><br><span class="line">            <span class="comment">// 在这里执行一些计算</span></span><br><span class="line">         }).ScheduleParallel();}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>对于EntityQueryDesc，在创建query时设置标志：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AddingSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">   <span class="keyword">private</span> EntityQuery m_Query;</span><br><span class="line"></span><br><span class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnCreate</span>()</span></span><br><span class="line">   {</span><br><span class="line">       <span class="keyword">var</span> queryDescription = <span class="keyword">new</span> EntityQueryDesc</span><br><span class="line">       {</span><br><span class="line">           All = <span class="keyword">new</span> ComponentType[] {</span><br><span class="line">              ComponentType.ReadWrite&lt;W&gt;(),</span><br><span class="line">              ComponentType.ReadOnly&lt;B&gt;()</span><br><span class="line">           },</span><br><span class="line">           Options = EntityQueryOptions.FilterWriteGroup</span><br><span class="line">       };</span><br><span class="line">       m_Query = GetEntityQuery(queryDescription);</span><br><span class="line">   }</span><br><span class="line">   <span class="comment">// Define IJobChunk struct and schedule...</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在query中启用 write group filtering时，query会将可写组件的writegroup中的所有components添加到<code>None</code>查询列表中，除非您明确将它们添加到<code>All</code>或<code>Any</code>列表中。结果就是，query仅在明确要求特定write group中每个component的情况下才选择该entity。否则，如果entity具有该write group中的一个或多个其他components，则query将不再包含他。</p>
+<p>在上面的示例代码中，query：</p>
+<ul>
+<li>排除任何具有component<code>A</code>的实体，因为它<code>W</code>是可写的，并且<code>A</code>是的write group的一部分<code>W</code>。</li>
+<li>不排除任何具有component<code>B</code>的实体。即使<code>B</code>是<code>W</code> writegroup的一部分，但它在<code>All</code>列表中显式指定了。</li>
+</ul>
+<h2 id="覆盖另一个使用Write-groups的system">覆盖另一个使用Write groups的system</h2>
+<p>如果system在其query中使用write group filter，则可以使用自己的system覆盖该system并写入那些components。要覆盖system，请将您自己的component添加到其他system要写入的component的write group中。由于write group filter排除了query中没有明确要求的write group中的任何component，因此其他system将忽略具有您自定义component的任何entity。</p>
+<p>例如，如果要通过指定旋转的角度和轴来设置entity的方向，则可以创建一个component和一个system，以将角度和轴的值转换为四元数并将其写入到<code>Unity.Transforms.Rotation</code>component中。为了防止<code>Unity.Transforms</code>system更新<code>Rotation</code>，无论您是否拥有其他components，都可以将<code>Rotation</code>component放入以下write group中：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"><span class="keyword">using</span> Unity.Collections;</span><br><span class="line"><span class="keyword">using</span> Unity.Entities;</span><br><span class="line"><span class="keyword">using</span> Unity.Transforms;</span><br><span class="line"><span class="keyword">using</span> Unity.Mathematics;</span><br><span class="line"></span><br><span class="line">[<span class="meta">Serializable</span>]</span><br><span class="line">[<span class="meta">WriteGroup(typeof(Rotation))</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> RotationAngleAxis : IComponentData</span><br><span class="line">{</span><br><span class="line">   <span class="keyword">public</span> <span class="built_in">float</span> Angle;</span><br><span class="line">   <span class="keyword">public</span> float3 Axis;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后，您可以使用该<code>RotationAngleAxis</code>component更新任何entity而不会发生冲突：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> Unity.Burst;</span><br><span class="line"><span class="keyword">using</span> Unity.Entities;</span><br><span class="line"><span class="keyword">using</span> Unity.Jobs;</span><br><span class="line"><span class="keyword">using</span> Unity.Collections;</span><br><span class="line"><span class="keyword">using</span> Unity.Mathematics;</span><br><span class="line"><span class="keyword">using</span> Unity.Transforms;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">RotationAngleAxisSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">   <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">   {</span><br><span class="line">      Entities.ForEach((<span class="keyword">ref</span> Rotation destination, <span class="keyword">in</span> RotationAngleAxis source) =&gt;</span><br><span class="line">      {</span><br><span class="line">         destination.Value </span><br><span class="line">             = quaternion.AxisAngle(math.normalize(source.Axis), source.Angle);</span><br><span class="line">      }).ScheduleParallel();</span><br><span class="line">   }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="扩展使用Write-groups的另一个System">扩展使用Write groups的另一个System</h2>
+<p>如果要扩展另一个System而不是覆盖它，或者要允许将来的system覆盖或扩展系统，则可以在自己的system上启用write group filter。但是，执行此操作时，默认情况下，两个system都不会处理component的任何组合。您必须显式查询和处理每个组合。</p>
+<p>在前面的示例中，它定义了一个write group，其中包含component<code>A</code>，<code>B</code>并且目标组是component <code>W</code>。如果将一个名为<code>C</code>的新component添加到write group，则新system可以查询包含<code>C</code>的entities，它并不关心这些entities是否也具有component<code>A</code>或<code>B</code>。但是，如果新system还启用了write group filter功能，那就不再成立了。如果只需要component<code>C</code>，则write group filter将排除带有<code>A</code>或<code>B</code>的任何entity。您必须显式查询有意义的每种component组合。**注意：**您可以在适当的时候使用查询<code>Any</code>的子句。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> query = <span class="keyword">new</span> EntityQueryDesc</span><br><span class="line">{</span><br><span class="line">    All = <span class="keyword">new</span> ComponentType[] {</span><br><span class="line">       ComponentType.ReadOnly&lt;C&gt;(), </span><br><span class="line">       ComponentType.ReadWrite&lt;W&gt;()</span><br><span class="line">    },</span><br><span class="line">    Any = <span class="keyword">new</span> ComponentType[] {</span><br><span class="line">       ComponentType.ReadOnly&lt;A&gt;(), </span><br><span class="line">       ComponentType.ReadOnly&lt;B&gt;()</span><br><span class="line">    },</span><br><span class="line">    Options = EntityQueryOptions.FilterWriteGroup</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure>
+<p>如果有任何entity包含未明确提及的write group中components的组合，则写入write group目标的system及其过滤器将无法处理它们。但是，如果您拥有任何这些类型的entities，则很可能是程序中的逻辑错误，因此它们不应该存在。</p>
+<h2 id="Write-Group总结">Write Group总结</h2>
+<p>Write Group对于ECS来说，<a target="_blank" rel="noopener" href="http://xn--OOPbase-4t3k1dwmo54afmaj7b3z4f91bi00ee4bc3ac59ryxfoo7gnroba225muh9a4a.XXX">其实就是一个OOP里的虚函数重写时要不要调用base.XXX</a>()的功能</p>
+<h1>版本控制</h1>
+<p>版本号检测潜在的更改。您可以使用它们来实施有效的优化策略，例如，自从应用程序的最后一帧以来数据没有更改时，跳过处理。对entity执行快速版本检查以提高应用程序的性能非常有用。</p>
+<p>本页概述了ECS使用的所有不同版本号，以及导致它们更改的条件。</p>
+<p>所有版本号都是32位有符号整数。它们总是增加，除非它们溢出：有符号整数溢出是C＃中定义的行为。这意味着要比较版本号，应使用<em>等式/不等式运算符，而不是关系运算符(我咋感觉这句话说反了)。</em></p>
+<p>例如，检查VersionB是否比VersionA更新的正确方法是使用以下方法：</p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">bool</span> VersionBIsMoreRecent = (VersionB - VersionA) &gt; <span class="number">0</span>;</span><br></pre></td></tr></tbody></table></figure>
+<p>通常无法保证版本号增加多少。</p>
+<h2 id="EntityId-Version">EntityId.Version</h2>
+<p>一个<code>EntityId</code>由索引和版本号组成。由于ECS会回收索引，因此<code>EntityManager</code>在entity被破坏时它的版本号都会增加。如果在<code>EntityManager</code>中查找<code>EntityId</code>时版本号不匹配，则意味着所引用的entity不再存在。</p>
+<p>例如，在您通过<code>EntityId</code>获取部队正在跟踪的敌人的位置之前，您可以调用<code>ComponentDataFromEntity.Exists</code>。这使用版本号来检查entity是否仍然存在。</p>
+<h2 id="World-Version">World.Version</h2>
+<p>ECS每次创建或销毁管理器（比如system）时，都会增加World的版本号。</p>
+<h2 id="EntityDataManager-GlobalVersion">EntityDataManager.GlobalVersion</h2>
+<p><code>EntityDataManager.GlobalVersion</code> 在每个job component system更新之前增加。</p>
+<p>您应该将此版本号与<code>System.LastSystemVersion</code>结合使用。</p>
+<h2 id="System-LastSystemVersion">System.LastSystemVersion</h2>
+<p><code>System.LastSystemVersion``EntityDataManager.GlobalVersion</code>每次job component system更新后，取的值。</p>
+<p>您应该将此版本号与<code>Chunk.ChangeVersion[]</code>结合使用。</p>
+<h2 id="Chunk-ChangeVersion">Chunk.ChangeVersion</h2>
+<p>对于archetype中的每种component类型，此数组包含该chunk中该component最后一次被访问时可写<code>EntityDataManager.GlobalVersion</code>的值。这并不意味任何内容都已更改，只是说可能已更改。</p>
+<p>即使存储了sharedcomponent的版本号，您也永远无法以可写方式访问它们：所以这并没有什么卵用。</p>
+<p>当您<code>WithChangeFilter()</code>在<code>Entities.ForEach</code>构造中使用该功能时，ECS会将特定component的<code>Chunk.ChangeVersion</code>与<code>System.LastSystemVersion</code>进行比较，并且它仅处理其component数组在system上次开始运行后被访问为可写的chunk。</p>
+<p>例如，如果确保自上一帧以来一组单位的生命值未发生变化，则可以跳过检查这些单位是否应更新其损坏模型的步骤。</p>
+<h2 id="EntityManager-m-ComponentTypeOrderVersion">EntityManager.m_ComponentTypeOrderVersion []</h2>
+<p>对于每种非shared component类型，每当涉及该类型的迭代器无效时，ECS都会增加版本号。也就是，任何可能修改该类型数组的内容（而不是实例）。</p>
+<p>例如，如果您具有特定component标识的静态对象和每个chunk的边界框，则仅当该component的类型顺序版本发生更改时，才需要更新这些边界框。</p>
+<h2 id="SharedComponentDataManager-m-SharedComponentVersion">SharedComponentDataManager.m_SharedComponentVersion []</h2>
+<p>当存储在引用sharedcomponent的chunk中的entity发生任何结构更改时，这些版本号会增加。</p>
+<p>例如，如果您保留每个sharecomponents的entity计数，则可以使用该版本号仅在相应版本号发生更改时重计算每个计数。</p>
+<h1>Job extensions</h1>
+<p>Unity C＃ Jobs System使您可以在多个线程上运行代码。该系统提供调度，并行处理和多线程安全性。Jobs System是Unity的核心模块，提供用于创建和运行job的通用接口和类（无论您是否使用ECS）。</p>
+<p>这些接口包括：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Unity.Jobs.IJob.html">IJob</a>：创建一个可以在由Jobs System scheduler决定的任何线程或核心上运行的job。</li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Unity.Jobs.IJobParallelFor.html">IJobParallelFor</a>：创建一个可以在多个线程上并行运行的作业，以处理<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/JobSystemNativeContainer.html">NativeContainer</a>的元素。</li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Unity.Jobs.IJobExtensions.html">IJobExtensions</a>：提供扩展方法以运行IJobs。</li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Unity.Jobs.IJobParallelForExtensions.html">IJobParalllelForExtensions</a>：提供扩展方法以运行IJobParallelFor job。</li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Unity.Jobs.JobHandle.html">JobHandle</a>：访问job的句柄。您还可以使用<code>JobHandle</code>实例来指定job之间的依赖关系。</li>
+</ul>
+<p>有关Job System的概述，请参见《 Unity用户手册》中的<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/JobSystemSafetySystem.html">C＃Jobs System</a>。</p>
+<p>该<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.jobs@latest">Job Package</a>扩展了Jobs System，以支持ECS。它包含了：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.jobs@latest?preview=1&amp;subfolder=/api/Unity.Jobs.IJobParallelForDeferExtensions.html">IJobParallelForDeferExtensions</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.jobs@latest?preview=1&amp;subfolder=/api/Unity.Jobs.IJobParallelForFilter.html">IJobParallelForFilter</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.jobs@latest?preview=1&amp;subfolder=/api/Unity.Jobs.JobParallelIndexListExtensions.html">JobParallelIndexListExtensions</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.jobs@latest?preview=1&amp;subfolder=/api/Unity.Jobs.JobParallelIndexListExtensions.JobStructProduce-1.html"><code>JobStructProduce&lt;T&gt;</code></a></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-dots-extension/">https://www.lfzxb.top/unity-dots-extension/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/Unity-DOTS/">Unity DOTS</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/unity-dots-part-of-components/" title="Unity DOTS：Components部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Unity DOTS：Components部分</div></div><div class="info-2"><div class="info-item-1">组件 Components是ECS体系结构的三个主要元素之一。它们代表您的游戏或应用程序的数据。Entities是索引您的components集合的标识符，而systems提供了行为。 ECS中的Components是具有以下“标记接口”之一的结构体类型：  IComponentData —用于通用和[chunk components]。 IBufferElementData —将[动态缓冲区（dynamic buffers）]与entities相关联。 ISharedComponentData —按archetype中的值对entities进行分类或分组。有关更多信息，请参见[Shared Component Data]。 ISystemStateComponentData —将特定system的状态与entity相关联，并检测何时创建或销毁单个实体。有关更多信息，请参见System State Component。 ISharedSystemStateComponentData —共享状态和System状态 数据的组合。请参阅System State Component。 B...</div></div></div></a><a class="pagination-related" href="/unity-dots-core-of-ecs/" title="Unity DOTS：ECS的核心部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity DOTS：ECS的核心部分</div></div><div class="info-2"><div class="info-item-1">ECS的概念 实体组件系统（ECS）架构将身份（Entities，实体），数据（Components，组件）和行为（Systems，系统）分开。该架构专注于数据。Systems读取Components数据流，然后将数据从输入状态转换为输出状态，然后对这些实体进行索引。 下图说明了这三个基本部分如何协同工作：  在此图中，系统读取Translation和Rotation部分，将它们相乘，然后更新相应的LocalToWorld成分（L2W = T*R）。 实体A和B具有Renderer组件，而实体C则没有，但是这不会影响系统，因为系统并不关心Renderer组件。 您可以设置一个系统，使其需要一个Renderer组件，在这种情况下，系统将忽略实体C的组件。或者，您也可以设置系统以排除具有Renderer组件的实体，然后忽略实体A和B的组件。 Archetypes(原型) 组件类型的组合称为“原型”。例如，一个3D对象可能具有一个用于其世界变换的组件，一个用于其线性运动的组件，一个用于旋转的组件和一个用于渲染的组件。这些3D对象的每个实例都对应一个实体，但是由于它们共享相同的组件集，因...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/dots-anything-about-isharedcomponent/" title="关于ISharedComponent的一切"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">关于ISharedComponent的一切</div></div><div class="info-2"><div class="info-item-1">前言 ECS中的ISharedComponent是一个非常重要的概念，但是理解起来却不是这么容易，前阵子找到一篇讲ISharedComponent的文章，感觉例子举的很好，讲的也很透彻，故翻译出来分享给大家。 本文翻译自：https://gametorrahod.com/everything-about-isharedcomponentdata/ 正文 这是ECS最容易被误解的功能之一。当您不知道它是如何设计的时候，通常会出现诸如“如何在工作中获取SCD数据？我不能？那有什么卵用！”这样的问题。因此，让我们开始了解它是如何工作的。 数据共享并不那么ECS 众所周知，ECS会紧密排布entity数据成为chunk。同样，高性能C＃（HPC＃）的限制是得确保您没有通往外界的任何“门户”。static无法使用。禁用别名。分析器无法通过公有字段引入job的引用类型。它也不会让您将指针潜入IComponentData其中。另外，存储器必须是线性的。 “共享”的概念听起来根本不像ECS。在ECS中，可以从chunk中获取任何用来工作的数据。您不会在任何地方跳转，这就是“默认情况下的性能”的来...</div></div></div></a><a class="pagination-related" href="/unity-dots-core-of-ecs/" title="Unity DOTS：ECS的核心部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：ECS的核心部分</div></div><div class="info-2"><div class="info-item-1">ECS的概念 实体组件系统（ECS）架构将身份（Entities，实体），数据（Components，组件）和行为（Systems，系统）分开。该架构专注于数据。Systems读取Components数据流，然后将数据从输入状态转换为输出状态，然后对这些实体进行索引。 下图说明了这三个基本部分如何协同工作：  在此图中，系统读取Translation和Rotation部分，将它们相乘，然后更新相应的LocalToWorld成分（L2W = T*R）。 实体A和B具有Renderer组件，而实体C则没有，但是这不会影响系统，因为系统并不关心Renderer组件。 您可以设置一个系统，使其需要一个Renderer组件，在这种情况下，系统将忽略实体C的组件。或者，您也可以设置系统以排除具有Renderer组件的实体，然后忽略实体A和B的组件。 Archetypes(原型) 组件类型的组合称为“原型”。例如，一个3D对象可能具有一个用于其世界变换的组件，一个用于其线性运动的组件，一个用于旋转的组件和一个用于渲染的组件。这些3D对象的每个实例都对应一个实体，但是由于它们共享相同的组件集，因...</div></div></div></a><a class="pagination-related" href="/unity-dots-ecs-burst-complier-jobsystem/" title="Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-13</div><div class="info-item-2">Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.4.13更新，修正了当时因为水平不足而导致的一些错误，拓展了部分内容。  前言 近期想从更深层次上学习ECS，之前一直停留在浅层次的编码模式（即ECS意识流），没有真正的去了解ECS的内部原理，Unity目前在维护一套以ECS为架构开发的DOTS技术栈，非常值得学习。 ECS 什么是ECS ECS即实体（Entity），组件（Component），系统（System），其中Entity，Component皆为纯数据向的类，System负责操控他们，这种模式会一定程度上优化我们的代码速度。  Entities：游戏中的事物，但在ECS中他只作为一个Id Components：与Entity相关的数据，但是这些数据应该由Component本身而不是Entity来组织。（这种组织上的差异正是面向对象和面向数据的设计之间的关键差异之一）。 Systems：Systems是把Components的数据从当前状态转换为下一个状态的逻辑，但System本身应当是无状态的。例如，一个system可能会通过他们的速度乘以从前一帧到这一帧的时间间隔来更新所有的移动中的entiti...</div></div></div></a><a class="pagination-related" href="/unity-dots-part-of-components/" title="Unity DOTS：Components部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Components部分</div></div><div class="info-2"><div class="info-item-1">组件 Components是ECS体系结构的三个主要元素之一。它们代表您的游戏或应用程序的数据。Entities是索引您的components集合的标识符，而systems提供了行为。 ECS中的Components是具有以下“标记接口”之一的结构体类型：  IComponentData —用于通用和[chunk components]。 IBufferElementData —将[动态缓冲区（dynamic buffers）]与entities相关联。 ISharedComponentData —按archetype中的值对entities进行分类或分组。有关更多信息，请参见[Shared Component Data]。 ISystemStateComponentData —将特定system的状态与entity相关联，并检测何时创建或销毁单个实体。有关更多信息，请参见System State Component。 ISharedSystemStateComponentData —共享状态和System状态 数据的组合。请参阅System State Component。 B...</div></div></div></a><a class="pagination-related" href="/unity-dots-part-of-entities/" title="Unity DOTS：Entities部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Entities部分</div></div><div class="info-2"><div class="info-item-1">Entities Entities是实体组件系统体系结构的三个主要元素之一。它们代表游戏或应用程序中的各个“事物”。Entities既没有行为也没有数据；取而代之的是，它担任索引各种数据的职责。Systems提供行为，而Components存储数据。 entity本质上是一个ID。最简单方法是把它作为一个超轻量级GameObject甚至没有名称。实体ID稳定；您可以使用它们来存储对另一个component或entities的引用。例如，Hierarchy中的子entity可能需要引用其父entity。 一个EntityManager管理在一个World中所有的entities。EntityManager维护entities列表并组织与entities相关联的数据以实现最佳性能。 尽管实体没有类型，但是可以按与entities相关联的components的类型对其进行分组。创建entities并向其添加components时，EntityManager会持续跟踪监控entities上components的唯一组合。这种独特的组合称为Archetype（原型）。将components...</div></div></div></a><a class="pagination-related" href="/unity-dots-systems/" title="Unity DOTS：Systems部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Systems部分</div></div><div class="info-2"><div class="info-item-1">Systems 一个system，也就是ECS里的S，提供了将component的数据从其当前状态变换到其下一个状态的逻辑-例如，一个system可以通过velocity乘以Time.deltaime来更新所有可移动entities的位置。  Instantiating systems Unity ECS自动在您的项目中发现system类型，并在运行时实例化它们。它将每个发现的system添加到默认system groups之一中。您可以使用system attributes来指定system的父组以及该system在该group中的顺序。如果未指定父项，则Unity将以确定性的，但并未指定顺序的将system添加到默认世界的Simulation system group中。您也可以使用attribute禁用自动创建。 system的更新循环由其父ComponentSystemGroup驱动。ComponentSystemGroup本身是一种特殊的system，负责更新其child systems。group可以嵌套。system从运行的world获取time数据；time由Up...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">Sync points</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Structural-changes-%E7%BB%93%E6%9E%84%E5%8F%98%E5%8C%96"><span class="toc-number">1.1.</span> <span class="toc-text">Structural changes(结构变化)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%81%BF%E5%85%8DSync-points"><span class="toc-number">1.2.</span> <span class="toc-text">避免Sync points</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">Write groups</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Write-groups%E7%A4%BA%E4%BE%8B"><span class="toc-number">2.1.</span> <span class="toc-text">Write groups示例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAWrite-groups"><span class="toc-number">2.2.</span> <span class="toc-text">创建Write groups</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%AF%E7%94%A8Write-groups%E8%BF%87%E6%BB%A4"><span class="toc-number">2.3.</span> <span class="toc-text">启用Write groups过滤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A6%86%E7%9B%96%E5%8F%A6%E4%B8%80%E4%B8%AA%E4%BD%BF%E7%94%A8Write-groups%E7%9A%84system"><span class="toc-number">2.4.</span> <span class="toc-text">覆盖另一个使用Write groups的system</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A9%E5%B1%95%E4%BD%BF%E7%94%A8Write-groups%E7%9A%84%E5%8F%A6%E4%B8%80%E4%B8%AASystem"><span class="toc-number">2.5.</span> <span class="toc-text">扩展使用Write groups的另一个System</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Write-Group%E6%80%BB%E7%BB%93"><span class="toc-number">2.6.</span> <span class="toc-text">Write Group总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">版本控制</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#EntityId-Version"><span class="toc-number">3.1.</span> <span class="toc-text">EntityId.Version</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#World-Version"><span class="toc-number">3.2.</span> <span class="toc-text">World.Version</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EntityDataManager-GlobalVersion"><span class="toc-number">3.3.</span> <span class="toc-text">EntityDataManager.GlobalVersion</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#System-LastSystemVersion"><span class="toc-number">3.4.</span> <span class="toc-text">System.LastSystemVersion</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Chunk-ChangeVersion"><span class="toc-number">3.5.</span> <span class="toc-text">Chunk.ChangeVersion</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#EntityManager-m-ComponentTypeOrderVersion"><span class="toc-number">3.6.</span> <span class="toc-text">EntityManager.m_ComponentTypeOrderVersion []</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SharedComponentDataManager-m-SharedComponentVersion"><span class="toc-number">3.7.</span> <span class="toc-text">SharedComponentDataManager.m_SharedComponentVersion []</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">Job extensions</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '7fb0eacf5acd8e4e594c74902cafaee4'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

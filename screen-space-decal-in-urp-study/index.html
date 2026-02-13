@@ -1,0 +1,410 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。 大体思路 根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到">
+<meta property="og:type" content="article">
+<meta property="og:title" content="URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记">
+<meta property="og:url" content="https://www.lfzxb.top/screen-space-decal-in-urp-study/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。 大体思路 根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg">
+<meta property="article:published_time" content="2021-04-02T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-01-03T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="URP">
+<meta property="article:tag" content="渲染管线">
+<meta property="article:tag" content="Decal">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记",
+  "url": "https://www.lfzxb.top/screen-space-decal-in-urp-study/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg",
+  "datePublished": "2021-04-02T00:00:00.000Z",
+  "dateModified": "2024-01-03T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/screen-space-decal-in-urp-study/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-04-02T00:00:00.000Z" title="发表于 2021-04-02 00:00:00">2021-04-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-01-03T00:00:00.000Z" title="更新于 2024-01-03 00:00:00">2024-01-03</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98/">应用实战</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>7分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/screen-space-decal-in-urp-study/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2024-01-03 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。</p>
+<h2 id="大体思路">大体思路</h2>
+<p>根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到屏幕面片四个顶点的射线，利用VS到PS的线性插值得到片元数目的射线原理，即可得知屏幕面片每一个片元对应的世界空间坐标），即可得知物体每一个片元对应的模型空间坐标，又因为我们使用了单位长度为1的Cube作为投射器，所以就可以直接用这个坐标当成UV去采样贴图（由于我们只是需要类似一个面片一样的贴花，所以需要裁剪掉除0~1范围外的所有UV），达成贴花的效果。</p>
+<h2 id="正文">正文</h2>
+<h3 id="基础设置">基础设置</h3>
+<h4 id="RenderQueue">RenderQueue</h4>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">"Queue" = "Transparent<span class="number">-499</span>"</span><br></pre></td></tr></tbody></table></figure>
+<p>为了避免渲染顺序问题，把其渲染队列放到Transparent，并且在任何半透明物体之前渲染</p>
+<h4 id="ZWrite-off">ZWrite off</h4>
+<p>为了支持透明度混合，关闭深度写入</p>
+<p>考虑：一个透明物体A深度小于当前贴花所用的投射器Cube，如果开启深度写入，就会导致A物体渲染错误（下图半透明砖块就是A，可以看到由于深度测试失败被透明的投射器Cube吞噬了）</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120419.jpg" alt="v2-56f7a4b1d9476343cc485fe34322844c_1440w" loading='lazy'></p>
+<p>正确结果应该是这样</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120426.jpg" alt="v2-19ae9d334b158498dcf6854c5deb32f2_1440w" loading='lazy'></p>
+<h3 id="模型空间相机到顶点的射线算法示例">模型空间相机到顶点的射线算法示例</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120434.jpg" alt="v2-c6afa30d7b23cbee7abb4d7c4f6b599d_1440w" loading='lazy'></p>
+<p>（为了方便画图这里没有追求严谨性，变换后的射线所在坐标系是会与Cube的Local基向量一致的）如上图，相机为点A，以Cube的B顶点为目标发出射线，然后以B为起点，向相机A的Z轴做垂线，构成一个直角三角形：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>△</mtext><mi>A</mi><mi>B</mi><mi>C</mi></mrow><annotation encoding="application/x-tex">△ABC</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.07153em;">BC</span></span></span></span>，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>△</mo><mi>A</mi><mi>B</mi><mi>C</mi></mrow><annotation encoding="application/x-tex">\bigtriangleup ABC</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.07153em;">BC</span></span></span></span>的<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><mi>C</mi></mrow><annotation encoding="application/x-tex">AC</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span>即为<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>B</mi></mrow><annotation encoding="application/x-tex">B</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span></span></span>的LinearEyeDepth值，当我们把射线和相机都转换到模型空间后，可以用前面的方法构造一个新的直角三角形：<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>△</mo><mi>A</mi><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\bigtriangleup AB''C''</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9463em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span>，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>△</mo><mi>A</mi><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\bigtriangleup AB''C''</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9463em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span>的<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>A</mi><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><annotation encoding="application/x-tex">AC''</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7519em;"></span><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span>即为<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><annotation encoding="application/x-tex">B''</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7519em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span>相机空间的深度值-z（因为相机空间是右手坐标系，所以z要取反），考虑到<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mi>o</mi><mi>d</mi><mi>e</mi><mi>l</mi><mn>2</mn><mi>W</mi><mi>o</mi><mi>r</mi><mi>l</mi><mi>d</mi></mrow><annotation encoding="application/x-tex">Model2World</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mord mathnormal">o</span><span class="mord mathnormal">d</span><span class="mord mathnormal">e</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.02778em;">or</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span></span></span></span>矩阵（从模型空间转世界空间的矩阵）的缩放系数，即有<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo>△</mo><mi>A</mi><mi>B</mi><mi>C</mi><mtext>  </mtext><mo>∼</mo><mtext>  </mtext><mo>△</mo><mi>A</mi><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><annotation encoding="application/x-tex">\bigtriangleup ABC\;\sim\;\bigtriangleup AB''C''</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.07153em;">BC</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">∼</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9463em;vertical-align:-0.1944em;"></span><span class="mord">△</span><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.7519em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span>，根据相似三角形定理有<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mfrac><mstyle scriptlevel="0" displaystyle="true"><mi>A</mi><mi>B</mi></mstyle><mstyle scriptlevel="0" displaystyle="true"><mi>A</mi><mi>C</mi></mstyle></mfrac><mtext>  </mtext><mo>=</mo><mtext>  </mtext><mfrac><mstyle scriptlevel="0" displaystyle="true"><mi>A</mi><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mstyle><mstyle scriptlevel="0" displaystyle="true"><mi>A</mi><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mstyle></mfrac></mrow><annotation encoding="application/x-tex">\frac{\displaystyle AB}{\displaystyle AC}\;=\;\frac{\displaystyle AB''}{\displaystyle AC''}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1.5707em;vertical-align:-0.4933em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.0773em;"><span style="top:-2.5067em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal sizing reset-size3 size6">A</span><span class="mord mathnormal sizing reset-size3 size6" style="margin-right:0.07153em;">C</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal sizing reset-size3 size6">A</span><span class="mord mathnormal sizing reset-size3 size6" style="margin-right:0.05017em;">B</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4933em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.8078em;vertical-align:-0.6119em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1959em;"><span style="top:-2.3881em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal sizing reset-size3 size6">A</span><span class="mord sizing reset-size3 size6"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal sizing reset-size3 size6">A</span><span class="mord sizing reset-size3 size6"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6119em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>，所以我们顶点B在模型空间坐标就是<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mtext>  </mtext><mtext>  </mtext><mrow><mi>A</mi><mi>B</mi></mrow><mo>=</mo><mfrac><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>A</mi><msup><mi>B</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow><mo>⋅</mo><mrow><mi>A</mi><mi>C</mi></mrow></mstyle><mstyle scriptlevel="0" displaystyle="true"><mrow><mi>A</mi><msup><mi>C</mi><mrow><mo mathvariant="normal">′</mo><mo mathvariant="normal">′</mo></mrow></msup></mrow></mstyle></mfrac></mrow><annotation encoding="application/x-tex">\;\;{AB}=\frac{\displaystyle{AB''}\cdot{AC}}{\displaystyle{AC''}}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mord"><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.05017em;">B</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.8078em;vertical-align:-0.6119em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1959em;"><span style="top:-2.3881em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord sizing reset-size3 size6"><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.07153em;">C</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord sizing reset-size3 size6"><span class="mord mathnormal">A</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8019em;"><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">′′</span></span></span></span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin sizing reset-size3 size6">⋅</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord sizing reset-size3 size6"><span class="mord mathnormal">A</span><span class="mord mathnormal" style="margin-right:0.07153em;">C</span></span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.6119em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span>，所以最终B点的模型空间坐标就是：</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">decalSpaceScenePos = i.cameraPosOS.xyz + i.viewRayOS.xyz * rcp(i.viewRayOS.w) * sceneDepthVS;</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="为什么不可以在VS中提前进行透视除法">为什么不可以在VS中提前进行透视除法</h3>
+<p><code>首先这里的透视除法特指SSD中的手动模拟操作，而并非渲染流水线的透视除法</code>。先明确一点，在屏幕空间插值的数据并不能保证是和之前的数据成线性关系（<strong>缩放+平移，会导致不满足线性变换定义之一——变换后原点不变</strong>），试想下，屏幕上连续的两个点他们的值完全可能和Z没有任何线性关系（实际上只和1/Z成线性关系）, 如果在VS中提前手动做了透视除法，相当破坏了1/Z的线性关系，导致结果错误，所以只能等到流水线把正确的数据主动传递到VS之后，再做透视除法</p>
+<p>PS：在更加通用的语境中，透视除法指vs之后，ps之前的vcc阶段的齐次除法，这一步是硬件来处理的。那么，为什么齐次除法要在硬件层做？这就牵扯到另一个概念：透视矫正插值，例如我们不能直接拿物体在ndc空间坐标为uv去采样，因为当物体不平行于相机时，uv值变化本身和Z之间关系是非线性的，只和1/Z成线性关系，需要通过透视矫正插值来处理，透视矫正插值也是硬件处理的，需要用到我们投影变换得到的齐次坐标的w分量。说到底是想要开发者们无需关心底层的细节，所以帮我们在硬件层做了齐次除法和透视矫正插值</p>
+<p>至于上文的Z, 1/Z, 透视除法，更加细节的推理详见：<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15273495/5120125"><strong>SoftRenderer&amp;RenderPipeline（从迷你光栅化软渲染器的实现看渲染流水线）</strong></a></p>
+<h3 id="裁剪多余UV">裁剪多余UV</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120501.jpg" alt="v2-7701ccda1aec63f47670af6ed9f52a2e_1440w" loading='lazy'></p>
+<p>由于我们只需要投射Cube与物体贴合的那部分UV，所以一些额外的UV需要裁剪掉，如上图，INSIDE区域是我们需要的，OUTSIDE部分是需要被裁剪的。出现这个问题的根本原因是深度值的不同导致最终计算出的模型空间坐标超出了原本-0.5~0.5的区间。</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">clip(<span class="number">0.5</span> - <span class="built_in">abs</span>(decalSpaceScenePos));</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="过度拉伸裁剪支持">过度拉伸裁剪支持</h3>
+<p>考虑一种情况，当一个投射器Cube被放在了一个拐角处，就会出现因为平面投影导致的UV超采样问题（根本原因是一个纹理坐标对应多个片元导致的极度拉伸，详情参见<a href="https://www.lfzxb.top/fundamentals-of-computer-graphics-chapter11-111-5/#%E5%B9%B3%E9%9D%A2%E6%8A%95%E5%BD%B1">Fundamentals of Computer Graphic 纹理映射-平面投影</a>），而这里我们没有办法很好的去处理这个问题（其实这里可以引出当前<a target="_blank" rel="noopener" href="http://ma-yidong.com/2018/05/12/terrain-cliff-problem/">大世界PCG的经典峭壁问题</a>），要么将这种情况进行裁剪，要么旋转Cube，让UV与切面有一定的倾斜角而不是直接垂直可以缓解</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120508.jpg" alt="v2-c6f2f2fa54a1446b5c509019a4285999_1440w" loading='lazy'></p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">float</span> shouldClip = <span class="number">0</span>;</span><br><span class="line"><span class="meta">#if _ProjectionAngleDiscardEnable</span></span><br><span class="line"></span><br><span class="line">float3 decalSpaceHardNormal = <span class="built_in">normalize</span>(<span class="built_in">cross</span>(ddx(decalSpaceScenePos), ddy(decalSpaceScenePos)));</span><br><span class="line">shouldClip = decalSpaceHardNormal.z &lt; _ProjectionAngleDiscardThreshold ? <span class="number">0</span> : <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line"><span class="meta">#endif</span></span><br><span class="line"></span><br><span class="line">clip(<span class="number">0.5</span> - <span class="built_in">abs</span>(decalSpaceScenePos) - shouldClip);</span><br></pre></td></tr></tbody></table></figure>
+<p>原理就是利用偏导数求出X,Y轴斜率然后叉乘得到法线信息，再通过法线信息与我们设定的临界值比较，如果太离谱就直接裁剪</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120528.jpg" alt="v2-610b1460a5920abedcac226bf829b232_1440w" loading='lazy'></p>
+<p>对于偏导数的几何意义，我找出了我的早年作品：（这是人写的字？）</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120533.jpg" alt="v2-2870c35ff355531f231cc45a3cb6be5f_1440w" loading='lazy'></p>
+<h3 id="正交相机支持">正交相机支持</h3>
+<p>这个SSD还支持了正交相机，主要对于正交相机的深度值处理，我们需要手动对它进行线性插值，最后是重建世界坐标的时候<code>我想了很久也没有明白为什么要对相机的世界坐标*2</code>，如果有知道的大佬请不吝赐教。</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#if _SupportOrthographicCamera</span></span><br><span class="line"><span class="comment">// static uniform branch depends on unity_OrthoParams.w, w = 1.0 if camera is ortho, 0.0 if perspective</span></span><br><span class="line"><span class="comment">// (should we use UNITY_BRANCH here?) decided NO because https://forum.unity.com/threads/correct-use-of-unity_branch.476804/</span></span><br><span class="line"><span class="keyword">if</span>(unity_OrthoParams.w)</span><br><span class="line">{</span><br><span class="line">    <span class="comment">// if orthographic camera, _CameraDepthTexture store scene depth linearly within [0,1]</span></span><br><span class="line">    <span class="comment">// if platform use reverse depth, make sure to 1-depth also</span></span><br><span class="line">    <span class="comment">// https://docs.unity3d.com/Manual/SL-PlatformDifferences.html</span></span><br><span class="line"><span class="meta">#if defined(UNITY_REVERSED_Z)</span></span><br><span class="line">    sceneRawDepth = <span class="number">1</span>-sceneRawDepth;</span><br><span class="line"><span class="meta">#endif</span></span><br><span class="line">    <span class="comment">// simply lerp(near,far, [0,1] linear depth) to get view space depth                  </span></span><br><span class="line">    <span class="type">float</span> sceneDepthVS = lerp(_ProjectionParams.y, _ProjectionParams.z, sceneRawDepth);</span><br><span class="line">    <span class="comment">//***Used a few lines from Asset: Lux URP Essentials by forst***</span></span><br><span class="line">    <span class="comment">//----------------------------------------------------------------------------</span></span><br><span class="line">    <span class="comment">// reconstruct posVSOrtho</span></span><br><span class="line">    float2 viewRayEndPosVS_xy = float2(unity_OrthoParams.xy * (i.screenPos.xy * <span class="number">2</span> - <span class="number">1</span>));</span><br><span class="line">    float3 posVSOrtho = float3(-viewRayEndPosVS_xy, -sceneDepthVS);</span><br><span class="line">    <span class="comment">// convert posVSOrtho to posWS</span></span><br><span class="line">    float3 posWS = mul(unity_CameraToWorld, float4(posVSOrtho,<span class="number">1</span>)).xyz;</span><br><span class="line">    posWS -= _WorldSpaceCameraPos * <span class="number">2</span>; <span class="comment">// Don't understand this, Why * 2?</span></span><br><span class="line">    posWS *= <span class="number">-1</span>;</span><br><span class="line">    <span class="comment">//----------------------------------------------------------------------------</span></span><br><span class="line">    <span class="comment">// transform world to object space(decal space)</span></span><br><span class="line">    decalSpaceScenePos = mul(UNITY_MATRIX_I_M, float4(posWS, <span class="number">1</span>)).xyz;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="Stencil-Test">Stencil Test</h3>
+<p>我们会有这样的需求，人物走在贴花上时不会被贴花，而是直接踩在上面（下图来自：<a target="_blank" rel="noopener" href="http://rainyeve.com/wordpress/?p=663%EF%BC%89">http://rainyeve.com/wordpress/?p=663）</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg" alt="v2-92d2d4b7afed73cb387d7a723666a8c3_1440w" loading='lazy'></p>
+<p>所以就需要进行模板测试</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Stencil</span><br><span class="line">{</span><br><span class="line">    Ref[_StencilRef]</span><br><span class="line">    Comp[_StencilComp]</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这里设置引用值为1，对比操作为NotEqual，意思是每个片元拿当前模板缓冲区值（默认值为0）与1对比，如果不等于1，即为测试通过，否则将丢弃片元</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120609.jpg" alt="v2-d63331ebfa3dbd506df0e105a49fb79f_1440w" loading='lazy'></p>
+<p>那么我们就可以为我们的人物Shader加上模板测试</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">Stencil</span><br><span class="line">{</span><br><span class="line">    Ref <span class="number">1</span></span><br><span class="line">    Comp NotEqual</span><br><span class="line">    Pass Replace</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>即可达成效果</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120614.jpg" alt="v2-18ed9fe55018190b54399f0c723c5302_1440w" loading='lazy'></p>
+<h2 id="总结">总结</h2>
+<p>从Colin大神的Shader中学到许多，理解到自己平时写的Shader和工业级Shader的差距（需要多方面考虑健壮性），也是头一次知道Shader也可以写的这么优雅，希望自己再接再厉，有朝一日自己也能跟着Siggraph，GDC复刻出想要的效果。</p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/100748588">游戏中的Decal(贴花)</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/ColinLeung-NiloCat/UnityURPUnlitScreenSpaceDecalShader">UnityURPUnlitScreenSpaceDecalShader</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.slideshare.net/blindrenderer/screen-space-decals-in-warhammer-40000-space-marine-14699854?fbclid=IwAR2X6yYeWmDiz1Ho4labx3zA3GATpC7fi5qNkzjEj-MYTOBpXnkIsnA3T-A">Screen Space Decals in Warhammer 40,000: Space Marine</a></p>
+<p><a href="https://www.lfzxb.top/fundamentals-of-computer-graphics-chapter11-111-5/">Fundamentals of Computer Graphic 纹理映射</a></p>
+<p><a target="_blank" rel="noopener" href="http://ma-yidong.com/2018/05/12/terrain-cliff-problem/">大世界PCG的经典峭壁问题</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.51cto.com/u_15273495/5120125">SoftRenderer&amp;RenderPipeline（从迷你光栅化软渲染器的实现看渲染流水线）</a></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/screen-space-decal-in-urp-study/">https://www.lfzxb.top/screen-space-decal-in-urp-study/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/URP/">URP</a><a class="post-meta__tags" href="/tags/%E6%B8%B2%E6%9F%93%E7%AE%A1%E7%BA%BF/">渲染管线</a><a class="post-meta__tags" href="/tags/Decal/">Decal</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/nodegraphprocesssor-and-odin/" title="NodeGraphProcessor整合Odin"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908114715.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">NodeGraphProcessor整合Odin</div></div><div class="info-2"><div class="info-item-1">前言 本人一直对节点编辑器比较感兴趣，最近看到有网友已经基于GraphView做出了自己的剧情编辑器，技能编辑器等，我也手痒难耐，并且眼馋GraphView的颜值很久了，决定来学习一下，并且准备把自己的技能编辑器移植过来。 NodeGraphProcessor版本：https://github.com/alelievr/NodeGraphProcessor/commit/bea17d70217f44509c30086ec04a4cfbe1836751 NodeGraphProcessor + Odin：https://github.com/wqaetly/NodeGraphProcessor 正文 GraphView介绍 GraphView是Unity推出的一个基于UIElement的节点编辑器UI模块，基建很完全，有多选，拖动，缩放，Group等功能，但是我没有找到官方的文档和示例，大家可以跟着这个UP主学习一下怎么从零开始使用GraphView做一个节点编辑器：Mert Kirimgeri 他还是 NodeBasedDialogueSystem 的作者  UIElement介...</div></div></div></a><a class="pagination-related" href="/nkg-moba-release-with-overflow/" title="NKGMoba技能系统联网Demo（内存泄漏尊享版）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">NKGMoba技能系统联网Demo（内存泄漏尊享版）</div></div><div class="info-2"><div class="info-item-1">warning 本项目完全开源免费，美术资源皆来源网络，仅供学习交流使用，严禁用于商业用途，否则造成的任何法律纠纷本人概不负责。开源地址：https://gitee.com/NKG_admin/NKGMobaBasedOnET  前言 前几天搞了一个Linux下的寻路库，想趁此机会把这个Moba开源项目部署到服务器上，自娱自乐一下，但是整个项目都是围绕技能系统展开的，对于上下线相关的处理还没做好，又没有房间机制，所以会有非常多由同一账号上下线导致的BUG。本篇文章主要是说明一下正确的Demo使用姿势 正文 Demo内容 英雄：热饭班长 被动技能，每次攻击都会在敌人身上叠加1层流血Buff，在5s内造成持续伤害，一旦一名敌方英雄身上流血效果达到5层，玩家自身将会获得持续5s的血怒Buff，大幅提高自己攻击力，在此期间所有的攻击都会对敌人直接叠加满层的流血效果。 Q技能，延迟0.5s后挥舞巨斧一周，外圈伤害比内圈伤害高，并且可以叠加血怒Buff W技能，下一次普攻将会减速敌人99%，可叠加血怒Buff E技能，面前锥形范围内敌人造成禁锢效果 每次进入战斗地图由系统分配阵营，将鼠标放在...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/screen-space-plana-reflection-in-urp-study/" title="URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907132640.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-24</div><div class="info-item-2">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 继续学习Colin大神的渲染示例库，这次学习的是屏幕空间平面反射（ScreenSpacePlanarReflection），一个可以用在移动端的平面反射库，但是对图形API有要求，PC/console/vulkan android/Metal iOS，OSX，因为其中用到了Compute Shader加速计算。项目还对不同平台做了差异化处理，干货很多。 学习过程中我也有很多疑问，有一些是百度谷歌看PPT解决的，有一些就实在不知道怎么办了，在文中有说明，望知道的大佬能不吝赐教。 正文 Compute Shader 简单来说Compute Shader是运行在GPU中的计算管线中的程序，其与渲染管线相互独立，旨在将任务切分成一个个运行单元，然后充分利用GPU的并行计算能力来提高目标的运行效率，也是现代GPGPU（General Purpose Computing on GPU）的基石。 其应用起来的相关概念用一张图即可概括（有一说一这张图感觉比NVIDIA的好看和明了多了，AMD YES！）：  有关Compute Shader的更多内容参见：知乎文章：Compute Shad...</div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-21</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a><a class="pagination-related" href="/massive-grass-rendering-based-on-gpu-instance/" title="基于GPU Instance的草地渲染学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-08</div><div class="info-item-2">基于GPU Instance的草地渲染学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理 GPU Instance API 基于GPU Instance的草地渲染实现 草地渲染内容拓展  GPU Instance的底层原理 简单概括一句话就是：传递一个对象的Mesh，指定其绘制次数和材质，Unity就会为我们在GPU的统一/常量缓冲区开辟好必要的缓冲区，然后以我们指定的材质对Mesh进行我们指定次数的渲染，这样就可以达成一次Drawcall绘制海量对象的目的。 好处在于：  传统渲染方式（无合批情形）：绘制多少个对象就要整理和传递多少次数据，其中整理和传递数据的过程消耗极大，多数为性能瓶颈 GPU Instance：只用从CPU往GPU传递一次数据，大大提高了渲染效率。  ...</div></div></div></a><a class="pagination-related" href="/nkgmoba-hpbarwithshader/" title="使用Shader实现LOL血条分隔线效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010705.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-04</div><div class="info-item-2">使用Shader实现LOL血条分隔线效果</div></div><div class="info-2"><div class="info-item-1">前言 马上要去上班了，这阵子雀食是啥都不想干，技能编辑器接Slate又费脑子，索性整点小活吧，想起来当前Moba项目的血条间隔还是用虚拟列表做的，性能捉急，准备用Shader重新实现一下。 正文 所谓血条间隔就是在血条中使用分割线来帮助玩家快速计算自身生命值的，个人认为是一个非常优秀的设计，比如下面的大塔姆，玩家可以在一秒钟之内就可以知道其还有360左右的生命值  因为血条间隔宽度和数量与战斗中英雄最大生命值有关，所以根据战斗中的英雄最大血量计算得出每个血条间隔的宽度值，传入Shader进行计算绘制，所以需要进行一些换算，现有以下条件  血条宽度为107px 英雄最大生命值为3700 血条每格代表100生命值  首先是血条间隔的数量，为 3700/100 = 37 个，而这37个间隔要均匀分布在107px中，所以每个间隔的宽度为100 / 37 = 2.70，注意，是100，不是107，因为我们绘制血条间隔与血条UI自身的宽度完全无关，根本原因是我们在Shader中会使用uv.x * 100的方式来构建一个虚拟的血条，所以不论英雄最大生命值是多少，都要除100。 123456Pe...</div></div></div></a><a class="pagination-related" href="/projects-vxgi/" title="ProjectS中的全局光照系统（开发中）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-08-13</div><div class="info-item-2">ProjectS中的全局光照系统（开发中）</div></div><div class="info-2"><div class="info-item-1">文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radiance Transfer Global Illumination（PRTGI），半动态GI方案，多为离线烘焙一部分场景光照数据，运行时实时采样进行光照计算 动态漫反射全局光照（Dynamic Diffuse Global Illumination）（DDGI），PRTGI的全实时版本，把烘焙放在运行时，类似的还有SurfelGI Voxel Global Illumination（VXGI），体素+RayCast流派  其中VXGI是将场景体素化，并在体素存储几何和材质信息，从而实现实时ReLight 我们都知道，对于大世界来说，游戏的寻路和碰撞也是很令人头痛的一件事，尤其是在Unity上 ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%A7%E4%BD%93%E6%80%9D%E8%B7%AF"><span class="toc-number">2.</span> <span class="toc-text">大体思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E6%96%87"><span class="toc-number">3.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.1.</span> <span class="toc-text">基础设置</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#RenderQueue"><span class="toc-number">3.1.1.</span> <span class="toc-text">RenderQueue</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ZWrite-off"><span class="toc-number">3.1.2.</span> <span class="toc-text">ZWrite off</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E7%A9%BA%E9%97%B4%E7%9B%B8%E6%9C%BA%E5%88%B0%E9%A1%B6%E7%82%B9%E7%9A%84%E5%B0%84%E7%BA%BF%E7%AE%97%E6%B3%95%E7%A4%BA%E4%BE%8B"><span class="toc-number">3.2.</span> <span class="toc-text">模型空间相机到顶点的射线算法示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E5%8F%AF%E4%BB%A5%E5%9C%A8VS%E4%B8%AD%E6%8F%90%E5%89%8D%E8%BF%9B%E8%A1%8C%E9%80%8F%E8%A7%86%E9%99%A4%E6%B3%95"><span class="toc-number">3.3.</span> <span class="toc-text">为什么不可以在VS中提前进行透视除法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A3%81%E5%89%AA%E5%A4%9A%E4%BD%99UV"><span class="toc-number">3.4.</span> <span class="toc-text">裁剪多余UV</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%87%E5%BA%A6%E6%8B%89%E4%BC%B8%E8%A3%81%E5%89%AA%E6%94%AF%E6%8C%81"><span class="toc-number">3.5.</span> <span class="toc-text">过度拉伸裁剪支持</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AD%A3%E4%BA%A4%E7%9B%B8%E6%9C%BA%E6%94%AF%E6%8C%81"><span class="toc-number">3.6.</span> <span class="toc-text">正交相机支持</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Stencil-Test"><span class="toc-number">3.7.</span> <span class="toc-text">Stencil Test</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">4.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">5.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '45546a68d19601b481649ccf31d05a37'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

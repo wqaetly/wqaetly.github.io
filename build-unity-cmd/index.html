@@ -1,0 +1,368 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>为Unity搭建完善的的Cmd工作环境 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文章已于2021.5.19更新，Monkey Commander支持指定自定义程序集，大幅优化了扫描程序集耗时。  前言 我们在使用Unity开发游戏的时候，往往会需要GM工具来测试游戏稳定性，在游戏中呼出对话框输入命令行执行对应GM代码是非常高效的（下图来自B站Up：https://www.bilibili.com/video/BV1v741187To）  此外，对于项目中不断增加的MenuI">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为Unity搭建完善的的Cmd工作环境">
+<meta property="og:url" content="https://www.lfzxb.top/build-unity-cmd/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文章已于2021.5.19更新，Monkey Commander支持指定自定义程序集，大幅优化了扫描程序集耗时。  前言 我们在使用Unity开发游戏的时候，往往会需要GM工具来测试游戏稳定性，在游戏中呼出对话框输入命令行执行对应GM代码是非常高效的（下图来自B站Up：https://www.bilibili.com/video/BV1v741187To）  此外，对于项目中不断增加的MenuI">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp">
+<meta property="article:published_time" content="2021-01-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-05-19T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="CMD">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "为Unity搭建完善的的Cmd工作环境",
+  "url": "https://www.lfzxb.top/build-unity-cmd/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp",
+  "datePublished": "2021-01-01T00:00:00.000Z",
+  "dateModified": "2021-05-19T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/build-unity-cmd/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '为Unity搭建完善的的Cmd工作环境',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">为Unity搭建完善的的Cmd工作环境</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">为Unity搭建完善的的Cmd工作环境</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-01T00:00:00.000Z" title="发表于 2021-01-01 00:00:00">2021-01-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-05-19T00:00:00.000Z" title="更新于 2021-05-19 00:00:00">2021-05-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">871</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/build-unity-cmd/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-05-19 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><div class="note info modern"><p>本文章已于2021.5.19更新，Monkey Commander支持指定自定义程序集，大幅优化了扫描程序集耗时。</p>
+</div>
+<h2 id="前言">前言</h2>
+<p>我们在使用Unity开发游戏的时候，往往会需要GM工具来测试游戏稳定性，在游戏中呼出对话框输入命令行执行对应GM代码是非常高效的（下图来自B站Up：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1v741187To">https://www.bilibili.com/video/BV1v741187To</a>）</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp" alt="v2-36a2d83c855079a052f05a8525f41332_720w" loading='lazy'></p>
+<p>此外，对于项目中不断增加的MenuItem编辑器拓展，每次使用工具都要去翻找对应的条目也是很麻烦的一件事，尤其是对于嵌套层次稍深的条目。。。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154542.jpg" alt="v2-e53d627a2baa4b341f858ab133bb431c_720w" loading='lazy'></p>
+<p>如果有个插件可以在Editor中输入Cmd执行对应MenuItem代码就好了，幸运的是上面提到的两个问题，我都找到了解决方案</p>
+<h2 id="正文">正文</h2>
+<h3 id="Runtime-Cmd-UnityIngameDebugConsole">Runtime Cmd-UnityIngameDebugConsole</h3>
+<p>首先是我们Runtime的Cmd，推荐：<a target="_blank" rel="noopener" href="https://github.com/yasirkula/UnityIngameDebugConsole">https://github.com/yasirkula/UnityIngameDebugConsole</a> 插件</p>
+<p>下载之后我们只需要把</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154607.jpg" alt="v2-2528be022859882dc936d4c395780346_720w" loading='lazy'></p>
+<p>放到场景中即可</p>
+<p>如果我们想要在游戏中根据命令执行某个方法(这是最简单直接的用法，同样还支持参数传递，返回值，参数重定向等多种功能，可以去插件Readme查看更多)</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">ConsoleMethod(<span class="string">"测试await/async的Log"</span>,<span class="string">"这是一条测试await/async的Log"</span>)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">async</span> <span class="keyword">void</span> <span class="title">TestAsyncLog</span>()</span></span><br><span class="line">{</span><br><span class="line">    Log.Info(<span class="string">"这是一个测试常规的Log--一秒后会Log加密通话"</span>);</span><br><span class="line">    <span class="keyword">await</span> Game.Scene.GetComponent&lt;TimerComponent&gt;().WaitAsync(<span class="number">1000</span>);</span><br><span class="line">    Log.Info(<span class="string">"这是一个测试常规的Log--别比别比，别比巴伯"</span>);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后打开Console，在对话框输入对应Cmd命令(自带智能提示和补全功能)，选中Cmd，点击回车即可运行</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154617.jpg" alt="v2-37b9da3adc91f6c8658810c26f1e9ce2_720w" loading='lazy'></p>
+<h3 id="Editor-Cmd-MonKey-Commander">Editor Cmd-MonKey Commander</h3>
+<p>然后是Editor下的Cmd（如果只是在Unity编辑器中，他可以同时担任Editor和Runtime的Cmd），推荐：<a target="_blank" rel="noopener" href="https://assetstore.unity.com/packages/tools/utilities/monkey-productivity-commands-119938?locale=zh-CN">https://assetstore.unity.com/packages/tools/utilities/monkey-productivity-commands-119938?locale=zh-CN</a></p>
+<p>对于它的自定义Cmd方法，官网文档有很详细的介绍：<a target="_blank" rel="noopener" href="https://sites.google.com/view/monkey-user-guide/command-creation">https://sites.google.com/view/monkey-user-guide/command-creation</a></p>
+<p>比如我们想让一个原本MenuItem方法变成我们Cmd启动的，可以这样</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Command(<span class="string">"ETEditor_RsyncEditor"</span>,<span class="string">"Rsync同步"</span>,Category = <span class="string">"ETEditor"</span>)</span>]</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">ShowWindow</span>()</span></span><br><span class="line">{</span><br><span class="line">	GetWindow(<span class="keyword">typeof</span> (RsyncEditor));</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后我们开启Monkey Command Console（默认热键是**`**,可以在Setting中进行修改 <img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154633.jpg" alt="v2-22659695d55f585ca55500b5b41065ce_720w" loading='lazy'> )</p>
+<p>输入对应Cmd，然后选中，点击回车即可运行</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154640.jpg" alt="v2-c9691a25aa1b0c2bf405465d6ae4ff31_720w" loading='lazy'></p>
+<p>我在使用Monkey Commander中遇到了一个奇怪的问题（Unity 2019.4.8 ltf）：每次修改代码进行编译的时候都会报这个错误</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154650.jpg" alt="v2-b11c3b2fdac85c04da5da812316db924_720w" loading='lazy'></p>
+<p>猜测应该是Unity 2019 Editor底层的缓存机制更改，导致插件运行到这部分代码时会出错，所以我们可以使用dnSpy对其dll进行更改并且重编译即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154712.jpg" alt="v2-87a2a5cb483a53c5c5fd7dc036573061_720w" loading='lazy'></p>
+<p>还有一个问题，那就是Monkey Commander默认会扫描大量的程序集（甚至会扫描mscorlib），然后对每个程序集的类型挨个反射处理，需要花费大量的时间，虽然内部新开了一个线程专门去处理，不会卡住编辑器，但还是需要等待很久才能看到自己命令正式装载到了Monkey Commander中，所以我对源码进行了更改，支持自定义指定需要扫描的程序.</p>
+<h2 id="总结">总结</h2>
+<p>这两个插件的Cmd实现核心原理都很简单，都利用了C#强大的反射机制，但是他们提供的周边拓展如果自己实现的话，需要颇费一些功夫</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/build-unity-cmd/">https://www.lfzxb.top/build-unity-cmd/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/CMD/">CMD</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154521.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/et-cloud-ecs/" title="ET篇：云端分布式服务器部署教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907230548.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">ET篇：云端分布式服务器部署教程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.9.7更新，更正ET 6.0的地址配置以及含义，新增Linux实操步骤  前言 对于Linux部署的实操部分，参见：https://www.lfzxb.top/recastnavigation-and-et-to-linux 正文 ET6.0版本配置 现在大多人用的都是云服务器，会将外网IP映射到内网IP（网卡IP），所以一般外网地址和内网地址都是内网IP。 实际上我试过将Socket绑定到云服务器的公网IP，会直接报错 但是服务端会将外网地址传递回客户端让客户端连接Gate，但是我们外网IP只能填服务器的内网IP，也就会导致客户端无法和服务端通信，所以我们要多做一列地址专门告诉客户端服务端的外网地址 总结一下 我们约定，服务器公网IP为192.168.0.1，内网IP为44.117.7.8  </div></div></div></a><a class="pagination-related" href="/box2d-integrated/" title="Box2D篇：整合Box2D到项目，并支持导出数据到服务端"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190704203259.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Box2D篇：整合Box2D到项目，并支持导出数据到服务端</div></div><div class="info-2"><div class="info-item-1">Box2D介绍 为游戏打造的2D物理引擎，就像Unity自带的2D物理引擎一样的功能 Box2D官网 http://box2d.org 白纸无字大佬整合的Box2D地址 https://github.com/Zonciu/Box2DSharp 绪论 因为服务端对某些技能进行击中判定，所以需要一个不依赖于Unity的物理引擎库，对于我做的Moba游戏，Box2D无疑是最佳选择。 如果是FPS游戏想在服务端做碰撞检测，需要3D的物理引擎库，因为你用2D物理引擎无法进行爆头，腰射这种判定。 具体步骤 下载白纸无字的Box2D 客户端配置 运行link.bat批处理命令  然后只需要将这几个文件放到项目的Plugins文件夹下面即可   服务端配置 同样的，我们在服务端创建Box2D项目  注意要开启允许不安全代码才不会报错 Box2D碰撞体数据可视化编辑器 https://www.lfzxb.top/box2d_unityvistualeditor/ Box2D碰撞体碰撞关系可视化编辑器 https://www.lfzxb.top/box2d_collisionrelationvisu...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/a-visual-tool-for-npbahave/" title="为NPBehave而生的可视化编辑器介绍"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/01/QQ截图20200125144426.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">为NPBehave而生的可视化编辑器介绍</div></div><div class="info-2"><div class="info-item-1">介绍 什么是NPBehave？https://www.lfzxb.top/npbehave_doc/ 使用到的库 ET：一个基于C#的游戏客户端，服务端框架！ Node_Editor_Framework：一个强大的可视化工具！ Odin：Unity编辑器拓展神器！ 编辑器截图 这是一个官方例子的可视化版本  支持导出配置文件，供客户端或者服务端读取  运行结果与官方示例一致  使用方法 1.在Unity编辑器的菜单栏，选择Tools/其他实用工具/多功能可视化编辑器即可进入编辑界面 2.然后这样可以创建一个Canvas  3.随便找个空地进行右击  4.鼠标左键点击某一个数据结点即可在Inspector面板显示其包含的数据  5.然后按照自己想要的结果把他们连接起来 6.鼠标左键点击一个空地，即可调出导出配置界面，然后即可进行导出工作。 7.最后在代码里创建自己想要的行为树，Start即可，其中的ID即为我们导出配置时上面显示的根节点ID！ 12NP_RuntimeTree npRuntimeTree = NP_RuntimeTreeFactory.CreateNpRuntime...</div></div></div></a><a class="pagination-related" href="/achieve-lol-attack-speed/" title="理解并实现LOL中的攻速机制"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907003938.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">理解并实现LOL中的攻速机制</div></div><div class="info-2"><div class="info-item-1">前言 攻速机制是Moba游戏中非常重要的机制之一，他会和状态机制，Buff机制产生联系，但是网上却少有详细介绍攻速机制并实现的文章，故有此文。 名词定义 因为为了描述清楚攻速机制需要有一些专有名词，为了避免歧义，本文中的名词及其相关释义如下所示（下面提到的所有概念均为我们逻辑层概念，和动画没有任何关系）   基本攻速：也即基础攻击间隔（BAT）的倒数，即两次攻击之间的间隔时长，比如一个英雄BAT为0.5，即0.5s攻击一次，那么它的基本攻速就是2，大部分英雄基本攻速不一样   攻速收益：对于攻速加成的实际转换比例，比如一双攻速鞋+35%攻速，如果一个英雄攻速收益是50%，那么他真正获得的额外攻速就是17.5%，大部分攻速收益不一样   额外攻速：是指通过Buff，装备，技能，等级成长获得的攻速，计算公式为：额外攻速 = 额外攻速加成 * 攻速收益   总攻速：计算公式为：最终攻速 = 基本攻速 + 额外攻速   基础攻击前摇：攻击打出伤害之前的时间段，在此时间段中对攻击指令进行主动/被动取消都将终止此次攻击，并且没有伤害，大部分英雄基础攻击前摇不一样   攻击前摇：计算公式：基础...</div></div></div></a><a class="pagination-related" href="/blackboard-0gc-write/" title="实现行为树黑板模块0GC赋值功能"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">实现行为树黑板模块0GC赋值功能</div></div><div class="info-2"><div class="info-item-1">引言 因为行为树中的黑板模块可以存储任意类型的数据，并且默认是以System.Object存储的，所以我们在进行赋值的时候，难免会出现装箱的情况，偶尔的一次装箱也没什么，如果是每帧的装箱。。。不会真有人能忍吧，不会吧，不会吧，不会吧 再多说几句，目前我在使用行为树做技能编辑器，之所以可能会出现上面说的每帧的装箱的情况，是因为我打算把行为树中所有的关键数据都放到黑板中，这样有很多好处  方便状态预测/回滚 方便Debug，逐帧调试 方便满足策划的所见即所得需求  上面说的这些我会在实现之后再和大家分享，有兴趣的可以先关注我的开源Moba项目  正文 要实现黑板赋值的0GC，就是要把他的装箱那一步给去掉，所以理所当然的，我们要自己封装数据类型 基类 1234public abstract class ANP_BBValue{    public abstract Type NP_BBValueType { get; }} 12345public interface INP_BBValue&lt;T&gt;{    T GetValue...</div></div></div></a><a class="pagination-related" href="/box2d-advance/" title="Box2D篇：进阶知识整合（刚体操作，碰撞处理）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190706131958.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">Box2D篇：进阶知识整合（刚体操作，碰撞处理）</div></div><div class="info-2"><div class="info-item-1">刚体操作 DestroyFixture(b2Fixture) 删除b2Fixture组件 通过b2World.Raycast和b2World.QueryAABB来获取要删除的b2Fixture组件 ApplyForce(force,point) 添加作用力到刚体上 force：要施加的力的大小，单位是N point：要施加力的点,这是一个全局坐标（世界坐标） ApplyImpulse(impulse,point) 添加冲量,单位是N*m。 ApplyTorque(Torque) Torque:扭力大小，为正表示顺时针，为负表示逆时针，单位kg*rad/s GetLoaclXXX,GetWorldXXX 用来实现本地坐标，向量和全局坐标，向量之间的转换 GetLocalCenter 获取刚体重心的本地坐标 GerWorldCenter 获取刚体重心的全局坐标 GetLoalPoint(worldPoint) 获取全局坐标点worldpoint在刚体坐标系统中的本地坐标 GetWorldPoint(localPoint) 获取本地坐标点localPoint在舞台坐标系统中的全局坐标 ...</div></div></div></a><a class="pagination-related" href="/box2d-baseknowledge/" title="Box2D篇：基础知识整合"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190705163811.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">Box2D篇：基础知识整合</div></div><div class="info-2"><div class="info-item-1">初入Box2D 创建Box2D物理世界 12// Vector2为x与y方向加速度World = new World(new Vector2(0, -9.8f)); 明确换算单位 Box2D中的计量单位是米（m）,而目前大部分的平台渲染都是基于像素px的，所以在进行渲染计算时，要注意对坐标或形状尺寸进行转换。通常 $$1m=30px$$ 开启2D模拟 调用World.Step(float timeStep);函数进行世界的模拟与刷新。 注意Box2D中计时单位是秒，不是帧！ timeStep 每次调用刷新函数间隔，由于Box2D世界计时单位是秒，所以要进行转化。 比如你游戏想运行在60帧，即一秒刷新60次，每次耗时1/60秒，那么timeStep = 1/60; 初识刚体 什么是刚体 一个固态的物体，他至少包含看得见或者摸得着这两个特性之一。 b2Body是Box2D的核心类，是学习Box2D的基础，也是重中之重。 创建刚体 创建一个刚体，不单单是b2Body的事情，还要创建多个对象，包括b2BodyDef和b2FixtureDef对象，然后在这些对象的协同合作下，完成刚体的创建...</div></div></div></a><a class="pagination-related" href="/box2d-collisionrelationvisualeditor/" title="Box2D篇：碰撞关系可视化编辑器"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190801215422.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-08-01</div><div class="info-item-2">Box2D篇：碰撞关系可视化编辑器</div></div><div class="info-2"><div class="info-item-1">前言 我们在游戏中难免会有碰撞检测然后进行处理这一需求，那么，错综复杂的碰撞关系无疑就成了一大设计难点，规模和数量少点还好说，直接写在代码即可，规模一大，就需要借助excel的帮助下，但是也免不了使用true/false作为标识，在修改，拓展的时候麻烦，在读取数据的时候会造成不必要的空间浪费。（我明明没可能和这个东西碰撞，为什么还要单独给他一个bool字段呢？）。所以我就想着，能不能做个东西，稍微缓解一下这个问题，于是就有了今天这篇文章。 相关知识点  Node_Editor_Framework，开源地址:https://github.com/Seneral/Node_Editor_Framework Odin相关特性 Bson序列化反序列化数据  正文 先放一张编辑器图片  这就是使用了Node_Editor_Framework的编辑器，我们可以看到，在里面对不同的碰撞体进行了分组（分类）操作，然后根据需求进行连线即可。 至于数据的处理，我提供了很多一键傻瓜式按钮，只需要点一下就行。 创建数据  首先是Create Group，此操作将会创建一个Group，所有在此Group中...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E6%96%87"><span class="toc-number">2.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Runtime-Cmd-UnityIngameDebugConsole"><span class="toc-number">2.1.</span> <span class="toc-text">Runtime Cmd-UnityIngameDebugConsole</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Editor-Cmd-MonKey-Commander"><span class="toc-number">2.2.</span> <span class="toc-text">Editor Cmd-MonKey Commander</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.</span> <span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '8e27119a72aa64b3558d6f76d78cd3f4'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

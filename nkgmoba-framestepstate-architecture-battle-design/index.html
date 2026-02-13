@@ -1,0 +1,414 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友MOBA项目的技能系统的网络同步部分的开发和完善上来，主要工作内容是：  在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能 将原本状态同步的方案转变到状态帧同步方案  这里还是简单">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计">
+<meta property="og:url" content="https://www.lfzxb.top/nkgmoba-framestepstate-architecture-battle-design/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友MOBA项目的技能系统的网络同步部分的开发和完善上来，主要工作内容是：  在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能 将原本状态同步的方案转变到状态帧同步方案  这里还是简单">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp">
+<meta property="article:published_time" content="2021-11-21T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-12-19T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="战斗系统">
+<meta property="article:tag" content="技能系统">
+<meta property="article:tag" content="个人项目">
+<meta property="article:tag" content="状态帧同步">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计",
+  "url": "https://www.lfzxb.top/nkgmoba-framestepstate-architecture-battle-design/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp",
+  "datePublished": "2021-11-21T00:00:00.000Z",
+  "dateModified": "2021-12-19T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/nkgmoba-framestepstate-architecture-battle-design/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-11-21T00:00:00.000Z" title="发表于 2021-11-21 00:00:00">2021-11-21</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-12-19T00:00:00.000Z" title="更新于 2021-12-19 00:00:00">2021-12-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/nkgmoba-framestepstate-architecture-battle-design/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-12-19 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>基于行为树的Moba技能系统系列文章总目录：<a href="https://www.lfzxb.top/nkgmoba-totaltabs/">https://www.lfzxb.top/nkgmoba-total</a></p>
+<p>在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NKGMobaBasedOnET">MOBA项目</a>的技能系统的网络同步部分的开发和完善上来，主要工作内容是：</p>
+<ul>
+<li>在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能</li>
+<li>将原本状态同步的方案转变到状态帧同步方案</li>
+</ul>
+<p>这里还是简单的谈一下为什么不选择帧同步而选择状态帧同步，如果基于帧同步进行开发的话，定点数的使用会大大增加各个模块的时间和人力成本，并且稍不注意就会有毁灭性的不同步出现，再者，帧同步出于安全考虑需要服务端进行校验工作，工作量和状态同步基本上没什么区别，帧同步真正的价值在于其 “帧” 的概念，有了帧的概念，就可以去预测，去回滚，去做录像，去做观战。。。而状态帧方案就可以让我们在不受限于帧同步条条框框的基础上拥有帧同步的开发体验与项目效果，其相对于帧同步来说，最为困难的部分就是<code>根据服务端传来的帧数据进行重新模拟+回滚</code>，这要求状态和逻辑分离的非常纯粹，也就是说对于客户端，接收任意帧内相同的输入必须能回滚到与服务端那一帧一样的数据和状态。</p>
+<h2 id="状态帧同步和状态同步对比">状态帧同步和状态同步对比</h2>
+<p>因为之前的技能系统是基于纯状态同步的，所以任何状态的变化都要去手动同步到客户端，比如一个技能里面就会有一些状态得同步到客户端，比如一些Buff层数，一些黑板值的变化等。。。这些事情都需要做一些特殊节点去做</p>
+<p>比如这个</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202112191529763.png!webp" alt="image-20211219152855708" loading='lazy'></p>
+<p>，不方便还不说，还很容易出BUG。。。，而如果采用了状态帧同步架构，就只需要每帧收集黑板脏数据发送给客户端，让客户端行为树自己去跑就ok了，完全不需要手写同步代码，当然了，意思大概是这个意思大家理解一下就好，真正实践起来还有另外一些问题，详情可参见：<a href="https://www.lfzxb.top/nkgmoba-fromstatetoframestepstate-record/">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札</a></p>
+<h2 id="设计目标">设计目标</h2>
+<h3 id="开发体验">开发体验</h3>
+<p>之前的战斗系统是基于状态同步的，对于一个技能中很多细碎的状态都要去手写同步代码，非常的痛苦，所以要实现的目标为：框架定好后几乎不需要手写同步代码，由技能系统托管整个同步流程</p>
+<h3 id="用户体验">用户体验</h3>
+<p>最终目标是能像王者荣耀那样可以不联网，本地跑一个单机模式，虽然这是一个看起来蹭热度的目标，但是他有这样几个好处</p>
+<ul>
+<li>强制要求了客户端跑所有逻辑，包括血量计算这种强严谨的（因为我们有服务器同步数据权威，所以无所畏惧），这样在开发阶段基本上可以获得单机游戏的开发体验</li>
+<li>预测回滚的功能更加强大，因为客户端跑了所有逻辑，所以我们可以预测回滚游戏的一切</li>
+<li>用户玩起来更爽，比如在飞机上，或者很多人的大会厅（想起我大学时光在大会议厅摸鱼）这种极弱网甚至无网的环境下也能体验游戏</li>
+</ul>
+<h2 id="状态帧同步基础框架">状态帧同步基础框架</h2>
+<p>首先明确一点，我们预测的对象只是玩家自己，不会预测别的玩家，否则会极大增加预测回滚成本，比如玩家A操控英雄A，那么就会预测英雄A的行为，对于玩家B,C,D一律只根据服务器回包来进行状态更新</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:600px;" src="https://www.processon.com/embed/616e3ecf1e0853446e50b783"></iframe>
+<h3 id="DeltaData">DeltaData</h3>
+<p>流程图中的DeltaData是服务器上每帧的脏数据</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121119.png!webp" alt="" loading='lazy'></p>
+<p>每帧所有脏数据会汇集成一个脏数据集合发送给客户端</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121146.png!webp" alt="" loading='lazy'></p>
+<p>然后客户端就会根据这个脏数据进行那一帧的模拟，从而最终得到和服务端一致的状态，那么这所谓的脏数据，具体包含哪些种类的数据？</p>
+<p>我把脏数据根据其产生的原因与作用归为两类：</p>
+<h4 id="CommonDeltaData">CommonDeltaData</h4>
+<p>常规的脏数据，例如对象的Transform，血量，蓝量，速度等常规属性，虽然这些常规属性可能会被技能系统所更改，但是被技能系统更改是一个行为，不是一个结果，而我们脏数据要的是一个结果，所以我还是把他们归类于常规脏数据</p>
+<h4 id="SkillSystemDeltaData">SkillSystemDeltaData</h4>
+<p>技能系统产生的脏数据，因为我们的技能系统主要由三部分组成</p>
+<ul>
+<li>NPBehave：技能行为树</li>
+<li>Slate：技能Timeline</li>
+<li>Buff：Buff系统</li>
+</ul>
+<p>所以继续细分的话也可以细分出三种脏数据类型</p>
+<ul>
+<li>技能行为树产生的黑板脏数据：因为我们使用的是基于事件的行为树，依赖于黑板值变化做事件驱动，所以只需要<code>记录脏黑板值然后传送给客户端</code>即可在客户端得到与服务端一样的行为树状态</li>
+<li>Slate产生的关键帧脏数据：Slate就更简单些，直接<code>同步当前Timeline中相对关键帧与状态</code>到客户端即可，由于服务端不存在回滚这一行为，也就不会有Track中的多个Action重复执行的问题，所以一直发送即可，直到被外层的技能行为树打断或者其生命周期结束，倒是客户端这边会有回滚的操作，但Timeline的特性就是定位到任意帧表现依旧正常，所以也不用担心</li>
+<li>Buff系统脏数据：主要包括Buff的<code>添加和删除</code></li>
+</ul>
+<h2 id="技能编辑器设计">技能编辑器设计</h2>
+<p>我们技能编辑器由两部分组成</p>
+<ul>
+<li>基于事件驱动的NPBehave行为树</li>
+<li>Timeline形式的Slate</li>
+</ul>
+<p>更详细的，对于客户端和服务端，使用的是同一份技能配置实例，而不是客户端一份技能配置，服务端一份技能配置，这种做法有以下好处：</p>
+<ul>
+<li>便于节点程序开发和技能的配置，因为不用单独配置客户端和服务器技能，两者是一个整体，也就不会涉及手写网络同步代码，由FrameHandler来收集DeltaData来进行网络同步，也会一定程度上减少技能配置人员脑力负担</li>
+<li>便于可视化调试，如果采用客户端与服务端分离的技能配置，那么服务端的技能Debug就会很困难，因为没有可视化的支持，而将客户端与服务器技能配置配置在一起就可以使用客户端已有的节点编辑器做可视化Debug</li>
+</ul>
+<p>利用Timeline去托管技能的线性逻辑部分正好可以规避掉在回滚时计时器状态问题，因为Timeline可以定位到任意帧确保逻辑表现一致</p>
+<h2 id="预测-回滚">预测&amp;&amp;回滚</h2>
+<p>预测回滚是帧同步亘古不变的核心，预测即直接进行Tick，然后记录自身的状态数据，即快照数据，回滚则是对比服务器与客户端同一帧快照是否一致，不一致则进行回滚</p>
+<p>可以不通过深拷贝Component的方式做快照，因为任何Component都可以抽象出一个专属的状态数据，比如</p>
+<ul>
+<li>直接：MoveComponent就是Pos，Rot，Speed，IsStopped</li>
+<li>间接：BuffComponent就是BuffContentIdList（BuffId，剩余帧数，层数）</li>
+</ul>
+<p>更合理的是，服务器每帧会发送deltaData到客户端，而这个deltaData就是我们专门为每个组件抽象出的数据，这样可以节省很多快照空间，单一个buffcomponent来说，可能一次序列化能达到8kb~10kb，那么10帧就是100kb，100帧就是1MB，如果在直接暴力深拷贝的基础上做优化，就需要自己做递归处理，比如BuffComponent你就需要递归到所有Buff的所有字段做深拷贝，这样才能剔除掉不想深拷贝的字段，那就不如直接抽离出一个状态数据了</p>
+<p>可以看到我把状态数据分为两类，一类是直接，一类是间接，所谓直接数据是因为他们比较简单（例如MoveComponent只有位置，朝向和速度这几个变量，是恒定不变的），可以直接将他们的所有数据都当作脏数据进行处理，所谓间接数据是因为他们比较复杂，而且数据结构往往是一直在变化的，直接全量发送浪费带宽，所以需要自己处理他们的变化了的数据作为脏数据</p>
+<p>不管是直接还是间接，本质都是缓存脏数据进行对比得到一致性的结果。比如行为树里的黑板数据，因为数据量往往会比较大，所以如果涉及到了新增/删除/修改黑板键值，那么脏数据只会发来这个新增/删除/修改的黑板键值，这种情况其实和MoveComponent脏数据本质是一样的，只是MoveComponent脏数据表现得更加直观一些（直接将全部数据都当作脏数据进行处理），那么对于行为树的脏数据，我们就需要手动处理下：每帧客户端对比记录自身产生的脏数据，然后与服务器发送的脏数据进行对比即可</p>
+<p>有这套结构之后，什么录像，观战，死亡回放（死亡回放就像OW说的会更麻烦点，要重建一个World，不能影响当前World）都ok了，因为我们可以根据这个抽象的状态数据驱动游戏的每一帧</p>
+<h2 id="录像-回放系统">录像&amp;&amp;回放系统</h2>
+<p>帧同步的一大特点就是只需要转发玩家输入的指令就能得到最终的结果</p>
+<p>状态帧则更复杂一些，因为我们本地没有确定性结果（没有使用定点数），所以需要将服务端计算后的结果回传给客户端，客户端才能根据这个正确的结果进行正确的表现</p>
+<p>我们的流程是客户端发送指令给服务端，然后服务端计算后将结果传回客户端，然后客户端根据结果做表现，也就是说客户端的表现完全取决于服务端每帧回包的指令</p>
+<p>所以对于录像，回放来说只需要不断将服务端每帧传给客户端的指令持久化下来，然后进行分发即可</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/nkgmoba-framestepstate-architecture-battle-design/">https://www.lfzxb.top/nkgmoba-framestepstate-architecture-battle-design/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F/">技能系统</a><a class="post-meta__tags" href="/tags/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE/">个人项目</a><a class="post-meta__tags" href="/tags/%E7%8A%B6%E6%80%81%E5%B8%A7%E5%90%8C%E6%AD%A5/">状态帧同步</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/nkgmoba-fromstatetoframestepstate-record/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 承接上篇 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 这篇文章记录一下将状态同步切换为状态帧同步所做的改动 网络同步 首先是最基础的网络同步模块 目前业界主流有两种做法  使命召唤：客户端落后于服务器，服务器收到客户端消息时根据帧号回滚到那一帧进行模拟，并将得出的结果返回客户端 守望先锋：客户端领先于服务器，服务器收到客户端消息以当前服务器所在帧为准，统一进行模拟  两种做法都是可以的，最大的不同在于服务器收到客户端消息时的处理方式，其他逻辑（比如预测，回滚）本质都是一样的，因为守望先锋的分享更加详尽一些，细节处理的可参考度也就更高，所以这里选择守望先锋的做法 这块内容在 基于行为树的MOBA技能系统：技能系统与网络同步 有提到，此处不再过多赘述，其中需要注意的一个概念是客户端一定是领先于服务器的，因为我们发送的网络包会在半个RTT+一个缓存帧时长才会到达服务端，所以如果服务端当前是95帧，RTT是8帧，缓冲帧时长为1帧，那么...</div></div></div></a><a class="pagination-related" href="/game-design-gems-0/" title="游戏设计精粹《零》"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">游戏设计精粹《零》</div></div><div class="info-2"><div class="info-item-1">游戏设计精粹《总目录》 决战刘谦！魔术VS超高速摄影机，能拍到破绽吗？：MisDirection 视频概要个人总结视频内容本身就是UP主用高速摄影机挑战魔术师手速的内容，当然人的速度是不可能快过千分之一秒甚至万分之一秒的高速摄像机的，但是视频的后半部分魔术师为了捍卫这一职业的尊严，提出，实践了MisDirection这一概念，把高速摄像机UP主治的服服帖帖，我个人看完视频后对魔术师这一职业更加的发自内心的尊重，他们也是一种艺术家，与游戏设计者算半个同行。回到MisDirection这一概念上来，直译过来就是错误引导，这在游戏开发中是很常用的技巧，通过剧情，旁白，场景，音乐把玩家朝着错误的方向引导，随后马上“摆玩家一道”，当然了，摆这一道不能是玩玩家，得让玩家感到心悦诚服才行，不然玩急眼了人家就不玩了。 这种让玩家心中所预料与实际发生的事情落差很大的手法如果把握不好很容易让玩家产生挫败感，也就是说你得让最终的反馈远大于玩家的挫败感才能震撼到玩家，例子也有很多，例如《ICE》里会有一个旁白不断地指引你的道路，如果玩家反方向走就会触发彩蛋，算是小惊喜，但也平添了几分别样的乐趣，再比如《...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/nkgmoba-fromstatetoframestepstate-record/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-20</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 承接上篇 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 这篇文章记录一下将状态同步切换为状态帧同步所做的改动 网络同步 首先是最基础的网络同步模块 目前业界主流有两种做法  使命召唤：客户端落后于服务器，服务器收到客户端消息时根据帧号回滚到那一帧进行模拟，并将得出的结果返回客户端 守望先锋：客户端领先于服务器，服务器收到客户端消息以当前服务器所在帧为准，统一进行模拟  两种做法都是可以的，最大的不同在于服务器收到客户端消息时的处理方式，其他逻辑（比如预测，回滚）本质都是一样的，因为守望先锋的分享更加详尽一些，细节处理的可参考度也就更高，所以这里选择守望先锋的做法 这块内容在 基于行为树的MOBA技能系统：技能系统与网络同步 有提到，此处不再过多赘述，其中需要注意的一个概念是客户端一定是领先于服务器的，因为我们发送的网络包会在半个RTT+一个缓存帧时长才会到达服务端，所以如果服务端当前是95帧，RTT是8帧，缓冲帧时长为1帧，那么...</div></div></div></a><a class="pagination-related" href="/nkgmoba-skillandnetwork/" title="基于行为树的MOBA技能系统：技能系统与网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-11-21</div><div class="info-item-2">基于行为树的MOBA技能系统：技能系统与网络同步</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 从我个人的感受而言，如果说技能系统开发难度为7，那么网络同步的开发难度就是10，因为它的触手涉及技能系统方方面面，稍有不慎就会有可怕的连锁反应导致混乱。 包括守望先锋的三面分享，其中网络同步部分读起来最为吃力，断层的感觉最强，但越是这样，越能说明守望先锋网络同步方案的健壮性 对于本文内容的拓展延伸与具体实现，参见  基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札  本文大量内容参照了：《守望先锋》GDC2017技术分享精粹重制版总目录 中的文章 守望先锋网络同步总结 同步数据设计 感觉先说明一下网络同步环境和数据结构的设计比较容易理解一些 客户端和服务端都各自维护着整局游戏所有的实体和数据，差别就是客户端不负责逻辑计算，逻辑计算是服务器权威的，客户端要能从服务器发来的帧数据恢复到和服务器发送数据那一帧相同的世界状态 对于客户端来说，本地有两...</div></div></div></a><a class="pagination-related" href="/nkg-moba-release-with-overflow/" title="NKGMoba技能系统联网Demo（内存泄漏尊享版）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-22</div><div class="info-item-2">NKGMoba技能系统联网Demo（内存泄漏尊享版）</div></div><div class="info-2"><div class="info-item-1">warning 本项目完全开源免费，美术资源皆来源网络，仅供学习交流使用，严禁用于商业用途，否则造成的任何法律纠纷本人概不负责。开源地址：https://gitee.com/NKG_admin/NKGMobaBasedOnET  前言 前几天搞了一个Linux下的寻路库，想趁此机会把这个Moba开源项目部署到服务器上，自娱自乐一下，但是整个项目都是围绕技能系统展开的，对于上下线相关的处理还没做好，又没有房间机制，所以会有非常多由同一账号上下线导致的BUG。本篇文章主要是说明一下正确的Demo使用姿势 正文 Demo内容 英雄：热饭班长 被动技能，每次攻击都会在敌人身上叠加1层流血Buff，在5s内造成持续伤害，一旦一名敌方英雄身上流血效果达到5层，玩家自身将会获得持续5s的血怒Buff，大幅提高自己攻击力，在此期间所有的攻击都会对敌人直接叠加满层的流血效果。 Q技能，延迟0.5s后挥舞巨斧一周，外圈伤害比内圈伤害高，并且可以叠加血怒Buff W技能，下一次普攻将会减速敌人99%，可叠加血怒Buff E技能，面前锥形范围内敌人造成禁锢效果 每次进入战斗地图由系统分配阵营，将鼠标放在...</div></div></div></a><a class="pagination-related" href="/nkgmoba-animsystem-dawn-blossoms-plucked-at-dusk/" title="基于行为树的MOBA技能系统：朝花夕拾 · 现代化的动画系统设计与开发"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202211051113549.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-11-05</div><div class="info-item-2">基于行为树的MOBA技能系统：朝花夕拾 · 现代化的动画系统设计与开发</div></div><div class="info-2"><div class="info-item-1">基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 今天也是冒着猪脑过载的风险想出了这么个像那么回事的标题，我命令看这个文章的所有人都狠狠的夸标题 2021.6.1，随着我战斗系统系列文章的发布，初版的动画系统也是第一次进入了大家的视野，文章中阐述了Unity动画状态机的缺陷，以及使用Playable API的理由，并且最后使用了 Animancer 作为Playable API的封装，然后在技能配置时进行指定一些动画过渡，Avatar，混合相关的参数  随后在代码里以这种方式进行处理 123456789101112131415161718192021222324252627public AnimancerState PlaySkillAnim(string stateTypes,    PlayAnimInfo.AvatarMaskType avatarMaskType = PlayAnimInfo.AvatarMaskType.None,    float fadeDuration = 0.25f, f...</div></div></div></a><a class="pagination-related" href="/nkgmoba-animsystem/" title="基于行为树的MOBA技能系统：动画系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：动画系统</div></div><div class="info-2"><div class="info-item-1">动画系统已有重构版本，可前往 朝花夕拾·动画系统的重构 进行查看  前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 这一篇来谈谈动画系统部分，别的先不说，先给大伙来个开幕雷击  相信很多读者都受过这个蜘蛛网的荼毒+迫害，事实上我并不是很能知道Unity出这个蜘蛛网有什么用，折磨我们吗？ 其实我们想一想，我们真的需要这种可视化吗？ 我对于这个问题的答案是否定的，在游戏开发中我们会有自己的状态系统，而动画系统往往就是与我们自己的状态系统相绑定的，根据状态来播放相应的动画，所以我们的需求就是切换状态然后播放动画，不需要知道，也不需要想象哪个动画可以切换到另一个动画，哪个不可以，这都是由我们状态系统控制的，所以完全不需要这个可视化工具，也不需要每次都一大堆的SetXXX，只需要几个能用的API就行。 所以众多开发者也是不堪其辱，干脆不用这个蜘蛛网方案，退而求其次，使用Animation自己控制播放，但是这样的话就没有办法使用Animator的新功能，比如动画重定向、Blend Tree、Avatar Ma...</div></div></div></a><a class="pagination-related" href="/nkgmoba-buffsystem/" title="基于行为树的MOBA技能系统：Buff系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：Buff系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 本篇文章主要讲一下Buff系统的设计。Buff系统是战斗系统中最为重要的一个部件，我们技能效果就是依靠Buff系统实现的，比如伤害，治疗，破甲，眩晕，护盾，斩杀等，也就是说一个技能真正的核心就是组成它的那些Buff，这一点其实在《可视化节点技能编辑器的制作》一文中的示例中有体现。 这就可以引申出一个“万物皆Buff”的思想，所有的行为/效果都可以用一个Buff来实现，常规的比如一个持续伤害Buff，特殊的比如一个播放特效Buff，往客户端同步数据Buff。 指导思想有了，并且经过《可视化节点技能编辑器的制作》文中Buff系统相关介绍，我们可以知道这种方式确实可行，那么具体怎么抽象出一个健壮的Buff系统就是我们需要考虑的事情了。 本文更多的是介绍Buff系统Runtime的架构设计，Editor的架构设计可从下图得知，更详细的内容在《可视化节点技能编辑器的制作》中：  正文 基类抽象 首先我们Runtime下的Buff需要有数据载体，用于记载此Buf...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%B8%A7%E5%90%8C%E6%AD%A5%E5%92%8C%E7%8A%B6%E6%80%81%E5%90%8C%E6%AD%A5%E5%AF%B9%E6%AF%94"><span class="toc-number">2.</span> <span class="toc-text">状态帧同步和状态同步对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E8%AE%A1%E7%9B%AE%E6%A0%87"><span class="toc-number">3.</span> <span class="toc-text">设计目标</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E4%BD%93%E9%AA%8C"><span class="toc-number">3.1.</span> <span class="toc-text">开发体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%A8%E6%88%B7%E4%BD%93%E9%AA%8C"><span class="toc-number">3.2.</span> <span class="toc-text">用户体验</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E5%B8%A7%E5%90%8C%E6%AD%A5%E5%9F%BA%E7%A1%80%E6%A1%86%E6%9E%B6"><span class="toc-number">4.</span> <span class="toc-text">状态帧同步基础框架</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DeltaData"><span class="toc-number">4.1.</span> <span class="toc-text">DeltaData</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#CommonDeltaData"><span class="toc-number">4.1.1.</span> <span class="toc-text">CommonDeltaData</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#SkillSystemDeltaData"><span class="toc-number">4.1.2.</span> <span class="toc-text">SkillSystemDeltaData</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E7%BC%96%E8%BE%91%E5%99%A8%E8%AE%BE%E8%AE%A1"><span class="toc-number">5.</span> <span class="toc-text">技能编辑器设计</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A2%84%E6%B5%8B-%E5%9B%9E%E6%BB%9A"><span class="toc-number">6.</span> <span class="toc-text">预测&amp;&amp;回滚</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BD%95%E5%83%8F-%E5%9B%9E%E6%94%BE%E7%B3%BB%E7%BB%9F"><span class="toc-number">7.</span> <span class="toc-text">录像&amp;&amp;回放系统</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '6a56f8eaca678925f6b7220c2c97f4c0'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

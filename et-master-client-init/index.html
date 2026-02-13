@@ -1,0 +1,381 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ET篇：master客户端初始化流程的介绍 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="要学习一个Demo，不能漫无目的的乱看，看到哪是哪，要有条理，我习惯于从程序入口开始 进入Init场景 发现貌似只有一个Init脚本发挥着作用  那我们就进入Init脚本 这个便是入口了，他调用了StartAsync()函数，至于为什么后面加上Coroutine()（Coroutine是个空函数，并没有什么具体的作用）  熊猫大大说是为了防止这种情况（好吧。。。）  ** 接下来我一步一步的解读I">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ET篇：master客户端初始化流程的介绍">
+<meta property="og:url" content="https://www.lfzxb.top/et-master-client-init/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="要学习一个Demo，不能漫无目的的乱看，看到哪是哪，要有条理，我习惯于从程序入口开始 进入Init场景 发现貌似只有一个Init脚本发挥着作用  那我们就进入Init脚本 这个便是入口了，他调用了StartAsync()函数，至于为什么后面加上Coroutine()（Coroutine是个空函数，并没有什么具体的作用）  熊猫大大说是为了防止这种情况（好吧。。。）  ** 接下来我一步一步的解读I">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp">
+<meta property="article:published_time" content="2020-02-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-02-01T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="GameFramework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ET篇：master客户端初始化流程的介绍",
+  "url": "https://www.lfzxb.top/et-master-client-init/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp",
+  "datePublished": "2020-02-01T00:00:00.000Z",
+  "dateModified": "2020-02-01T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/et-master-client-init/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ET篇：master客户端初始化流程的介绍',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ET篇：master客户端初始化流程的介绍</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ET篇：master客户端初始化流程的介绍</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-02-01T00:00:00.000Z" title="发表于 2020-02-01 00:00:00">2020-02-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-02-01T00:00:00.000Z" title="更新于 2020-02-01 00:00:00">2020-02-01</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">996</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/et-master-client-init/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2020-02-01 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p><strong>要学习一个Demo，不能漫无目的的乱看，看到哪是哪，要有条理，我习惯于从程序入口开始</strong></p>
+<p><strong>进入Init场景</strong></p>
+<p><strong>发现貌似只有一个Init脚本发挥着作用</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp" alt="" loading='lazy'></p>
+<p><strong>那我们就进入Init脚本</strong></p>
+<p><strong>这个便是入口了，他调用了StartAsync()函数，至于为什么后面加上Coroutine()（Coroutine是个空函数，并没有什么具体的作用）</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171611341.png!webp" alt="" loading='lazy'></p>
+<p><strong>熊猫大大说是为了防止这种情况（好吧。。。）</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171759469.png!webp" alt="" loading='lazy'></p>
+<p>** 接下来我一步一步的解读Init函数里面的语句**</p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//把所有的异步回调都放到主线程执行</span></span><br><span class="line">SynchronizationContext.SetSynchronizationContext(OneThreadSynchronizationContext.Instance);</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>这个如果不理解的，应该去看看我前面的ETBook笔记</strong></p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//使当前游戏物体不会被销毁</span></span><br><span class="line">DontDestroyOnLoad(gameObject);</span><br><span class="line"><span class="comment">//添加ETModel.dll，并解析维护当中的特性</span></span><br><span class="line">Game.EventSystem.Add(DLLType.Model, <span class="keyword">typeof</span>(Init).Assembly);</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>第一句没什么好说的</strong></p>
+<p><strong>我们来看第二句做了什么</strong></p>
+<p><strong>好了，看完了（看官：？？？脑瘫博主，关注了）</strong></p>
+<p><strong>我来总结一下</strong></p>
+<ol>
+<li><strong>将程序集交管给字典维护</strong></li>
+<li><strong>对于每个程序集的每个类型，都会尝试得到自定义特性，并放到types里面维护</strong></li>
+<li><strong>清空生命周期系统中所有维护的类型</strong></li>
+<li><strong>解析types中的属于组件生命周期的特性，并放到相应的字典进行维护</strong></li>
+<li><strong>解析types中的属于事件系统的特性，并放到相应的字典进行维护</strong> <strong>接下来是添加重要的组件，组件的功能细节实现大家可以自己进去看看</strong></li>
+</ol>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//添加计时器组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;TimerComponent&gt;();</span><br><span class="line"><span class="comment">//添加全局配置组件（主要是AB包服务器地址）</span></span><br><span class="line">Game.Scene.AddComponent&lt;GlobalConfigComponent&gt;();</span><br><span class="line"><span class="comment">//添加外网通讯组件（用于发送和接收消息）</span></span><br><span class="line">Game.Scene.AddComponent&lt;NetOuterComponent&gt;();</span><br><span class="line"><span class="comment">//添加资源组件（用于加载资源）</span></span><br><span class="line">Game.Scene.AddComponent&lt;ResourcesComponent&gt;();</span><br><span class="line"><span class="comment">//添加玩家组件（使用字典维护，可当做抽象化的玩家，处于不同的游戏流程会有不同的身份）</span></span><br><span class="line">Game.Scene.AddComponent&lt;PlayerComponent&gt;();</span><br><span class="line"><span class="comment">//添加单位组件（这是游戏中物体的最小单元，继承自Entity）</span></span><br><span class="line">Game.Scene.AddComponent&lt;UnitComponent&gt;();</span><br><span class="line"><span class="comment">//添加UI组件，管理UI</span></span><br><span class="line">Game.Scene.AddComponent&lt;UIComponent&gt;();</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>注意，每个被Add的组件，都会执行其Awake（前提是他有类似的方法），这也是ETBook中的内容，不懂的同学回去补课哦</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331194350630.png!webp" alt="" loading='lazy'></p>
+<p>**该添加的组件都添加好了，框架大致没问题，那么就该下载更新资源了 **</p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// 下载ab包</span></span><br><span class="line"><span class="keyword">await</span> BundleHelper.DownloadBundle();</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>资源下载完成后，那就去加载具体的更新代码吧，顺便插一句，热更的代码已经被打成dll，当做资源下载</strong></p>
+<p><strong>被打成ab包的资源全在这哦</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331195459617.png!webp" alt="" loading='lazy'></p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//加载热更新程序集</span></span><br><span class="line">Game.Hotfix.LoadHotfixAssembly();</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>我们再来看一下这里面的实现</strong></p>
+<p><strong>好了，看完了，我再来总结一下（看官：？？？）</strong></p>
+<ol>
+<li><strong>加载资源</strong></li>
+<li><strong>读取Hotfix.dll</strong></li>
+<li><strong>根据当前模式来决定使用Hotfix.dll的方式，看不懂这部分代码的，需要去补习ILRuntime哦</strong></li>
+<li><strong>卸载资源</strong></li>
+</ol>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//加载配置文件</span></span><br><span class="line">Game.Scene.GetComponent&lt;ResourcesComponent&gt;().LoadBundle(<span class="string">"config.unity3d"</span>);</span><br><span class="line"><span class="comment">//添加配置组件，来读取并部署配置文件</span></span><br><span class="line">Game.Scene.AddComponent&lt;ConfigComponent&gt;();</span><br><span class="line"><span class="comment">//卸载配置文件</span></span><br><span class="line">Game.Scene.GetComponent&lt;ResourcesComponent&gt;().UnloadBundle(<span class="string">"config.unity3d"</span>);</span><br><span class="line"><span class="comment">//添加OpcodeType组件（是双端通讯协议的重要组成部分）</span></span><br><span class="line">Game.Scene.AddComponent&lt;OpcodeTypeComponent&gt;();</span><br><span class="line"><span class="comment">//添加消息分发组件（确保从服务端收到的消息能正确的送到到接受者手中）</span></span><br><span class="line">Game.Scene.AddComponent&lt;MessageDispatcherComponent&gt;();</span><br><span class="line"><span class="comment">//执行HotFix程序集中的函数（在Game.Hotfix.LoadHotfixAssembly();已经设置好）</span></span><br><span class="line">Game.Hotfix.GotoHotfix();</span><br><span class="line"><span class="comment">//测试</span></span><br><span class="line">Game.EventSystem.Run(EventIdType.TestHotfixSubscribMonoEvent, <span class="string">"TestHotfixSubscribMonoEvent"</span>);</span><br></pre></td></tr></tbody></table></figure>
+<p><strong>到这里，万事俱备</strong></p>
+<p><strong>然后利用Unity生命周期函数，整个框架就跑起来了</strong></p>
+<figure class="highlight c#"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">	<span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">Update</span>()</span></span><br><span class="line">{</span><br><span class="line">	OneThreadSynchronizationContext.Instance.Update();</span><br><span class="line">	Game.Hotfix.Update?.Invoke();</span><br><span class="line">	Game.EventSystem.Update();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">LateUpdate</span>()</span></span><br><span class="line">{</span><br><span class="line">	Game.Hotfix.LateUpdate?.Invoke();</span><br><span class="line">	Game.EventSystem.LateUpdate();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">OnApplicationQuit</span>()</span></span><br><span class="line">{</span><br><span class="line">	Game.Hotfix.OnApplicationQuit?.Invoke();</span><br><span class="line">	Game.Close();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/et-master-client-init/">https://www.lfzxb.top/et-master-client-init/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/GameFramework/">GameFramework</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190331171408105.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/et-master-message/" title="ET篇：master消息机制介绍"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190429175655.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">ET篇：master消息机制介绍</div></div><div class="info-2"><div class="info-item-1">终于到了核心部分之一了——消息机制 一般消息的流转 既然讲到消息，我们要到消息的源头——客户端 来到Unity.Hotfix的Init文件，并定位到这一句 1Game.EventSystem.Run(EventIdType.InitSceneStart); 他会执行这里的Run代码（不知道为何的去复习ETBook的EventSystem哦）  进入UILoginFactory，他是登录UI的工厂类，在这个工厂将完成一系列的操作 123456789101112 //获取资源组件，用以加载资源ResourcesComponent resourcesComponent = ETModel.Game.Scene.GetComponent&lt;ResourcesComponent&gt;();//加载UI的AB包resourcesComponent.LoadBundle(UIType.UILogin.StringToAB());//获取到登录UIGameObject bundleGameObject = (GameObject)resourcesComponent.GetAsset(UI...</div></div></div></a><a class="pagination-related" href="/et-fgui-smallmap/" title="ET篇：基于FGUI的小地图制作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190523125800.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">ET篇：基于FGUI的小地图制作</div></div><div class="info-2"><div class="info-item-1">前言 小地图开发对于我们来说是再常见不过的需求了，单用Unity中的UGUI来说倒也方便，但是用FGUI又如何呢？ 正式开始 FGUI资源的搭建 注意小地图图片要用装载器来包装，不然他将会是不可触摸的，小地图宽高我们设置为200，大地图我们设置大小为100  然后导出到Unity FGUI坐标系统 http://www.fairygui.com/guide/unity/transform.html 小地图到大地图的坐标映射  落实到代码就是 12345678910111213141516     public override void Start(FUI5V5Map self)     {//为小地图图片添加点击事件         self.SmallMapSprite.onRightClick.Add(this.AnyEventHandler);     }     void AnyEventHandler(EventContext context)     {         //Log.Info("点击了小地图");  ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/et-all/" title="ET篇：个人笔记汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/b14.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-07-06</div><div class="info-item-2">ET篇：个人笔记汇总</div></div><div class="info-2"><div class="info-item-1">ET系列教程视频  B站视频教程  ETBook学习笔记  ETBook笔记汇总  FairyGUI学习笔记  ET使用FairyGUI开发的完整工作流 基于FGUI的小地图制作  ET 5.0学习笔记  运行master master项目结构梳理 master客户端初始化流程 master服务端初始化流程 master消息机制  ET 6.0学习笔记  ET 6.0学习笔记 ET6.0接入ILRuntime  ET 7.0学习笔记  ET7+FariyGUI+huatuo+luban+yooasset接入教程  ET 斗地主学习笔记  运行斗地主 斗地主的资源工作流  ET 其他笔记  ETTask和ETVoid相关知识 ET中那些千万不能踩的坑 ET&amp;&amp;FGUI接入xasset流程  </div></div></div></a><a class="pagination-related" href="/et-cloud-ecs/" title="ET篇：云端分布式服务器部署教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907230548.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-09-07</div><div class="info-item-2">ET篇：云端分布式服务器部署教程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.9.7更新，更正ET 6.0的地址配置以及含义，新增Linux实操步骤  前言 对于Linux部署的实操部分，参见：https://www.lfzxb.top/recastnavigation-and-et-to-linux 正文 ET6.0版本配置 现在大多人用的都是云服务器，会将外网IP映射到内网IP（网卡IP），所以一般外网地址和内网地址都是内网IP。 实际上我试过将Socket绑定到云服务器的公网IP，会直接报错 但是服务端会将外网地址传递回客户端让客户端连接Gate，但是我们外网IP只能填服务器的内网IP，也就会导致客户端无法和服务端通信，所以我们要多做一列地址专门告诉客户端服务端的外网地址 总结一下 我们约定，服务器公网IP为192.168.0.1，内网IP为44.117.7.8  </div></div></div></a><a class="pagination-related" href="/et-doudizhu-res/" title="ET篇：斗地主的资源工作流"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190421155442833.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：斗地主的资源工作流</div></div><div class="info-2"><div class="info-item-1">有了master的学习经验，斗地主的学习将不会太多精细化，更多细节大家可以自行查看，本系列文章旨在帮助大家理解整个开发流程 资源划分策略 先来到Asset下的Bundles文件夹，这里是游戏内用到的所有的资源，都被打成ab包，正式发布时将会删除，从资源服务器下载文件 Independent   Code 包含热更新模块的dll文件   Config 包含客户端的配置文件（连接配置，所用到的玩家，敌人等数据结构） UI   Landlords/Altas 包含游戏内用到的所有图集   Landlords/Content 玩家正式开局游戏内的个人信息   Landlords/HandCard 玩家手牌UI   Landlords/LandlordsEnd 游戏结束界面   Landlords/Interaction 玩家的正式游戏内操作界面（出牌，不要，抢地主，不抢等）   Landlords/LandlordsLobby 游戏大厅   Landlords/LandlordsLogin 登录界面   Landlords/LandlordsRoom 正式游戏界面UI   Landlor...</div></div></div></a><a class="pagination-related" href="/et-doudizhu-run/" title="ET篇：运行斗地主Demo"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190205205414947.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：运行斗地主Demo</div></div><div class="info-2"><div class="info-item-1">环境准备： 下载斗地主Demo https://github.com/Viagi/LandlordsCore.git 准备2017.4.0版本的Unity https://unity3d.com/cn/get-unity/download/archive 下载并配置MongoDB以及Studio 3T MongoDB地址：****https://www.mongodb.com/download-center/community  选择Custom  我是在D盘新建了MongoDB文件夹来作为安装目录   这个可视化工具看个人喜好，我这里没有安装   找到电脑上的cmd.exe  复制一份到MongoDB安装目录的bin文件夹下面 打开刚刚复制的cmd.exe 执行以下命令(_dbpath后面的路径为你的MongoDB安装路径下的的data文件夹路径) 1mongod -dbpath D:\MongoDB\data 然后他可能会这样  打开浏览器,输入** http://localhost:27017/如果显示如下信息,表示连接成功**  Studio 3T的下载 https://...</div></div></div></a><a class="pagination-related" href="/et-ettask-etvoid/" title="ET篇：ETVoid和void，ETTask和Task的区别与使用时机"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190505103623.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：ETVoid和void，ETTask和Task的区别与使用时机</div></div><div class="info-2"><div class="info-item-1">在学习ET的过程中，我们经常看到ETVoid和ETTask的身影 比如 1234567891011121314151617181920/// &lt;summary&gt;/// 异步加载assetbundle/// &lt;/summary&gt;/// &lt;param name="assetBundleName"&gt;&lt;/param&gt;/// &lt;returns&gt;&lt;/returns&gt;public async ETTask LoadBundleAsync(string assetBundleName){    assetBundleName = assetBundleName.ToLower();    string[] dependencies = AssetBundleHelper.GetSortedDependencies(assetBundleName);    // Log.Debug($"-----------dep load {assetBundleName} dep...</div></div></div></a><a class="pagination-related" href="/et-fgui-smallmap/" title="ET篇：基于FGUI的小地图制作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190523125800.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：基于FGUI的小地图制作</div></div><div class="info-2"><div class="info-item-1">前言 小地图开发对于我们来说是再常见不过的需求了，单用Unity中的UGUI来说倒也方便，但是用FGUI又如何呢？ 正式开始 FGUI资源的搭建 注意小地图图片要用装载器来包装，不然他将会是不可触摸的，小地图宽高我们设置为200，大地图我们设置大小为100  然后导出到Unity FGUI坐标系统 http://www.fairygui.com/guide/unity/transform.html 小地图到大地图的坐标映射  落实到代码就是 12345678910111213141516     public override void Start(FUI5V5Map self)     {//为小地图图片添加点击事件         self.SmallMapSprite.onRightClick.Add(this.AnyEventHandler);     }     void AnyEventHandler(EventContext context)     {         //Log.Info("点击了小地图");  ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="author-info-name">烟雨迷离半世殇</div><div class="author-info-description">愿天下心诚剑士人人可剑开天门！</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="card-info-social-icons"><a class="social-icon" href="https://gitee.com/NKG_admin" target="_blank" title="Gitee"><i class="iconfont icon-mayun"></i></a><a class="social-icon" href="https://github.com/wqaetly" target="_blank" title="Github"><i class="iconfont icon-github"></i></a><a class="social-icon" href="https://space.bilibili.com/33595745" target="_blank" title="Bilibili"><i class="iconfont icon-bilibili-line"></i></a><a class="social-icon" href="https://music.163.com/#/user/home?id=286997681" target="_blank" title="网易云音乐"><i class="iconfont icon-wangyiyunyinle"></i></a><a class="social-icon" href="https://www.zhihu.com/people/gu-gao-de-wang-1" target="_blank" title="知乎"><i class="iconfont icon-zhihu"></i></a><a class="social-icon" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=QHF3d3hxc3lzcnEAMTFuIy8t" target="_blank" title="QQ邮箱"><i class="iconfont icon-youxiang"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">博客全面AI化！欢迎大家点击左下角按钮体验！</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/qimendunjia/" title="《奇门遁甲》学习总结"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202510042255490.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="《奇门遁甲》学习总结" loading='lazy'></a><div class="content"><a class="title" href="/qimendunjia/" title="《奇门遁甲》学习总结">《奇门遁甲》学习总结</a><time datetime="2026-02-12T00:00:00.000Z" title="更新于 2026-02-12 00:00:00">2026-02-12</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2025-total/" title="2025个人年度总结"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202412222310582.jpg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="2025个人年度总结" loading='lazy'></a><div class="content"><a class="title" href="/2025-total/" title="2025个人年度总结">2025个人年度总结</a><time datetime="2025-12-27T00:00:00.000Z" title="更新于 2025-12-27 00:00:00">2025-12-27</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI GC在游戏中的应用" loading='lazy'></a><div class="content"><a class="title" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用">AI GC在游戏中的应用</a><time datetime="2025-12-20T00:00:00.000Z" title="更新于 2025-12-20 00:00:00">2025-12-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="游戏技能配置AI Agent开发记录" loading='lazy'></a><div class="content"><a class="title" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录">游戏技能配置AI Agent开发记录</a><time datetime="2025-11-11T00:00:00.000Z" title="更新于 2025-11-11 00:00:00">2025-11-11</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/aigc-computer/" title="开源免费的AI装机助手"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="开源免费的AI装机助手" loading='lazy'></a><div class="content"><a class="title" href="/aigc-computer/" title="开源免费的AI装机助手">开源免费的AI装机助手</a><time datetime="2025-11-10T00:00:00.000Z" title="更新于 2025-11-10 00:00:00">2025-11-10</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '246630d8e9085a64ba1dbd8ec605a177'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

@@ -1,0 +1,541 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>(译)SRP Batcher Speed up your rendering! | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频： https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/ 本文翻译自：SRP Batcher: Speed up your rendering! 和 https://docs.unity3d.com/Manual/SRPBatcher.html  在2018，我们介绍了一个被称为S">
+<meta property="og:type" content="article">
+<meta property="og:title" content="(译)SRP Batcher Speed up your rendering!">
+<meta property="og:url" content="https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频： https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/ 本文翻译自：SRP Batcher: Speed up your rendering! 和 https://docs.unity3d.com/Manual/SRPBatcher.html  在2018，我们介绍了一个被称为S">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg">
+<meta property="article:published_time" content="2021-03-14T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-03-14T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="URP">
+<meta property="article:tag" content="文献翻译">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="Shader">
+<meta property="article:tag" content="SRP Batcher">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "(译)SRP Batcher Speed up your rendering!",
+  "url": "https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg",
+  "datePublished": "2021-03-14T00:00:00.000Z",
+  "dateModified": "2021-03-14T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '(译)SRP Batcher Speed up your rendering!',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">(译)SRP Batcher Speed up your rendering!</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">(译)SRP Batcher Speed up your rendering!</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-03-14T00:00:00.000Z" title="发表于 2021-03-14 00:00:00">2021-03-14</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-03-14T00:00:00.000Z" title="更新于 2021-03-14 00:00:00">2021-03-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">基础知识</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>12分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/srp-batcher-speed-up-your-rendering/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-03-14 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频：</p>
+<p><a href="https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/">https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/</a></p>
+<p>本文翻译自：<a target="_blank" rel="noopener" href="https://blogs.unity3d.com/2019/02/28/srp-batcher-speed-up-your-rendering/">SRP Batcher: Speed up your rendering!</a> 和 <a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/SRPBatcher.html">https://docs.unity3d.com/Manual/SRPBatcher.html</a></p>
+<blockquote>
+<p>在2018，我们介绍了一个被称为SRP的高度自定义的渲染技术，一个被称为SRP Batcher新的引擎底层Loop就是这个技术的一部分，SRP Batcher可以在渲染时加速你的CPU 1.2到4倍（这取决于你的场景）。让我们看看如何这个功能的最佳实践吧！</p>
+</blockquote>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/pUM7ifjGKkM" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<p>上面那个视频显示了Unity渲染时最坏的一个场景：每个对象都是动态的，并且使用不同的材质（材质的颜色或者贴图等属性不同），所以尽管非常多相同的Mesh，但是在渲染时每个Mesh都会被当成不同的Mesh进行渲染（所以无法使用GPU Instance优化技术）。这个场景使用SRP Batcher在PS4平台上可以加速4倍（这个视频是PC的，渲染API是DX11）</p>
+<p><em>注意：当我们谈及4倍的加速时，我们说的是CPU端的渲染相关代码（例如在Profiler中显示的“RenderLoop.Draw”h和“ShadowLoop.Draw”标签），而不是总的渲染帧率。</em></p>
+<h2 id="Unity和Materials">Unity和Materials</h2>
+<p>Unity是一个非常灵活的渲染引擎，你可以在一帧的的任何时间点修改任何Material属性。此外，Unity历史版本的渲染管线并不是面向Constant Buffer进行开发的，这是为了支持DX9这样的图形API。但是，这样漂亮的功能有一些弊端，比如当一个DrawCall要求使用一个新的Material的时候，需要有大量的工作去处理，所以，你在一个场景中的Material越多，为了设置GPU端的数据而占用的CPU资源就越多。解决此问题的传统方法是减少DrawCall的数量以优化CPU渲染消耗，因为Unity在发出DrawCall之前必须进行很多设置。而且实际的CPU消耗就来自该设置，而不是来自GPU DrawCall本身，而这只是Unity需要将其推送到GPU命令缓冲区的一些字节而已。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122424.jpg" alt="v2-468dbafcce53e918cd60135f60f2107d_1440w" loading='lazy'></p>
+<p>在渲染的循环中，当一个新的Material被发现了，CPU会收集所有的属性并且在GPU的内存中设置不同的Constant Buffers。GPU缓冲区的数量就取决于Shader是如何声明其CBUFFERs的。</p>
+<p>译者PS：上文提到的Constant Buffer对应于GPU上的一种常量内存缓存，速度仅次于流处理器族中的共享内存和寄存器，下图来自《全局光照技术》（手机拍照不好看，就pdf截图了）</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122433.jpg" alt="v2-0ba34b3fed03d6864204c5d980bcfc96_1440w" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122440.jpg" alt="v2-eb92167004fc2daf7215068838b0ee11_1440w" loading='lazy'></p>
+<h2 id="SPR是如何工作的">SPR是如何工作的</h2>
+<p>当我们开发SRP的时候，我们不得不重写一些引擎的底层部分。这同样是一个好机会，我们可以原生地集成一些新的规范，例如GPU数据持久化。我们旨在加快场景使用大量不同材质（但Shader变体很少）的这种常见情况。</p>
+<p>现在，<strong>底层的渲染Loop可以把material的数据持久化在GPU的内存。如果material的内容没有改变，我们就不需要设置，上传buffer到GPU</strong>。此外，我们使用特定的代码路径来在一个大的GPU buffer中快速的更新引擎的内置属性。现在这个新的流程图就像这样：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122500.jpg" alt="v2-c624d436ea96f4ce135f15b2d0262160_1440w" loading='lazy'></p>
+<p>这样，CPU就只需要处理引擎内置的属性（例如标记为对象的变换的属性）。所有的Materials都在GPU内存上有一块持久化的CBUFFERs。综上所述，SRP Batcher加速来自于两个不同的方面：</p>
+<ul>
+<li>每个材质的内容持久化在GPU的memory上</li>
+<li>一个专用的代码路径来管理一个大的“per object”的GPU CBUFFER</li>
+</ul>
+<h2 id="如何启用SRP-Batcher">如何启用SRP Batcher</h2>
+<p>你的工程必须使用URP,HDRP或者你的自定义SRP。然后就可以在SRP的Asset Inspector面板上进行激活</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122521.jpg" alt="v2-e35030068b701bca0b5f0f491d23307b_1440w" loading='lazy'></p>
+<p>如果你想要在运行时使用代码来开关SRP Batcher：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">GraphicsSettings.useScriptableRenderPipelineBatching = <span class="literal">true</span>;</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="SRP-Batcher-兼容性">SRP Batcher 兼容性</h2>
+<p>对于一个通过SRP Batcher代码路径渲染的对象，有三个要求</p>
+<ol>
+<li>对象必须是Mesh或者Skinned Mesh，不能是粒子特效</li>
+<li>Shader必须与SRP Batcher兼容，所有的在URP或者HDRP中的Lit和Unlit Shader都满足这个需求（除了这些shader的粒子特效版本）</li>
+<li>渲染的对象不使用MaterialPropertyBlocks</li>
+</ol>
+<p>对于一个与SRP Batcher兼容的Shader来说：</p>
+<ol>
+<li>必须声明所有引擎内置的属性（例如unity_ObjectToWorld，unity_SHAr等）在一个名称为“UnityPerDraw”的CBUFFER中。</li>
+<li>必须声明所有的Material属性在一个名为“UnityPerMaterial”的CBUFFER中</li>
+</ol>
+<p>可以在一个Shader的Inspector面板查看其是否兼容SRP Batcher</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122529.jpg" alt="v2-01943ffdc502bf44d36cee88aab0d074_1440w" loading='lazy'></p>
+<p>在一个给定的Scene中，一些对象时SRP Batcher兼容的，而另一些不是，这个场景仍然可以正常渲染。兼容SRP Batcher的对象使用SRP Batcher的代码路径，另一些将会使用标准的SRP渲染代码路径</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122537.jpg" alt="v2-2e708f2c8cea97b04f3d3df56d401bcc_1440w" loading='lazy'></p>
+<h2 id="性能监测的艺术">性能监测的艺术</h2>
+<h3 id="SRPBatcherProfiler-cs">SRPBatcherProfiler.cs</h3>
+<p>如果你想在特定场景测试SRP Batcher带来的性能提升，可以使用SRPBatcherProfiler.cs这一C#脚本（<a target="_blank" rel="noopener" href="https://github.com/Unity-Technologies/SRPBatcherBenchmark/blob/master/Assets/Scripts/SRPBatcherProfiler.cs">这是链接</a>）。</p>
+<p>只需要把这个脚本加入你的场景，当游戏运行时，你就能看到一个UI面板，上面记录了一些有用的信息。你还可以使用F9来开关SRP Batcher</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122543.jpg" alt="v2-6e9464432fde38d69e9ce556d99339ff_1440w" loading='lazy'></p>
+<p>在这里，所有时间均以毫秒（ms）为单位。这些时间测量结果显示了在Unity SRP渲染循环中CPU消耗。</p>
+<p><em>注意：计时表示在一帧期间调用的所有“RenderLoop.Draw”和“Shadows.Draw”标记的累计时间（所有线程）。例如“1.31ms SRP Batcher code path”，也许只有0.31ms花费在主线程，1ms的是所有的Graphic JobSystem的消耗。</em></p>
+<table>
+<thead>
+<tr>
+<th>名称</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>(SRP batcher ON)</strong> / <strong>(SRP batcher OFF)</strong></td>
+<td>表示是否开启SRP Batcher，按F9开关</td>
+</tr>
+<tr>
+<td><strong>CPU Rendering time</strong></td>
+<td>表示SRP循环在CPU中花费的总的时间，无论使用哪种多线程模式，例如单线程，client/worker或Graphic Job。在这里，您可以最大程度地看到SRP Batcher的效果。要查看批处理程序的优化，请尝试将其打开和关闭以查看CPU耗时的差异。此示例总计为2.11ms。**（incl RT idle）：**表示SRP在渲染线程空闲状态耗时。这可能意味着该应用程序处于client/worker模式，没有任何图形工作，这是在渲染线程必须等待主线程上的渲染命令时发生的。在此示例中，渲染线程空闲了0.36毫秒。</td>
+</tr>
+<tr>
+<td><strong>SRP Batcher code path (flushes)</strong></td>
+<td>表示您的游戏或应用程序花费在SRP Batcher代码路径中的时间。这可分为游戏渲染<strong>所有对象</strong>（shadow passes除外）所花费的时间（1.18ms），以及<strong>Shadows</strong>（1.13ms）。如果<strong>Shadows</strong>耗时很高，请尝试减少“场景”中的阴影投射灯数量，或者在“Render Pipeline Asset”中选择较低的Shadow Cascades数量。在这个例子中，它是1.31ms。**(flush(s))**数量表示Unity刷新场景的次数，因为它遇到了新的Shader Variant（在此示例中：89）。较少的flush总是更好的，因为这意味着一个渲染帧中的Shader Variants数量较少。</td>
+</tr>
+<tr>
+<td><strong>Standard code path (flushes)</strong></td>
+<td>表示Unity花费在渲染与SRP Batcher不兼容的对象（例如粒子）上的时间。在此示例中，SRP Batcher在0.80ms内flush了81个对象：shadow passes为0.09毫秒，所有其他pass为0.71毫秒。</td>
+</tr>
+<tr>
+<td><strong>Global Main Loop: (FPS)</strong></td>
+<td>表示全局主循环时间（以毫秒为单位），可以得知<strong>每秒帧数</strong>（FPS）。注意：“FPS”不是线性的，因此，如果您看到FPS增加20，这并不一定意味着您已经优化了场景。要查看SRP Batcher是否优化了场景渲染，请将其切换为“开”和“关”，然后在<strong>CPU Rendering time</strong>下比较数字。</td>
+</tr>
+</tbody>
+</table>
+<p>示例：(译者PS：对于flushes数据变动，个人认为是在SRP Batcher关闭的时候，遇到一个不同材质的就会flush一次，而开启SRP Batcher，flushes值就取决于Shader变体了)</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg" alt="v2-c155d7d835d0deb869034688d3bbe48d_1440w" loading='lazy'></p>
+<h2 id="支持的平台">支持的平台</h2>
+<p>SRP几乎支持所有的平台，下面是一张表，包含了最低Unity版本信息</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>Platform</strong></th>
+<th style="text-align:center"><strong>Minimum Unity version required</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Windows DirectX 11</td>
+<td style="text-align:center">2018.2</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>PlayStation 4</strong></td>
+<td style="text-align:center">2018.2</td>
+</tr>
+<tr>
+<td style="text-align:left">Vulkan</td>
+<td style="text-align:center">2018.3</td>
+</tr>
+<tr>
+<td style="text-align:left">OSX Metal</td>
+<td style="text-align:center">2018.3</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>iOS</strong>  Metal</td>
+<td style="text-align:center">2018.3</td>
+</tr>
+<tr>
+<td style="text-align:left">Nintendo Switch</td>
+<td style="text-align:center">2018.3</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Xbox One</strong>  DirectX 11</td>
+<td style="text-align:center">2019.2</td>
+</tr>
+<tr>
+<td style="text-align:left">OpenGL 4.2 and higher</td>
+<td style="text-align:center">2019.1</td>
+</tr>
+<tr>
+<td style="text-align:left">OpenGL ES 3.1 and higher</td>
+<td style="text-align:center">2019.1</td>
+</tr>
+<tr>
+<td style="text-align:left">Xbox One DirectX 12</td>
+<td style="text-align:center">2019.1</td>
+</tr>
+<tr>
+<td style="text-align:left">Windows DirectX 12</td>
+<td style="text-align:center">2019.1</td>
+</tr>
+</tbody>
+</table>
+<h2 id="VR那点事">VR那点事</h2>
+<p>SRP Batcher支持VR，但仅限于“SinglePassInstanced”模式，开启VR模式并不会增加任何CPU消耗</p>
+<h2 id="常见问题">常见问题</h2>
+<h3 id="我怎么知道我当前用法是否是SRP-Batcher的最佳实践呢？">我怎么知道我当前用法是否是SRP Batcher的最佳实践呢？</h3>
+<p>使用SRPBatcherProfiler.cs，首先检查SRP Batcher是否开启，然后查看“Standard code path”消耗，应该尽可能接近0。当然了，如果你的场景使用了一些skinned meshes或者粒子特效，“Standard code path”会不可避免的有一些消耗。</p>
+<h3 id="无论是否开启SRP-Batcher，SRPBatcherProfiler耗时显示都差不多是为啥？">无论是否开启SRP Batcher，SRPBatcherProfiler耗时显示都差不多是为啥？</h3>
+<p>首先，您应该检查几乎所有渲染耗时都使用了SRP Batcher的代码路径（请参见上文）。如果是这样，数字仍然相似，则查看“flush”数字。当SRP Batcher打开时，“flush”数量应减少很多。根据经验，减少10倍非常好了，减少2倍也可以接受。如果flush计数没有减少很多，则意味着您仍然有很多Shader变体。尝试减少Shader变体的数量。如果您做了很多不同的着色器，请尝试使用更多参数制作一个“Uber”着色器。这样就无需拥有大量不同的Material参数。</p>
+<h3 id="当我开启SRP-Batcher的时候并没有显著变化是为啥？">当我开启SRP Batcher的时候并没有显著变化是为啥？</h3>
+<p>先看下上面的两个问题。如果SRPBatcherProfiler显示“CPU Rendering time”快两倍，并且FPS不变，则CPU渲染部分不是您的瓶颈。这并不意味着您不是CPU bound，而是因为您可能使用了太多的C＃ Gameplay或太多的物理元素。无论如何，如果“CPU Rendering time”快两倍，那还是不错的。您可能已经在顶部视频中注意到，即使以3.5倍的速度进行加速，场景仍然保持60FPS的速度。那是因为我们已将VSYNC打开。SRP Batcher确实在CPU端节省了6.8ms。这些毫秒可以用于其他任务。它还可以节省移动设备的电池寿命。</p>
+<h2 id="如何高效的检查SRP-Batcher">如何高效的检查SRP Batcher</h2>
+<p>理解“batcher”在SRP Batcher上下文中含义是很重要的。</p>
+<p>传统做法，人们倾向于减少DrawCall的数量以优化CPU渲染消耗。这样做的真正原因是引擎在发出DrawCall之前必须进行很多设置。而且实际的CPU消耗来自该设置，而不是来自GPU DrawCall本身（这只是要放入GPU命令缓冲区的一些字节）。SRP Batcher不会减少DrawCalls的数量。它只是减少了DrawCall之间的GPU设置成本。</p>
+<p>您可以在以下工作流程中看到这一点：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122607.jpg" alt="v2-84acb05a8aeec88017a02ce975a3a83b_1440w" loading='lazy'></p>
+<p>左侧是标准SRP渲染管线循环。右边是SRP Batcher循环。在SRP Batcher程序上下文中，“batch”只是“Bind”，“Draw”，“Bind”，“Draw”…这样的一个GPU命令的序列。</p>
+<p>在标准SRP中，对于每种新material都调用慢的一批的SetShaderPass。在SRP Batcher上下文中，将为每个新的Shader变体调用SetShaderPass。</p>
+<p>为了获得最佳性能，您需要将这些batches保持尽可能大。因此，您需要避免任何Shader变体更改，但是如果它们使用相同的Shader，则可以使用任意数量的不同materials。</p>
+<p>您可以使用Unity Frame Debugger查看SRP Batcher的“batches”长度。每个批次都是帧调试器中称为“ SRP Batch”的事件，如您在此处看到的：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122615.jpg" alt="v2-77fbbff0c02da724c6296097b7c4eeca_1440w" loading='lazy'></p>
+<p>查看左侧的SRP Batch事件。另外查看batch的大小，即Drawcall的数量（此处为109）。这是一个非常有效的batch。您还将看到上一个batch被破坏的原因(“Node use different shader keywords”)。这意味着用于batch的Shader关键字不同于先前batch中的关键字。这意味着shader变体已更改，我们必须中断该batch。</p>
+<p>在某些场景中，某些batch大小可能会非常低，例如以下示例：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122625.jpg" alt="v2-0bf20f9a6258dd498ec5b41129148720_1440w" loading='lazy'></p>
+<p>batch大小仅为2。这可能意味着您有太多不同的shader变体。如果要创建自己的SRP，请尝试使用最少的关键字编写通用的“Uber Shader”。您不必担心在“property”部分中输入了多少material参数。</p>
+<p><em>注意：Frame Debugger中的SRP Batcher信息需要Unity 2018.3或更高版本。</em></p>
+<h2 id="编写你自己的SRP-Batcher兼容的Shader">编写你自己的SRP Batcher兼容的Shader</h2>
+<p>注意：此部分是专门给高级用户看的，他们会编写他们自己的SRP和Shader库。如果使用我们提供的管线（URP,HDRP）的用户可以跳过，我们提供的Shader是SRP Batcher兼容的。</p>
+<p>如果你正在编写自己的渲染循环，你的shader需要遵循以下几条规则来受益于SRP Batcher</p>
+<h3 id="“Per-Material”变量">“Per Material”变量</h3>
+<p>首先，所有的“per material”数据都需要声明在一个名为“UnityPerMaterial”的CBUFFER中。什么是“per material”数据呢？其实就是你定义在“shader property”中所有的变量。这些变量可以显示在material的Inspector面板上。举个例子：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Properties</span><br><span class="line">{</span><br><span class="line">	_Color1 ("Color 1", Color) = (1,1,1,1)</span><br><span class="line">	_Color2 ("Color 2", Color) = (1,1,1,1)</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">float4 _Color1;</span><br><span class="line">float4 _Color2;</span><br></pre></td></tr></tbody></table></figure>
+<p>如果你编译这个Shader，这个Shader的Inspector面板将会这样显示：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122632.jpg" alt="v2-9d76b70a51d5111ea4f3ba147c6ab28d_1440w" loading='lazy'></p>
+<p>为了修复这个问题，仅仅需要这样声明即可</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">CBUFFER_START(UnityPerMaterial)</span><br><span class="line"></span><br><span class="line">float4 _Color1;</span><br><span class="line">float4 _Color2;</span><br><span class="line"></span><br><span class="line">CBUFFER_END</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="“Per-Object”变量">“Per Object”变量</h3>
+<p>SRP Batcher同样需要一个名为“UnityPerDraw”的CBUFFER。这个CBUFFER应该包含所有的Unity引擎 built-In的变量</p>
+<p>变量声明顺序同 “UnityPerDraw” CBUFFER一样重要。所有变量都应遵循我们称为“Block Feature”的布局。例如，“Space Position block feature”应按以下顺序包含所有这些变量：</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">CBUFFER_START(UnityPerDraw)</span><br><span class="line">    </span><br><span class="line">float4x4 unity_ObjectToWorld;</span><br><span class="line">float4x4 unity_WorldToObject;</span><br><span class="line">float4 unity_LODFade;</span><br><span class="line">float4 unity_WorldTransformParams;</span><br><span class="line"></span><br><span class="line">CBUFFER_END</span><br></pre></td></tr></tbody></table></figure>
+<p>如果不需要它们，则不必声明其中的某些block features。“UnityPerDraw”中的所有引擎内置变量应为float4或float4x4。在移动设备上，人们可能想使用real4（16位编码的浮点值）来节省一些GPU带宽。并非所有UnityPerDraw变量都可以使用“real4”。请参考“Could be real4”一栏。</p>
+<p>下表描述了可以在“UnityPerDraw” CBUFFER中使用的所有可能的block features：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122645.jpg" alt="v2-0d35e59075747cc8e062173b9d649649_1440w" loading='lazy'></p>
+<p>注意：如果将一个feature block的变量之一声明为real4（half），则该feature block的所有其他潜在变量也应声明为real4。</p>
+<p>提示1：始终在Inpsector中检查新shader的兼容性状态。我们检查了几个潜在的错误（UnityPerDraw布局声明等），并显示为什么不兼容。</p>
+<p>提示2：在编写自己的SRP Shader时，可以参考LWRP或HDRP包以查看其UnityPerDraw CBUFFER声明以获取灵感。</p>
+<h2 id="参考">参考</h2>
+<p><a target="_blank" rel="noopener" href="https://blogs.unity3d.com/2019/02/28/srp-batcher-speed-up-your-rendering/">https://blogs.unity3d.com/2019/02/28/srp-batcher-speed-up-your-rendering/</a></p>
+<p><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/SRPBatcher.html">https://docs.unity3d.com/Manual/SRPBatcher.html</a></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/">https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/URP/">URP</a><a class="post-meta__tags" href="/tags/%E6%96%87%E7%8C%AE%E7%BF%BB%E8%AF%91/">文献翻译</a><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/Shader/">Shader</a><a class="post-meta__tags" href="/tags/SRP-Batcher/">SRP Batcher</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/recastnavigation-and-et-to-linux/" title="构建recastnavigation并部署服务端到Linux"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120924.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">构建recastnavigation并部署服务端到Linux</div></div><div class="info-2"><div class="info-item-1">前言 这几天有群友Mac运行不了Moba项目，是因为recastnavigation我编译的是Windows专用的动态dll库，用Mac就得编译一个dylib，好在最后解决了 正好前阵子换了博客系统，之前买的服务器空闲下来了，那我索性再去Linux编一个so的吧，正好把项目架设到服务器上，自娱自乐一下。 本文提及Linux专用的premake5.lua和用于p/invoke的文件链接：https://gitee.com/NKG_admin/NKGMobaBasedOnET/tree/master/RecastNavMesh/Core/Linux-RecastNavDll 文章部分内容参照 @footman 大佬的doc文档 环境 CentOS 7.6（注意，因为在写本篇文章过程中我进行了多次试验，重置了很多次系统，所以下面的一些截图可能环境于此处不一致，以此处为准） 服务器配置 先去阿里云服务器控制台把需要的端口开了 安全-防火墙-添加规则 只添加这两个规则就够了，一个用于FTP操作文件(我们FinalShell就是连接的这个端口)，一个作为游戏服务器端口  客户终端配置 使用F...</div></div></div></a><a class="pagination-related" href="/ow-gdc-share-table-of-contents/" title="《守望先锋》GDC2017技术分享精粹重制版总目录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">《守望先锋》GDC2017技术分享精粹重制版总目录</div></div><div class="info-2"><div class="info-item-1">本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和技能系统PDF，一些必要的地方我录制了Gif图，方便观看。 《守望先锋》GDC 2017技术分享视频内容大纲 《守望先锋》架构设计和网络同步 原视频链接  《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现 原视频链接  《守望先锋》网络脚本化的武器和技能系统 原视频链接  </div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-21</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a><a class="pagination-related" href="/fundamentals-of-computer-graphics-chapter11-111-5/" title="纹理映射"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920155919.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">纹理映射</div></div><div class="info-2"><div class="info-item-1">纹理映射 在尝试复制真实世界的外貌时，人们很快意识到几乎任何物质的表面都是有特征的。木材长有纹理。皮肤长有皱纹；布料会有编织结构；油画会有画刷或滚筒留下的痕迹，即使是光滑的塑料也会有制作他的模具的凹凸不平的痕迹，并且光滑金属显示出机器加工过程的痕迹。材料的没有特征的地方很快也会被斑点，凹痕，污点，划痕，指纹和污垢覆盖。 在图形学中，我们把这些现象统称为“空间上表面属性的变化”——表面的属性在每一处地方都在发生着变化，但并没有真正意义上改变表面的形状，考虑到这些因素，所有的建模和渲染系统都提供了一些纹理映射的涵义：使用一个被称作纹理贴图，纹理图像，或者仅仅是一个纹理，来存储这些你想要在一个表面上展示的细节，然后进行数学处理，把这个图片“映射”到表面上。 事实证明，一旦存在将图像映射到表面的机制，就会有很多奇淫技巧，这些技巧已经超过了我们介绍表面细节的基本目标。纹理可以用来制作阴影和反射，提供光照信息，甚至定义表面形状。在复杂的交互程序中，纹理经常被用于存储与其作为一张图片毫无干系的的数据（这里不知道怎么组织语言了，举个例子就是我们可以把骨骼动画烘焙到一张纹理中，从而让GPU去执行蒙...</div></div></div></a><a class="pagination-related" href="/introduction-to-direct3d-12-yi/" title="（译）Introduction To Direct3D 12"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">（译）Introduction To Direct3D 12</div></div><div class="info-2"><div class="info-item-1">本文翻译自：Introduction to Direct3D 12 的前半部分，前半部分讲了一些DX细节，对于理解基础知识很有帮助，后半部分偏实践练习，翻译意义不大。 介绍Direct3D 12 DirectX 12是微软最新一代的DirectX APIS，Direct3D 12是其图形API集合（其余API类型为DirectSound，DirectInput，DirectDraw等）。Direct3D 12比先前的任何一个Direct3D版本表现的都要好，Direct3D提供了对于图形硬件更加底层的控制来允许更加高效的利用多线程。我们可以利用多线程来填充command lists。有更多控制权同时也意味着我们需要承担更多的责任，例如CPU/GPU同步以及内存管理。 Direct3D通过使用预编译的pipeline state objects（PSO）和command lists（bundles）来最小化CPU开销。 在我们应用的初始化阶段，我们会创建很多由shaders（vertex，pixel等）和其他管线状态（blending，rasterizer，primitive to...</div></div></div></a><a class="pagination-related" href="/massive-grass-rendering-based-on-gpu-instance/" title="基于GPU Instance的草地渲染学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-08</div><div class="info-item-2">基于GPU Instance的草地渲染学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理 GPU Instance API 基于GPU Instance的草地渲染实现 草地渲染内容拓展  GPU Instance的底层原理 简单概括一句话就是：传递一个对象的Mesh，指定其绘制次数和材质，Unity就会为我们在GPU的统一/常量缓冲区开辟好必要的缓冲区，然后以我们指定的材质对Mesh进行我们指定次数的渲染，这样就可以达成一次Drawcall绘制海量对象的目的。 好处在于：  传统渲染方式（无合批情形）：绘制多少个对象就要整理和传递多少次数据，其中整理和传递数据的过程消耗极大，多数为性能瓶颈 GPU Instance：只用从CPU往GPU传递一次数据，大大提高了渲染效率。  ...</div></div></div></a><a class="pagination-related" href="/nkgmoba-hpbarwithshader/" title="使用Shader实现LOL血条分隔线效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010705.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-04</div><div class="info-item-2">使用Shader实现LOL血条分隔线效果</div></div><div class="info-2"><div class="info-item-1">前言 马上要去上班了，这阵子雀食是啥都不想干，技能编辑器接Slate又费脑子，索性整点小活吧，想起来当前Moba项目的血条间隔还是用虚拟列表做的，性能捉急，准备用Shader重新实现一下。 正文 所谓血条间隔就是在血条中使用分割线来帮助玩家快速计算自身生命值的，个人认为是一个非常优秀的设计，比如下面的大塔姆，玩家可以在一秒钟之内就可以知道其还有360左右的生命值  因为血条间隔宽度和数量与战斗中英雄最大生命值有关，所以根据战斗中的英雄最大血量计算得出每个血条间隔的宽度值，传入Shader进行计算绘制，所以需要进行一些换算，现有以下条件  血条宽度为107px 英雄最大生命值为3700 血条每格代表100生命值  首先是血条间隔的数量，为 3700/100 = 37 个，而这37个间隔要均匀分布在107px中，所以每个间隔的宽度为100 / 37 = 2.70，注意，是100，不是107，因为我们绘制血条间隔与血条UI自身的宽度完全无关，根本原因是我们在Shader中会使用uv.x * 100的方式来构建一个虚拟的血条，所以不论英雄最大生命值是多少，都要除100。 123456Pe...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Unity%E5%92%8CMaterials"><span class="toc-number">1.</span> <span class="toc-text">Unity和Materials</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SPR%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84"><span class="toc-number">2.</span> <span class="toc-text">SPR是如何工作的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E5%90%AF%E7%94%A8SRP-Batcher"><span class="toc-number">3.</span> <span class="toc-text">如何启用SRP Batcher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SRP-Batcher-%E5%85%BC%E5%AE%B9%E6%80%A7"><span class="toc-number">4.</span> <span class="toc-text">SRP Batcher 兼容性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%A7%E8%83%BD%E7%9B%91%E6%B5%8B%E7%9A%84%E8%89%BA%E6%9C%AF"><span class="toc-number">5.</span> <span class="toc-text">性能监测的艺术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#SRPBatcherProfiler-cs"><span class="toc-number">5.1.</span> <span class="toc-text">SRPBatcherProfiler.cs</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%AF%E6%8C%81%E7%9A%84%E5%B9%B3%E5%8F%B0"><span class="toc-number">6.</span> <span class="toc-text">支持的平台</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#VR%E9%82%A3%E7%82%B9%E4%BA%8B"><span class="toc-number">7.</span> <span class="toc-text">VR那点事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">8.</span> <span class="toc-text">常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%88%91%E6%80%8E%E4%B9%88%E7%9F%A5%E9%81%93%E6%88%91%E5%BD%93%E5%89%8D%E7%94%A8%E6%B3%95%E6%98%AF%E5%90%A6%E6%98%AFSRP-Batcher%E7%9A%84%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E5%91%A2%EF%BC%9F"><span class="toc-number">8.1.</span> <span class="toc-text">我怎么知道我当前用法是否是SRP Batcher的最佳实践呢？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E8%AE%BA%E6%98%AF%E5%90%A6%E5%BC%80%E5%90%AFSRP-Batcher%EF%BC%8CSRPBatcherProfiler%E8%80%97%E6%97%B6%E6%98%BE%E7%A4%BA%E9%83%BD%E5%B7%AE%E4%B8%8D%E5%A4%9A%E6%98%AF%E4%B8%BA%E5%95%A5%EF%BC%9F"><span class="toc-number">8.2.</span> <span class="toc-text">无论是否开启SRP Batcher，SRPBatcherProfiler耗时显示都差不多是为啥？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BD%93%E6%88%91%E5%BC%80%E5%90%AFSRP-Batcher%E7%9A%84%E6%97%B6%E5%80%99%E5%B9%B6%E6%B2%A1%E6%9C%89%E6%98%BE%E8%91%97%E5%8F%98%E5%8C%96%E6%98%AF%E4%B8%BA%E5%95%A5%EF%BC%9F"><span class="toc-number">8.3.</span> <span class="toc-text">当我开启SRP Batcher的时候并没有显著变化是为啥？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E9%AB%98%E6%95%88%E7%9A%84%E6%A3%80%E6%9F%A5SRP-Batcher"><span class="toc-number">9.</span> <span class="toc-text">如何高效的检查SRP Batcher</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E5%86%99%E4%BD%A0%E8%87%AA%E5%B7%B1%E7%9A%84SRP-Batcher%E5%85%BC%E5%AE%B9%E7%9A%84Shader"><span class="toc-number">10.</span> <span class="toc-text">编写你自己的SRP Batcher兼容的Shader</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%80%9CPer-Material%E2%80%9D%E5%8F%98%E9%87%8F"><span class="toc-number">10.1.</span> <span class="toc-text">“Per Material”变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E2%80%9CPer-Object%E2%80%9D%E5%8F%98%E9%87%8F"><span class="toc-number">10.2.</span> <span class="toc-text">“Per Object”变量</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">11.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '9d87d484641f046bac28f0ea3ee077c8'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

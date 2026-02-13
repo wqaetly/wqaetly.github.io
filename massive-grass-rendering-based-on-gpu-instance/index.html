@@ -1,0 +1,480 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于GPU Instance的草地渲染学习笔记 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于GPU Instance的草地渲染学习笔记">
+<meta property="og:url" content="https://www.lfzxb.top/massive-grass-rendering-based-on-gpu-instance/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp">
+<meta property="article:published_time" content="2021-08-08T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-08T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="URP">
+<meta property="article:tag" content="GPU Instance">
+<meta property="article:tag" content="草海渲染">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于GPU Instance的草地渲染学习笔记",
+  "url": "https://www.lfzxb.top/massive-grass-rendering-based-on-gpu-instance/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp",
+  "datePublished": "2021-08-08T00:00:00.000Z",
+  "dateModified": "2021-08-08T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/massive-grass-rendering-based-on-gpu-instance/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于GPU Instance的草地渲染学习笔记',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">基于GPU Instance的草地渲染学习笔记</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于GPU Instance的草地渲染学习笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-08-08T00:00:00.000Z" title="发表于 2021-08-08 00:00:00">2021-08-08</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-08-08T00:00:00.000Z" title="更新于 2021-08-08 00:00:00">2021-08-08</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98/">应用实战</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/massive-grass-rendering-based-on-gpu-instance/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-08-08 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。</p>
+<p>学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——<a target="_blank" rel="noopener" href="https://github.com/ColinLeung-NiloCat/UnityURP-MobileDrawMeshInstancedIndirectExample">基于GPU Instance的草地渲染</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" alt="image-20210907010135213" loading='lazy'></p>
+<p>本文章主要涉及到的技术内容为：</p>
+<ul>
+<li>GPU Instance的底层原理</li>
+<li>GPU Instance API</li>
+<li>基于GPU Instance的草地渲染实现</li>
+<li>草地渲染内容拓展</li>
+</ul>
+<h2 id="GPU-Instance的底层原理">GPU Instance的底层原理</h2>
+<p>简单概括一句话就是：传递一个对象的Mesh，指定其绘制次数和材质，Unity就会为我们在GPU的<code>统一/常量缓冲区</code>开辟好必要的缓冲区，然后以我们指定的材质对Mesh进行我们指定次数的渲染，这样就可以达成一次Drawcall绘制海量对象的目的。</p>
+<p>好处在于：</p>
+<ul>
+<li>传统渲染方式（无合批情形）：绘制多少个对象就要整理和传递多少次数据，其中整理和传递数据的过程消耗极大，多数为性能瓶颈</li>
+<li>GPU Instance：只用从CPU往GPU传递一次数据，大大提高了渲染效率。</li>
+</ul>
+<p>对于Unity的GPU Instance来说，从数据处理的角度其实也可以分为两类：</p>
+<ul>
+<li>第一种是使用了 <code>支持并启用了GPU Instance的Shader</code> 的材质的物体在进行渲染时（例如我们通过Gameobject.Instantiate实例化了100w个正方体），Unity会对所有渲染对象进行特殊处理，为所有的渲染目标在GPU的常量缓冲区（Constant Buffer中）准备各种缓冲区（顶点数据缓冲区，材质数据缓冲区，transform矩阵数据缓冲区等）</li>
+<li>第二种是我们自己调用GPU Instance API进行实例绘制，那么Unity只会根据我们所传递的参数为其准备顶点缓冲区，材质数据缓冲区，对于矩阵数据缓冲区或者其他自定义数据是不提供的，也就需要我们自己通过ComputeBuffer来传递这些数据，然后在Shader中根据instanceId进行处理。例如我们使用GPU Instance API绘制100w个三角形，那么Unity会控制GPU后端为我们准备一个能容纳300w个顶点的缓冲区和一个材质数据缓冲区。</li>
+</ul>
+<h2 id="GPU-Instance-API">GPU Instance API</h2>
+<p>GPU Instance API有两种，第一种是Graphic提供的，第二种是CommandBuffer提供的，两者只是提供的接口不同，在效率上没有什么差别，毕竟就算我们直接用CommandBuffer API也只是Unity提供给我们的上层封装，而不是真正的GPU后端里的CommandBuffer。</p>
+<p>Colin大神项目里使用了Graphic的API，对于CommandBuffer的GPU Instance API，知乎也有一篇文章使用到了——<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/354633512">URP渲染管线 - GPUInstance绘制草地</a>，关于API的更多详细内容，参见<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstancedIndirect.html">Graphics.DrawMeshInstancedIndirect</a> 和 <a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Rendering.CommandBuffer.DrawMeshInstancedProcedural.html">CommandBuffer.DrawMeshInstancedProcedural</a> 官方文档。</p>
+<p>我对于DrawMeshInstanced和DrawMeshInstancedIndirect这两个API的区别理解就是：</p>
+<ul>
+<li>DrawMeshInstanced会受限于Unity内部的预先定义，比如单次DrawMeshInstanced调用最多绘制1023实例，单次Drawcall最多绘制500个实例（也就意味着一次DrawMeshInstanced可能会有多个Drawcall），但可以一定程度上享受Unity内部基建（将单次DrawMeshInstanced绘制的所有实例作为一个剔除组对待，但是并不支持单个实例的剔除和排序来提高透明度测试和深度测试的性能），所以这个“一定程度上的Unity基建”已经是相当鸡肋了，不要也罢</li>
+<li>DrawMeshInstancedIndirect自由度和性能上限更高，没有DrawMeshInstanced那么多限制，但也意味着放弃享用了Unity的一些内部基建（同上鸡肋），需要自己处理LOD和裁剪</li>
+</ul>
+<p>所以一般都选用DrawMeshInstancedIndirect来进行开发。</p>
+<h2 id="基于GPU-Instance的草地渲染实现">基于GPU Instance的草地渲染实现</h2>
+<h3 id="渲染流程">渲染流程</h3>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:500px;" src="https://www.processon.com/embed/61092ab90e3e74368fc6fb6e"></iframe>
+<h3 id="基于Compute-Shader的裁剪">基于Compute Shader的裁剪</h3>
+<p>对于Compute Shader相关内容可移步：<a href="https://www.lfzxb.top/screen-space-plana-reflection-in-urp-study/">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</a>，这里只放一张使用示意图：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010205.png!webp" alt="image-20210907010205874" loading='lazy'></p>
+<p>基于GPU Instance的原理——我们只把一个物体的顶点数据传递到了GPU侧，然后通过instance id和不同的变换矩阵，在vs和ps中绘制出多个对象，虽然只有一次Drawcall调用，但是渲染后端内部处理的时候会将这一个物体的顶点数据使用vs处理多次（我们想要绘制出的实例数量），那么对于在视角中完全不可见的实例，对它进行的vs处理就是不必要的，但是我们自己使用GPU Instance控制绘制的实例没有办法享受应用阶段的裁剪红利（一般由引擎提供粗粒度的，以对象为单位的裁剪），也就引申出<strong>GPU Instance需要做的裁剪工作</strong>。</p>
+<p>虽然最后在齐次裁剪空间的裁剪会帮我们把不必要的片元给裁剪掉，但是我们自己提前手动做视锥体裁剪的话可以减少很多顶点操作，对于超多数量的实例，性能提升的幅度一想便知。</p>
+<p>项目进行了两次裁剪：</p>
+<ol>
+<li>第一次是纯CPU端的裁剪，通过对每棵草进行分块，然后对分出的块使用摄像机的视锥体进行AABB测试，在视锥体内的才会加入待渲染的草地块列表</li>
+<li>第二次是基于Compute Shader的纯GPU的裁剪，将传递进来的一块或多块草地区域中的每棵草通过VP矩阵变换到齐次裁剪空间进行手动裁剪，通过测试的才会加入最终的待渲染列表</li>
+</ol>
+<p>所以对于分块的大小设置是会直接影响到是CPU Heavy还是GPU Heavy：<code>如果每个分块的大小越大，则在CPU裁剪粒度越大，则CPU压力越小，GPU压力越大，反之则反之</code></p>
+<p>对于渲染目标的裁剪，相关实现技术有很多，可以参见：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/74936111">【游戏场景剔除】剔除算法综述</a></p>
+<h3 id="草地广告牌">草地广告牌</h3>
+<p>我们知道经典的广告牌算法：将相机从世界空间转换到模型空间来构造一个旋转矩阵，变换物体的顶点，让它看起来像是一直朝着摄像机</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/10/QQ%E6%88%AA%E5%9B%BE20191019231004.png" alt="图自Shader入门精要" loading='lazy'></p>
+<p>但是在这里算法似乎有些不同？</p>
+<p>其实还是经典广告牌算法，之所以可以如此简化是因为在这个草地渲染中，是<code>由于每棵草的锚点世界坐标已知，所以可以直接通过偏移的形式换算出每个顶点的世界坐标</code>，也就是说，一开始的<code>每棵草的模型空间顶点就被当成了世界空间顶点</code>，从而可以直接套用观察矩阵的旋转信息来实现广告牌效果，最后加上其锚点世界坐标（或者乘以一个只包含位移的世界变换矩阵）即可得出这个顶点真正的世界坐标</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//rotation(make grass LookAt() camera just like a billboard)</span></span><br><span class="line"><span class="comment">//=========================================</span></span><br><span class="line">float3 cameraTransformRightWS = UNITY_MATRIX_V[<span class="number">0</span>].xyz;</span><br><span class="line"><span class="comment">//UNITY_MATRIX_V[0].xyz == world space camera Right unit vector</span></span><br><span class="line">float3 cameraTransformUpWS = UNITY_MATRIX_V[<span class="number">1</span>].xyz;</span><br><span class="line"><span class="comment">//UNITY_MATRIX_V[1].xyz == world space camera Up unit vector</span></span><br><span class="line">float3 cameraTransformForwardWS = -UNITY_MATRIX_V[<span class="number">2</span>].xyz;</span><br><span class="line"><span class="comment">//UNITY_MATRIX_V[2].xyz == -1 * world space camera Forward unit vector</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//Expand Billboard (billboard Left+right)</span></span><br><span class="line">float3 positionOS = IN.positionOS.x * cameraTransformRightWS;</span><br><span class="line"><span class="comment">//random width from posXZ, min 0.1</span></span><br><span class="line"><span class="comment">//Expand Billboard (billboard Up)</span></span><br><span class="line">positionOS += IN.positionOS.y * cameraTransformUpWS;</span><br><span class="line"></span><br><span class="line">float3 positionWS = positionOS + perGrassPivotPosWS;</span><br><span class="line">OUT.positionCS = TransformWorldToHClip(positionWS);</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="草地交互">草地交互</h3>
+<p>核心为GrassBendingRTPrePass，利用TrailRender组件，将自动淡出的运行轨迹渲染到一张RT上，作为草地交互的信息源</p>
+<p>这个渲染时序为：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">m_ScriptablePass.renderPassEvent = RenderPassEvent.AfterRenderingPrePasses;</span><br></pre></td></tr></tbody></table></figure>
+<p>可通过FrameDebug查看渲染结果</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010228.png!webp" alt="image-20210907010228334" loading='lazy'></p>
+<p>随后即可在Shader中根据这个RT进行草地交互，这里采取的方案是直接将影响到的草尖位置下移来模拟草被压下去的效果，需要注意的是<code>需要自己构造用于采样上面那个RT的UV坐标</code>，即每棵草锚点世界空间位置减去整个草地的中心位置然后除以整个草地的大小</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//get "is grass stepped" data(bending) from RT</span></span><br><span class="line">float2 grassBendingUV = ((perGrassPivotPosWS.xz - _PivotPosWS.xz) / _BoundSize) * <span class="number">0.5</span> + <span class="number">0.5</span>;</span><br><span class="line"><span class="comment">//claculate where is this grass inside bound (can optimize to 2 MAD)</span></span><br><span class="line"><span class="type">float</span> stepped = tex2Dlod(_GrassBendingRT, float4(grassBendingUV, <span class="number">0</span>, <span class="number">0</span>)).x;</span><br><span class="line"></span><br><span class="line"><span class="comment">//bending by RT (hard code)</span></span><br><span class="line">float3 bendDir = cameraTransformForwardWS;</span><br><span class="line">bendDir.xz *= <span class="number">0.5</span>; <span class="comment">//make grass shorter when bending, looks better</span></span><br><span class="line">bendDir.y = <span class="built_in">min</span>(<span class="number">-0.5</span>, bendDir.y);</span><br><span class="line"><span class="comment">//prevent grass become too long if camera forward is / near parallel to ground</span></span><br><span class="line">positionOS = lerp(positionOS.xyz + bendDir * positionOS.y / -bendDir.y, positionOS.xyz,</span><br><span class="line">                  stepped * <span class="number">0.95</span> + <span class="number">0.05</span>); <span class="comment">//don't fully bend, will produce ZFighting</span></span><br></pre></td></tr></tbody></table></figure>
+<p>如果是单纯的顶点位置下移难免有些僵硬，那么再配合上风场的模拟使草倾倒，看起来就非常自然了</p>
+<h3 id="风场模拟">风场模拟</h3>
+<p>三波风浪循环作用，只影响草的草尖部分，最后将风浪影响的偏移量叠加到顶点位置上即可</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//wind animation (biilboard Left Right direction only sin wave)            </span></span><br><span class="line"><span class="type">float</span> wind = <span class="number">0</span>;</span><br><span class="line">wind += (<span class="built_in">sin</span>(</span><br><span class="line">    _Time.y * _WindAFrequency + perGrassPivotPosWS.x * _WindATiling.x + perGrassPivotPosWS.z *</span><br><span class="line">    _WindATiling.y) * _WindAWrap.x + _WindAWrap.y) * _WindAIntensity; <span class="comment">//windA</span></span><br><span class="line">wind += (<span class="built_in">sin</span>(</span><br><span class="line">    _Time.y * _WindBFrequency + perGrassPivotPosWS.x * _WindBTiling.x + perGrassPivotPosWS.z *</span><br><span class="line">    _WindBTiling.y) * _WindBWrap.x + _WindBWrap.y) * _WindBIntensity; <span class="comment">//windB</span></span><br><span class="line">wind += (<span class="built_in">sin</span>(</span><br><span class="line">    _Time.y * _WindCFrequency + perGrassPivotPosWS.x * _WindCTiling.x + perGrassPivotPosWS.z *</span><br><span class="line">    _WindCTiling.y) * _WindCWrap.x + _WindCWrap.y) * _WindCIntensity; <span class="comment">//windC</span></span><br><span class="line">wind *= IN.positionOS.y; <span class="comment">//wind only affect top region, don't affect root region</span></span><br><span class="line">float3 windOffset = cameraTransformRightWS * wind; <span class="comment">//swing using billboard left right direction</span></span><br><span class="line">positionWS.xyz += windOffset;</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="支持光照和阴影">支持光照和阴影</h3>
+<p>URP在光照的处理上与Built-In管线有很大不同</p>
+<ul>
+<li>Built-In：每个光源会遍历一次所有的Pass，如果一个场景中待渲染物体有m个Pass，n个光源，就会有<code>m*n</code>次Drawcall，在这种类型的Drawcall过程中渲染数据和渲染状态的改变对性能的打击是毁灭性的</li>
+<li>URP：每个Pass中遍历所有的光源，一次渲染搞定所有光源</li>
+</ul>
+<p>显而易见的，会节约大量的Drawcall，拥有更好的性能</p>
+<p>首先添加一些关键词，理由在注释里也说清楚了</p>
+<ul>
+<li>在URP <code>C#侧</code>源码中会对Shader中的关键字进行判断，如果定义不合法就会被裁剪，详情可参见<code>ShaderPreprocessor.cs</code>中的StripUnused函数</li>
+<li>如果不添加这些关键词，就无法正常调用Core.hlsl和Lighting.hlsl中所定义的字段和函数（因为他们内部对关键字是否定义做了判断）</li>
+</ul>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// -------------------------------------</span></span><br><span class="line"><span class="comment">// Universal Render Pipeline keywords</span></span><br><span class="line"><span class="comment">// When doing custom shaders you most often want to copy and paste these #pragmas</span></span><br><span class="line"><span class="comment">// These multi_compile variants are stripped from the build depending on:</span></span><br><span class="line"><span class="comment">// 1) Settings in the URP Asset assigned in the GraphicsSettings at build time</span></span><br><span class="line"><span class="comment">// e.g If you disabled AdditionalLights in the asset then all _ADDITIONA_LIGHTS variants</span></span><br><span class="line"><span class="comment">// will be stripped from build</span></span><br><span class="line"><span class="comment">// 2) Invalid combinations are stripped. e.g variants with _MAIN_LIGHT_SHADOWS_CASCADE</span></span><br><span class="line"><span class="comment">// but not _MAIN_LIGHT_SHADOWS are invalid and therefore stripped.</span></span><br><span class="line"><span class="meta">#pragma multi_compile _ _MAIN_LIGHT_SHADOWS</span></span><br><span class="line"><span class="meta">#pragma multi_compile _ _MAIN_LIGHT_SHADOWS_CASCADE</span></span><br><span class="line"><span class="meta">#pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS</span></span><br><span class="line"><span class="meta">#pragma multi_compile _ _ADDITIONAL_LIGHT_SHADOWS</span></span><br><span class="line"><span class="meta">#pragma multi_compile _ _SHADOWS_SOFT</span></span><br><span class="line"><span class="comment">// -------------------------------------</span></span><br></pre></td></tr></tbody></table></figure>
+<p>其中对于光照函数，可以参见<code>Lighting.hlsl</code>，对于阴影函数，参见<code>Shadows.hlsl</code>，可以顺藤摸瓜得到所有关键字定义的缘由</p>
+<p>随后计算平行光和额外光源他们的光照与阴影即可，光照模型选择了经典的半兰伯特作为漫反射方案，逐顶点的高光反射作为高光方案（更加详尽的光照内容在下面的注释中）</p>
+<figure class="highlight glsl"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line">half3 ApplySingleDirectLight(Light light, half3 N, half3 V, half3 albedo, half positionOSY)</span><br><span class="line">{</span><br><span class="line">    half3 H = <span class="built_in">normalize</span>(light.direction + V);</span><br><span class="line">    <span class="comment">//direct diffuse </span></span><br><span class="line">    half directDiffuse = <span class="built_in">dot</span>(N, light.direction) * <span class="number">0.5</span> + <span class="number">0.5</span>; <span class="comment">//half lambert, to fake grass SSS</span></span><br><span class="line">    <span class="comment">//direct specular</span></span><br><span class="line">    <span class="type">float</span> directSpecular = saturate(<span class="built_in">dot</span>(N,H));</span><br><span class="line">    <span class="comment">//pow(directSpecular,8)</span></span><br><span class="line">    directSpecular *= directSpecular;</span><br><span class="line">    directSpecular *= directSpecular;</span><br><span class="line">    directSpecular *= directSpecular;</span><br><span class="line">    <span class="comment">//directSpecular *= directSpecular; //enable this line = change to pow(directSpecular,16)</span></span><br><span class="line">    <span class="comment">//add direct directSpecular to result</span></span><br><span class="line">    directSpecular *= <span class="number">0.1</span> * positionOSY;<span class="comment">//only apply directSpecular to grass's top area, to simulate grass AO</span></span><br><span class="line">    half3 lighting = light.color * (light.shadowAttenuation * light.distanceAttenuation);</span><br><span class="line">    half3 result = (albedo * directDiffuse + directSpecular) * lighting;</span><br><span class="line">    <span class="keyword">return</span> result; </span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">-----------------------------------PS------------------------------------------</span><br><span class="line">    </span><br><span class="line">    Light mainLight;</span><br><span class="line"><span class="meta">#if _MAIN_LIGHT_SHADOWS</span></span><br><span class="line">    mainLight = GetMainLight(TransformWorldToShadowCoord(pos</span><br><span class="line"><span class="meta">#else</span></span><br><span class="line">    mainLight = GetMainLight();</span><br><span class="line"><span class="meta">#endif                               </span></span><br><span class="line">    half3 randomAddToN = (_RandomNormal * <span class="built_in">sin</span>(perGrassPivotPosWS.x * <span class="number">82.32523</span> + perGrassPivotPosWS.z) + wind</span><br><span class="line">        * <span class="number">-0.25</span>) * cameraTransformRightWS; <span class="comment">//random normal per grass </span></span><br><span class="line">    <span class="comment">//default grass's normal is pointing 100% upward in world space, it is an important but simple grass normal trick</span></span><br><span class="line">    <span class="comment">//-apply random to normal else lighting is too uniform</span></span><br><span class="line">    <span class="comment">//-apply cameraTransformForwardWS to normal because grass is billboard</span></span><br><span class="line">    half3 N = <span class="built_in">normalize</span>(half3(<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>) + randomAddToN - cameraTransformForwardWS * <span class="number">0.5</span>);</span><br><span class="line">    half3 V = viewWS / ViewWSLength;</span><br><span class="line">    half3 baseColor = tex2Dlod(_BaseColorTexture,</span><br><span class="line">                               float4(TRANSFORM_TEX(positionWS.xz, _BaseColorTexture), <span class="number">0</span>, <span class="number">0</span>)) * _BaseColor;</span><br><span class="line">    <span class="comment">//sample mip 0 only</span></span><br><span class="line">    half3 albedo = lerp(_GroundColor, baseColor, IN.positionOS.y);</span><br><span class="line">    <span class="comment">//（计算球谐光照，因为场景中的光照探针）</span></span><br><span class="line">    half3 lightingResult = SampleSH(<span class="number">0</span>) * albedo;</span><br><span class="line">    <span class="comment">//main direct light</span></span><br><span class="line">    lightingResult += ApplySingleDirectLight(mainLight, N, V, albedo, positionOS.y);</span><br><span class="line">    mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));</span><br><span class="line"><span class="meta">#if _ADDITIONAL_LIGHTS</span></span><br><span class="line">    <span class="comment">// Returns the amount of lights affecting the object being renderer.</span></span><br><span class="line">    <span class="comment">// These lights are culled per-object in the forward renderer</span></span><br><span class="line">    <span class="type">int</span> additionalLightsCount = GetAdditionalLightsCount();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; additionalLightsCount; ++i)</span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// Similar to GetMainLight, but it takes a for-loop index. This figures out the</span></span><br><span class="line">        <span class="comment">// per-object light index and samples the light buffer accordingly to initialized the</span></span><br><span class="line">        <span class="comment">// Light struct. If _ADDITIONAL_LIGHT_SHADOWS is defined it will also compute shadows.</span></span><br><span class="line">        Light light = GetAdditionalLight(i, positionWS);</span><br><span class="line">        <span class="comment">// Same functions used to shade the main light.</span></span><br><span class="line">        lightingResult += ApplySingleDirectLight(light, N, V, albedo, positionOS.y);</span><br><span class="line">    }</span><br><span class="line"><span class="meta">#endif</span></span><br></pre></td></tr></tbody></table></figure>
+<p>这里还有一个小Trick，高光部分只影响了草尖部分，而非全部的顶点，因为如果全部顶点都计算高光，那么在就会过曝（右边图片的白色草区域，由于视角方向与光照方向取平均归一化后基本与法线方向一致导致点乘过大，也就是高光系数太高所以会过曝），只影响草尖部分还可以利用VS到PS的线性插值来获得更好的光照效果（自动渐变）</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010250.png!webp" alt="左边为高光只作用草尖效果，右边为全部顶点都计算高光的效果" loading='lazy'></p>
+<h2 id="拓展">拓展</h2>
+<p>这样的一个草地系统其实已经很完善了，只是应用在工业生产中还需要进行算法改进以及提供一些其他的基础设施，算法部分的改进方向（四叉树扫寻优化）在原项目中已做了注释，此处不表</p>
+<p>这部分主要说一下基础建设</p>
+<h3 id="草地编辑器">草地编辑器</h3>
+<p>工业化生产中我们会有草地编辑器的需求，类似Unity自带的地形系统的刷草，刷树功能，顺着这个项目的思路来的话，问题的关键有两点：</p>
+<ol>
+<li>如何使用笔刷刷出世界坐标，并且需要应对带有起伏的地形</li>
+<li>如何多样化植物类型，比如同时支持草和花（下面统称为细节对象）</li>
+</ol>
+<p>对于第一点，可以直接利用Unity自带的地形系统（Terrain）作为数据编辑和导出的工具，这里可以简略说一下Terrain的工作原理：</p>
+<ul>
+<li>高度图（Height Map）用于记录地形的起伏</li>
+<li>控制图（Control Map）用于记录地表混合信息</li>
+<li>灰度图（Grayscale Map）用于记录草，花，岩石等细节对象在单个纹素所对应的数量</li>
+</ul>
+<p>在地形编辑器中刷好草之后，我们可以通过采样高度图和<code>TerrainData.GetDetailLayer</code> API的方式来获取草的世界坐标，随后进行渲染即可</p>
+<p>也可以自己参照着Terrain编辑器自己专门写一个刷草编辑器，可控性更高，刷草编辑器的核心就是<code>射线检测计算坐标 + 笔刷贴图采样计算影响到的UV</code>，下面给出两个参考链接</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/Unity-Technologies/UnityCsReference/blob/HEAD/Modules/TerrainEditor/">Unity Terrains编辑器部分源码</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.patreon.com/posts/grass-geometry-2-40077798">Grass Geometry Shader with Interactivity</a></li>
+</ul>
+<p>对于第二点，有了第一点的铺垫，其解决方案也呼之欲出了：因为Unity的TerrainData没有提供获取细节对象类型的API，所以需要自己写一个刷草编辑器，将数据存储到两张灰度图即可，第一张用于记录草的高度（纹素的UV坐标即为草的X-Z坐标），第二张用于记录细节对象的类型（是花还是草）</p>
+<h3 id="更丰富的草地交互">更丰富的草地交互</h3>
+<p>现在项目中的草地交互是胶囊体走过的地方草地会被压下去，其实类似的还有人物挥剑，释放强力技能造成的冲击波从而导致草地被压下去的效果，都可以通过在这个RT上进行操作的方式实现，但有些游戏类型可能交互的需求不尽于此：比如割草和烧草</p>
+<p>如果是常规的Gameobject草，我们可以通过碰撞检测来设置草的状态数据，但我们使用了GPU Instance来绘制草是取不到具体草对象的，所以需要寻找别的方案</p>
+<h4 id="割草">割草</h4>
+<p>如果是一刀下去连根拔起，那大可以直接清空灰度图那部分纹素的信息，但是为了追求更自然的表现，一般都是要留草根的，这里其实思路和上面的草地交互RT差不多，区别是不会自动恢复，也就是说RT的影响是永久性的，所以需要新开一张RT用于记录割草的信息</p>
+<h4 id="烧草">烧草</h4>
+<p>烧草更复杂一些，但核心仍然是RT，由这个RT来表示烧草的位置，并且在Shader中对这个RT进行采样，如果被影响到了就需要进行烧毁的特效表现</p>
+<p>具体算法就类似于很多游戏中的 “搜寻物品” 世界扫描线效果，可以参见 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/347319259">Unity3D Shader:死亡搁浅扫描效果</a></p>
+<h2 id="参考">参考</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://learnopengl.com/Advanced-OpenGL/Instancing">LearnOpenGL GPU Instance</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/74936111">【游戏场景剔除】剔除算法综述</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/98642798">关于静态批处理/动态批处理/GPU Instancing /SRP Batcher的详细剖析</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/354633512">URP渲染管线 - GPUInstance绘制草地</a></li>
+<li><a target="_blank" rel="noopener" href="https://wiki.gurbu.com/index.php?title=GPU_Instancer:Terminology">Gurbu GPU Instance wiki</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.nvidia.com/gpugems/gpugems2/part-i-geometric-complexity/chapter-3-inside-geometry-instancing">GPU Gems 2: Inside Geometry Instancing</a></li>
+<li><a href="https://www.lfzxb.top/screen-space-plana-reflection-in-urp-study/">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Graphics.DrawMeshInstancedIndirect.html">Graphics.DrawMeshInstancedIndirect</a> 和 <a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Rendering.CommandBuffer.DrawMeshInstancedProcedural.html">CommandBuffer.DrawMeshInstancedProcedural</a> 官方文档</li>
+<li><a target="_blank" rel="noopener" href="https://huailiang.github.io/blog/2019/harmonics/">球谐光照</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Unity-Technologies/UnityCsReference/blob/HEAD/Modules/TerrainEditor/">Unity Terrains编辑器部分源码</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.patreon.com/posts/grass-geometry-2-40077798">Grass Geometry Shader with Interactivity</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/347319259">Unity3D Shader:死亡搁浅扫描效果</a></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/massive-grass-rendering-based-on-gpu-instance/">https://www.lfzxb.top/massive-grass-rendering-based-on-gpu-instance/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/URP/">URP</a><a class="post-meta__tags" href="/tags/GPU-Instance/">GPU Instance</a><a class="post-meta__tags" href="/tags/%E8%8D%89%E6%B5%B7%E6%B8%B2%E6%9F%93/">草海渲染</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/early-z-test-and-late-z-test/" title="Early-Z和Late-Z规则"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907005950.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Early-Z和Late-Z规则</div></div><div class="info-2"><div class="info-item-1">前言 已经不止一次看到有文章说：不管有没有Early-Z最后的Late-Z一定会执行了，仔细想一下其实是不合理的：  Early-Z相当于把Late-Z提前，一样会有逐片元的深度测试和深度写入，如果Early-Z和Late-Z是共存的，那么就有两次Z-Buffer的读取和写入，造成带宽浪费 Early-Z因为种种原因失效了，执行Late-Z无可非议，但如果Early-Z没有失效，我们都在Early-Z处理好了，为什么还需要在Late-Z处理一次？  这篇文章就把深度缓冲区的所有操作都整理起来，并且还会包含一些引申出来的知识点，给每位看官进行一条龙服务。 正文 名词规范 国际惯例了属于是，为了避免歧义，本文中所有用到的名词，英语词汇都将在此处列出，希望看官们能把此处列出的名词和释义代入文章中，而不是自己脑海里的，这样你好我也好：  PS：片元着色器 Z-Buffer：深度缓冲区 Z-Test：深度测试 Z-Write：深度写入 Early-Z：提前Z-Test和Z-Write，位于光栅化阶段之后，PS阶段之前，以pixel quad为单位（既以4个像素为一组，因为深度缓存内的数据是...</div></div></div></a><a class="pagination-related" href="/xlua-practise-total/" title="基于XLua的热更新框架实践总结"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010344.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">基于XLua的热更新框架实践总结</div></div><div class="info-2"><div class="info-item-1">前言 花了两周时间，学习了Lua，并且基于XLua搭建了一套热更新框架，包括开发环境，XLua实践，基础建设（基于lua-protobuf的配置表和网络协议），OOP框架，UI框架等。这篇博客的主要内容也就是叙述这些功能的实现过程，包括过程中遇到的一些坑和解决方案，主要以讲述思路为主，其实也是我的学习路线和思路分享，希望对想着手学习XLua的同好有所帮助。 开发环境搭建 XLua下载 由于我们后面还需要接入lua-protobuf，RapidJson，LPeg，FFI for lua53等第三方库，所以推荐直接从 build_xlua_with_libs 下载最新的Release包，根据自己的需求选择目标Lua版本的Release包进行下载即可。 其中较为重要的是Plugins目录下动态库的配置，因为此处配置不正确会导致不同平台可能会遇到运行时找不到动态库的报错，官方的动态库和配置信息（动态库的mate文件）是直接可用的。 如果有自己编译动态库的需求，需要注意不同编译选项得到的动态库在Unity这边所需要的配置也不一样，对于第三方动态库的编译和p/Invoke相关的内容，可以前往...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-21</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a><a class="pagination-related" href="/nkgmoba-hpbarwithshader/" title="使用Shader实现LOL血条分隔线效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010705.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-04</div><div class="info-item-2">使用Shader实现LOL血条分隔线效果</div></div><div class="info-2"><div class="info-item-1">前言 马上要去上班了，这阵子雀食是啥都不想干，技能编辑器接Slate又费脑子，索性整点小活吧，想起来当前Moba项目的血条间隔还是用虚拟列表做的，性能捉急，准备用Shader重新实现一下。 正文 所谓血条间隔就是在血条中使用分割线来帮助玩家快速计算自身生命值的，个人认为是一个非常优秀的设计，比如下面的大塔姆，玩家可以在一秒钟之内就可以知道其还有360左右的生命值  因为血条间隔宽度和数量与战斗中英雄最大生命值有关，所以根据战斗中的英雄最大血量计算得出每个血条间隔的宽度值，传入Shader进行计算绘制，所以需要进行一些换算，现有以下条件  血条宽度为107px 英雄最大生命值为3700 血条每格代表100生命值  首先是血条间隔的数量，为 3700/100 = 37 个，而这37个间隔要均匀分布在107px中，所以每个间隔的宽度为100 / 37 = 2.70，注意，是100，不是107，因为我们绘制血条间隔与血条UI自身的宽度完全无关，根本原因是我们在Shader中会使用uv.x * 100的方式来构建一个虚拟的血条，所以不论英雄最大生命值是多少，都要除100。 123456Pe...</div></div></div></a><a class="pagination-related" href="/screen-space-decal-in-urp-study/" title="URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-01-03</div><div class="info-item-2">URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。 大体思路 根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到屏幕面片四个顶点的射线，利用VS到PS的线性插值得到片元数目的射线原理，即可得知屏幕面片每一个片元对应的世界空间坐标），即可得知物体每一个片元对应的模型空间坐标，又因为我们使用了单位长度为1的Cube作为投射器，所以就可以直接用这个坐标当成UV去采样贴图（由于我们只是需要类似一个面片一样的贴花，所以需要裁剪掉除0~1范围外的所有UV），达成贴花的效果。 正文 基础设置 RenderQueue 1"Queue" = "Transparent-499" 为了避免渲染顺序问题，把其渲染队列放到Transparent，并且在任何半透明物体之前渲染 ZWri...</div></div></div></a><a class="pagination-related" href="/screen-space-plana-reflection-in-urp-study/" title="URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907132640.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-24</div><div class="info-item-2">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 继续学习Colin大神的渲染示例库，这次学习的是屏幕空间平面反射（ScreenSpacePlanarReflection），一个可以用在移动端的平面反射库，但是对图形API有要求，PC/console/vulkan android/Metal iOS，OSX，因为其中用到了Compute Shader加速计算。项目还对不同平台做了差异化处理，干货很多。 学习过程中我也有很多疑问，有一些是百度谷歌看PPT解决的，有一些就实在不知道怎么办了，在文中有说明，望知道的大佬能不吝赐教。 正文 Compute Shader 简单来说Compute Shader是运行在GPU中的计算管线中的程序，其与渲染管线相互独立，旨在将任务切分成一个个运行单元，然后充分利用GPU的并行计算能力来提高目标的运行效率，也是现代GPGPU（General Purpose Computing on GPU）的基石。 其应用起来的相关概念用一张图即可概括（有一说一这张图感觉比NVIDIA的好看和明了多了，AMD YES！）：  有关Compute Shader的更多内容参见：知乎文章：Compute Shad...</div></div></div></a><a class="pagination-related" href="/projects-vxgi/" title="ProjectS中的全局光照系统（开发中）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-08-13</div><div class="info-item-2">ProjectS中的全局光照系统（开发中）</div></div><div class="info-2"><div class="info-item-1">文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radiance Transfer Global Illumination（PRTGI），半动态GI方案，多为离线烘焙一部分场景光照数据，运行时实时采样进行光照计算 动态漫反射全局光照（Dynamic Diffuse Global Illumination）（DDGI），PRTGI的全实时版本，把烘焙放在运行时，类似的还有SurfelGI Voxel Global Illumination（VXGI），体素+RayCast流派  其中VXGI是将场景体素化，并在体素存储几何和材质信息，从而实现实时ReLight 我们都知道，对于大世界来说，游戏的寻路和碰撞也是很令人头痛的一件事，尤其是在Unity上 ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GPU-Instance%E7%9A%84%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86"><span class="toc-number">2.</span> <span class="toc-text">GPU Instance的底层原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GPU-Instance-API"><span class="toc-number">3.</span> <span class="toc-text">GPU Instance API</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8EGPU-Instance%E7%9A%84%E8%8D%89%E5%9C%B0%E6%B8%B2%E6%9F%93%E5%AE%9E%E7%8E%B0"><span class="toc-number">4.</span> <span class="toc-text">基于GPU Instance的草地渲染实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="toc-number">4.1.</span> <span class="toc-text">渲染流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8ECompute-Shader%E7%9A%84%E8%A3%81%E5%89%AA"><span class="toc-number">4.2.</span> <span class="toc-text">基于Compute Shader的裁剪</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8D%89%E5%9C%B0%E5%B9%BF%E5%91%8A%E7%89%8C"><span class="toc-number">4.3.</span> <span class="toc-text">草地广告牌</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8D%89%E5%9C%B0%E4%BA%A4%E4%BA%92"><span class="toc-number">4.4.</span> <span class="toc-text">草地交互</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A3%8E%E5%9C%BA%E6%A8%A1%E6%8B%9F"><span class="toc-number">4.5.</span> <span class="toc-text">风场模拟</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%AF%E6%8C%81%E5%85%89%E7%85%A7%E5%92%8C%E9%98%B4%E5%BD%B1"><span class="toc-number">4.6.</span> <span class="toc-text">支持光照和阴影</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8B%93%E5%B1%95"><span class="toc-number">5.</span> <span class="toc-text">拓展</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%8D%89%E5%9C%B0%E7%BC%96%E8%BE%91%E5%99%A8"><span class="toc-number">5.1.</span> <span class="toc-text">草地编辑器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9B%B4%E4%B8%B0%E5%AF%8C%E7%9A%84%E8%8D%89%E5%9C%B0%E4%BA%A4%E4%BA%92"><span class="toc-number">5.2.</span> <span class="toc-text">更丰富的草地交互</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%89%B2%E8%8D%89"><span class="toc-number">5.2.1.</span> <span class="toc-text">割草</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%83%A7%E8%8D%89"><span class="toc-number">5.2.2.</span> <span class="toc-text">烧草</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">6.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '082e9c1ed6aec827561d5028661d9506'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

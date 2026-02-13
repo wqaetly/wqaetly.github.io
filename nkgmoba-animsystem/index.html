@@ -1,0 +1,361 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于行为树的MOBA技能系统：动画系统 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="动画系统已有重构版本，可前往 朝花夕拾·动画系统的重构 进行查看  前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 这一篇来谈谈动画系统部分，别的先不说，先给大伙来个开幕雷击  相信很多读者都受过这个蜘蛛网的荼毒+迫害，事实上我并不是很能知道Unity出这个蜘蛛网有什么用，折磨我们吗？ 其实我们想一想，我们真的需要">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于行为树的MOBA技能系统：动画系统">
+<meta property="og:url" content="https://www.lfzxb.top/nkgmoba-animsystem/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="动画系统已有重构版本，可前往 朝花夕拾·动画系统的重构 进行查看  前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 这一篇来谈谈动画系统部分，别的先不说，先给大伙来个开幕雷击  相信很多读者都受过这个蜘蛛网的荼毒+迫害，事实上我并不是很能知道Unity出这个蜘蛛网有什么用，折磨我们吗？ 其实我们想一想，我们真的需要">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp">
+<meta property="article:published_time" content="2021-06-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-06-01T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="战斗系统">
+<meta property="article:tag" content="技能系统">
+<meta property="article:tag" content="个人项目">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于行为树的MOBA技能系统：动画系统",
+  "url": "https://www.lfzxb.top/nkgmoba-animsystem/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp",
+  "datePublished": "2021-06-01T00:00:00.000Z",
+  "dateModified": "2021-06-01T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/nkgmoba-animsystem/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于行为树的MOBA技能系统：动画系统',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">基于行为树的MOBA技能系统：动画系统</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于行为树的MOBA技能系统：动画系统</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-06-01T00:00:00.000Z" title="发表于 2021-06-01 00:00:00">2021-06-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-06-01T00:00:00.000Z" title="更新于 2021-06-01 00:00:00">2021-06-01</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>5分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/nkgmoba-animsystem/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-06-01 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><div class="note info modern"><p>动画系统已有重构版本，可前往 <a href="https://www.lfzxb.top/nkgmoba-animsystem-dawn-blossoms-plucked-at-dusk/">朝花夕拾·动画系统的重构</a> 进行查看</p>
+</div>
+<h2 id="前言">前言</h2>
+<p>基于行为树的Moba技能系统系列文章总目录：<a href="https://www.lfzxb.top/nkgmoba-totaltabs/">https://www.lfzxb.top/nkgmoba-totaltabs/</a></p>
+<p>这一篇来谈谈动画系统部分，别的先不说，先给大伙来个开幕雷击</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907130249.jpeg!webp" alt="img" loading='lazy'></p>
+<p>相信很多读者都受过这个蜘蛛网的荼毒+迫害，事实上我并不是很能知道Unity出这个蜘蛛网有什么用，折磨我们吗？</p>
+<p>其实我们想一想，我们真的需要这种可视化吗？</p>
+<p>我对于这个问题的答案是否定的，在游戏开发中我们会有自己的状态系统，而动画系统往往就是与我们自己的状态系统相绑定的，根据状态来播放相应的动画，所以我们的需求就是切换状态然后播放动画，不需要知道，也不需要想象哪个动画可以切换到另一个动画，哪个不可以，这都是由我们状态系统控制的，所以完全不需要这个可视化工具，也不需要每次都一大堆的SetXXX，只需要几个能用的API就行。</p>
+<p>所以众多开发者也是不堪其辱，干脆不用这个蜘蛛网方案，退而求其次，使用Animation自己控制播放，但是这样的话就没有办法使用Animator的新功能，比如<strong>动画重定向、Blend Tree、Avatar Mask等功能</strong>。</p>
+<p>好在官方似乎意识到自己的不足，推出了一个Playable系统，简而言之这个系统可以让我们不需要受蜘蛛网的折磨就可以享受Animator的新功能，<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/97826181">【Playable API】不用Animator如何播放动画？</a></p>
+<p>当然了，构建PlayableGraph虽说不麻烦，但是挺烦人的，幸运的是，有一个插件帮我们做好了所有的工作，我们可以真正的只关心PlayAPI了，那就是大名鼎鼎的<a target="_blank" rel="noopener" href="https://kybernetik.com.au/animancer/">Animancer</a>，它基于Playable，可以运行时自动动态构建PlayableGraph，我们开发者完全不用关心，只需要准备好AnimationClip和一些必须的数据（比如你需要使用Avatar Mask，就需要准备好Avatar Mask），然后调用API就好了。</p>
+<h2 id="与状态系统的联动">与状态系统的联动</h2>
+<p>对于Animancer的使用，这里就不多说了，看一下Animancer自带的Demo就可以秒懂，这里主要说一下和状态系统的联动设计，关于状态系统的内容我会单独写一篇文章，这里不再赘述</p>
+<p>先来看动画组件中的两个字段</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 管理所有的动画文件</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> Dictionary&lt;<span class="built_in">string</span>, AnimationClip&gt; AnimationClips = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, AnimationClip&gt;();</span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 运行时所播放的动画文件，会动态变化</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 例如移动速度快到一定程度将会播放另一种跑路动画，这时候就需要动态替换RuntimeAnimationClips的Run所对应的VALUE</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> KEY:外部调用的名称</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> VALEU：对应AnimationClips中的KEY，可以取得相应的动画文件</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="keyword">public</span> Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt; RuntimeAnimationClips = <span class="keyword">new</span> Dictionary&lt;<span class="built_in">string</span>, <span class="built_in">string</span>&gt;</span><br><span class="line">{</span><br><span class="line">    { StateTypes.Run.GetStateTypeMapedString(), <span class="string">"Anim_Run1"</span> },</span><br><span class="line">    { StateTypes.Idle.GetStateTypeMapedString(), <span class="string">"Anim_Idle1"</span> },</span><br><span class="line">    { StateTypes.CommonAttack.GetStateTypeMapedString(), <span class="string">"Anim_Attack1"</span> }</span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure>
+<p>AnimationClips是动画名和动画资源的映射</p>
+<p>RuntimeAnimationClips是状态名和状态名对应的动画资源的映射，可以看到RuntimeAnimationClips字段它的Key是字符串类型，并且有几个初始数据，分别是移动，默认和攻击状态的枚举字符串（这里顺带提一嘴，对于使用枚举做Key，或者对枚举进行ToString操作都是非常消耗性能的操作，需要注意优化，参照：<a target="_blank" rel="noopener" href="https://blog.csdn.net/qq_36576410/article/details/87909947">Unity优化记录（3）——C#（如何解决使用enum和struct作为Dictionary的TKey带来的GC）</a> 和 <a target="_blank" rel="noopener" href="https://www.cnblogs.com/smalldust/archive/2006/04/25/384657.html">也谈用反射实现Enum→String映射：一种重视性能的方法</a> ，但是本Demo代码没有做。）</p>
+<p>为什么这里要使用string，而不是直接使用状态枚举作为key呢？因为我们的状态会非常多，简单的如移动，攻击，复杂的如某些特殊状态，比如一些技能的二段，三段对应的动画不一样，所以状态也不一样，但是我们没有办法将游戏里所有的状态都用枚举表示出来，所以就选择在状态类中加一个string，作为状态的名称，然后用状态的名称，而不是枚举作为Key，这样就解决了这个问题。</p>
+<p>嗯，基本上就这一个需要注意的点，需要切换状态然后播放动画的时候只需要进行以下调用</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//尝试切换到寻路状态，切换成功返回true，否则返回false</span></span><br><span class="line"><span class="keyword">if</span> (!ChangeState&lt;NavigateState&gt;(StateTypes.Run, <span class="string">"Navigate"</span>, <span class="number">1</span>)) <span class="keyword">return</span>;</span><br><span class="line"><span class="comment">//因为我们切换状态成功就意味着寻路状态已经位于状态栈顶，所以可以直接使用这个API进行播放寻路动画</span></span><br><span class="line">Entity.GetComponent&lt;AnimationComponent&gt;().PlayAnimByStackFsmCurrent(<span class="number">0.3f</span>, animSpeed);</span><br><span class="line">------------------------------------------------------------------------------------------------------------------</span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 根据栈式状态机来自动播放动画</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">PlayAnimByStackFsmCurrent</span>(<span class="params"><span class="built_in">float</span> fadeDuration = <span class="number">0.3f</span>, <span class="built_in">float</span> speed = <span class="number">1.0f</span></span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">//先根据StateType进行动画播放</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.RuntimeAnimationClips.ContainsKey(<span class="keyword">this</span>.StackFsmComponent.GetCurrentFsmState().StateTypes.ToString()))</span><br><span class="line">    {</span><br><span class="line">        PlayAnim(<span class="keyword">this</span>.StackFsmComponent.GetCurrentFsmState().StateTypes, fadeDuration, speed);</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">//如果没有的话就根据StateName进行动画播放</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">this</span>.RuntimeAnimationClips.ContainsKey(<span class="keyword">this</span>.StackFsmComponent.GetCurrentFsmState().StateName))</span><br><span class="line">    {</span><br><span class="line">        PlayAnim(<span class="keyword">this</span>.StackFsmComponent.GetCurrentFsmState().StateName, fadeDuration, speed);</span><br><span class="line">    }</span><br><span class="line">    <span class="comment">//否则播放默认动画</span></span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">this</span>.PlayIdelFromStart();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果我们想在不切换状态的情况下仍然播放另一个动画的话，就自己控制</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//先配备好状态名以及其对应的要播放的AnimationClip名</span></span><br><span class="line">unit.GetComponent&lt;AnimationComponent&gt;().RuntimeAnimationClips[playAnimInfo.StateName] = playAnimInfo.AnimationClipName;</span><br><span class="line"><span class="comment">//手动调用PlayAnim进行播放</span></span><br><span class="line">unit.GetComponent&lt;AnimationComponent&gt;().PlayAnim(playAnimInfo.StateName, fadeDuration);</span><br></pre></td></tr></tbody></table></figure>
+<p>有时我们会有边播放技能动画，变播放移动动画的需求，使用Animancer的AvatarMask功能即可（由于Demo使用的模型在设置为人形时会出现鬼畜+骨骼错乱，就没有演示了）</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/nkgmoba-animsystem/">https://www.lfzxb.top/nkgmoba-animsystem/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F/">技能系统</a><a class="post-meta__tags" href="/tags/%E4%B8%AA%E4%BA%BA%E9%A1%B9%E7%9B%AE/">个人项目</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/nkgmoba-buffsystem/" title="基于行为树的MOBA技能系统：Buff系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">基于行为树的MOBA技能系统：Buff系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 本篇文章主要讲一下Buff系统的设计。Buff系统是战斗系统中最为重要的一个部件，我们技能效果就是依靠Buff系统实现的，比如伤害，治疗，破甲，眩晕，护盾，斩杀等，也就是说一个技能真正的核心就是组成它的那些Buff，这一点其实在《可视化节点技能编辑器的制作》一文中的示例中有体现。 这就可以引申出一个“万物皆Buff”的思想，所有的行为/效果都可以用一个Buff来实现，常规的比如一个持续伤害Buff，特殊的比如一个播放特效Buff，往客户端同步数据Buff。 指导思想有了，并且经过《可视化节点技能编辑器的制作》文中Buff系统相关介绍，我们可以知道这种方式确实可行，那么具体怎么抽象出一个健壮的Buff系统就是我们需要考虑的事情了。 本文更多的是介绍Buff系统Runtime的架构设计，Editor的架构设计可从下图得知，更详细的内容在《可视化节点技能编辑器的制作》中：  正文 基类抽象 首先我们Runtime下的Buff需要有数据载体，用于记载此Buf...</div></div></div></a><a class="pagination-related" href="/usual-vfx-in-game/" title="常见游戏特效学习与实现"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907131552.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">常见游戏特效学习与实现</div></div><div class="info-2"><div class="info-item-1">前言 最近打算学习下特效部分，因为现在我的热饭班长血怒特效很挫，长这样  但是人家应该是这样的  虽然说热饭班长没有Shader撑牌面，但就算加上Shader感觉也比不上原版那么霸气，而且有很多奇怪的贴图我都不知道怎么用，比如  我直接黑人问号脸，所以来学习一下 本文大部分内容都收集整理自realtimevfx网站，也推荐大家去这个网站学习特效制作，大佬作品和教程非常多！ 正文 特效是Textures，Sprites，Meshes，Lights和Shader一起配合而创建的酷炫效果。 在特效制作工作流程中，特效纹理是决定最终特效质量的最重要的其中一环，它的制作通常与游戏的风格有很大的相关性，Jason Keyser’s LoL FX breakdowns 频道有很多非常好的示例 VFX的五大艺术准则 Gameplay 特效的制作要去迎合Gameplay，让Gameplay对于玩家来说更加清晰明确，反馈性更强。这一点在许多文章，视频，PPT都有提及，举个例子，LOL中提莫的蘑菇爆炸的时候要播放特效，老版本的蘑菇爆炸特效和欧米伽小队的爆炸特效完全不一样，一方面是特效的质量，另一方面，...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/nkg-moba-release-with-overflow/" title="NKGMoba技能系统联网Demo（内存泄漏尊享版）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-22</div><div class="info-item-2">NKGMoba技能系统联网Demo（内存泄漏尊享版）</div></div><div class="info-2"><div class="info-item-1">warning 本项目完全开源免费，美术资源皆来源网络，仅供学习交流使用，严禁用于商业用途，否则造成的任何法律纠纷本人概不负责。开源地址：https://gitee.com/NKG_admin/NKGMobaBasedOnET  前言 前几天搞了一个Linux下的寻路库，想趁此机会把这个Moba开源项目部署到服务器上，自娱自乐一下，但是整个项目都是围绕技能系统展开的，对于上下线相关的处理还没做好，又没有房间机制，所以会有非常多由同一账号上下线导致的BUG。本篇文章主要是说明一下正确的Demo使用姿势 正文 Demo内容 英雄：热饭班长 被动技能，每次攻击都会在敌人身上叠加1层流血Buff，在5s内造成持续伤害，一旦一名敌方英雄身上流血效果达到5层，玩家自身将会获得持续5s的血怒Buff，大幅提高自己攻击力，在此期间所有的攻击都会对敌人直接叠加满层的流血效果。 Q技能，延迟0.5s后挥舞巨斧一周，外圈伤害比内圈伤害高，并且可以叠加血怒Buff W技能，下一次普攻将会减速敌人99%，可叠加血怒Buff E技能，面前锥形范围内敌人造成禁锢效果 每次进入战斗地图由系统分配阵营，将鼠标放在...</div></div></div></a><a class="pagination-related" href="/nkgmoba-animsystem-dawn-blossoms-plucked-at-dusk/" title="基于行为树的MOBA技能系统：朝花夕拾 · 现代化的动画系统设计与开发"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202211051113549.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-11-05</div><div class="info-item-2">基于行为树的MOBA技能系统：朝花夕拾 · 现代化的动画系统设计与开发</div></div><div class="info-2"><div class="info-item-1">基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 今天也是冒着猪脑过载的风险想出了这么个像那么回事的标题，我命令看这个文章的所有人都狠狠的夸标题 2021.6.1，随着我战斗系统系列文章的发布，初版的动画系统也是第一次进入了大家的视野，文章中阐述了Unity动画状态机的缺陷，以及使用Playable API的理由，并且最后使用了 Animancer 作为Playable API的封装，然后在技能配置时进行指定一些动画过渡，Avatar，混合相关的参数  随后在代码里以这种方式进行处理 123456789101112131415161718192021222324252627public AnimancerState PlaySkillAnim(string stateTypes,    PlayAnimInfo.AvatarMaskType avatarMaskType = PlayAnimInfo.AvatarMaskType.None,    float fadeDuration = 0.25f, f...</div></div></div></a><a class="pagination-related" href="/nkgmoba-buffsystem/" title="基于行为树的MOBA技能系统：Buff系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：Buff系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 本篇文章主要讲一下Buff系统的设计。Buff系统是战斗系统中最为重要的一个部件，我们技能效果就是依靠Buff系统实现的，比如伤害，治疗，破甲，眩晕，护盾，斩杀等，也就是说一个技能真正的核心就是组成它的那些Buff，这一点其实在《可视化节点技能编辑器的制作》一文中的示例中有体现。 这就可以引申出一个“万物皆Buff”的思想，所有的行为/效果都可以用一个Buff来实现，常规的比如一个持续伤害Buff，特殊的比如一个播放特效Buff，往客户端同步数据Buff。 指导思想有了，并且经过《可视化节点技能编辑器的制作》文中Buff系统相关介绍，我们可以知道这种方式确实可行，那么具体怎么抽象出一个健壮的Buff系统就是我们需要考虑的事情了。 本文更多的是介绍Buff系统Runtime的架构设计，Editor的架构设计可从下图得知，更详细的内容在《可视化节点技能编辑器的制作》中：  正文 基类抽象 首先我们Runtime下的Buff需要有数据载体，用于记载此Buf...</div></div></div></a><a class="pagination-related" href="/nkgmoba-collisionsystem/" title="基于行为树的MOBA技能系统：碰撞系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：碰撞系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 一些游戏中简单的碰撞系统，可能就是手写几个圆形，矩形，扇形就够用了，但是Moba类游戏很多技能碰撞体是畸形的，比如派克的R，男枪的Q，R等都是不规则的，所以我们需要一个稳健的物理库来支持这些，自己处理碰撞体顶点数据，创建碰撞体到物理世界中，因为游戏类型原因，我选择了Box2D：https://github.com/erincatto/Box2D，对于FPS游戏，只有Bullet（3D物理库）：https://github.com/bulletphysics/bullet3 可选，这里就不多说了。 由于碰撞系统本身需要和技能系统产生非常紧密的联系，所以涉及到的内容也会比较多，主要包括  Box2D物理库介绍 Box2D碰撞体编辑器拓展，负责制作碰撞体和导出碰撞体数据：https://www.lfzxb.top/box2d-unityvistualeditor/ Box2D碰撞关系编辑器拓展，负责维护碰撞体之间的碰撞关系，并自动生成代码：https://...</div></div></div></a><a class="pagination-related" href="/nkgmoba-framestepstate-architecture-battle-design/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-12-19</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友MOBA项目的技能系统的网络同步部分的开发和完善上来，主要工作内容是：  在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能 将原本状态同步的方案转变到状态帧同步方案  这里还是简单的谈一下为什么不选择帧同步而选择状态帧同步，如果基于帧同步进行开发的话，定点数的使用会大大增加各个模块的时间和人力成本，并且稍不注意就会有毁灭性的不同步出现，再者，帧同步出于安全考虑需要服务端进行校验工作，工作量和状态同步基本上没什么区别，帧同步真正的价值在于其 “帧” 的概念，有了帧的概念，就可以去预测，去回滚，去做录像，去做观战。。。而状态帧方案就可以让我们在不受限于帧同步条条框框的基础上拥有帧同步的开发体验与项目效果，其相对于帧同步来说，最为困难的部分就是根据服务端传来的帧数据进行重新模拟+回滚，这要求状态和逻辑分离的非常纯粹，也就是说对于客户端，接收任意帧内相同的输入必须能回滚到...</div></div></div></a><a class="pagination-related" href="/nkgmoba-fromstatetoframestepstate-record/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-20</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 承接上篇 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 这篇文章记录一下将状态同步切换为状态帧同步所做的改动 网络同步 首先是最基础的网络同步模块 目前业界主流有两种做法  使命召唤：客户端落后于服务器，服务器收到客户端消息时根据帧号回滚到那一帧进行模拟，并将得出的结果返回客户端 守望先锋：客户端领先于服务器，服务器收到客户端消息以当前服务器所在帧为准，统一进行模拟  两种做法都是可以的，最大的不同在于服务器收到客户端消息时的处理方式，其他逻辑（比如预测，回滚）本质都是一样的，因为守望先锋的分享更加详尽一些，细节处理的可参考度也就更高，所以这里选择守望先锋的做法 这块内容在 基于行为树的MOBA技能系统：技能系统与网络同步 有提到，此处不再过多赘述，其中需要注意的一个概念是客户端一定是领先于服务器的，因为我们发送的网络包会在半个RTT+一个缓存帧时长才会到达服务端，所以如果服务端当前是95帧，RTT是8帧，缓冲帧时长为1帧，那么...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E7%8A%B6%E6%80%81%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%81%94%E5%8A%A8"><span class="toc-number">2.</span> <span class="toc-text">与状态系统的联动</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '565fa0daee36187ffbeb5baa9b3a3e85'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

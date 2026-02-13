@@ -1,0 +1,807 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>（译）Introduction To Direct3D 12 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文翻译自：Introduction to Direct3D 12 的前半部分，前半部分讲了一些DX细节，对于理解基础知识很有帮助，后半部分偏实践练习，翻译意义不大。 介绍Direct3D 12 DirectX 12是微软最新一代的DirectX APIS，Direct3D 12是其图形API集合（其余API类型为DirectSound，DirectInput，DirectDraw等）。Direc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="（译）Introduction To Direct3D 12">
+<meta property="og:url" content="https://www.lfzxb.top/introduction-to-direct3d-12-yi/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文翻译自：Introduction to Direct3D 12 的前半部分，前半部分讲了一些DX细节，对于理解基础知识很有帮助，后半部分偏实践练习，翻译意义不大。 介绍Direct3D 12 DirectX 12是微软最新一代的DirectX APIS，Direct3D 12是其图形API集合（其余API类型为DirectSound，DirectInput，DirectDraw等）。Direc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="文献翻译">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "（译）Introduction To Direct3D 12",
+  "url": "https://www.lfzxb.top/introduction-to-direct3d-12-yi/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/introduction-to-direct3d-12-yi/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '（译）Introduction To Direct3D 12',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">（译）Introduction To Direct3D 12</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">（译）Introduction To Direct3D 12</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86/">理论知识</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">10.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>33分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/introduction-to-direct3d-12-yi/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>本文翻译自：<a target="_blank" rel="noopener" href="https://www.braynzarsoft.net/viewtutorial/q16390-03-initializing-directx-12">Introduction to Direct3D 12</a> 的前半部分，前半部分讲了一些DX细节，对于理解基础知识很有帮助，后半部分偏实践练习，翻译意义不大。</p>
+<h1>介绍Direct3D 12</h1>
+<p>DirectX 12是微软最新一代的DirectX APIS，Direct3D 12是其图形API集合（其余API类型为DirectSound，DirectInput，DirectDraw等）。Direct3D 12比先前的任何一个Direct3D版本表现的都要好，Direct3D提供了对于图形硬件更加底层的控制来允许更加高效的利用多线程。我们可以利用多线程来填充command lists。有更多控制权同时也意味着我们需要承担更多的责任，例如CPU/GPU同步以及内存管理。</p>
+<p>Direct3D通过使用预编译的pipeline state objects（PSO）和command lists（bundles）来最小化CPU开销。</p>
+<p>在我们应用的初始化阶段，我们会创建很多由shaders（vertex，pixel等）和其他管线状态（blending，rasterizer，primitive topology等）组成的PSO。然后在Runtime过程中，当我们改变渲染管线的时候，驱动不再需要像DX11那样不得不创建管线状态了，取而代之的是，我们提供一个PSO，当我们调用draw的时候，会重复利用我们提供的PSO，这样我们不会再有那些起飞一样的创建管线状态的消耗。</p>
+<p>我们也可以在初始化期间创建多组commands，这些命令对于comman lists不同的是，他可以<strong>可重复利用</strong>，并被称为<em>Bundles</em> <a target="_blank" rel="noopener" href="https://docs.microsoft.com/zh-cn/windows/win32/direct3d12/recording-command-lists-and-bundles">MSDN Bundles</a>.另一个很酷的地方是，它的API调用很少，在MSDN中大约有200（其中1/3完成了所有困难的工作）。</p>
+<h2 id="初始化-Direct3D-12">初始化 Direct3D 12</h2>
+<ul>
+<li>创建一个设备（device）</li>
+<li>创建一个命令队列（command queue）</li>
+<li>创建一个交换链（swap chain）</li>
+<li>创建一个描述符堆（descriptor heap）</li>
+<li>创建一个命令分配器（command allocator）</li>
+<li>创建一个根签名（root signature）</li>
+<li>编译并创建着色器字节码（Compiling and Creating shader bytecode）</li>
+<li>创建一个管线状态对象（pipeline state object）</li>
+<li>创建一个命令列表（command list）</li>
+<li>创建一个隔离和隔离事件（fence and fence event）</li>
+</ul>
+<h1>图形管线概览</h1>
+<p><em>图形管线</em> 是运行在图形硬件上，被称为*阶段（stages）*的一系列过程。我们将数据推送到流水线中，流水线将在这些阶段中运行数据，以获得表达3D场景的2D图像。我们还能够利用图形管线的流输出阶段（Stream Output Stage）来流式输出被处理的几何图形。一些管线阶段是可以配置的(<em>Fixed Function</em>)，而另一些是可以被编程的(<em>Programmable</em>)。那些可编程的阶段被称为着色器（<em>Shaders</em>），它们被使用HLSL编写（<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb509561(v=vs.85).aspx">HLSL MSDN</a>）。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153431.jpg!webp" alt="v2-288e16b695e5db4bef6d8679a90bca44_720w" loading='lazy'></p>
+<p>在图形管线中的着色器有:</p>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx">顶点着色器（Vertex Shader）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">外壳着色器（Hull Shader）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">域细分着色器（Domain Shader）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx">几何着色器（Geometry Shader）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx">像素着色器（Pixel Shader）</a></p>
+</li>
+</ul>
+<h2 id="计算着色器（Compute-Shader）">计算着色器（Compute Shader）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476331(v=vs.85).aspx">MSDN Compute Shader</a></p>
+<p>通过使用GPU作为并行处理器来扩展CPU的处理能力，可将计算着色器（也称为Dispatch Pipeline）用于进行极快的计算。这可以和图形没有任何关系，你可以使用计算着色器管线在GPU上执行非常消耗性能的操作，例如精确的碰撞检测。</p>
+<h2 id="输入装配阶段（Input-Assembler-IA-Stage）">输入装配阶段（Input Assembler (IA) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205116(v=vs.85).aspx">MSDN Input Assembler Stage</a></p>
+<p>图形流水线的第一阶段被称为输入装配阶段。这是一个固定的功能阶段，这意味着我们不能通过编程来实现它。取而代之的是，我们为device配置它，以便它知道如何从我们提供的包含顶点和索引的缓冲区数据中创建三角形，线和点这样的图元。我们为IA提供一个<em>Input Layout</em>以便它指到如何读取顶点数据。在它把这些数据装配成图元后，它将这些图元输送到图形管线其余阶段。IA还有一些其他的功能，它会将系统生成的值以字符串的形式附加到图元上 (primitive id, instance id, vertex id等）。这些值被称为*<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb509647(v=vs.85).aspx">语义（Semantics）</a>*，下面是一个示例：</p>
+<figure class="highlight cpp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">D3D12_INPUT_ELEMENT_DESC layout[] =</span><br><span class="line">{</span><br><span class="line">    { <span class="string">"POSITION"</span>, <span class="number">0</span>, DXGI_FORMAT_R32G32B32_FLOAT, <span class="number">0</span>, <span class="number">0</span>, D3D12_INPUT_PER_VERTEX_DATA, <span class="number">0</span> },  </span><br><span class="line">};</span><br></pre></td></tr></tbody></table></figure>
+<p>这个input layout告诉IA，每个顶点缓冲区的顶点有一个元素，这个元素应当被限定在顶点着色器中的"POSITION"参数。同时，这个元素会在顶点数据首字节的起始处（第二个参数是0），包含三个浮点数，每个32比特，或者说4字节（第三个参数，DXGI_FORMAT_R32G32B32_FLOAT）。</p>
+<h2 id="顶点着色器阶段（Vertex-Shader-VS-Stage）">顶点着色器阶段（Vertex Shader (VS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx#Vertex_Shader_Stage">MSDN Vertex Shader Stage</a></p>
+<p>VS是第一个着色器（可编程）阶段，这意味着我们可以定制它。所有由IA阶段装配的图元顶点都要经过VS阶段。使用VS，可以进行诸如变换，缩放，光照，对纹理进行置换贴图之类的操作。为了能让管线正常工作，顶点着色器必须总是实现，即使在程序中的顶点不需要进行更改。最简单的顶点着色器也会简单的将顶点位置传递给下一阶段：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">float4 main(float4 pos : POSITION) : SV_POSITION</span><br><span class="line">{</span><br><span class="line">    return pos;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>顶点着色器简单的返回了输入的位置。注意在pos右边的POSITION，是一个语义的例子。当我们创建我们顶点（input）layout时，我们指定POSITION作为我们顶点的位置值，所以他们将会被发送到VS参数中。如果你想的话，你可以更改POSITION为其他名称。</p>
+<h2 id="外壳着色器阶段（Hull-Shader-HS-Stage）">外壳着色器阶段（Hull Shader (HS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">MSDN Tesselation Stages</a></p>
+<p>HS阶段是被称为（曲面细分阶段）*<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">Tessellation Stages</a>*的三个可选阶段中第一个阶段。<em>Tesselation Stages</em>包括外壳着色器（Hull Shader），曲面细分器（Tessellator），域细分色器阶段（Domain Shader stages）。它们一起工作来实现被称为曲面细分的东西。曲面细分的作用是将一个图元对象（例如一个三角形或者线段）分割成许多较小的部分，从而以极快的速度增加模型的细节。它会在GPU上新建这些图元（当然是在他们显示在屏幕上之前），但是他们不会被保存在内存中，所以这相较于在CPU创建这些图元节省了很多时间（这里意思应该是CPU从内存读取高细节模型）。你可以放一个低模模型，然后使用曲面细分着色器将其转换为超高细节的模型。所以，回到这个Hull Shader，这是一个可编程阶段，这个阶段是用来计算如何，在哪添加新的顶点到一个图元上来让它细节更加丰富。然后把这些数据发送到Tessellator阶段和Domain Shader阶段。</p>
+<h2 id="曲面细分器阶段（Tessellator-TS-Stage）">曲面细分器阶段（Tessellator (TS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">MSDN Tesselation Stages</a></p>
+<p>曲面细分器阶段是曲面细分过程的第二个阶段。这是一个固定功能阶段。这个阶段获取从Hull Shader阶段输入的数据，然后真正进行图元的分割，最后将数据传递到Domain Shader阶段。</p>
+<h2 id="域细分着色器阶段（Domain-Shader-DS-Stage）">域细分着色器阶段（Domain Shader (DS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff476340(v=vs.85).aspx">MSDN Tesselation Stages</a></p>
+<p>这是曲面细分流程的第三个阶段，这是一个可编程功能阶段，这个阶段获取从Hull Shader阶段创建的新顶点的位置，然后变换从tessallator阶段获取的顶点来创建更多细节，在三角形中心或者线段上添加再多的顶点也不会增加任何细节。这个阶段会把这些顶点传递到Geometry Shader阶段。</p>
+<h2 id="几何着色器阶段（Geometry-Shader-GS-Stage）">几何着色器阶段（Geometry Shader (GS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx#Geometry_Shader_Stage">MSDN Geometry Shader Stage</a></p>
+<p>这是另一个可选的shader阶段。同时也是另一个可编程阶段。它接收图元作为输入，例如三角形的三个顶点，线段的两个顶点，一个点的一个顶点。它还可以从邻边图元中获取数据作为输入，例如一条线的附加2个顶点，或三角形的附加3个顶点。GS的一个优点是它可以创建或销毁图元（VS无法实现，它只能获取一个顶点并输出一个顶点）。在这一阶段，我们可以将一个点变成四边形或三角形，这使其非常适合在粒子特效引擎中使用。我们能够将数据从GS传递到Rasterizer阶段，和/或通过Stream Output传递到内存中的顶点缓冲区。</p>
+<h2 id="流输出阶段（Stream-Output-SO-Stage）">流输出阶段（Stream Output (SO) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205121(v=vs.85).aspx">MSDN Stream Output Stage</a></p>
+<p>该阶段用于从管线中获取顶点数据。从SO发送到内存的顶点数据被放入一个或多个顶点缓冲区。从SO输出的顶点数据始终以列表形式发送，例如线列表或三角形列表。永远不会发出不完整的图元，就像在顶点和几何阶段一样，它们会被无声地分解。所谓不完整的图元，举个例子就是那些只有两个顶点的三角形或只有一个顶点的线。</p>
+<h2 id="光栅化阶段（Rasterizer-Stage-RS-）">光栅化阶段（Rasterizer Stage (RS)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205125(v=vs.85).aspx">MSDN Rasterizer Stage</a></p>
+<p>RS阶段获取发送给它的向量信息（形状和图元），并通过在每个图元上内插每个顶点值将它们转换为像素。它还处理裁剪，基本上是裁剪屏幕视图之外的图元。这取决于我们所谓的<em>Viewport</em>，可以在代码中进行设置。</p>
+<h2 id="像素着色器阶段（Pixel-Shader-PS-Stage）">像素着色器阶段（Pixel Shader (PS) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205146(v=vs.85).aspx#Pixel_Shader_Stage">MSDN Pixel Shader Stage</a></p>
+<p>此阶段进行计算并修改将在屏幕上看到的每个像素，例如基于像素的光照。它是另一个可编程着色器，并且是一个可选阶段。RS为图元中的每个像素调用一次像素着色器。就像我们之前说过的那样，在RS中，图元中每个顶点的值和属性都是通过整个图元进行内插的。基本上就像顶点着色器，顶点着色器具有1：1映射（它接受一个顶点并返回一个顶点），而像素着色器也具有1：1映射（它接受一个像素并返回一个像素）。像素着色器的工作是计算每个像素片段的最终颜色。像素片段是将会被绘制到屏幕上的每个潜在像素。例如，在实心圆后面有一个实心正方形。正方形中的像素是像素片段，圆形中的像素也是像素片段。每个像素都有机会写入屏幕，但是一旦进入Output Merger阶段，即决定要绘制到屏幕上的最终像素，它将看到圆的深度值小于正方形深度值，因此只会绘制圆形像素。PS输出4维颜色值。一个简单的Pixel Shader的示例可能如下所示：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">float4 main() : SV_TARGET</span><br><span class="line">{</span><br><span class="line">    return float4(1.0f, 1.0f, 1.0f, 1.0f);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这个像素着色器设置所有被绘制在屏幕中的像素的几何图形颜色为白色。基于此着色器，所有将会被绘制的几何图形都会变成白色。</p>
+<h2 id="输出合并阶段（Output-Merger-OM-Stage）">输出合并阶段（Output Merger (OM) Stage）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb205120(v=vs.85).aspx">MSDN Output Merger Stage</a></p>
+<p>管线的最后一个阶段是输出合并阶段。最基本的，此阶段获取像素片段和深度/模板缓冲区，并确定实际将哪些像素写入渲染目标。它还基于我们设置的混合模型和混合因子应用混合。渲染目标是Texture2D资源，我们使用device接口将其绑定到OM。场景完成渲染到渲染目标上后，我们可以在swap chain上调用present来显示结果！</p>
+<h1>概览Direct3D 12是如何工作的</h1>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153459.jpg" alt="v2-c28ad9adce4d46a6e03a8789a8f226cc_720w" loading='lazy'></p>
+<h2 id="管线状态对象（Pipeline-State-Objects-PSO">管线状态对象（Pipeline State Objects (PSO))</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899196(v=vs.85).aspx">MSDN Pipeline States</a></p>
+<p><em>Pipeline State Object</em>由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788705(v=vs.85).aspx">ID3D12PipelineState</a>接口表示，并由设备接口通过<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788663(v=vs.85).aspx">CreateGraphicsPipelineState()</a>方法创建。若要设置<em>Pipeline State Object</em>，可以调用<em>Command List</em>的<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903918(v=vs.85).aspx">SetPipelineState()</a>方法。</p>
+<p>该接口是使Direct3D 12表现出色的一部分。在初始化期间，您将创建许多此类<em>Pipeline State Objects</em>，然后使用<em>Command List</em>进行设置会占用很少的CPU开销，因为管线状态对象在设置时已经创建完毕，并且在GPU上进行设置就像传递指针那样非常简单。PSO数量不做限制。</p>
+<p>创建管线状态对象时，必须填写<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770370(v=vs.85).aspx">D3D12_GRAPHICS_PIPELINE_STATE_DESC</a>结构。设置管线状态对象时，此结构将决定管线的状态。</p>
+<p>可以在<em>Pipeline State Object</em>中设置大多数管线状态，但是有一些不能在<em>Pipeline State Object</em>中设置，而是由<em>Command List</em>设置。</p>
+<h3 id="被PSO设置的状态">被PSO设置的状态</h3>
+<ul>
+<li>
+<p>Shader字节码，包括vertex, pixel, domain, hull, 以及geometry(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770405(v=vs.85).aspx">D3D12_SHADER_BYTECODE</a>)</p>
+</li>
+<li>
+<p>流输出缓冲区(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770410(v=vs.85).aspx">D3D12_STREAM_OUTPUT_DESC</a>)</p>
+</li>
+<li>
+<p>混合状态(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770339(v=vs.85).aspx">D3D12_BLEND_DESC</a>)</p>
+</li>
+<li>
+<p>光栅化状态(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770387(v=vs.85).aspx">D3D12_RASTERIZER_DESC</a>)</p>
+</li>
+<li>
+<p>深度/模板状态(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770356(v=vs.85).aspx">D3D12_DEPTH_STENCIL_DESC</a>)</p>
+</li>
+<li>
+<p>input layout(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770378(v=vs.85).aspx">D3D12_INPUT_LAYOUT_DESC</a>)</p>
+</li>
+<li>
+<p>图元拓扑(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770385(v=vs.85).aspx">D3D12_PRIMITIVE_TOPOLOGY_TYPE</a>)</p>
+</li>
+<li>
+<p>渲染目标数量</p>
+</li>
+<li>
+<p>渲染目标视图格式(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb173059(v=vs.85).aspx">DXGI_FORMAT</a>)</p>
+</li>
+<li>
+<p>深度模板视图格式(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb173059(v=vs.85).aspx">DXGI_FORMAT</a>)</p>
+</li>
+<li>
+<p>采样描述(<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/bb173072(v=vs.85).aspx">DXGI_SAMPLE_DESC</a>)</p>
+</li>
+</ul>
+<h3 id="被命令列表设置的状态">被命令列表设置的状态</h3>
+<ul>
+<li>
+<p>资源绑定 (包括<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn986883(v=vs.85).aspx">vertex buffers</a>, <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn986882(v=vs.85).aspx">index buffers</a>, <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn986886(v=vs.85).aspx">stream output targets</a>, <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn986884(v=vs.85).aspx">render targets</a>, <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903908(v=vs.85).aspx">descriptor heaps</a>, 以及图形根参数（graphics root arguments）)</p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903900(v=vs.85).aspx">视窗（Viewports）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903899(v=vs.85).aspx">裁剪矩形（Scissor Rectangles）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903886(v=vs.85).aspx">混合因子（Blend factor）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903887(v=vs.85).aspx">深度/模板引用值（Depth/Stencil reference value）</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903885(v=vs.85).aspx">图元拓扑顺序和邻接类型（Primitive topology order and adjacency type）</a></p>
+</li>
+</ul>
+<p><em>Pipeline State Object</em>设置的管线状态不会被<em>Command Lists</em>或<em>Bundles</em>继承（当<em>Command Queue</em>一次执行多个<em>Command Lists</em>时，在上一个<em>Command Lists</em>设置的<em>Pipeline State Objects</em>管线状态不会被下一个<em>Command Lists</em>继承）（<em>Bundles</em>不会继承由调用<em>Command Lists</em>中的<em>Pipeline State Objects</em>设置的管线状态）。在<em>Command List</em>或<em>Bundle</em>创建时设置<em>Command Lists</em>和<em>Bundles</em>的初始图形管线状态。</p>
+<p>未由<em>Pipeline State Object</em>设置的管线状态也不会被<em>Command Lists</em>继承。另一方面，<em>Bundles</em>继承未使用<em>Pipeline State Object</em>设置的所有图形管线状态。当<em>Bundles</em>通过方法调用更改管线状态时，在Bundle完成执行后，该状态将保留回到Command List。</p>
+<p>默认图形管线状态为：</p>
+<ul>
+<li>
+<p>图元拓扑被设置为 <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff728726(v=vs.85).aspx#D3D_PRIMITIVE_TOPOLOGY_UNDEFINED">D3D_PRIMITIVE_TOPOLOGY_UNDEFINED</a></p>
+</li>
+<li>
+<p>视窗被设置为0</p>
+</li>
+<li>
+<p>裁剪矩形被设置为0</p>
+</li>
+<li>
+<p>混合因子被设置为0</p>
+</li>
+<li>
+<p>深度/模板缓冲区被设置为0</p>
+</li>
+</ul>
+<p>您可以通过调用 <a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903847(v=vs.85).aspx">ClearState</a> 方法将<em>Command List</em>的管线状态设置回默认值。如果在<em>Bundle</em>上调用此方法，则对command lists “close()” 函数的调用将返回E_FAIL。</p>
+<p>由<em>Command Lists</em>设置的资源绑定由command list执行的<em>Bundles</em>继承。bundle完成执行后，<em>Bundles</em>设置的资源绑定也将为调用command list保持设置。</p>
+<h2 id="设备（The-Device）">设备（The Device）</h2>
+<p>device由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788650(v=vs.85).aspx">ID3D12Device</a>接口表示。device是一个虚拟适配器，可用于创建command lists，pipeline state objects, root signatures, command allocators, command queues, fences, resources, descriptors和descriptor heaps。计算机可能具有多个GPU，因此我们可以使用DXGI factory来枚举设备，并找到功能级别11（与Direct3d 12兼容）的第一个device而不是软件层的device。 Direct3D最强大的功能之一就是它对于多线程应用程序兼容性更好。</p>
+<h2 id="命令列表（Command-Lists-CL">命令列表（Command Lists (CL))</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899205(v=vs.85).aspx">MSDN Command Lists and Bundles</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153516.jpg" alt="v2-d09c5414dd763afde53bc0fb4cd07cf8_720w" loading='lazy'></p>
+<p>Command lists由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770465(v=vs.85).aspx">ID3D12CommandList</a>接口表示，并由device接口通过<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788656(v=vs.85).aspx">CreateCommandList()</a>方法创建。<br>
+我们使用<em>Command Lists</em>来分配要在GPU上执行的命令。命令可能包括设置pipeline state, 设置resources, 转换resource states (<em>Resource Barriers</em>), 设置vertex/index buffer, 绘制, 清空render target, 设置render target view, 执行<em>bundles</em> (groups of commands)等。</p>
+<p>Command lists与<em>Command Allocator</em>相关联，该<em>Command Allocator</em>将命令存储在GPU上。</p>
+<p>首次创建command list时，我们需要使用<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770348(v=vs.85).aspx">D3D12_COMMAND_LIST_TYPE</a>标志指定该command list的类型，并提供与该command list关联的command allocator。有四种类型的command lists：direct，bundle，compute和copy。</p>
+<p>direct command list是GPU可以执行的command list。direct command list需要与direct command allocator关联（使用D3D12_COMMAND_LIST_TYPE_DIRECT标志创建的command allocator）。</p>
+<p>要将<em>Command List</em>设置为记录状态，我们调用command list的Reset()方法，提供<em>Command Allocator</em>和<em>Pipeline State Object</em>。将NULL作为<em>Pipeline State Object</em>的参数传递是有合法的，并且将设置默认管线状态。</p>
+<p>当我们完成command list的填充时，我们必须调用<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn903855(v=vs.85).aspx">close()</a>方法以将command list设置为非记录状态。调用close之后，我们可以使用<em>Command Queue</em>执行command list。</p>
+<p>一旦执行了command list，即使GPU尚未完成，我们也能够将其重置（一旦调用execute，则由Command Allocator存储在GPU上运行的命令）。这使我们可以重用分配给command list的内存（在CPU端，而不是在由<em>Command Allocator</em>将命令存储在内存中的GPU端）。</p>
+<h2 id="捆绑包（Bundles）">捆绑包（Bundles）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899205(v=vs.85).aspx">MSDN Command Lists and Bundles</a></p>
+<p><em>Bundles</em>由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770465(v=vs.85).aspx">ID3D12CommandList</a>接口表示，与<em>Direct Command Lists</em>相同，唯一的区别是创建bundle时（通过调用<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788656(v=vs.85).aspx">CreateCommandList()</a>方法），使用<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770348(v=vs.85).aspx">D3D12_COMMAND_LIST_TYPE_BUNDLE</a>标志而不是<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770348(v=vs.85).aspx">D3D12_COMMAND_LIST_TYPE_DIRECT</a>标志来创建bundle。<br>
+Bundles是一组经常重复使用的命令。它们很有用，因为与命令组有关的大多数CPU工作都是在bundle创建时完成的。在大多数情况下，<em>Bundles</em>与<em>Command Lists</em>相同，只是bundles只能由<em>Direct Command List</em>执行，而<em>Direct Command List</em>只能由<em>Command Queue</em>执行。可以重复使用Command Lists，但是在再次调用该command list上的execute之前，GPU必须先完成该command list的执行。在实践中，您几乎不可能重用command list，因为场景会在帧之间变化，这意味着command list会在帧之间变化。</p>
+<p>Nvidia上有一篇不错的文章，介绍了Direct3D最佳实践（<a target="_blank" rel="noopener" href="https://developer.nvidia.com/dx12-dos-and-donts">DX12 Do’s And Don’ts</a>），并传达了他们的建议，bundle 最多只能包含约12条命令，否则，如果添加太多命令，bundle的可重用性将受到削弱，这意味着您将无法经常重复使用它。最好创建许多可以经常重用的小bundles，而不是创建几个您不经常重用的大bundles，因为bundles的全部是可重用的命令组。</p>
+<p><em>Bundles</em>不能直接从<em>Command Queue</em>中执行。您可以通过从<em>Direct Command List</em>调用ExecuteBundle()在<em>Command List</em>上执行bundle 。</p>
+<p><em>Bundles</em>不继承调用<em>Direct Command List</em>设置的管线状态。</p>
+<h2 id="命令队列（Command-Queues-CQ-）">命令队列（Command Queues (CQ)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899124(v=vs.85).aspx">MSDN Command Queues</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153528.jpg" alt="v2-eef66d0092bae35bc3b99af502ca4077_720w" loading='lazy'></p>
+<p><em>Command Queues</em>由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788627(v=vs.85).aspx">ID3D12CommandQueue</a>接口表示，并且由device接口的<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788657(v=vs.85).aspx">CreateCommandQueue()</a>方法创建。我们使用command queue来提交将要由GPU执行的<em>Command Lists</em>。<em>Command Queues</em>也会被用于更新资源块映射（resource tile mappings）。</p>
+<h2 id="命令分配器（Command-Allocators-CA-）">命令分配器（Command Allocators (CA)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899205(v=vs.85).aspx">MSDN Command Allocators</a></p>
+<p><em>Command Allocators</em>由<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770463(v=vs.85).aspx">ID3D12CommandAllocator</a>接口表示，并使用device接口的<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788655(v=vs.85).aspx">CreateCommandAllocator()</a>方法创建。</p>
+<p><em>Command Allocators</em>表示用于存储来自<em>Command Lists</em>和<em>Bundles</em>的命令的GPU内存。</p>
+<p>一旦<em>Command List</em>执行完毕，您可以在<em>Command Allocator</em>上调用<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn770464(v=vs.85).aspx">reset()</a>释放内存。尽管可以在执行<em>Command Queue</em>调用后立即在<em>Command List</em>上调用reset()，但在调用reset()之前，与<em>Command Allocator</em>关联的<em>Command List</em><strong>必须</strong>在GPU上完全完成执行，否则调用将失败。这是因为GPU可能正在执行存储在<em>Command Allocator</em>表示的内存中的命令。这也是我们的应用程序必须使用<em>Fences</em>同步CPU和GPU的原因。在对<em>Command Allocator</em>调用<em>reset()<em>之前，必须检查围栏（fence）以确保与</em>Command Allocator</em>关联的<em>Command List</em>已完成执行。</p>
+<p>只有一个任何<em>Command List</em>关联一个<em>Command Allocator</em>的时候才可以在任何时候都处于记录状态。这意味着对于每个填充command lists的线程，您将需要<strong>至少</strong>一个<em>Command Allocator</em>和<strong>至少</strong>一个<em>Command List</em>。</p>
+<h2 id="资源（Resources）">资源（Resources）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899206(v=vs.85).aspx">MSDN Resource Binding</a></p>
+<p>资源包括构建场景的数据。他们是用于存储几何图形，纹理和shader数据的成块的内存，图形管线可以从这些内存中访问到它们。<strong>资源类型</strong>是资源包含的数据类型。</p>
+<p><strong>Resource Types</strong></p>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471517(v=vs.85).aspx">Texture1D</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471518(v=vs.85).aspx">Texture1DArray</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471525(v=vs.85).aspx">Texture2D</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471526(v=vs.85).aspx">Texture2DArray</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471540(v=vs.85).aspx">Texture2DMS</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471541(v=vs.85).aspx">Texture2DMSArray</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/ff471562(v=vs.85).aspx">Texture3D</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn788709(v=vs.85).aspx">Buffers (ID3D12Resource )</a></p>
+</li>
+</ul>
+<p><strong>Resource References/Views</strong></p>
+<ul>
+<li>
+<p>Constant buffer view (CBV)</p>
+</li>
+<li>
+<p>Unordered access view (UAV)</p>
+</li>
+<li>
+<p>Shader resource view (SRV)</p>
+</li>
+<li>
+<p>Samplers</p>
+</li>
+<li>
+<p>Render Target View (RTV)</p>
+</li>
+<li>
+<p>Depth Stencil View (DSV)</p>
+</li>
+<li>
+<p>Index Buffer View (IBV)</p>
+</li>
+<li>
+<p>Vertex Buffer View (VBV)</p>
+</li>
+<li>
+<p>Stream Output View (SOV)</p>
+</li>
+</ul>
+<h2 id="描述符（资源视图）（Descriptors-Resource-Views-）">描述符（资源视图）（Descriptors (Resource Views)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899109(v=vs.85).aspx">MSDN Descriptors</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153540.jpg" alt="v2-74cdb079d65f6968ab034179b9592b88_720w" loading='lazy'></p>
+<p><em>描述符</em>是一种结构，它告诉着色器在哪里可以找到资源以及如何解释资源中的数据。就像在D3D11中查看资源视图那样，您可以在D3D12中查看资源描述符。您可能会为同一资源创建多个描述符，因为管线的不同阶段可能会不同地使用它。例如，我们创建一个Texture2D资源。我们创建一个“渲染目标视图”（RTV），以便可以将该资源用作管线的输出缓冲区（将该资源作为RTV绑定到“输出合并”（OM）阶段）。我们还可以为同一资源创建一个无序访问视图（UAV），我们可以将其用作着色器资源并使用其纹理化几何图型（例如，如果场景中某处有监控摄像机，则可以执行此操作。我们将摄像机看到的场景渲染到资源（RTV）上，然后我们将该资源（UAV）渲染到安全室中的电视上。）</p>
+<p>描述符只能放在描述符堆（<em>Descriptor Heaps</em>）中。没有其他方法可以将描述符存储在内存中（某些根描述符（只能是CBV的根描述符）以及原始的或结构的UAV或SRV缓冲区除外。像Texture2D SRV这样的复杂类型不能用作根描述符）。</p>
+<h2 id="描述符表（Descriptor-Tables-DT-）">描述符表（Descriptor Tables (DT)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899113(v=vs.85).aspx">MSDN Descriptor Tables</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153548.jpg" alt="v2-e18b7dcd07044f4bad40d969350c7d2f_720w" loading='lazy'></p>
+<p>描述符表是描述符堆中的描述符数组。所有描述符表都是描述符堆的偏移量和长度。</p>
+<p>着色器可以通过根签名的描述符表按索引访问描述符堆中的描述符。因此，要访问着色器中的描述符，您将索引到根签名描述符表。</p>
+<p>CBV，UAV，SRV和采样器存储在描述符堆中，并且可以由着色器的描述符引用。</p>
+<p>RTV，DSV，IBV，VBV和SOV并非通过描述符表进行引用，而是直接绑定到管线。MSDN文档在这部分内容上有些令人困惑，因此说实话，我对此并不完全确定，但是MSDN说这些没有存储在描述符堆中，但是对于RTV而言，并不是完全正确的，DSV和SOV，因为您需要为其创建堆和描述符。据我了解，没有其他方法可以创建它们。</p>
+<h2 id="描述符堆（Descriptor-Heaps-DH-）">描述符堆（Descriptor Heaps (DH)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899110(v=vs.85).aspx">MSDN Descriptor Heaps</a></p>
+<p>描述符堆由接口ID3D12DescriptorHeap表示，并使用方法ID3D12Device::CreateDescriptorHeap()创建。描述符堆是描述符的列表。它们是存储描述符的一块内存。</p>
+<p>采样器不能与资源进入相同的描述符堆。描述符堆也可以是**“着色器可见”<strong>或</strong>“非着色器可见”**。着色器可见描述符堆是包含着色器可以访问的描述符的堆。这些类型的堆可能包括CBV，UAV，SRV和Sampler描述符。非着色器可见描述符堆是着色器无法引用的堆。这些类型的堆包括RTV，DSV，IBV，VBV和SOV资源类型。法线贴图可能具有三个描述符堆，一个用于采样器，一个用于着色器可见资源，一个用于非着色器可见资源。</p>
+<p>在任何时候，只能将一个着色器可见堆和一个采样器堆绑定到管线。您希望描述符堆在最长时间内具有正确的描述符（根据MSDN，“理想情况下是整个渲染帧或更多”）。描述符堆必须有足够的空间来为每个所需状态集动态定义描述符表。为此，您可以在管线状态改变时重用描述符空间（例如，正在渲染一棵树，在描述符堆中有一个描述符，该描述符在绘制树干时指向树皮的UAV。当您需要绘制树的叶子时，管线会发生变化，因此您可以通过将树皮纹理的UAV替换为叶子纹理的UAV来重用树皮纹理的UAV。）</p>
+<p>D3D12允许您在command list中多次更改描述符堆。这非常有用，因为较旧的低功耗GPU仅具有65k的描述符堆存储空间。更改描述符堆会导致GPU“刷新”当前的描述符堆，这是一项昂贵的操作，因此您希望尽可能少地执行此操作。</p>
+<p>Bundles仅允许调用一次SetDescriptorHeaps，并且此命令设置的描述符堆必须与调用bundle的command list已设置的描述符堆完全匹配。</p>
+<p>有两种管理描述符堆的方法，这里有两种（在MSDN文档中提到了这些方法）：</p>
+<p><strong>基本方法（效率低下，但很容易实现）</strong><br>
+第一种方法（也是最基本的方法）就在绘制调用之前，将绘制所需的所有描述符添加到描述符堆，然后在根签名中设置一个描述符表以指向新的描述符。这种方法很好，因为不需要跟踪描述符堆中的所有描述符。但是，由于我们将对绘制调用的所有描述符都添加到了堆中，因此在堆中将有很多重复的描述符，这使得该方法非常拉跨，尤其是在渲染相似的对象或场景时。</p>
+<p>我们必须在描述符堆中的可用空间中添加新的描述符，而不是覆盖先前绘制中描述符堆中已经存在的描述符的原因，是因为GPU实际上可以同时执行多个绘制调用，这意味着我们开始为当前绘制覆盖描述符A时，可能会在描述符堆中仍然使用A。</p>
+<p>使用此方法，由于以下一个或两个原因，您可能需要一个附加的描述符堆：场景又大又复杂，描述符空间用完了，或者可能存在同步问题，因此您有一个用于GPU读取的描述符堆，然后在GPU执行命令列表时用CPU填充另一个描述符堆，然后在每一帧交换这两个堆。</p>
+<p><strong>第二种方法（效率更高，更难以实施）</strong><br>
+另一种方法是跟踪描述符堆中每个描述符的索引。这种方式非常高效，因为您可以为相似的对象和场景重用描述符。这种方法是高效的，因为在描述符堆中很少有完全不重复的描述符。这种方法的缺点是实现起来有点复杂。</p>
+<p>如果您的场景足够小，并且没有在整个场景中更改的资源，则实际上可以创建一个巨型描述符表，并在场景结束时刷新该对象，然后需要重新加载新资源。如果在整个场景中唯一改变的是根常量和根描述符，那么这将起作用。描述符表（在根签名中定义）将在整个场景中保持不变。</p>
+<p>进行一些优化的其他几种方法是在描述符堆中有两个描述符表。一个描述符表的资源在整个场景中不会改变，而另一个描述符表的资源则经常变化。</p>
+<p>您将要做的另一件事是确保根常量和根描述符包含最频繁更改的常量和描述符。</p>
+<h2 id="根签名（Root-Signatures-RS-）">根签名（Root Signatures (RS)）</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899208(v=vs.85).aspx">MSDN Root Signatures</a></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153603.jpg" alt="v2-f0f925e286ab7e5a5e1c58abc6754468_720w" loading='lazy'></p>
+<p>根签名定义了着色器访问的数据（资源）。根签名就像一个函数的参数列表，其中函数是着色器，而参数列表是着色器访问的数据类型。</p>
+<p>根签名包含<strong>根常量</strong>，<strong>根描述符</strong>和<strong>描述符表</strong>。根参数是根签名中的一项，可以是根常量，根描述符或描述符表。应用程序可以更改的根参数的实际数据称为**“根参数”**。</p>
+<p>根签名的最大大小始终为64 DWORDS。</p>
+<h3 id="根常数（Root-Constants）">根常数（Root Constants）</h3>
+<p>根常量是内联32位值（它们的成本为1 DWORD）。这些值直接存储在根签名中。由于内存被限制在根签名，因此您只想在此处存储着色器访问的最常更改的常量值。这些值显示为着色器的恒定缓冲区。从着色器访问这些变量没有成本（无需重定向），因此访问它们非常快。</p>
+<h3 id="根描述符（Root-Descriptors）">根描述符（Root Descriptors）</h3>
+<p>根描述符是内联描述符，着色器最常访问的就是内联描述符。是64位虚拟地址（2个DWORD）。这些描述符仅限于CBV，原始或结构化SRV和UAV。不能使用诸如Texture2D SRV之类的复杂类型。从着色器引用根描述符时，需要进行一次重定向。关于根描述符的另一件事要注意的是，它们只是指向资源的指针，它们不包含数据的大小，这意味着从根描述符访问资源时不能进行越界检查，这与存储在描述符堆中的描述符不同（确实包括大小，并且可以在其中进行边界检查）。</p>
+<h3 id="描述符表（Descriptor-Tables）">描述符表（Descriptor Tables）</h3>
+<p>上面讨论过，描述符表是描述符堆的偏移量和长度。描述符表只有32位（1个DWORD）。描述符表中有多少个描述符没有限制（但是会被限制于描述符堆的描述符数量）。从描述符表访问资源时，存在两个间接开销。第一个间接方法是从描述符表指针到存储在堆中的描述符，然后从描述符堆到实际资源。</p>
+<h2 id="资源屏障Resource-Barriers">资源屏障Resource Barriers</h2>
+<p><a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn899226(v=vs.85).aspx">MSDN Resource Barriers</a></p>
+<p>资源屏障用于更改资源或子资源的状态或使用情况。Direct3D 12在其多线程友好的API中引入了资源屏障。资源屏障用于帮助在多个线程之间同步资源的使用。</p>
+<p>资源屏障有三种类型：转换屏障，混叠屏障和无序访问视图（UAV）屏障。</p>
+<h3 id="转换屏障">转换屏障</h3>
+<p>当您要将资源或子资源的状态从一种状态转换到另一种状态时，可以使用转换屏障。何时更改资源状态的一个示例是在翻转交换链之前将资源从渲染目标状态更改为当前状态。</p>
+<h3 id="混叠屏障">混叠屏障</h3>
+<p>混叠屏障与<a target="_blank" rel="noopener" href="https://msdn.microsoft.com/en-us/library/windows/desktop/dn786477(v=vs.85).aspx">Tiled Resources</a>一起使用。这些屏障用于更改具有映射到同一个图块池（same tile pool）（来自msdn）的两个不同资源的用法。</p>
+<h3 id="无序访问视图（UAV）屏障">无序访问视图（UAV）屏障</h3>
+<p>UAV屏障用于确保在调用此屏障之前完成所有读/写操作。例如，如果正在写入UAV，此时来了一个draw call，在执行draw call之前完成对UAV的写入。无需在仅从UAV读取的两个绘制或者调用之间创建UAV屏障。如果同一UAV被两个不同的绘制或调用写入，也不需要，只要应用程序确定一个在另一个开始之前就已经完全完成即可。如果要绘制纹理，则可以在UAV上使用UAV屏障，然后使用该纹理在模型上绘制。在将UAV用作模型上的纹理之前，UAV屏障将确保绘制到UAV的调用已完成。</p>
+<h2 id="隔离和隔离事件（Fences-and-Fence-Events）">隔离和隔离事件（Fences and Fence Events）</h2>
+<p>作为DirectX 12的底层的一部分，我们可以将命令队列发送到GPU以开始执行，然后可以立即在CPU上再次开始工作。为了确保我们不修改或删除GPU当前正在使用的内容，我们使用隔离。 Fences和Fence Events将让我们知道GPU在执行命令队列时的位置。在此应用中，我们要做的是告诉GPU执行命令队列，更新游戏逻辑，检查/等待GPU完成执行命令队列，通过将更多命令查询到命令列表中来更新管线，然后再次执行执行命令队列。**首先用命令填充命令列表，执行命令队列，发信号通知命令列表以将隔离值设置为指定值，然后检查隔离值是否是我们告诉命令列表将其设置为的值。如果是这样，我们知道命令列表已完成其中的命令，可以重置命令列表和队列，然后重新填充命令列表。如果fence值仍然不是我们所指示的值，那么我们创建一个fence事件并等待GPU发出信号。**隔离由ID3D12Fence接口表示，而隔离事件是句柄HANDLE。device使用ID3D12Device::CreateFence方法创建隔离，并使用CreateEvent()方法创建隔离事件。</p>
+<h2 id="概览Direct3D-12应用的流程控制（Overview-of-Application-Flow-Control-for-Direct3D-12）">概览Direct3D 12应用的流程控制（Overview of Application Flow Control for Direct3D 12）</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg" alt="v2-06d88835bbb341e990180dd3118f8e26_720w" loading='lazy'></p>
+<p>这是Direct3D的经典模型:</p>
+<ol>
+<li>初始化应用程序</li>
+<li>启动主循环</li>
+<li>构建场景（如果是新场景的话）</li>
+<li>更新游戏逻辑</li>
+<li>加载/释放资源（如果需要的话）</li>
+<li>等待GPU</li>
+<li>重置命令分配器和命令列表</li>
+<li>填充任务列表</li>
+<li>如果是是多线程的话，等待任务列表线程</li>
+<li>执行任务列表</li>
+<li>回到第三步</li>
+</ol>
+<h3 id="1-初始化应用程序">1. 初始化应用程序</h3>
+<p>此阶段可能包括以下内容:</p>
+<ul>
+<li>
+<p>从文件或数据库加载设置</p>
+</li>
+<li>
+<p>确保这是应用程序的唯一实例</p>
+</li>
+<li>
+<p>检查更新</p>
+</li>
+<li>
+<p>检查内存申请</p>
+</li>
+<li>
+<p>检查许可证 (例如体验版，Demo版甚至是盗版)</p>
+</li>
+<li>
+<p>创建一个窗口</p>
+</li>
+<li>
+<p>初始化脚本引擎</p>
+</li>
+<li>
+<p>构建资源管理器</p>
+</li>
+<li>
+<p>构建音频系统</p>
+</li>
+<li>
+<p>构建网络</p>
+</li>
+<li>
+<p>构建控制器</p>
+</li>
+<li>
+<p>初始化Direc3D</p>
+<ul>
+<li>
+<p>构建描述符堆（Descriptor heap manager，如果有的话）</p>
+</li>
+<li>
+<p>构建命令列表</p>
+</li>
+<li>
+<p>构建RTV</p>
+</li>
+<li>
+<p>构建命令分配器</p>
+</li>
+<li>
+<p>构建所有的PSO（你将会有很多PSO）</p>
+</li>
+<li>
+<p>构建所有的根签名（通常来说你只需要一个）</p>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-开始主循环">2.开始主循环</h3>
+<p>可以在这里开始主循环，检查windows窗口事件，如果没有，就更新游戏。</p>
+<h3 id="3-构建场景">3.构建场景</h3>
+<p>当然，这是在主循环内，因为您的游戏中可能有很多场景。您当然可以做任何想做的事，但是通常情况下，场景变化时不必退出主循环。此阶段包括以下内容：</p>
+<ul>
+<li>
+<p>加载整个场景所需的资源（直到场景改变或玩家退出时才释放这些东西）。这包括纹理，几何图形，文本等。</p>
+</li>
+<li>
+<p>加载初始资源（这些资源您将立即在场景中需要，例如，如果您在房间内出生，则加载在房间内纹理以及该房间内的任何模型。这些资源可能会在您离开房间后释放。）如果您的场景足够小以装入整个场景所需的每个资源，则这些内容可能与上面的项目相同。</p>
+</li>
+<li>
+<p>设置摄像机，初始视口以及视图和投影矩阵。</p>
+</li>
+<li>
+<p>设置整个场景可能需要的Command Bundles。</p>
+</li>
+</ul>
+<h3 id="4-更新游戏逻辑">4.更新游戏逻辑</h3>
+<p>这是游戏真正的核心部分。在这个阶段你可能会更新AI，检查来自网络的信息，更新场景中的对象信息，例如位置和动画。你懂的，</p>
+<h3 id="5-加载-释放资源">5.加载/释放资源</h3>
+<p>这是您的资源管理器进入的位置。如果对象进入的场景具有尚未加载的纹理，则可以在此处加载。如果有物体离开场景，也可以在此处卸载。如果愿意，可以将资源管理器放在单独的线程上。一种执行此操作的方法是，如果有对象进入场景，则游戏逻辑会通知资源管理器。当主循环继续时，资源管理器将开始加载所需的纹理。如果在绘制对象时尚未加载纹理，则资源管理器将提供临时或默认纹理。这对于具有开放世界的游戏很有用。与对象离开场景时一样，它使资源管理器（在单独的线程上）知道不需要哪些资源（通常是引用计数达到零），并在资源管理器释放资源时继续执行，而不是在主循环在继续之前等待资源管理器释放资源。</p>
+<h3 id="6-等待GPU">6.等待GPU</h3>
+<p>您很可能将使用双倍或三倍缓冲，这意味着您将至少拥有2-3个命令分配器。这样做的原因是因为在执行与其关联的命令列表时无法重置命令分配器（另一方面，使用命令队列执行命令后可以立即重置命令列表）。这意味着对于每个帧，在此阶段，就在重置命令分配器之前，您将检查GPU是否已完成与该命令分配器关联的命令列表。您将为此使用隔离和隔离事件。您还需要为每个帧设置隔离，并为每个线程需要一个隔离事件。在帧“f”上执行命令列表时，下一步是等待GPU在帧“f + 1”结束。对于三重缓冲，它将如下所示：</p>
+<ul>
+<li>wait for GPU to finish with frame 1</li>
+<li>render frame 1</li>
+<li>wait for GPU to finish with frame 2</li>
+<li>render frame 2</li>
+<li>wait for GPU to finish with frame 3</li>
+<li>render frame 3</li>
+<li>wait for GPU to finish with frame 1</li>
+<li>render frame 1</li>
+</ul>
+<h3 id="7-重置命令分配器和命令列表">7.重置命令分配器和命令列表</h3>
+<p>在等待GPU完成要使用的命令分配器后，您将其重置以及重置命令列表。如果与前一帧相比绝对没有任何变化，则不必总是重置命令列表，但是几乎从来没有这种情况。如果您知道经常重复执行某些命令序列，请将它们放入Bundles中，然后在命令列表中执行bundes。</p>
+<h3 id="8-填充任务列表">8.填充任务列表</h3>
+<p>这包括您希望GPU执行的大多数操作，例如绑定诸如顶点和索引缓冲区之类的资源，纹理，创建描述符，设置管线状态，使用资源屏障，设置隔离值等。</p>
+<h3 id="9-等待任务列表线程（如果是多线程的话）">9.等待任务列表线程（如果是多线程的话）</h3>
+<p>如果您有多线程应用程序，则可能要在单独的线程上填充命令列表。一次只能有一个线程访问命令列表，因此每个线程将需要自己的命令列表，以及自己的隔离，隔离事件和命令分配器。您调用带有命令队列的执行命令列表数组，因此主线程将等待，直到命令列表线程完成其命令列表的填充。它将把命令列表放入数组中，并与命令队列一起执行。</p>
+<h3 id="10-执行任务列表">10.执行任务列表</h3>
+<p>这是你在command queue调用ExecuteCommandLists()来渲染你场景的阶段。</p>
+<h2 id="Direct3D-12中的多线程（Multithreading-in-Direct3D-12）">Direct3D 12中的多线程（Multithreading in Direct3D 12）</h2>
+<p>我觉得我需要简短的概括一下利用多线程的应用程序的结构，因为这才是Direct3D 12真正的威力所在。</p>
+<p>实际上很简单。它看起来像这样：</p>
+<ol>
+<li>
+<p>初始化应用程序（包括d3d和其他所有内容）</p>
+</li>
+<li>
+<p>启动主循环</p>
+</li>
+<li>
+<p>更新游戏逻辑</p>
+</li>
+<li>
+<p>产生多个线程</p>
+</li>
+<li>
+<p>每个线程等待GPU完成执行上一帧的命令列表</p>
+</li>
+<li>
+<p>每个线程重置先前的帧命令分配器</p>
+</li>
+<li>
+<p>每个线程重置其命令列表</p>
+</li>
+<li>
+<p>每个线程填写其命令列表</p>
+</li>
+<li>
+<p>主线程等待命令列表线程完成其命令列表的填写</p>
+</li>
+<li>
+<p>使用完成的命令列表数组执行命令队列</p>
+</li>
+<li>
+<p>转到3。</p>
+</li>
+</ol>
+<h3 id="每个线程都有自己的命令列表">每个线程都有自己的命令列表</h3>
+<p>这是多线程应用程序变得有趣的地方。您需要以某种方式在逻辑上分割场景，以便每个线程可以填充部分场景的命令列表。有两种方法可以执行此操作，但是请记住，在执行命令列表时，将按照您在数组中提供命令的顺序执行它们。为了使应用程序获得最大性能，您一直想做的一件事就是按管线状态对实体进行分组。因此，如果场景中的两个对象使用特定的PSO，则需要尝试将它们放在一起，这样您只需为它们更改一次PSO。如果未将它们放在一起，则可能必须更改PSO两次，每个对象一次。但是，这并非总是将命令分组的最佳方法。由于诸如透明度之类的某些因素，您几乎总是需要从远到近绘制场景（对于相机来说）。如果共享同一PSO的那两个对象是窗户，一个窗户很远，并且一个窗户在摄像机前面，如果您将这两个对象共享在一起，因为它们共享了相同的PSO，则场景将错误的渲染。如果您先画出它们，则前面窗后将什么也不会出现。</p>
+<p>要分组的第一件事很可能是距相机的距离。您可能有一个绘制远距离对象的命令列表，一个绘制近距离对象的命令列表，一个绘制天空盒的命令列表，一个绘制用户界面（例如健康状况）的命令列表状态以及用于帧后处理的另一个命令列表。</p>
+<h3 id="多线程中的命令分配器">多线程中的命令分配器</h3>
+<p>命令分配器在任何时候都只能记录一个命令列表。这意味着对于每个线程，您必须有一个单独的命令列表。您无法在执行命令列表时重置命令分配器，这意味着对于每个帧缓冲区，您将需要一个命令分配器（双缓冲区需要两个，三缓冲区需要三个）。</p>
+<p>由于上述原因，程序中的命令分配器的数量必须为：NumberOfThreads * NumberOfFrameBuffers</p>
+<p>如果您的应用程序有2个线程来填充命令分配器，并且您正在使用三重缓冲，则将需要2 * 3 = 6个命令分配器。</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/introduction-to-direct3d-12-yi/">https://www.lfzxb.top/introduction-to-direct3d-12-yi/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/%E6%96%87%E7%8C%AE%E7%BF%BB%E8%AF%91/">文献翻译</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920153612.jpg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/lol-darius/" title="LOL：诺克各个流派以及连招汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">LOL：诺克各个流派以及连招汇总</div></div><div class="info-2"><div class="info-item-1">前言 我个人非常喜欢诺克这个英雄，原因是多方面的 1. 他会回血 2. 伤害高 3. 坦度高 4. 大招帅，还能刷新连劈 视频链接们 炸胡视频：   </div></div></div></a><a class="pagination-related" href="/the-record-of-build-site-based-on-hexo/" title="基于Github使用Hexo建站过程记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">基于Github使用Hexo建站过程记录</div></div><div class="info-2"><div class="info-item-1">前言 从WordPress刚转过来，感觉很爽，本主题基于butterfly：https://github.com/jerryc127/hexo-theme-butterfly 配置，本文记录Hexo建站过程中遇到的问题和相关解决方案。 快速入门Hexo https://www.cnblogs.com/liuxianan/p/build-blog-website-by-hexo-github.html npm Install卡住 使用代理registry 1npm config set registry https://registry.npm.taobao.org 来自OSS的图片无法显示 因为防盗链的原因，所以需要给每个md文件加上 1 详见：https://segmentfault.com/a/1190000017896469 Hexo更换电脑重新部署 https://www.jianshu.com/p/906294181814 更换博客地址 https://www.cnblogs.com/zhansu/p/9643066.html Debug 在hexo g的时候如果出错，...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/fundamentals-of-computer-graphics-chapter11-111-5/" title="纹理映射"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920155919.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">纹理映射</div></div><div class="info-2"><div class="info-item-1">纹理映射 在尝试复制真实世界的外貌时，人们很快意识到几乎任何物质的表面都是有特征的。木材长有纹理。皮肤长有皱纹；布料会有编织结构；油画会有画刷或滚筒留下的痕迹，即使是光滑的塑料也会有制作他的模具的凹凸不平的痕迹，并且光滑金属显示出机器加工过程的痕迹。材料的没有特征的地方很快也会被斑点，凹痕，污点，划痕，指纹和污垢覆盖。 在图形学中，我们把这些现象统称为“空间上表面属性的变化”——表面的属性在每一处地方都在发生着变化，但并没有真正意义上改变表面的形状，考虑到这些因素，所有的建模和渲染系统都提供了一些纹理映射的涵义：使用一个被称作纹理贴图，纹理图像，或者仅仅是一个纹理，来存储这些你想要在一个表面上展示的细节，然后进行数学处理，把这个图片“映射”到表面上。 事实证明，一旦存在将图像映射到表面的机制，就会有很多奇淫技巧，这些技巧已经超过了我们介绍表面细节的基本目标。纹理可以用来制作阴影和反射，提供光照信息，甚至定义表面形状。在复杂的交互程序中，纹理经常被用于存储与其作为一张图片毫无干系的的数据（这里不知道怎么组织语言了，举个例子就是我们可以把骨骼动画烘焙到一张纹理中，从而让GPU去执行蒙...</div></div></div></a><a class="pagination-related" href="/srp-batcher-speed-up-your-rendering/" title="(译)SRP Batcher Speed up your rendering!"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-14</div><div class="info-item-2">(译)SRP Batcher Speed up your rendering!</div></div><div class="info-2"><div class="info-item-1">推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频： https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/ 本文翻译自：SRP Batcher: Speed up your rendering! 和 https://docs.unity3d.com/Manual/SRPBatcher.html  在2018，我们介绍了一个被称为SRP的高度自定义的渲染技术，一个被称为SRP Batcher新的引擎底层Loop就是这个技术的一部分，SRP Batcher可以在渲染时加速你的CPU 1.2到4倍（这取决于你的场景）。让我们看看如何这个功能的最佳实践吧！   上面那个视频显示了Unity渲染时最坏的一个场景：每个对象都是动态的，并且使用不同的材质（材质的颜色或者贴图等属性不同），所以尽管非常多相同的Mesh，但是在渲染时每个Mesh都会被当成不同的Mesh进行渲染（所以无法使用GPU Instance优化技术）。这个场景使用SRP Batcher在PS4平台上可以加速4倍（这个视频是PC的，渲染API是DX11） 注意...</div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/color-pipeline/" title="颜色管线精粹"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250126195238973.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-01-28</div><div class="info-item-2">颜色管线精粹</div></div><div class="info-2"><div class="info-item-1">前言 接触图形学中颜色相关的概念许久了，色域，LDR，HDR，ToneMapping，伽马空间，线性空间，sRGB，ACES等名词也都算耳熟能详，但一直以来都是零散细碎的知识点，从来没系统整理过。 个人一直关注UE的发展和官方油管频道，恰巧看到了一个颜色管线的视频，算是事无巨细的详解了上面每一个概念和他们之间的关系，遂有此文，与诸君共赏。 今天我们要讨论发生在引擎和渲染过程中的颜色管线以及特定的颜色转换 线性渲染 我们先想象一个简化版的渲染管线，一个纹理输入，在线性空间下渲染，经过后处理，最后显示在窗口中（或者存储到一个文件中）  我们先从中间看起，即Linear Rendering in RGB，既然是渲染，我们首先应该关注的就是颜色值 颜色值代表光量，可以是范围很大的值，也可以是范围很小的值 并且他们是线性的，这意味着如果我们将颜色值翻倍，我们得到的光量也是翻倍的  他们用于引擎的工作环境和运行时环境的颜色空间中 在更加深入之前，我们先了解一下颜色的基础知识 颜色基础知识  一般我们在谈论颜色空间的时候，同时涵盖了颜色编码和颜色空间这两个概念，我们先来看颜色空间 颜色空间  ...</div></div></div></a><a class="pagination-related" href="/early-z-test-and-late-z-test/" title="Early-Z和Late-Z规则"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907005950.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-07-24</div><div class="info-item-2">Early-Z和Late-Z规则</div></div><div class="info-2"><div class="info-item-1">前言 已经不止一次看到有文章说：不管有没有Early-Z最后的Late-Z一定会执行了，仔细想一下其实是不合理的：  Early-Z相当于把Late-Z提前，一样会有逐片元的深度测试和深度写入，如果Early-Z和Late-Z是共存的，那么就有两次Z-Buffer的读取和写入，造成带宽浪费 Early-Z因为种种原因失效了，执行Late-Z无可非议，但如果Early-Z没有失效，我们都在Early-Z处理好了，为什么还需要在Late-Z处理一次？  这篇文章就把深度缓冲区的所有操作都整理起来，并且还会包含一些引申出来的知识点，给每位看官进行一条龙服务。 正文 名词规范 国际惯例了属于是，为了避免歧义，本文中所有用到的名词，英语词汇都将在此处列出，希望看官们能把此处列出的名词和释义代入文章中，而不是自己脑海里的，这样你好我也好：  PS：片元着色器 Z-Buffer：深度缓冲区 Z-Test：深度测试 Z-Write：深度写入 Early-Z：提前Z-Test和Z-Write，位于光栅化阶段之后，PS阶段之前，以pixel quad为单位（既以4个像素为一组，因为深度缓存内的数据是...</div></div></div></a><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-21</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">介绍Direct3D 12</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96-Direct3D-12"><span class="toc-number">1.1.</span> <span class="toc-text">初始化 Direct3D 12</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">图形管线概览</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%88Compute-Shader%EF%BC%89"><span class="toc-number">2.1.</span> <span class="toc-text">计算着色器（Compute Shader）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E8%A3%85%E9%85%8D%E9%98%B6%E6%AE%B5%EF%BC%88Input-Assembler-IA-Stage%EF%BC%89"><span class="toc-number">2.2.</span> <span class="toc-text">输入装配阶段（Input Assembler (IA) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%A1%B6%E7%82%B9%E7%9D%80%E8%89%B2%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Vertex-Shader-VS-Stage%EF%BC%89"><span class="toc-number">2.3.</span> <span class="toc-text">顶点着色器阶段（Vertex Shader (VS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%96%E5%A3%B3%E7%9D%80%E8%89%B2%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Hull-Shader-HS-Stage%EF%BC%89"><span class="toc-number">2.4.</span> <span class="toc-text">外壳着色器阶段（Hull Shader (HS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9B%B2%E9%9D%A2%E7%BB%86%E5%88%86%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Tessellator-TS-Stage%EF%BC%89"><span class="toc-number">2.5.</span> <span class="toc-text">曲面细分器阶段（Tessellator (TS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%9F%E7%BB%86%E5%88%86%E7%9D%80%E8%89%B2%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Domain-Shader-DS-Stage%EF%BC%89"><span class="toc-number">2.6.</span> <span class="toc-text">域细分着色器阶段（Domain Shader (DS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%87%A0%E4%BD%95%E7%9D%80%E8%89%B2%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Geometry-Shader-GS-Stage%EF%BC%89"><span class="toc-number">2.7.</span> <span class="toc-text">几何着色器阶段（Geometry Shader (GS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%81%E8%BE%93%E5%87%BA%E9%98%B6%E6%AE%B5%EF%BC%88Stream-Output-SO-Stage%EF%BC%89"><span class="toc-number">2.8.</span> <span class="toc-text">流输出阶段（Stream Output (SO) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%89%E6%A0%85%E5%8C%96%E9%98%B6%E6%AE%B5%EF%BC%88Rasterizer-Stage-RS-%EF%BC%89"><span class="toc-number">2.9.</span> <span class="toc-text">光栅化阶段（Rasterizer Stage (RS)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%83%8F%E7%B4%A0%E7%9D%80%E8%89%B2%E5%99%A8%E9%98%B6%E6%AE%B5%EF%BC%88Pixel-Shader-PS-Stage%EF%BC%89"><span class="toc-number">2.10.</span> <span class="toc-text">像素着色器阶段（Pixel Shader (PS) Stage）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BE%93%E5%87%BA%E5%90%88%E5%B9%B6%E9%98%B6%E6%AE%B5%EF%BC%88Output-Merger-OM-Stage%EF%BC%89"><span class="toc-number">2.11.</span> <span class="toc-text">输出合并阶段（Output Merger (OM) Stage）</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">概览Direct3D 12是如何工作的</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%A1%E7%BA%BF%E7%8A%B6%E6%80%81%E5%AF%B9%E8%B1%A1%EF%BC%88Pipeline-State-Objects-PSO"><span class="toc-number">3.1.</span> <span class="toc-text">管线状态对象（Pipeline State Objects (PSO))</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A2%ABPSO%E8%AE%BE%E7%BD%AE%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toc-number">3.1.1.</span> <span class="toc-text">被PSO设置的状态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A2%AB%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8%E8%AE%BE%E7%BD%AE%E7%9A%84%E7%8A%B6%E6%80%81"><span class="toc-number">3.1.2.</span> <span class="toc-text">被命令列表设置的状态</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%AE%BE%E5%A4%87%EF%BC%88The-Device%EF%BC%89"><span class="toc-number">3.2.</span> <span class="toc-text">设备（The Device）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8%EF%BC%88Command-Lists-CL"><span class="toc-number">3.3.</span> <span class="toc-text">命令列表（Command Lists (CL))</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8D%86%E7%BB%91%E5%8C%85%EF%BC%88Bundles%EF%BC%89"><span class="toc-number">3.4.</span> <span class="toc-text">捆绑包（Bundles）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E9%98%9F%E5%88%97%EF%BC%88Command-Queues-CQ-%EF%BC%89"><span class="toc-number">3.5.</span> <span class="toc-text">命令队列（Command Queues (CQ)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E5%88%86%E9%85%8D%E5%99%A8%EF%BC%88Command-Allocators-CA-%EF%BC%89"><span class="toc-number">3.6.</span> <span class="toc-text">命令分配器（Command Allocators (CA)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%EF%BC%88Resources%EF%BC%89"><span class="toc-number">3.7.</span> <span class="toc-text">资源（Resources）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%8F%E8%BF%B0%E7%AC%A6%EF%BC%88%E8%B5%84%E6%BA%90%E8%A7%86%E5%9B%BE%EF%BC%89%EF%BC%88Descriptors-Resource-Views-%EF%BC%89"><span class="toc-number">3.8.</span> <span class="toc-text">描述符（资源视图）（Descriptors (Resource Views)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8%EF%BC%88Descriptor-Tables-DT-%EF%BC%89"><span class="toc-number">3.9.</span> <span class="toc-text">描述符表（Descriptor Tables (DT)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%8F%E8%BF%B0%E7%AC%A6%E5%A0%86%EF%BC%88Descriptor-Heaps-DH-%EF%BC%89"><span class="toc-number">3.10.</span> <span class="toc-text">描述符堆（Descriptor Heaps (DH)）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A0%B9%E7%AD%BE%E5%90%8D%EF%BC%88Root-Signatures-RS-%EF%BC%89"><span class="toc-number">3.11.</span> <span class="toc-text">根签名（Root Signatures (RS)）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E5%B8%B8%E6%95%B0%EF%BC%88Root-Constants%EF%BC%89"><span class="toc-number">3.11.1.</span> <span class="toc-text">根常数（Root Constants）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B9%E6%8F%8F%E8%BF%B0%E7%AC%A6%EF%BC%88Root-Descriptors%EF%BC%89"><span class="toc-number">3.11.2.</span> <span class="toc-text">根描述符（Root Descriptors）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%8F%E8%BF%B0%E7%AC%A6%E8%A1%A8%EF%BC%88Descriptor-Tables%EF%BC%89"><span class="toc-number">3.11.3.</span> <span class="toc-text">描述符表（Descriptor Tables）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B5%84%E6%BA%90%E5%B1%8F%E9%9A%9CResource-Barriers"><span class="toc-number">3.12.</span> <span class="toc-text">资源屏障Resource Barriers</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BD%AC%E6%8D%A2%E5%B1%8F%E9%9A%9C"><span class="toc-number">3.12.1.</span> <span class="toc-text">转换屏障</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%B7%E5%8F%A0%E5%B1%8F%E9%9A%9C"><span class="toc-number">3.12.2.</span> <span class="toc-text">混叠屏障</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E5%BA%8F%E8%AE%BF%E9%97%AE%E8%A7%86%E5%9B%BE%EF%BC%88UAV%EF%BC%89%E5%B1%8F%E9%9A%9C"><span class="toc-number">3.12.3.</span> <span class="toc-text">无序访问视图（UAV）屏障</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9A%94%E7%A6%BB%E5%92%8C%E9%9A%94%E7%A6%BB%E4%BA%8B%E4%BB%B6%EF%BC%88Fences-and-Fence-Events%EF%BC%89"><span class="toc-number">3.13.</span> <span class="toc-text">隔离和隔离事件（Fences and Fence Events）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%A7%88Direct3D-12%E5%BA%94%E7%94%A8%E7%9A%84%E6%B5%81%E7%A8%8B%E6%8E%A7%E5%88%B6%EF%BC%88Overview-of-Application-Flow-Control-for-Direct3D-12%EF%BC%89"><span class="toc-number">3.14.</span> <span class="toc-text">概览Direct3D 12应用的流程控制（Overview of Application Flow Control for Direct3D 12）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%88%9D%E5%A7%8B%E5%8C%96%E5%BA%94%E7%94%A8%E7%A8%8B%E5%BA%8F"><span class="toc-number">3.14.1.</span> <span class="toc-text">1. 初始化应用程序</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E5%BC%80%E5%A7%8B%E4%B8%BB%E5%BE%AA%E7%8E%AF"><span class="toc-number">3.14.2.</span> <span class="toc-text">2.开始主循环</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E6%9E%84%E5%BB%BA%E5%9C%BA%E6%99%AF"><span class="toc-number">3.14.3.</span> <span class="toc-text">3.构建场景</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E6%9B%B4%E6%96%B0%E6%B8%B8%E6%88%8F%E9%80%BB%E8%BE%91"><span class="toc-number">3.14.4.</span> <span class="toc-text">4.更新游戏逻辑</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-%E5%8A%A0%E8%BD%BD-%E9%87%8A%E6%94%BE%E8%B5%84%E6%BA%90"><span class="toc-number">3.14.5.</span> <span class="toc-text">5.加载/释放资源</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-%E7%AD%89%E5%BE%85GPU"><span class="toc-number">3.14.6.</span> <span class="toc-text">6.等待GPU</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-%E9%87%8D%E7%BD%AE%E5%91%BD%E4%BB%A4%E5%88%86%E9%85%8D%E5%99%A8%E5%92%8C%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8"><span class="toc-number">3.14.7.</span> <span class="toc-text">7.重置命令分配器和命令列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-%E5%A1%AB%E5%85%85%E4%BB%BB%E5%8A%A1%E5%88%97%E8%A1%A8"><span class="toc-number">3.14.8.</span> <span class="toc-text">8.填充任务列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-%E7%AD%89%E5%BE%85%E4%BB%BB%E5%8A%A1%E5%88%97%E8%A1%A8%E7%BA%BF%E7%A8%8B%EF%BC%88%E5%A6%82%E6%9E%9C%E6%98%AF%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%9A%84%E8%AF%9D%EF%BC%89"><span class="toc-number">3.14.9.</span> <span class="toc-text">9.等待任务列表线程（如果是多线程的话）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#10-%E6%89%A7%E8%A1%8C%E4%BB%BB%E5%8A%A1%E5%88%97%E8%A1%A8"><span class="toc-number">3.14.10.</span> <span class="toc-text">10.执行任务列表</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Direct3D-12%E4%B8%AD%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%EF%BC%88Multithreading-in-Direct3D-12%EF%BC%89"><span class="toc-number">3.15.</span> <span class="toc-text">Direct3D 12中的多线程（Multithreading in Direct3D 12）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%AF%8F%E4%B8%AA%E7%BA%BF%E7%A8%8B%E9%83%BD%E6%9C%89%E8%87%AA%E5%B7%B1%E7%9A%84%E5%91%BD%E4%BB%A4%E5%88%97%E8%A1%A8"><span class="toc-number">3.15.1.</span> <span class="toc-text">每个线程都有自己的命令列表</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%91%BD%E4%BB%A4%E5%88%86%E9%85%8D%E5%99%A8"><span class="toc-number">3.15.2.</span> <span class="toc-text">多线程中的命令分配器</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '2e3548b9d4f94d15b59c890315f08165'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

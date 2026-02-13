@@ -1,0 +1,427 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>（译）Forward Plus Bringing Deferred Lighting to the Next Level | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="在网上鲜少有能全面，具体介绍Forward+渲染管线的文章，所以抽空翻译下这个2015年的PPT，分享出来 摘要 这篇论文介绍了Forward+，这是一种通过剔除和仅存储对像素有贡献的光源来渲染许多光源的方法。Forward+是对传统的Forward渲染的扩展。利用GPU的计算能力实现的light-culling模块被添加到渲染管线中，用于创建有效light-list；该列表传递给最终的渲染着色器">
+<meta property="og:type" content="article">
+<meta property="og:title" content="（译）Forward Plus Bringing Deferred Lighting to the Next Level">
+<meta property="og:url" content="https://www.lfzxb.top/forwardplus-bringing-deferred-lighting-to-the-next-level/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="在网上鲜少有能全面，具体介绍Forward+渲染管线的文章，所以抽空翻译下这个2015年的PPT，分享出来 摘要 这篇论文介绍了Forward+，这是一种通过剔除和仅存储对像素有贡献的光源来渲染许多光源的方法。Forward+是对传统的Forward渲染的扩展。利用GPU的计算能力实现的light-culling模块被添加到渲染管线中，用于创建有效light-list；该列表传递给最终的渲染着色器">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png!webp">
+<meta property="article:published_time" content="2024-01-14T00:00:00.000Z">
+<meta property="article:modified_time" content="2025-02-27T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Defered Render">
+<meta property="article:tag" content="Forward Plus Render">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "（译）Forward Plus Bringing Deferred Lighting to the Next Level",
+  "url": "https://www.lfzxb.top/forwardplus-bringing-deferred-lighting-to-the-next-level/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png!webp",
+  "datePublished": "2024-01-14T00:00:00.000Z",
+  "dateModified": "2025-02-27T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/forwardplus-bringing-deferred-lighting-to-the-next-level/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '（译）Forward Plus Bringing Deferred Lighting to the Next Level',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">（译）Forward Plus Bringing Deferred Lighting to the Next Level</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">（译）Forward Plus Bringing Deferred Lighting to the Next Level</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-01-14T00:00:00.000Z" title="发表于 2024-01-14 00:00:00">2024-01-14</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-02-27T00:00:00.000Z" title="更新于 2025-02-27 00:00:00">2025-02-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">基础知识</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>13分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/forwardplus-bringing-deferred-lighting-to-the-next-level/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2025-02-27 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>在网上鲜少有能全面，具体介绍Forward+渲染管线的文章，所以抽空翻译下这个<a target="_blank" rel="noopener" href="https://takahiroharada.files.wordpress.com/2015/04/forward_plus.pdf">2015年的PPT</a>，分享出来</p>
+<h1>摘要</h1>
+<p>这篇论文介绍了Forward+，这是一种通过剔除和仅存储对像素有贡献的光源来渲染许多光源的方法。Forward+是对传统的Forward渲染的扩展。利用GPU的计算能力实现的light-culling模块被添加到渲染管线中，用于创建有效light-list；该列表传递给最终的渲染着色器，该着色器可以访问有关光源的所有信息。尽管Forward+增加了最终着色器的工作量，但从理论上讲，它与compute-shader-based的延迟光照相比需要更少的内存带宽。此外，它避免了延迟技术的主要缺点：即对材质和光照模型的限制。</p>
+<p>本论文进行了实验以比较Forward+和延迟光照的性能。</p>
+<p>PS：<a target="_blank" rel="noopener" href="http://www.klayge.org/2012/04/21/forward%E6%A1%86%E6%9E%B6%E7%9A%84%E9%80%86%E8%A2%AD%EF%BC%9A%E8%A7%A3%E6%9E%90forward%E6%B8%B2%E6%9F%93/">参考Forward框架的逆袭：解析Forward+渲染</a> 的内容，TBDR和Forward+内容对比：(注意此处的TBDR不是指移动平台的TBR架构，而是一种渲染流水线方案)</p>
+<p>TBDR：</p>
+<ol>
+<li>生成G-Buffer，这一步和传统deferred shading一样。</li>
+<li>把G-Buffer划分成许多16×16的tile，每个tile根据depth得到bounding box。</li>
+<li>对于每个tile，把它的bounding box和light求交，得到对这个tile有贡献的light序列。</li>
+<li>对于G-Buffer的每个pixel，用它所在tile的light序列累加计算shading。</li>
+</ol>
+<p>Forward+</p>
+<ol>
+<li>Z-prepass，很多forward shading都会用这个作为优化，而在forward+中，这个变成了必然步骤。</li>
+<li>把Z-Buffer划分成许多16×16的tile，每个tile根据depth得到bounding box。</li>
+<li>对于每个tile，把它的bounding box和light求交，得到对这个tile有贡献的light序列。</li>
+<li>对于每个物体，在PS中用该pixel所在tile的light序列累加计算shading。</li>
+</ol>
+<p>从这里可以看出，前两步与Tiled-based deferred shading大同小异，但只需要Z-Buffer，而不需要很消耗带宽的G-Buffer（<a target="_blank" rel="noopener" href="http://www.klayge.org/2011/11/28/klayge-4-0%E4%B8%ADdeferred-rendering%E7%9A%84%E6%94%B9%E8%BF%9B%EF%BC%88%E4%BA%8C%EF%BC%89%EF%BC%9A%E6%8B%A5%E6%8C%A4%E7%9A%84g-buffer/">G-Buffer最小也要32bit color + 32bit depth</a>）。第三步是完全一样的。第四部由于用了forward，可以有forward的各种好处：</p>
+<ul>
+<li>复杂材质</li>
+<li>支持硬件AA（虽然我一直认为硬件AA多算了很多东西，是一种巨大的浪费）</li>
+<li>带宽利用率高</li>
+<li>支持透明物体</li>
+</ul>
+<h1>概述</h1>
+<p>近年来，延迟渲染在实时渲染中变得越来越受欢迎，尤其是在游戏领域。延迟技术的主要优势在于能够使用多种光源、将光照与几何复杂性分离以及可管理的着色器组合。然而，延迟技术也存在一些缺点，比如材质种类有限、更高的内存和带宽需求、处理透明物体的困难，以及缺乏硬件抗锯齿支持[Kap10]。材质的多样性对于实现真实的着色效果至关重要，而这对于Forward渲染来说并不是问题。然而，正向渲染通常需要设置少量且固定的光源，以避免PS的ALU消耗过大，并且需要CPU管理光源和物体。此外，由于当前游戏主机（例如XBox 360）上的昂贵的动态分支性能，延迟渲染变得更具吸引力是在情理之中的。</p>
+<p>近些年的GPU硬件的计算能力得到了很大提升，这使得使用Forward方法进行大量光源渲染变得可能，即使如此，在片段着色器遍历所有光源进行着色的方法还是代价过高。</p>
+<p>我们提出了Forward+：一种通过剔除和仅存储对像素有贡献的光源来进行渲染的方法。光源在最终的着色器中逐个进行计算。通过这种方式，我们保留了正向渲染的所有优点，并获得了以大量光源进行渲染的能力。</p>
+<h1>相关工作</h1>
+<p>Foward在进行着色时可以使用的光源数量存在严格的限制[AMHH08]。延迟技术克服了这一问题，并且在游戏主机等设备上变得越来越受欢迎。</p>
+<p>延迟渲染需要导出存储屏幕空间光照所需的所有几何信息的GBuffer从而使得内存压力很大。</p>
+<p>延迟光照将光照计算和材质计算分离，以减少内存带宽。Andersson [And11]利用GPU的计算能力实现了延迟光照系统。从理论上讲，该方法通过减少内存带宽可以在现有的延迟技术中获得最佳性能。</p>
+<p>基于灯光索引的延迟光照采用了略有不同的方法，它存储灯光索引而不是叠加灯光分量[Tre09]。它减少了GBuffer导出的成本，但在最终着色过程中需要读取更多的数据，相比之下需要比延迟光照技术更多的数据。这种方法有一些限制，例如每像素的光源数量具有预定义的最大容量。Forward+在不受其限制的情况下学习了这种方法的概念，并通过使用现代GPU的灵活计算能力进一步减少了内存带宽。</p>
+<h1>方法</h1>
+<p>Forward+通过在最终着色之前添加light-culling阶段扩展了正向渲染管线。该管线包括三个阶段：深度预处理、light-culling和最终着色。另一个修改是对光源数据结构的调整，它必须存储在线性缓冲区中，着色器可以从中进行访问，以进行light-culling和最终着色。深度预处理对于正向渲染是可选的，但对于Forward+来说，它是必不可少的，以减少最终着色步骤中的像素Overdraw(这对Forward+来说尤其昂贵)。如果将深度预处理与延迟技术中使用的GBuffer预处理进行比较，延迟技术中会导出全屏几何信息，而正向渲染中的深度预处理更便宜，因为它只填充深度缓冲区。</p>
+<h2 id="light-culling">light-culling</h2>
+<p>light-culling阶段类似于延迟光照中的叠加灯光分量。但light-culling不是计算光照分量，而是计算重叠像素的light-index列表。可以为每个像素计算light-list，这对于最终着色来说是更好的选择，但如果考虑整个渲染管线的效率，这种方法并不高效。</p>
+<p>最重要的问题是内存占用和light-culling阶段计算的效率。因此，屏幕被分割成tile，并且light-index是根据每个tile来计算的。尽管tile化可能会为tile中的像素增加错误的light-index，但它大大减少了内存占用和计算量。light-index缓冲区的内存大小和最终着色器的效率是一种权衡。通过充分利用现代GPU的计算能力，light-culling可以完全在GPU上实现，正如第4节中所详细描述的那样。因此，整个光照管线完全在GPU上执行。</p>
+<h2 id="着色">着色</h2>
+<p>light-culling创建了覆盖了每个像素的light-list，而最终着色则遍历light-list，并使用存储在每个光源的信息来进行材质计算，例如光源位置和颜色。这些信息在使用延迟技术最终着色时是不可用的。现在，可以将每个材质实例的信息存储并访问到线性结构化缓冲区（structured buffers）中，并将其传递给最终着色器。因此，由于光积累和着色同时发生在一个地方，并且具有完整的材质和光照信息，因此渲染质量的所有限制都已经被消除。使用复杂的材质和更精确的光照模型来改善视觉质量不受其他限制，除了GPU计算成本，这在很大程度上由覆盖单个像素的光源数量×材质成本×光照模型成本所决定。使用这种方法，高Overdraw可能会降低性能；因此，深度预处理对于最终着色的成本最小化至关重要。</p>
+<h1>light-culling实现</h1>
+<p>Forward+渲染管线可以重用大部分现有正向渲染管线的代码，因为它主要是对其进行扩展。compute-shader-based的光源剔除是该技术的重要补充。由于当前GPU和图形API的灵活性，光源剔除可以以多种方式实现，每种方式都有其利弊。本节描述了两种完全在GPU上运行的实现方法。这些方法按tile构建light-list。虽然它们也可以通过运行额外的kernel来按像素构建light-list，但这会增加计算时间和内存占用。</p>
+<h2 id="收集法">收集法</h2>
+<p>这种方法使用了一种收集（Gather）的方式，在单个computer shader中构建light-list，类似于[And11]。它对每个tile执行一个线程组（Thread Group）。通过使用tile的屏幕空间范围和像素的最大和最小深度值来计算tile的视锥体。kernel首先使用线程组中的所有线程将光源读取到本地寄存器中。然后并行检查光源与tile视锥体的重叠情况。如果光源有重叠，线程将使用本地原子操作将光源累积到线程本地存储（TLS）中。在收集完所有与tile重叠的光源后，它使用所有线程将光源刷新到全局内存中。这种方法在光源数量不是太大时简单而有效。但当光源数量非常庞大时，可能需要考虑使用查找（Scatter）方法。</p>
+<h2 id="映射法">映射法</h2>
+<p>首先，它计算出每个光源与哪个tile重叠，并将light-index和tile索引数据写入缓冲区。这是通过执行每个光源一个线程来完成的。此时缓冲区的数据（按light-index排序）需要按tile索引进行排序，因为我们需要每个tile的light-index列表。我们使用基数排序（radix sort），然后运行内核来找到缓冲区中每个tile的起始和结束偏移量。</p>
+<h1>结果和讨论</h1>
+<p>Forward+是使用DirectX11实现的，Fig. 1 (a) 是使用Forward+的AMD Leo演示的屏幕截图。由于该方法允许使用任何表面着色器，因此不限制光照和表面材质。演示中使用的一个材质示例是金属着色器，其中对贡献到像素的所有光源进行了物理上准确的效果评估。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png" alt="image-20240114170821583" loading='lazy'></p>
+<p>然而，天下没有免费的午餐。我们为了更好的渲染质量愿意付出怎样的代价？为了对Forward+进行详细分析并进行比较，我们实现了compute-shader-based的延迟光照管线，该管线不写入GBuffer[And11]。这种实现的好处在于它通过使用computer shader一次读取和写入Framebuffer，从而节省了内存带宽。因此，从理论上讲，它在内存带宽方面是最佳的，而内存带宽是标准延迟技术的一个缺点。</p>
+<p>我们比较了Forward+和延迟渲染在管线的三个步骤中的理论内存带宽。在光源剔除的实现方面，选择了收集法，因为光剔除与延迟光积累类似。表1比较了这些方法的理论内存带宽。延迟渲染在GBuffer预处理阶段将所有数据压缩为要写入的单个float4渲染目标。而Forward+不会写入全屏光积累缓冲区；相反，它只在光处理时写入每个tile上重叠的光索引。在大多数情况下，光索引的数据大小远远小于完整的帧缓冲区。然而，增加了光剔除阶段会增加最终shading时的内存读取：Forward+必须读取所有重叠的光索引和光信息，而延迟渲染技术只从光积累缓冲区中读取float4。通过将Forward+的总内存带宽减去延迟渲染的总内存带宽，就可以得出<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mi>o</mi><mi>t</mi><mi>a</mi><msub><mi>l</mi><mrow><mi>d</mi><mi>i</mi><mi>f</mi><mi>f</mi></mrow></msub><mo>=</mo><mi>N</mi><mo>×</mo><mi>F</mi><mo>×</mo><mo stretchy="false">(</mo><mn>15</mn><mo>−</mo><mi>M</mi><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mi mathvariant="normal">/</mi><mi>T</mi><mo>+</mo><mn>1</mn><mo>+</mo><mi>L</mi><mo stretchy="false">)</mo><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">Total_{diff}=N\times F \times (15-M \times (1/T+1+L))</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mord mathnormal">o</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0197em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight" style="margin-right:0.10764em;">ff</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">15</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7667em;vertical-align:-0.0833em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1/</span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">L</span><span class="mclose">))</span></span></span></span>, 现在假设 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mi>o</mi><mi>t</mi><mi>a</mi><msub><mi>l</mi><mrow><mi>d</mi><mi>i</mi><mi>f</mi><mi>f</mi></mrow></msub><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">Total_{diff}&gt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mord mathnormal">o</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0197em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight" style="margin-right:0.10764em;">ff</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span> ，则<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>M</mi><mo>&lt;</mo><mn>15</mn><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>L</mi><mo stretchy="false">)</mo><mo>×</mo><mi>T</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>T</mi></mrow><annotation encoding="application/x-tex">M&lt;15 \times (1+(1+L)\times T)/T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">15</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">L</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span></span></span></span> , 我们发现如果光源是点光源（L = 8，包含位置、半径和颜色），并且每个tile的平均光源数M小于 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>15</mn><mo>×</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>+</mo><mi>L</mi><mo stretchy="false">)</mo><mo>×</mo><mi>T</mi><mo stretchy="false">)</mo><mi mathvariant="normal">/</mi><mi>T</mi><mo>&gt;</mo><mn>15</mn><mo>×</mo><mn>9</mn></mrow><annotation encoding="application/x-tex">15 \times (1+(1+L)\times T)/T&gt;15\times 9</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">15</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">L</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mclose">)</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">15</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">9</span></span></span></span>，则Forward+需要比延迟渲染更少的内存带宽（<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>T</mi><mi>o</mi><mi>t</mi><mi>a</mi><msub><mi>l</mi><mrow><mi>d</mi><mi>i</mi><mi>f</mi><mi>f</mi></mrow></msub><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">Total_{diff}&gt;0</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9805em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mord mathnormal">o</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span><span class="mord"><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.0197em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight" style="margin-right:0.10764em;">ff</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span></span></span></span>）。总的来说，对比计算基础的最低内存占用的延迟光照技术和Forward+，在理论上，没有任何延迟渲染技术能够在内存带宽方面打败Forward+。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141716018.png" alt="表1：对于Forward+，(A)、(B)、(C) 分别代表深度预处理、光剔除和最终着色；对于Deferred，(A)、(B)、(C) 分别代表GBuffer-预处理、光积累和最终着色。这个表格不包括诸如在(A)阶段深度缓冲区写入和在(B)阶段光读取等常见的内存带宽。N、F、M、T、L 分别代表屏幕像素数量、float的大小、一个tile上重叠光源的平均数量、tile大小以及光的数据大小。Forward+在(B)阶段读取深度，在(B)阶段为每个tile写入光索引，并在(C)阶段读取光索引和光。Deferred在(A)阶段写入法线向量，在(B)阶段读取深度和法线，在(B)阶段写入光积累，并在(C)阶段读取光积累。Total是(A)、(B)和(C)的总和。" loading='lazy'></p>
+<p>为了确认这一分析，我们建立了一个包含 3,072 个散布在空间中的光源的演示场景，如图2(a)所示，并比较了这两种方法的性能。我们使用了 8×8 的tile大小。图2(b)是每个tile上光源数量的可视化。tile与模型边缘重叠的原因是视锥在深度方向上更长；因此，它会表示处与整个视锥重叠的光源。为了改善这个问题，必须检测每个视锥中的空白空间。然而，一个tile中可以有任意数量的深度层。一个复杂的空白空间检测并不值得。使用空间细分而不是二维细分可能会解决这个问题，但这需要更多的内存和ALU操作。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708720.png" alt="image-20240114170846660" loading='lazy'></p>
+<p>在图3中，Forward+(H)和Deferred(H)是在AMD RadeonTMHD 6970上的渲染时间。我们测量了表1中的预处理、光处理和最终着色的计算时间，包括内核调度成本和GPU管线刷新开销。测得的时间不是纯粹的GPU处理时间，但比较是公平的，因为两种测试条件相同。结果证实了理论内存带宽消耗的分析：Forward+在预处理和光处理方面更好，而延迟渲染在最终着色方面更好。</p>
+<p>总体而言，Forward+更快。我们还通过降低GPU的内存时钟速度来测试，以模拟具有较低内存带宽的GPU。如图3中Forward+(L)和Deferred(L)的比较所示，Forward+和延迟渲染之间的差距变大，因为延迟渲染需要更多的内存访问。将来，GPU可能会增加ALU/内存带宽比，因为增加ALU单元比提高内存带宽更容易。这个实验表明，Forward+在具有该规格的GPU上是有前景的。我们在AMD A8-3510MX上进行了另一项测试，该处理器集成了AMD Radeon HD 6620G GPU。图4中的结果证实了对集成GPU上的Forward+的理论分析，与离散GPU相比，集成GPU的内存带宽更有限，SIMD单元更少。一些移动或集成GPU采用基于tile的渲染。具有tile光剔除的Forward+非常适应这种渲染架构，因为它可以减少最终着色时读取光列表的成本。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141730153.png" alt="image-20240114173030129" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141732513.png" alt="image-20240114173218488" loading='lazy'></p>
+<p>在本文中，我们没有调查tile大小如何影响性能，这取决于tile大小以及许多其他因素，如场景的几何复杂性、光源数量和光源的最大影响距离等。自动找到场景的最佳tile大小可能是未来一个有趣的研究课题。</p>
+<h1>结论</h1>
+<p>我们提出了Forward+，这是一种渲染方法，它在传统的前向渲染管线中增加了基于GPU计算的光剔除阶段，以处理大量光源。它让我们摆脱了延迟渲染技术的限制，并通过结合前向和延迟技术的优势，实现更好的渲染质量。Forward+在理论上需要的内存带宽比compute-shader-based的延迟光照少。</p>
+<p>我们进行了实验证明，Forward+表现优于内存占用最少的延迟光照技术。<br>
+作为未来的工作，由于最终着色的自由度，我们可以探索许多可能性。一个例子是通过对光源进行局部短射线投射，从场景中所有光源计算阴影。</p>
+<h1>引用</h1>
+<p>[AMHH08]</p>
+<p>AKENINE-MOLLER T., HAINES E., HOFFMAN N.:</p>
+<p><em>Real-Time Rendering</em>, 3 ed. AK Peters, July 2008. 2</p>
+<p>[And11]</p>
+<p>ANDERSSON J.: DirectX 11 Rendering in Battlefield 3.</p>
+<p><em>Game Developers Conference</em> (2011). 2, 3</p>
+<p>[Kap10]</p>
+<p>KAPLANYAN A.: CryENGINE 3: Reaching the speed of</p>
+<p>light. <em>ACM SIGGRAPH 2010 Courses</em> (2010). 1</p>
+<p>[Tre09]</p>
+<p>TREBILCO D.: Light indexed deferred rendering. In</p>
+<p><em>ShaderX7</em> (2009), Charles River Media. 2</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/forwardplus-bringing-deferred-lighting-to-the-next-level/">https://www.lfzxb.top/forwardplus-bringing-deferred-lighting-to-the-next-level/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Defered-Render/">Defered Render</a><a class="post-meta__tags" href="/tags/Forward-Plus-Render/">Forward Plus Render</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141708626.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/solve-async-load-use-problem-with-classic-producer-consumer-model/" title="用经典的生产-消费者模型解决游戏开发中异步加载和使用问题"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401212111402.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">用经典的生产-消费者模型解决游戏开发中异步加载和使用问题</div></div><div class="info-2"><div class="info-item-1">封面来自：https://www.youtube.com/watch?app=desktop&amp;v=VXJSJ6c3ZIs 前言 最近实践了很多有关异步记载和使用的业务场景，无一例外的，由于 异步 的存在，业务代码需要非常小心的维护各种状态，才能足够稳定和安全 只遇到一次还好，代码和人有一个能跑就行，遇到很多次心情就很烦躁了，所以准备抽空研究下这种业务场景较为通用的解决方案 正文 场景例程  整个世界被拆分成无数个nxn的tile，需要根据相机位置动态加载，卸载tile（以下简称地图流式行为 相机位置每帧都在变动，即每帧都有可能触发地图流式行为，正常视角渲染所需tile数量在32~50之间 出于表现和内存性能的平衡考虑，最大支持同时存在256个加载的tile，基于LRU策略进行调度 tile的加载是异步的 最终需要把加载的tile资源按照正确的索引上传至GPU  问题展示 直接上代码，我们以一帧的LateUpdate为例（此LateUpdate每帧执行），将资源加载和使用看为一个整体 但由于异步的特性，当某一帧的异步完成时，一些数据和状态可能已经发生了变动，会影响到另一帧的...</div></div></div></a><a class="pagination-related" href="/michangsheng-ins/" title="《觅长生》游玩有感"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202401141421155.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">《觅长生》游玩有感</div></div><div class="info-2"><div class="info-item-1"> 印象中上一次玩这种修仙类型的RPG（其实我更倾向于叫他们策略RPG）还是小学的时候玩4399上的武林外传 我去搜了下，居然还在，没错就这个，哈哈  其实我个人一直对这种类型的游戏不太感冒，游戏开发大亨是，文明也是，虽然是有一些策略养成的乐趣在里面，但远不如一场场酣畅淋漓的战斗来的快感强烈 这次购买觅长生也是偶然瞥到一眼评论区的修仙味很浓+游戏本体打折才下手，游玩体验的话，就我个人而言，中规中矩，还有很大进步空间 概览 第一次打开游戏，头很铁，直接普通难度开局，然后全部凡人选项，我倒要看看所谓凡人修仙传到底是什么感觉 然后如愿以偿的体验了凡人修仙是什么感觉，没有奇遇，神武大会两次都是第二轮被狠狠淘汰，拜入门槛最低的门派，努力一生也只是个内门弟子，无数次存档驯服魔剑均以失败告终，最终在筑基后期再难精进半步，子然一身，身陨道消。 原来真正的凡人修仙竟是此等的无力，放在修仙小说里应当是围观主角打架但不小心被波及致死的路人甲吧 第二次重建档，直接所有buff全部拉满，单修炼速度都让旁人望而却步，再加上灵根属性加成，拜入离火宗，不费吹灰之力拿下神武大会冠军，轻松收服剑池魔剑，哪怕是林府篇的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/forward-vs-deferred-vs-forward-plus/" title="（译）Forward vs Deferred vs Forward+ Rendering with DirectX 11"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202405172106940.jpeg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-02-27</div><div class="info-item-2">（译）Forward vs Deferred vs Forward+ Rendering with DirectX 11</div></div><div class="info-2"><div class="info-item-1">在网上鲜少有能全面，具体对比Forward,Deferred,Forward+渲染管线的文章，所以抽空翻译下，分享出来 原文地址：https://www.3dgep.com/forward-plus/ In this article, I will analyze and compare three rendering algorithms: 在本文中，我将分析并比较三种渲染算法：  Forward Rendering&nbsp;Forward 渲染 Deferred Shading&nbsp;延迟着色 Forward+ (Tiled Forward Rendering) Forward+（平铺前向渲染）  Contents  1 Introduction&nbsp;1 介绍  1.1 Definitions&nbsp;1.1 定义   2 Forward Rendering&nbsp;2 前向渲染  2.1 Vertex Shader&nbsp;2.1 顶点着色器 2.2 Pixel Shader&nbsp;2.2 像素着色器  2.2.1 Material&nbsp;2.2.1 材质 2.2.2 Textures&nbsp;2.2.2 纹理 2.2.3 Light...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">摘要</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">概述</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">相关工作</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">方法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#light-culling"><span class="toc-number">4.1.</span> <span class="toc-text">light-culling</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9D%80%E8%89%B2"><span class="toc-number">4.2.</span> <span class="toc-text">着色</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">5.</span> <span class="toc-text">light-culling实现</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%94%B6%E9%9B%86%E6%B3%95"><span class="toc-number">5.1.</span> <span class="toc-text">收集法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%98%A0%E5%B0%84%E6%B3%95"><span class="toc-number">5.2.</span> <span class="toc-text">映射法</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">6.</span> <span class="toc-text">结果和讨论</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">7.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">8.</span> <span class="toc-text">引用</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '0e5d0586026d00fc00b7e20aaa9081ea'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

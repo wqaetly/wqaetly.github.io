@@ -1,0 +1,1125 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>AI GC基础知识 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 准备学习下当前火热且流行的大语言模型相关知识，在此之前我在人工智能领域是零基础的，但是没有关系，现在有AI辅助了，直接让AI给出学习路线，在我多方对比后，对于学习路线的制定，推荐DeepSeek 基础概念 1. 核心概念解读 机器学习 (Machine Learning, ML)  含义：人工智能的一个子领域。它的核心思想是：不直接编写程序来解决问题，而是让计算机通过“学习”数据中的模式，自">
+<meta property="og:type" content="article">
+<meta property="og:title" content="AI GC基础知识">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-base/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 准备学习下当前火热且流行的大语言模型相关知识，在此之前我在人工智能领域是零基础的，但是没有关系，现在有AI辅助了，直接让AI给出学习路线，在我多方对比后，对于学习路线的制定，推荐DeepSeek 基础概念 1. 核心概念解读 机器学习 (Machine Learning, ML)  含义：人工智能的一个子领域。它的核心思想是：不直接编写程序来解决问题，而是让计算机通过“学习”数据中的模式，自">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2025-09-25T00:00:00.000Z">
+<meta property="article:modified_time" content="2025-09-29T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="机器学习">
+<meta property="article:tag" content="大语言模型">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "AI GC基础知识",
+  "url": "https://www.lfzxb.top/aigc-base/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2025-09-25T00:00:00.000Z",
+  "dateModified": "2025-09-29T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-base/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'AI GC基础知识',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">AI GC基础知识</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">AI GC基础知识</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-09-25T00:00:00.000Z" title="发表于 2025-09-25 00:00:00">2025-09-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-09-29T00:00:00.000Z" title="更新于 2025-09-29 00:00:00">2025-09-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86/">基础知识</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">13.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>43分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-base/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2025-09-29 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>前言</h1>
+<p>准备学习下当前火热且流行的大语言模型相关知识，在此之前我在人工智能领域是零基础的，但是没有关系，现在有AI辅助了，直接让AI给出学习路线，在我多方对比后，对于学习路线的制定，推荐DeepSeek</p>
+<h1>基础概念</h1>
+<h3 id="1-核心概念解读">1. 核心概念解读</h3>
+<h4 id="机器学习-Machine-Learning-ML"><strong>机器学习 (Machine Learning, ML)</strong></h4>
+<ul>
+<li><strong>含义</strong>：<strong>人工智能的一个子领域</strong>。它的核心思想是：<strong>不直接编写程序来解决问题，而是让计算机通过“学习”数据中的模式，自己找到解决方案。</strong></li>
+<li><strong>关键</strong>：“学习”意味着模型会通过数据自动调整其内部的参数，从而提升在特定任务（如预测、分类）上的性能。</li>
+<li><strong>比喻</strong>：教孩子识别猫。你不是给他一套严格的规则（比如有胡子、尖耳朵），而是给他看成千上万张猫和狗的图片，让他自己总结出猫的特征。</li>
+</ul>
+<h4 id="神经网络-Neural-Network-NN"><strong>神经网络 (Neural Network, NN)</strong></h4>
+<ul>
+<li><strong>含义</strong>：<strong>一种模仿人脑神经元连接方式的计算模型</strong>，是<strong>实现机器学习的一种方法/算法</strong>。</li>
+<li><strong>结构</strong>：由大量相互连接的“神经元”（节点）组成。每个神经元接收输入，进行简单计算，然后产生输出并传递给下一层神经元。</li>
+<li><strong>关键</strong>：通过调整神经元之间的连接强度（权重）来学习。</li>
+<li><strong>比喻</strong>：一个复杂的投票系统。初级神经元（输入层）负责看图片的各个像素（是黑色吗？是边缘吗？），中间神经元（隐藏层）综合这些初级信息（看起来像眼睛？像胡须？），最后层的神经元（输出层）根据所有信息投票决定这是不是一只猫。</li>
+</ul>
+<h4 id="深度学习-Deep-Learning-DL"><strong>深度学习 (Deep Learning, DL)</strong></h4>
+<ul>
+<li><strong>含义</strong>：<strong>机器学习的子领域，特指使用“深度”神经网络的技术</strong>。“深度”指的是神经网络中具有<strong>很多层（通常超过3层）</strong> 隐藏层。</li>
+<li><strong>关键</strong>：层数越多，网络能学习到的特征就越抽象和复杂。浅层网络可能识别边缘、颜色，深层网络就能识别眼睛、轮子，甚至整个物体和场景。</li>
+<li><strong>关系</strong>：深度学习 ⊂ 机器学习 ⊂ 人工智能</li>
+<li><strong>比喻</strong>：如果说传统机器学习是手工雕刻，那么深度学习就是使用大型机械化工具进行雕刻，能处理更复杂、更庞大的原材料（数据）。</li>
+</ul>
+<h4 id="大语言模型-Large-Language-Model-LLM"><strong>大语言模型 (Large Language Model, LLM)</strong></h4>
+<ul>
+<li><strong>含义</strong>：<strong>一种基于深度学习（具体是Transformer架构）的、经过海量文本数据训练的巨大神经网络</strong>。它的核心任务是理解和生成人类语言。</li>
+<li><strong>关键</strong>：
+<ol>
+<li><strong>大 (Large)</strong>：参数量极其巨大（通常达数十亿、数千亿），模型规模大，训练数据量也巨大。</li>
+<li><strong>语言模型 (Language Model)</strong>：它的本质是预测下一个词的概率。给定一句话的前几个词，它能计算出下一个最可能出现的词是什么。通过这种反复预测，它就能生成流畅的句子、段落甚至文章。</li>
+</ol>
+</li>
+<li><strong>著名例子</strong>：ChatGPT（基于GPT系列）、Gemini（基于PaLM）、LLaMA、文心一言等。</li>
+<li><strong>比喻</strong>：一个阅读了互联网上几乎所有书籍、文章、代码的“超级大脑”。它学到了语法、事实、逻辑推理甚至不同文风。当你给它一个提示（Prompt），它就在基于这个“大脑”中的所有知识，进行一场极其复杂的“词语接龙”。</li>
+</ul>
+<hr>
+<h3 id="2-联系与区别">2. 联系与区别</h3>
+<h4 id="联系（层次关系）"><strong>联系（层次关系）</strong></h4>
+<p>这是一个典型的<strong>从属关系</strong>，就像“俄罗斯套娃”：</p>
+<ul>
+<li><strong>人工智能 (AI)</strong> 是最广阔的领域，目标是让机器智能地行动。</li>
+<li><strong>机器学习 (ML)</strong> 是实现AI的一种核心途径。</li>
+<li><strong>深度学习 (DL)</strong> 是机器学习中目前最强大、最热门的一个分支。</li>
+<li><strong>神经网络 (NN)</strong> 是深度学习（及部分机器学习）的基础架构。</li>
+<li><strong>大语言模型 (LLM)</strong> 是深度学习技术（特别是Transformer）在自然语言处理（NLP）领域的一个具体应用和辉煌成果。</li>
+</ul>
+<p><strong><code>人工智能 &gt; 机器学习 &gt; 深度学习 &gt; (神经网络) &gt; 大语言模型</code></strong></p>
+<h4 id="区别（对比总结）"><strong>区别（对比总结）</strong></h4>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">术语</th>
+<th style="text-align:left">核心定位</th>
+<th style="text-align:left">关系比喻</th>
+<th style="text-align:left">主要解决的任务</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>机器学习 (ML)</strong></td>
+<td style="text-align:left"><strong>一个领域/方法论</strong></td>
+<td style="text-align:left"><strong>“父类”</strong></td>
+<td style="text-align:left">预测、分类、聚类等（如图片分类、股票预测）</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>神经网络 (NN)</strong></td>
+<td style="text-align:left"><strong>一种算法/架构</strong></td>
+<td style="text-align:left"><strong>ML的一种“工具”</strong></td>
+<td style="text-align:left">适合处理图像、语音、文本等复杂非线性问题</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>深度学习 (DL)</strong></td>
+<td style="text-align:left"><strong>ML的一个分支</strong></td>
+<td style="text-align:left"><strong>“使用了高级工具的ML”</strong></td>
+<td style="text-align:left">计算机视觉、语音识别、自然语言处理等</td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>大语言模型 (LLM)</strong></td>
+<td style="text-align:left"><strong>DL的一个具体应用</strong></td>
+<td style="text-align:left"><strong>“DL领域里的一个明星产品”</strong></td>
+<td style="text-align:left">理解和生成人类语言（如对话、翻译、摘要）</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="总结一张图">总结一张图</h3>
+<pre><code class="highlight mermaid">graph TD
+    A[人工智能 AI] --&gt; B[机器学习 ML];
+    B --&gt; C[深度学习 DL];
+    C --&gt; D[大语言模型 LLM];
+    C -.-&gt; E[其他深度学习应用&lt;br&gt;如：图像识别、自动驾驶];
+    B -.-&gt; F[其他机器学习算法&lt;br&gt;如：随机森林、SVM];
+    subgraph "核心技术"
+        G[神经网络 NN]
+    end
+    C --&gt; G;
+    D --&gt; G;</code></pre>
+<h1>LLM学习路线</h1>
+<p>太棒了！拥有如此扎实的游戏开发和技术背景，是你学习LLM的巨大优势。你的数学和编程功底意味着你可以直接跳过许多基础障碍，直击LLM的核心技术与实践应用。</p>
+<p>我为你量身定制一个**“硬核实践派”LLM学习方案**，目标不仅是“会用”，更是“懂原理、能改造、可部署”。</p>
+<hr>
+<h3 id="你的优势分析">你的优势分析</h3>
+<ol>
+<li><strong>强大的工程能力 (C++/C#/Python)</strong>：能轻松驾驭模型推理、部署优化、API搭建等硬核工程任务。</li>
+<li><strong>深厚的数学基础 (线性代数等)</strong>：理解Transformer中的矩阵运算、注意力机制、梯度下降等概念将轻而易举。</li>
+<li><strong>游戏引擎经验 (Unity/UE)</strong>：具备将LLM与游戏世界（如NPC对话、剧情生成、程序化内容创建）结合的绝佳视角和能力。</li>
+<li><strong>系统架构思维</strong>：游戏开发锻炼出的性能优化、资源管理和系统设计能力，对部署和优化大模型至关重要。</li>
+</ol>
+<hr>
+<h3 id="定制化学习方案：“从理论到游戏集成”">定制化学习方案：“从理论到游戏集成”</h3>
+<h4 id="阶段一：高速直通核心（利用你的基础）">阶段一：高速直通核心（利用你的基础）</h4>
+<p><strong>目标</strong>：跳过ML/DL基础课，直击Transformer和LLM架构本质。</p>
+<ol>
+<li><strong>必读论文（精读）</strong>：
+<ul>
+<li><strong>《Attention Is All You Need》</strong>：所有一切的起点。你的数学基础可以让你直接理解其中的<code>Q, K, V</code>矩阵运算和Scaled Dot-Product Attention的细节。重点关注<strong>自注意力机制</strong>如何实现“全局依赖关系建模”。推荐<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1TZ421j7Ke/?spm_id_from=333.1387.list.card_archive.click">3Blue的视频讲解，通俗易懂</a></li>
+<li><strong>《LLaMA: Open and Efficient Foundation Language Models》</strong>：了解如何从零开始高效地训练一个现代LLM，包括技术细节如<code>RMSNorm</code>, <code>SwiGLU</code>, <code>RoPE</code>等。这比读GPT-3的论文更贴近开源实践。</li>
+</ul>
+</li>
+<li><strong>核心学习资源</strong>：
+<ul>
+<li><strong>博客</strong>：再次推荐Jay Alammar的 <a target="_blank" rel="noopener" href="http://jalammar.github.io/illustrated-transformer/">《The Illustrated Transformer》</a>，用你的知识快速过一遍，建立直观理解。这里有中文版：[[图解Transformer_The_Illustrated_Transformer-CSDN博客]]</li>
+<li><strong>视频</strong>：YouTube上搜索“Transformer详解”，找一些有公式和代码推导的视频，你会很快抓住精髓。</li>
+</ul>
+</li>
+</ol>
+<h4 id="阶段二：动手实践与推理（发挥你的工程优势）">阶段二：动手实践与推理（发挥你的工程优势）</h4>
+<p><strong>目标</strong>：不满足于调用API，要能在自己的机器上跑起开源模型，并理解其推理全过程。</p>
+<ol>
+<li><strong>工具</strong>：<strong>Hugging Face <code>transformers</code> library</strong>。这是你的主战场。</li>
+<li><strong>任务</strong>：
+<ul>
+<li><strong>学习使用Pipeline和AutoClasses</strong>：快速体验文本生成、对话、摘要等功能。</li>
+<li><strong>手动实现文本生成循环</strong>：抛开高级API，使用<code>model.generate()</code>函数，并尝试调整其参数（如<code>temperature</code>, <code>top_p</code>, <code>top_k</code>），深刻理解采样策略对生成结果的影响。</li>
+<li><strong>探索模型架构</strong>：用<code>from_pretrained</code>加载一个模型（如<code>facebook/opt-1.3b</code>或<code>meta-llama/Llama-2-7b-chat-hf</code>），打印它的<code>model</code>对象，研究它的模块结构（有多少层Transformer？Embedding维度是多少？）。<strong>这是你作为资深程序员理解它的最佳方式。</strong></li>
+</ul>
+</li>
+<li><strong>硬核挑战</strong>（可选但强烈推荐）：
+<ul>
+<li>使用 <strong><code>llama.cpp</code></strong> 或 <strong><code>GGML</code></strong> 等项目。这些项目用C++编写，专门为了在消费级硬件（甚至手机）上高效推理LLM（如LLaMA）。<strong>你的C++背景在这里是无价之宝</strong>。尝试编译并运行它，理解量化（Quantization）技术如何将模型变小变快。</li>
+</ul>
+</li>
+</ol>
+<h4 id="阶段三：微调与定制化（连接游戏开发）">阶段三：微调与定制化（连接游戏开发）</h4>
+<p><strong>目标</strong>：让通用的LLM学会你的游戏专属知识（如世界观、角色设定、任务线）。</p>
+<ol>
+<li><strong>学习微调（Fine-tuning）技术</strong>：
+<ul>
+<li><strong>全参数微调</strong>：虽然强大但成本极高，初期了解即可。</li>
+<li><strong>参数高效微调（PEFT）</strong>：<strong>这是重点！</strong> 学习<strong>LoRA</strong>和<strong>QLoRA</strong>技术。它们可以用很少的算力（一张消费级GPU）对大模型进行微调。Hugging Face的<code>peft</code>库提供了完美支持。</li>
+</ul>
+</li>
+<li><strong>为游戏场景设计微调任务</strong>：
+<ul>
+<li><strong>数据准备</strong>：为你的游戏NPC创建对话数据集（<code>(输入, 输出)</code>对）。例如：
+<ul>
+<li>输入：<code>玩家说：你好，强壮的古尔丹。这里的天气如何？</code></li>
+<li>输出：<code>古尔丹说：（粗声粗气地）哼，外乡人！灰烬之地的天空永远被熔炉的黑烟笼罩，没什么天气可言。你是来找活的吗？</code></li>
+</ul>
+</li>
+<li><strong>进行微调</strong>：使用<code>peft</code> + <code>transformers</code>在上述数据集上对一个小模型（如<code>Nous-Hermes-2-Mistral-7B-DPO</code>）进行LoRA微调，打造一个“古尔丹”专属对话模型。</li>
+</ul>
+</li>
+</ol>
+<h4 id="阶段四：集成与部署（发挥引擎经验）">阶段四：集成与部署（发挥引擎经验）</h4>
+<p><strong>目标</strong>：将训练好的模型无缝集成到Unity或Unreal Engine游戏中。</p>
+<ol>
+<li><strong>方案一：本地推理（低延迟，高隐私）</strong>
+<ul>
+<li><strong>C++ Layer</strong>：使用<strong>llama.cpp</strong>编译成一个动态链接库（DLL/.so）。</li>
+<li><strong>引擎层</strong>：
+<ul>
+<li><strong>Unity</strong>：使用<code>[DllImport]</code>调用C++ DLL，在C#中编写一个管理类，处理文本输入和输出。</li>
+<li><strong>Unreal Engine</strong>：直接编写C++模块与llama.cpp集成。</li>
+</ul>
+</li>
+<li><strong>流程</strong>：游戏内输入 -&gt; C#/UE C++ -&gt; C++ DLL -&gt; LLM推理 -&gt; 返回结果 -&gt; 引擎输出。</li>
+</ul>
+</li>
+<li><strong>方案二：API服务器（高模型能力，需网络）</strong>
+<ul>
+<li><strong>后端</strong>：使用<code>FastAPI</code>或<code>Flask</code>在Python中创建一个简单的HTTP服务器，封装对Hugging Face模型的调用。</li>
+<li><strong>引擎层</strong>：
+<ul>
+<li><strong>Unity</strong>：使用<code>UnityWebRequest</code>向本地或远程的API服务器发送POST请求，获取生成的文本。</li>
+<li><strong>Unreal Engine</strong>：使用<code>Http Module</code>做同样的事情。</li>
+</ul>
+</li>
+<li><strong>流程</strong>：游戏内输入 -&gt; HTTP请求 -&gt; Python服务器 -&gt; LLM推理 -&gt; HTTP响应 -&gt; 引擎输出。</li>
+</ul>
+</li>
+</ol>
+<h4 id="阶段五：探索前沿与应用">阶段五：探索前沿与应用</h4>
+<p><strong>目标</strong>：将LLM的能力更深层次地融入游戏开发管线。</p>
+<ul>
+<li><strong>程序化内容生成</strong>：用LLM生成无穷无尽的任务描述、道具背景故事、信件、书籍内容。</li>
+<li><strong>AI驱动NPC</strong>：结合<strong>LangChain</strong>等框架，为NPC构建记忆体、知识库和目标系统，创造真正“活”的角色。</li>
+<li><strong>代码辅助</strong>：使用<strong>Code LLM</strong>（如StarCoder, CodeLlama）来辅助你编写游戏逻辑、Shader、优化代码。</li>
+</ul>
+<hr>
+<h3 id="为你推荐的“技术栈”">为你推荐的“技术栈”</h3>
+<ul>
+<li><strong>核心库</strong>：<code>transformers</code>, <code>peft</code>, <code>accelerate</code>, <code>bitsandbytes</code> (用于QLoRA)</li>
+<li><strong>推理优化</strong>：<code>llama.cpp</code>, <code>vLLM</code></li>
+<li><strong>应用框架</strong>：<code>LangChain</code> (用于构建复杂AI应用链)</li>
+<li><strong>模型hub</strong>：<strong>Hugging Face Model Hub</strong></li>
+<li><strong>首选模型</strong>：从<strong>Mistral-7B</strong>, <strong>Llama-2-7B-Chat</strong>, <strong>Microsoft Phi-2</strong>等较小但能力强的模型开始实践。</li>
+</ul>
+<h3 id="总结">总结</h3>
+<p>你的路径与初学者完全不同：<br>
+<strong>直接解剖Transformer架构 -&gt; 用C++级工具进行高效推理 -&gt; 用PEFT技术为游戏微调专属模型 -&gt; 利用引擎经验实现低延迟集成。</strong></p>
+<p>这个方案充分发挥了你的“资深程序员”优势，避免了重复学习已知内容，直指技术和应用的核心。祝你在这个充满潜力的交叉领域玩得开心，说不定你的下一个项目就能诞生出真正具有“智慧”的虚拟世界！</p>
+<h1>MCP开发建议</h1>
+<p>个人实践下来推荐使用C#进行MCP的开发，理由如下：</p>
+<ul>
+<li>借助C#强大的Attribute特性，能够体验到其他语言无法体验的便利性</li>
+<li>借助C#强大的await/async语法，能够获得游戏服务器开发体验，一个Tool调用即可完成所有工作，整个流程非常可控</li>
+</ul>
+<p>当然有利有弊，C#开发的MCP只能通过dotnet或者docker执行，没法做到其他主流MCP那样直接通过npx执行，不过瑕不掩瑜<br>
+C# MCP SDK： <a target="_blank" rel="noopener" href="https://github.com/modelcontextprotocol/csharp-sdk">https://github.com/modelcontextprotocol/csharp-sdk</a></p>
+<h2 id="尽可能利用await-async特性来串行大任务">尽可能利用await/async特性来串行大任务</h2>
+<p>一开始我在开发MCP Server的时候，做了一堆零散的Tool函数，频繁的与LLM交互，让LLM自己去选择调用Tool，虽然说也能跑通，但是少了点可控性<br>
+这时候就可以利用await/async特性来将一个大任务整个串行起来封装到一个Tool调用里，好处是我们可以随时加入自己的prompt来让LLM更加可控，例如一个特制的代码规范化流程：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line">		<span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">async</span> Task&lt;FixTaskResult&gt; <span class="title">ProcessSingleDefect</span>(<span class="params">  </span></span></span><br><span class="line"><span class="params"><span class="function">            McpServer mcpServer,  </span></span></span><br><span class="line"><span class="params"><span class="function">            DefectDetail defect,  </span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="built_in">int</span> currentIndex,  </span></span></span><br><span class="line"><span class="params"><span class="function">            <span class="built_in">int</span> totalCount,  </span></span></span><br><span class="line"><span class="params"><span class="function">            CancellationToken cancellationToken</span>)</span>  </span><br><span class="line">        {            <span class="keyword">var</span> taskStart = DateTime.Now;  </span><br><span class="line">  </span><br><span class="line">            <span class="keyword">try</span>  </span><br><span class="line">            {  </span><br><span class="line">                <span class="comment">// 构建文件路径 - 使用处理后的本地相对路径  </span></span><br><span class="line">                <span class="keyword">var</span> localRelPath = defect.LocalRelPath.Replace(<span class="string">'/'</span>, Path.DirectorySeparatorChar);  </span><br><span class="line">                <span class="keyword">var</span> filePath = Path.IsPathRooted(localRelPath)  </span><br><span class="line">                    ? localRelPath  </span><br><span class="line">                    : Path.Combine(Directory.GetCurrentDirectory(), localRelPath);  </span><br><span class="line">  </span><br><span class="line">                <span class="comment">// 构建给LLM的修复提示 - 让LLM直接处理文件  </span></span><br><span class="line">                <span class="keyword">var</span> fixPrompt = <span class="string">$@"请自动修复以下代码文件中的告警问题：  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">文件路径: <span class="subst">{filePath}</span>  </span></span><br><span class="line"><span class="string">告警位置: 第 <span class="subst">{defect.LineNum}</span> 行  </span></span><br><span class="line"><span class="string">告警消息: <span class="subst">{defect.Message}</span>  </span></span><br><span class="line"><span class="string">告警规则: <span class="subst">{defect.Checker}</span>  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">请执行以下操作：  </span></span><br><span class="line"><span class="string">1. 读取文件内容  </span></span><br><span class="line"><span class="string">2. 分析第 <span class="subst">{defect.LineNum}</span> 行的告警问题：<span class="subst">{defect.Message}</span>，并严格按照告警建议进行修复，例如：禁止对UnityEngine.Object类型的对象multiTouches使用空条件、空合并运算符，请使用自定义的CheckIsNull方法。需要调用multiTouches.CheckIsNull()来代替原本的判空操作  </span></span><br><span class="line"><span class="string">3. 修复该问题（只修复指定问题，保持其他代码不变）  </span></span><br><span class="line"><span class="string">4. 如果可以安全修复，请创建备份并写入修复后的内容  </span></span><br><span class="line"><span class="string">5. 如果无法安全修复，请说明原因  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">要求：  </span></span><br><span class="line"><span class="string">- 只修复指定的告警问题  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">请描述你的修复过程和结果。"</span>;  </span><br><span class="line">				</span><br><span class="line">                <span class="keyword">var</span> messages = <span class="keyword">new</span>[]  </span><br><span class="line">                {                    <span class="keyword">new</span> ChatMessage(ChatRole.User, fixPrompt)  </span><br><span class="line">                };  </span><br><span class="line">                <span class="keyword">var</span> options = <span class="keyword">new</span> ChatOptions  </span><br><span class="line">                {  </span><br><span class="line">                    MaxOutputTokens = <span class="number">2000</span>,  </span><br><span class="line">                    Temperature = <span class="number">0.1f</span>,  </span><br><span class="line">                };  </span><br><span class="line">  </span><br><span class="line">                <span class="comment">// 调用LLM获取修复结果  </span></span><br><span class="line">                <span class="keyword">var</span> llmResponse = <span class="keyword">await</span> mcpServer.AsSamplingChatClient()  </span><br><span class="line">                    .GetResponseAsync(messages, options, cancellationToken);  </span><br><span class="line">  </span><br><span class="line">                <span class="keyword">var</span> responseContent = llmResponse.ToString().Trim();  </span><br><span class="line">  </span><br><span class="line">                <span class="comment">// 简单判断修复是否成功（基于LLM的响应内容）  </span></span><br><span class="line">                <span class="keyword">var</span> isSuccess = responseContent.Contains(<span class="string">"修复成功"</span>) ||  </span><br><span class="line">                              responseContent.Contains(<span class="string">"已修复"</span>) ||  </span><br><span class="line">                              responseContent.Contains(<span class="string">"修复完成"</span>) ||  </span><br><span class="line">                              responseContent.Contains(<span class="string">"successfully"</span>);  </span><br><span class="line">  </span><br><span class="line">                <span class="keyword">return</span> <span class="keyword">new</span> FixTaskResult  </span><br><span class="line">                {  </span><br><span class="line">                    TaskIndex = currentIndex,  </span><br><span class="line">                    DefectInfo = defect,  </span><br><span class="line">                    Status = isSuccess ? <span class="string">"fixed"</span> : <span class="string">"fix_failed"</span>,  </span><br><span class="line">                };  </span><br><span class="line">            }            <span class="keyword">catch</span> (OperationCanceledException)  </span><br><span class="line">            {                <span class="keyword">return</span> <span class="keyword">new</span> FixTaskResult  </span><br><span class="line">                {  </span><br><span class="line">                    TaskIndex = currentIndex,  </span><br><span class="line">                    Message = <span class="string">"操作已取消"</span>,  </span><br><span class="line">                };  </span><br><span class="line">            }            <span class="keyword">catch</span> (Exception ex)  </span><br><span class="line">            {                <span class="keyword">return</span> <span class="keyword">new</span> FixTaskResult  </span><br><span class="line">                {  </span><br><span class="line">                    TaskIndex = currentIndex,  </span><br><span class="line">                    Message = <span class="string">$"处理失败: <span class="subst">{ex.Message}</span>"</span>,  </span><br><span class="line">                };  </span><br><span class="line">            }        }</span><br></pre></td></tr></tbody></table></figure>
+<p>这个函数本身也在被别的Tool调用，从而让整个流程非常可控<br>
+当然如果MCP Client不支持Smaple操作，就只有通过返回的JSON内容来引导LLM做下一步的操作了，就像这样：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">string</span> fixPrompt = <span class="string">@"请自动修复每个Task的告警问题：  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">文件路径: {defect.RelPath} 注意，直接按这个相对路径读取，而不是转换成绝对路径  </span></span><br><span class="line"><span class="string">告警位置: 第 {defect.LineNum} 行  </span></span><br><span class="line"><span class="string">告警消息: {defect.Message}  </span></span><br><span class="line"><span class="string">告警规则: {defect.Checker}  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">请执行以下操作：  </span></span><br><span class="line"><span class="string">1. 读取文件内容  </span></span><br><span class="line"><span class="string">2. 分析第 {defect.LineNum} 行的告警问题：{defect.Message}，并严格按照告警建议进行修复（只修复指定问题，保持其他代码不变），例如：禁止对UnityEngine.Object类型的对象multiTouches使用空条件、空合并运算符，请使用自定义的CheckIsNull方法。需要调用multiTouches.CheckIsNull()来代替原本的判空操作  </span></span><br><span class="line"><span class="string">3. 如果无法安全修复，请说明原因  </span></span><br><span class="line"><span class="string">4. 调用MarkTaskStatusBySession来更新保存Session的状态  </span></span><br><span class="line"><span class="string">  </span></span><br><span class="line"><span class="string">要求：  </span></span><br><span class="line"><span class="string">- 只修复指定的告警问题"</span>;</span><br><span class="line">  </span><br><span class="line"><span class="keyword">return</span> JsonSerializer.Serialize(<span class="keyword">new</span>  </span><br><span class="line">{  </span><br><span class="line">    success = <span class="literal">true</span>,  </span><br><span class="line">    taskIndex = taskIndex,  </span><br><span class="line">    totalTasks = filteredDefects.Count,  </span><br><span class="line">    hasMore = taskIndex + <span class="number">1</span> &lt; filteredDefects.Count,  </span><br><span class="line">    task = defect,  </span><br><span class="line">    <span class="comment">// 这里将要做的事情返回给LLM（MCP Client），LLM就能按我们的想法继续任务</span></span><br><span class="line">    instructions = fixPrompt  </span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="数据压缩的重要性">数据压缩的重要性</h2>
+<p>对于各种LLM来说，其上下文都比较有限，没法让我们肆无忌惮的传输数据，否则上下文会被极速消耗完毕（money也是。这时候LLM就很容易出幻觉了，所以我们在开发MCP的时候必须时刻谨记数据压缩，当成开发游戏服务器一样，不需要发送的字段一定要剔除掉，例如：MCP Server从一个天气站点拉取了全国所有省份的天气信息，用来对比气温最高的省份，那么最终返回给LLM的json内容其实只需要两个字段，省份名和温度。当然了，可以更进一步直接在MCP Server内部对比完毕，只返回一个省份的名字，这里只是举例说明</p>
+<h2 id="MCP-Prompt-系统详解">MCP Prompt 系统详解</h2>
+<p>其实MCP Client和Sever的开发都是比较简单的概念，但是Prompt就是比较抽象的一个东西了，我用AI分析代码总结如下：</p>
+<h3 id="什么是-MCP-Prompt？">什么是 MCP Prompt？</h3>
+<p>MCP Prompt 是 Model Context Protocol 中的提示模板系统，允许服务器向 LLM 客户端提供预定义的、参数化的提示模板。</p>
+<h3 id="代码示例">代码示例</h3>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">McpServerPromptType</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">MyPrompts</span></span><br><span class="line">{</span><br><span class="line">    [<span class="meta">McpServerPrompt, Description(<span class="string">"Creates a prompt to summarize the provided message."</span>)</span>]</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ChatMessage <span class="title">Summarize</span>(<span class="params">[Description(<span class="string">"The content to summarize"</span></span>)] <span class="built_in">string</span> content)</span> =&gt;</span><br><span class="line">        <span class="keyword">new</span>(ChatRole.User, <span class="string">$"Please summarize this content into a single sentence: <span class="subst">{content}</span>"</span>);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="工作原理">工作原理</h3>
+<ol>
+<li><strong>注册阶段</strong>：服务器启动时自动扫描并注册带有 <code>[McpServerPromptType]</code> 和 <code>[McpServerPrompt]</code> 特性的方法</li>
+<li><strong>发现阶段</strong>：客户端可以查询服务器提供的所有可用提示</li>
+<li><strong>调用阶段</strong>：客户端传入参数，服务器生成格式化的 <code>ChatMessage</code></li>
+<li><strong>使用阶段</strong>：客户端将生成的提示发送给 LLM 进行处理</li>
+</ol>
+<h3 id="应用场景">应用场景</h3>
+<ul>
+<li><strong>标准化提示模板</strong> - 为常见任务提供统一格式</li>
+<li><strong>参数化提示生成</strong> - 根据不同输入动态生成提示</li>
+<li><strong>多语言支持</strong> - 提供不同语言的提示模板</li>
+<li><strong>角色扮演设置</strong> - 为 LLM 设定特定角色和上下文</li>
+</ul>
+<h2 id="MCP-Tool-vs-MCP-Prompt-对比分析">MCP Tool vs MCP Prompt 对比分析</h2>
+<h3 id="核心区别">核心区别</h3>
+<table>
+<thead>
+<tr>
+<th>方面</th>
+<th>MCP Tool</th>
+<th>MCP Prompt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>本质</strong></td>
+<td>执行具体操作的工具</td>
+<td>生成提示模板的工厂</td>
+</tr>
+<tr>
+<td><strong>目的</strong></td>
+<td>完成业务逻辑和数据处理</td>
+<td>提供标准化的对话模板</td>
+</tr>
+<tr>
+<td><strong>执行位置</strong></td>
+<td>MCP 服务器端</td>
+<td>生成后发送给客户端</td>
+</tr>
+<tr>
+<td><strong>返回结果</strong></td>
+<td>操作的最终结果</td>
+<td>格式化的提示文本</td>
+</tr>
+<tr>
+<td><strong>复杂度</strong></td>
+<td>可包含复杂业务逻辑</td>
+<td>通常为简单的文本格式化</td>
+</tr>
+<tr>
+<td><strong>副作用</strong></td>
+<td>可能产生副作用（IO、网络等）</td>
+<td>无副作用，纯函数式</td>
+</tr>
+</tbody>
+</table>
+<h3 id="MCP-Tool-示例">MCP Tool 示例</h3>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">McpServerTool(Name = <span class="string">"SummarizeContentFromUrl"</span>), Description(<span class="string">"Summarizes content downloaded from a specific URI"</span>)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">async</span> Task&lt;<span class="built_in">string</span>&gt; <span class="title">SummarizeDownloadedContent</span>(<span class="params"></span></span></span><br><span class="line"><span class="params"><span class="function">    McpServer thisServer,</span></span></span><br><span class="line"><span class="params"><span class="function">    HttpClient httpClient,</span></span></span><br><span class="line"><span class="params"><span class="function">    [Description(<span class="string">"The url from which to download the content to summarize"</span></span>)] <span class="built_in">string</span> url,</span></span><br><span class="line"><span class="function">    CancellationToken cancellationToken)</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 1. 下载内容</span></span><br><span class="line">    <span class="built_in">string</span> content = <span class="keyword">await</span> httpClient.GetStringAsync(url);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 2. 调用 LLM 进行处理</span></span><br><span class="line">    ChatMessage[] messages = [</span><br><span class="line">        <span class="keyword">new</span>(ChatRole.User, <span class="string">"Briefly summarize the following downloaded content:"</span>),</span><br><span class="line">        <span class="keyword">new</span>(ChatRole.User, content),</span><br><span class="line">    ];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> response = <span class="keyword">await</span> thisServer.AsSamplingChatClient().GetResponseAsync(messages, options, cancellationToken);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 3. 返回处理结果</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">$"Summary: <span class="subst">{response}</span>"</span>;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="工作流程对比">工作流程对比</h3>
+<h4 id="Tool-工作流程">Tool 工作流程</h4>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LLM 客户端 → 调用 Tool → MCP 服务器执行业务逻辑 → 返回最终结果 → LLM 客户端获得结果</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="Prompt-工作流程">Prompt 工作流程</h4>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LLM 客户端 → 请求 Prompt → MCP 服务器生成提示模板 → 客户端接收提示 → LLM 处理提示内容</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="适用场景">适用场景</h3>
+<h4 id="MCP-Tool-适用场景">MCP Tool 适用场景</h4>
+<ul>
+<li><strong>数据获取和处理</strong>：网页爬取、API 调用、数据库查询</li>
+<li><strong>文件操作</strong>：读写文件、图片处理、文档转换</li>
+<li><strong>系统集成</strong>：调用外部服务、执行系统命令</li>
+<li><strong>计算密集型任务</strong>：数据分析、算法处理</li>
+</ul>
+<h4 id="MCP-Prompt-适用场景">MCP Prompt 适用场景</h4>
+<ul>
+<li><strong>对话模板标准化</strong>：统一的交互格式</li>
+<li><strong>上下文设置</strong>：为 LLM 提供角色和背景信息</li>
+<li><strong>多步骤提示</strong>：复杂任务的分步指导</li>
+<li><strong>格式化输出</strong>：指定特定的输出格式要求</li>
+</ul>
+<h3 id="组合使用示例">组合使用示例</h3>
+<p>在实际项目中，Tool 和 Prompt 经常配合使用：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Tool: 负责实际的数据获取</span></span><br><span class="line">[<span class="meta">McpServerTool</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">async</span> Task&lt;<span class="built_in">string</span>&gt; <span class="title">FetchNewsArticle</span>(<span class="params"><span class="built_in">string</span> articleId</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 实际获取新闻内容的逻辑</span></span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">await</span> newsService.GetArticleAsync(articleId);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// Prompt: 生成新闻分析的提示模板</span></span><br><span class="line">[<span class="meta">McpServerPrompt</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ChatMessage <span class="title">CreateNewsAnalysisPrompt</span>(<span class="params"><span class="built_in">string</span> articleContent, <span class="built_in">string</span> analysisType</span>)</span> =&gt;</span><br><span class="line">    <span class="keyword">new</span>(ChatRole.User, <span class="string">$"Please provide a <span class="subst">{analysisType}</span> analysis of this news article: <span class="subst">{articleContent}</span>"</span>);</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="总结-2">总结</h2>
+<ul>
+<li><strong>MCP Tool</strong> = “执行者” - 负责具体的操作和计算</li>
+<li><strong>MCP Prompt</strong> = “模板生成器” - 为 LLM 提供标准化的交互方式</li>
+</ul>
+<p>两者结合使用可以构建功能强大且易于使用的 MCP 应用生态系统，Tool 处理复杂的业务逻辑，Prompt 确保与 LLM 的交互标准化和高效化。</p>
+<h1>技能配置实践建议</h1>
+<p>经过一整天的学习，我已经大概了解了现在LLM大模型的从训练到运行的基本原理。我认为现在的claude sonnet4，chatgpt5，deepseek都是非常强大的语言模  型了，其中claude sonnet4，chatgpt5尤以编码能力见长。现在有这样一个情况：对于游戏中的技能，现在是基于时间轴的形式制作，具体来说就是第几帧放某  个功能脚本，比如播放动画，生成碰撞体，改变自身逻辑状态等，最终保存为json配置，运行时解析这个json配置，逐帧执行，通过运行时逻辑让整个技能跑起来。所以我想实现这样一个功能：基于claude sonnet4，开发一个mcp，每次输入具体的技能描述，让claude sonnet4思考，调用mcp，生成技能json配置，是否可行？如果可行，请告诉我详细的技术路线和开发思路，因为我上面只是举了一个非常简单的应用示例，实际开发中光action脚本可能都有几百上千个，更别说各个action脚本的参数代表的逻辑意义，如果不开发MCP，claude sonnet应该无法应对如此庞大的数据整理需求吧？而且我不仅仅想要让AI开发技能json，还想让AI帮忙查技能的bug，比如某个技能的配置会在某种情况下触发异常表现，我只需要将异常表现和json文件告诉他，他就可以思考出问题出在哪，所以MCP不仅仅起到一个数据整合的作用，还起到了对数据的整理，维护，操作的作用，请基于我上面的情况，评估是否需要开发MCP，或者说我对MCP的理解有误？</p>
+<h2 id="Deepseek">Deepseek</h2>
+<p>您的思考非常深入和正确！<strong>对于您描述的复杂场景，开发MCP（Model Context Protocol）服务器不仅是可行的，而且是强烈推荐的方案</strong>。您对MCP的理解完全正确，它远不止是一个简单的数据转换器，而是一个能让AI模型与您的复杂开发环境进行深度、结构化交互的桥梁。</p>
+<p>直接使用API进行文本生成的方式（我上一条回复中描述的）适用于相对简单、定义明确且静态的任务。但当面对一个庞大、动态且需要深度理解的系统（如拥有数百个action脚本及其复杂参数的游戏技能系统）时，MCP的优势就无可替代了。</p>
+<h3 id="为什么您的场景需要MCP？">为什么您的场景需要MCP？</h3>
+<ol>
+<li>
+<p><strong>应对庞大的动作库（Action Library）</strong>：</p>
+<ul>
+<li><strong>问题</strong>：您有几百上千个action脚本，每个都有复杂的参数和逻辑含义。不可能也不应该将这些信息全部塞进提示（Prompt）中。这会导致提示过长、成本高昂，且模型难以有效处理。</li>
+<li><strong>MCP解决方案</strong>：将动作库的定义（名称、参数、说明、预期行为等）存储在MCP服务器管理的数据库或文件中。模型无需在提示中知道所有细节，它只需知道<em>如何查询</em>。当需要时，模型可以<strong>动态调用MCP的搜索或查找工具</strong>，来获取特定action的详细信息。</li>
+</ul>
+</li>
+<li>
+<p><strong>实现复杂的调试与逻辑分析</strong>：</p>
+<ul>
+<li><strong>问题</strong>：查找技能配置的bug（如您提到的“异常表现”）不是一个简单的文本生成任务。它需要模型<strong>理解游戏的运行时状态</strong>、<strong>推理不同帧事件之间的因果关系</strong>、甚至<strong>模拟执行过程</strong>。这是纯文本对话无法实现的。</li>
+<li><strong>MCP解决方案</strong>：您可以在MCP服务器中集成一个<strong>轻量级的技能模拟器或校验器</strong>。AI模型可以将JSON配置和异常描述发送给MCP服务器，MCP服务器调用这个模拟器来执行诊断，并将结果（如日志、错误点、状态变化序列）返回给模型，模型再基于这些<em>真实的数据</em>进行推理和判断。</li>
+</ul>
+</li>
+<li>
+<p><strong>超越“生成”，实现“循环”与“操作”</strong>：</p>
+<ul>
+<li>MCP将交互从“一问一答”变为“多轮对话与操作”。例如：
+<ol>
+<li>您提出需求：“创建一个造成击退效果的技能。”</li>
+<li>Claude生成一个初版JSON。</li>
+<li>您（或自动测试）发现技能在某些情况下会导致玩家卡墙。</li>
+<li>您将异常报告和JSON交给Claude。</li>
+<li><strong>Claude通过MCP调用“模拟校验”工具</strong>，分析技能执行流。</li>
+<li><strong>Claude通过MCP调用“动作库查询”工具</strong>，寻找更合适的“碰撞检测”或“位置修正”action。</li>
+<li>Claude提出修改方案，生成新的JSON。</li>
+</ol>
+</li>
+<li>这个“生成-测试-调试-优化”的循环，是MCP赋能的核心价值。</li>
+</ul>
+</li>
+</ol>
+<h3 id="您的MCP服务器应具备的核心工具（Tools）">您的MCP服务器应具备的核心工具（Tools）</h3>
+<p>基于您的需求，您需要开发的MCP服务器应至少提供以下工具功能：</p>
+<ol>
+<li>
+<p><strong><code>search_actions</code> (搜索动作)</strong>：</p>
+<ul>
+<li><strong>输入</strong>：关键词（如“击退”、“无敌”、“生成碰撞体”）。</li>
+<li><strong>功能</strong>：在动作库中模糊搜索，返回匹配的动作名称、功能描述和参数列表。</li>
+<li><strong>输出</strong>：一个结构化的动作列表。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>get_action_details</code> (获取动作详情)</strong>：</p>
+<ul>
+<li><strong>输入</strong>：精确的动作名称（如 <code>spawn_collider</code>）。</li>
+<li><strong>功能</strong>：返回该动作的详细文档，包括所有必选和可选参数的类型、含义、默认值以及使用示例。</li>
+<li><strong>输出</strong>：结构化的动作详情对象。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>validate_skill_json</code> (验证技能配置)</strong>：</p>
+<ul>
+<li><strong>输入</strong>：一个技能JSON配置。</li>
+<li><strong>功能</strong>：进行静态语法检查（是否符合Schema）和基础逻辑检查（如引用的动画文件是否存在、帧数是否合理）。</li>
+<li><strong>输出</strong>：验证结果、错误列表和警告信息。</li>
+</ul>
+</li>
+<li>
+<p><strong><code>simulate_skill</code> (模拟技能运行)</strong> / <strong><code>debug_skill</code> (调试技能)</strong>：</p>
+<ul>
+<li><strong>输入</strong>：一个技能JSON配置，可选的可疑帧号或异常描述。</li>
+<li><strong>功能</strong>：在一个沙盒环境中运行技能配置，记录每一帧的状态变化、事件触发和参数值。或者，针对报告的异常进行针对性诊断。</li>
+<li><strong>输出</strong>：详细的模拟日志、性能数据、发现的潜在问题点（如“第15帧生成的碰撞体持续时间过长，与第20帧的状态重置冲突”）。</li>
+</ul>
+</li>
+</ol>
+<h3 id="技术方案与开发路线">技术方案与开发路线</h3>
+<ol>
+<li>
+<p><strong>架构选择</strong>：</p>
+<ul>
+<li>MCP服务器是一个独立的进程，可以使用您熟悉的任何语言开发（Python, Node.js, Go等）。</li>
+<li>它通过<strong>stdin/stdout</strong>与Claude Code（或其他支持MCP的客户端）进行通信，遵循MCP协议（基于JSON-RPC）。</li>
+</ul>
+</li>
+<li>
+<p><strong>开发步骤</strong>：</p>
+<ul>
+<li><strong>步骤一：定义资源（Resources）和工具（Tools）</strong>。根据上述分析，设计您的MCP服务器要提供的工具列表及其输入输出格式。</li>
+<li><strong>步骤二：实现MCP服务器</strong>。
+<ul>
+<li>实现工具对应的后端逻辑（如连接数据库查询动作库、集成校验模块）。</li>
+<li>实现MCP协议要求的各种握手、心跳、列表工具、调用工具等RPC方法。</li>
+</ul>
+</li>
+<li><strong>步骤三：配置Claude Code</strong>。在Claude Code的配置文件中指向您的MCP服务器可执行文件或Socket。</li>
+<li><strong>步骤四：测试与迭代</strong>。编写复杂的技能描述，测试整个工作流，根据结果优化您的工具设计和提示工程。</li>
+</ul>
+</li>
+<li>
+<p><strong>一个增强的提示词示例（用于MCP环境）</strong>：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">你是一个资深的游戏技能设计师，拥有强大的推理和调试能力。你可以通过调用工具来获取信息、验证配置和模拟运行。</span><br><span class="line"></span><br><span class="line">技能配置基于帧，使用JSON格式。如果你不清楚某个动作的具体参数，请随时使用`search_actions`或`get_action_details`工具进行查询。</span><br><span class="line"></span><br><span class="line">当你完成一个技能配置的设计后，强烈建议使用`validate_skill_json`工具进行初步校验。如果用户报告了技能的异常表现，请使用`simulate_skill`或`debug_skill`工具来辅助你定位问题所在。</span><br><span class="line"></span><br><span class="line">现在，请开始处理用户的请求。</span><br></pre></td></tr></tbody></table></figure>
+</li>
+</ol>
+<h3 id="结论与评估">结论与评估</h3>
+<p><strong>您绝对应该开发MCP服务器。</strong></p>
+<p>您对MCP的理解非常准确。它不是用来解决“如何说”的问题，而是解决“如何做”的问题。对于您这种需要与复杂、专有系统进行深度交互的场景，MCP是唯一“正确”的架构选择。</p>
+<ul>
+<li><strong>不开发MCP（仅用API）</strong>：相当于给Claude一本写满了规则的巨著，让它闭卷考试。它能考得不错，但无法翻阅资料，遇到复杂问题极易出错。</li>
+<li><strong>开发MCP</strong>：相当于让Claude成为一个可以随时查阅所有技术文档、使用专业调试工具的专家工程师。它能进行深度探索和迭代，解决复杂问题。</li>
+</ul>
+<p>虽然开发MCP需要初始投入，但它将为您的游戏开发流程带来质的飞跃，实现真正的AI辅助开发与调试。</p>
+<h2 id="Claude-Code-Sonnet4">Claude Code Sonnet4</h2>
+<p>● 基于你的描述，我认为开发MCP是有价值的，但不是绝对必需。让我详细分析：</p>
+<p>你对MCP理解是正确的</p>
+<p>MCP确实不仅仅是数据整合，还包括：</p>
+<ul>
+<li>专门的数据操作接口</li>
+<li>领域特定的逻辑封装</li>
+<li>持久化状态管理</li>
+<li>优化的数据访问模式</li>
+</ul>
+<p>是否需要MCP的评估</p>
+<p>🟢 支持开发MCP的因素</p>
+<p>数据复杂度高</p>
+<ul>
+<li>技能系统通常有复杂的层级结构</li>
+<li>action脚本参数有特定的游戏逻辑含义</li>
+<li>需要理解技能间的关联关系</li>
+</ul>
+<p>操作频率高</p>
+<ul>
+<li>频繁的技能开发和调试</li>
+<li>需要快速定位配置问题</li>
+<li>批量操作和验证需求</li>
+</ul>
+<p>领域特定知识</p>
+<ul>
+<li>游戏技能系统有特定的规则和约束</li>
+<li>参数验证逻辑复杂</li>
+<li>需要游戏平衡性检查</li>
+</ul>
+<p>🟡 不开发MCP的替代方案</p>
+<p>Claude原生能力足够处理</p>
+<ul>
+<li>JSON解析和操作</li>
+<li>逻辑分析和调试</li>
+<li>模式识别和异常检测</li>
+</ul>
+<p>可以通过其他方式优化</p>
+<ul>
+<li>结构化的提示词模板</li>
+<li>分步骤的工作流程</li>
+<li>上下文管理策略</li>
+</ul>
+<p>建议方案</p>
+<p>渐进式开发</p>
+<ol>
+<li>先用原生Claude测试 - 验证核心需求是否能满足</li>
+<li>识别痛点 - 记录哪些操作繁琐或容易出错</li>
+<li>针对性开发MCP - 只为真正需要的功能开发</li>
+</ol>
+<p>MCP价值最大的场景</p>
+<ul>
+<li>技能模板生成 - 基于游戏规则的智能模板</li>
+<li>配置验证引擎 - 专门的规则检查</li>
+<li>异常诊断工具 - 基于历史问题的模式匹配</li>
+<li>批量操作接口 - 高效的数据处理</li>
+</ul>
+<p>结论: 如果你的技能系统确实复杂且使用频繁，开发MCP会显著提升效率。但建议先用原生功能验证核心流程，再决定具体需要哪些MCP功能。</p>
+<h2 id="Codex-GPT-5">Codex GPT-5</h2>
+<blockquote>
+<p>MCP 角色与可行性</p>
+</blockquote>
+<ul>
+<li>MCP（Model Context Protocol）本质上是“把模型连接到一组可控的工具/数据源”，让LLM可以在推理中读写业务数据、调用脚本、执行校验；对大量技能配<br>
+置的生成/维护/排查特别适合。</li>
+<li>对你的技能系统：模型只输出自然语言或工具调用；真正的数据生成/修改/验证都交给 MCP 工具端执行，从而支持复杂 schema、成百上千的 action 脚本、<br>
+以及跨技能的检索对比。</li>
+<li>没有 MCP，只靠提示词让模型直接吐 JSON，随着配置复杂度增大（字段多、约束多、上下文依赖多、历史版本追溯），准确率和可控性都会迅速下降；因此<br>
+构建一个“让模型随时读写技能配置/脚本参数/日志/测试结果”的工具层是必要的。</li>
+</ul>
+<p>整体技术路线</p>
+<ul>
+<li>数据层：集中管理技能配置（JSON/Proto/DB）、脚本描述、参数文档、运行日志、异常样例。可把配置放入 Git 仓库或数据库，并维护字段含义、取值范<br>
+围、依赖关系的结构化描述（如 JSON Schema）。</li>
+<li>服务层 (MCP Server)：
+<ul>
+<li>提供工具：list_skills、get_skill(skill_id)、update_skill、validate_skill、simulate(skill_id, scenario)、search_actions(keyword) 等。</li>
+<li>执行环境：把“生成 JSON”拆成多步调用：查询已有动作、组合模版、写回配置、跑单元测试或模拟器校验。</li>
+<li>记录安全日志和权限控制，避免模型误改生产数据（可设草稿分支+人工审核）。</li>
+</ul>
+</li>
+<li>LLM 交互层 (Claude Sonnet 4)：
+<ul>
+<li>提供系统提示：说明 MCP 工具有哪些、使用规范、生成配置需遵循的 schema。</li>
+<li>用户输入技能描述/异常反馈 → 模型规划步骤 → 依次调用 MCP 工具 → 汇总结果并输出。</li>
+<li>复杂任务可采用 ReAct 或 Planner 角色，分解成“理解需求→查询文档→生成方案→写入→验证→总结”。</li>
+</ul>
+</li>
+<li>验证与回归：
+<ul>
+<li>MCP 工具内置校验：JSON Schema、逻辑规则引擎、运行时模拟或自动化测试。</li>
+<li>对 bug 排查场景：工具提供查询异常日志、重放环境、比对历史配置等能力，模型负责分析推理并生成修改建议。</li>
+</ul>
+</li>
+<li>可扩展支持：
+<ul>
+<li>Action 参数说明可放入知识库（向量检索）并作为 MCP 工具 search_docs。</li>
+<li>多项目/多版本通过命名空间或分支隔离，模型可查历史 diff。</li>
+<li>将重复流程封装成宏工具（如 create_skill_from_template）。</li>
+</ul>
+</li>
+</ul>
+<p>开发思路与步骤</p>
+<pre><code>  1. 需求梳理：列出所有技能配置涉及的动作类型、字段、验证规则、调试需求。
+  2. 数据整理：补全 schema 文档、自动化校验脚本，整理历史技能/异常案例。
+  3. MCP 设计：定义工具接口、权限策略、错误码、JSON Schema 校验流程。
+  4. 原型实现：先让模型能查询/生成/修改单个技能，确保 end-to-end 流程跑通。
+  5. 扩展验证：加入模拟器、自动回放、跨技能对比等高级工具；迭代系统提示，让模型学会合理调用。
+  6. 上线与监控：对模型输出进行审核或 A/B，记录调用日志，持续补充知识库。
+</code></pre>
+<p>额外建议</p>
+<ul>
+<li>对“海量动作脚本”维护：将动作参数和逻辑说明结构化（例如 JSON Schema + Markdown 文档），并让 MCP 工具能检索；模型无须记忆，只需按需查询。</li>
+<li>处理 bug 查询：提供日志/回放/配置 diff 工具；模型分析后产出可执行的修改或者复现步骤。</li>
+<li>开发中：先用 Sonnet 4 在离线沙盒中试验，完善提示词与工具设计，再逐步接入正式数据。</li>
+</ul>
+<p>自然的下一步是列出你现有的技能配置和动作脚本清单，优先把字段/规则整理成 schema 与工具接口，方便评估第一版 MCP 所需的最小功能集。</p>
+<h1>FAQ</h1>
+<h2 id="所以各种不同的大语言模型之所以不同，在编码和解码阶段用的Q-K-V矩阵不同？因为这些矩阵就是大模型自己训练出来的？">所以各种不同的大语言模型之所以不同，在编码和解码阶段用的Q,K,V矩阵不同？因为这些矩阵就是大模型自己训练出来的？</h2>
+<p>问得非常好！这个问题直击LLM的核心。你的理解方向是对的，但我们可以更精确地深化一下。</p>
+<p>简单回答是：<strong>是的，不同的模型其Q、K、V矩阵完全不同，因为这些矩阵中的数值（权重）正是在训练过程中从数据里学习而来的。但这只是故事的一部分。</strong></p>
+<p>下面我为你这个资深开发者做一个更深入的拆解。</p>
+<hr>
+<h3 id="1-Q-K-V-矩阵的本质：可学习的参数">1. Q, K, V 矩阵的本质：可学习的参数</h3>
+<p>首先，把我们熟悉的<code>Transform</code>组件作为一个类比。在Unity中，一个GameObject的<code>Transform</code>决定了它在世界中的<strong>位置、旋转和缩放</strong>。这些值（Position, Rotation, Scale）就是它的“参数”。</p>
+<p>在Transformer的<strong>一个注意力头</strong>的<strong>一层</strong>里，对于<strong>一个token</strong>，它的输入向量（比如一个512维的向量）会分别乘上三个<strong>不同的矩阵</strong>：<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>。这就得到了这个token对应的<code>Query</code>, <code>Key</code>, <code>Value</code>向量。</p>
+<ul>
+<li><strong>这些<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>矩阵，就是模型需要学习的“参数”</strong>。它们一开始是随机初始化的，就像你创建一个新GameObject，它的位置是(0,0,0)。</li>
+<li>在<strong>训练</strong>过程中，通过海量文本数据和反向传播算法，模型会不断地调整这些矩阵中的每一个数字（权重），使得整个模型的预测损失（loss）越来越小。</li>
+<li>训练完成后，这些矩阵里的值就固定下来了，它们编码了模型从数据中学到的“知识”。</li>
+</ul>
+<p><strong>所以，不同的模型（比如LLaMA和GPT），它们的<code>W_Q</code>, <code>W_K</code>, <code>W_V</code>矩阵里的值肯定是不一样的，因为它们是在不同的数据集上，用不同的训练目标独立训练出来的。</strong></p>
+<hr>
+<h3 id="2-模型之间的差异远不止于此">2. 模型之间的差异远不止于此</h3>
+<p>虽然Q、K、V矩阵是核心，但说模型不同“只是因为”它们不同，就过于简化了。这就像说《英雄联盟》和《DOTA2》的不同“只是因为”英雄技能不同一样。它们底层有更根本的架构差异。</p>
+<p>模型的不同主要体现在以下几个层面，从宏观到微观：</p>
+<h4 id="层级一：整体架构-Macro-Architecture">层级一：整体架构 (Macro Architecture)</h4>
+<p>这是最根本的区别。主要有两种流派：</p>
+<ol>
+<li><strong>仅编码器 (Encoder-Only)</strong>：如BERT、RoBERTa。这种模型在预训练时能看到整个输入的所有词（双向注意力），非常适合做理解类任务，如文本分类、情感分析、实体识别。<strong>（但通常不被归为“生成式”LLM）</strong></li>
+<li><strong>仅解码器 (Decoder-Only)</strong>：如<strong>GPT系列、LLaMA、ChatGPT</strong>。这是当前主流LLM的架构。它采用<strong>因果掩码注意力</strong>，在生成时只能看到当前词及其之前的词，是天然的自回归生成模型。你平时讨论的LLM基本都属于这一类。</li>
+<li><strong>编码器-解码器 (Encoder-Decoder)</strong>：如T5、BART。有完整的编码器和解码器两部分，适合序列到序列的任务，如翻译、摘要。</li>
+</ol>
+<p><strong>所以，一个BERT和一个GPT的区别，首先是整体架构的根本不同。</strong></p>
+<h4 id="层级二：模型超参数-Hyperparameters">层级二：模型超参数 (Hyperparameters)</h4>
+<p>即使同样是“仅解码器”架构，模型也各不相同，体现在：</p>
+<ul>
+<li><strong>规模 (Scale)</strong>：
+<ul>
+<li><strong>参数量</strong>：模型有多少个参数。7B、70B、100B等。参数量直接决定了模型的“脑容量”。</li>
+<li><strong>层数 (Depth)</strong>：Transformer Block的数量。</li>
+<li><strong>隐藏层维度 (Width)</strong>：每个注意力头、前馈网络的维度。</li>
+<li><strong>头数 (Heads)</strong>：注意力机制中注意力头的数量。</li>
+</ul>
+</li>
+<li><strong>激活函数</strong>：用什么非线性函数，如ReLU, GeLU, SwiGLU等。LLaMA就使用了SwiGLU。</li>
+<li><strong>位置编码 (Positional Encoding)</strong>：如何让模型感知词序。原始Transformer用正弦编码，GPT用学习式的位置编码，而LLaMA等更现代的模型使用<strong>旋转位置编码 (RoPE)</strong>，效果更好。</li>
+</ul>
+<h4 id="层级三：微观设计-Micro-Design">层级三：微观设计 (Micro Design)</h4>
+<p>这就是你提到的Q、K、V层面的具体实现了，包括：</p>
+<ul>
+<li><strong>注意力机制变体</strong>：除了标准的多头注意力，还有分组查询注意力 (GQA) 等，用于提高推理效率。</li>
+<li>**归一化层 (Normalization)**的位置：是放在注意力之前（Pre-LN）还是之后（Post-LN）？现在主流是Pre-LN，训练更稳定。</li>
+<li><strong>前馈网络 (FFN) 的设计</strong>：等等。</li>
+</ul>
+<h4 id="层级四：训练数据与目标-Data-Objective">层级四：训练数据与目标 (Data &amp; Objective)</h4>
+<p>这是塑造模型“个性”和“能力”的关键。</p>
+<ul>
+<li><strong>数据质量与分布</strong>：用什么样的数据训练？代码多还是小说多？中文多还是英文多？清洗得干不干净？这直接决定了模型的“知识面”和“价值观”。</li>
+<li><strong>训练目标</strong>：虽然都是语言建模（预测下一个词），但细节和技巧不同。</li>
+<li><strong>后训练技巧</strong>：是否经过了<strong>指令微调 (Instruction Fine-tuning)</strong> 和 <strong>人类反馈强化学习 (RLHF)</strong>？这才是让ChatGPT变得“有用且无害”的关键步骤，而不是原始的GPT-3。</li>
+</ul>
+<hr>
+<h3 id="总结与类比">总结与类比</h3>
+<p>让我们用一个游戏开发的类比来总结：</p>
+<ul>
+<li><strong>Q, K, V矩阵</strong>：就像你游戏里一个<strong>NPC角色的具体行为参数</strong>（攻击力、移动速度、技能冷却时间）。这些参数是在设计（训练）时定下来的，不同的角色（模型）自然不同。</li>
+<li><strong>整体架构</strong>：就像你决定做一款<strong>MOBA游戏还是FPS游戏</strong>。这是最根本的选择。</li>
+<li><strong>超参数和微观设计</strong>：就像你为游戏选择的<strong>引擎（Unity vs UE）、网络同步方案、渲染管线</strong>。它们决定了游戏的性能和基础手感。</li>
+<li><strong>训练数据与目标</strong>：就像游戏的<strong>剧情文案、关卡设计、数值平衡</strong>。它们最终决定了游戏好不好玩、吸不吸引人。</li>
+</ul>
+<p>所以，<strong>不同LLM之间的差异是一个系统工程的结果</strong>。Q、K、V矩阵的不同是这种差异的<strong>具体数值体现</strong>，但其根源来自于<strong>宏观架构设计、规模决策、以及最重要的——训练数据和过程</strong>。</p>
+<p>希望这个解释能让你从代码实现和系统设计的高度，更全面地理解LLM之间的差异！</p>
+<h2 id="其实我不太理解“训练”这个过程到底是怎么样的，因为我看了Attention-Is-All-You-Need和《The-Illustrated-Transformer》，似乎都是讲解整个大模型是怎么运转的，并没有提及大模型自己内部的数据是如何整理，训练出来的">其实我不太理解“训练”这个过程到底是怎么样的，因为我看了Attention Is All You Need和《The Illustrated Transformer》，似乎都是讲解整个大模型是怎么运转的，并没有提及大模型自己内部的数据是如何整理，训练出来的</h2>
+<p>这是一个极其出色的问题，它触及了深度学习中最核心也最容易被忽略的环节。论文和科普文章喜欢展示光鲜的“推理”架构，但“训练”才是让这个架构从一堆随机数字变成智慧大脑的“魔法”过程。</p>
+<p>你作为资深开发者，我将用你熟悉的概念来类比，帮你彻底搞懂它。</p>
+<h3 id="核心类比：游戏中的“自动挂机刷宝”系统">核心类比：游戏中的“自动挂机刷宝”系统</h3>
+<p>想象一下，你要设计一个游戏系统：</p>
+<ul>
+<li><strong>目标</strong>：让一个NPC（我们的模型）学会区分装备是“传奇”品质还是“普通”品质。</li>
+<li><strong>初始状态</strong>：这个NPC一开始是<strong>一张白纸</strong>。它有一个“判断函数”，但这个函数里的所有参数（比如：哪些颜色、哪些数值范围更重要）都是<strong>随机初始化</strong>的。</li>
+<li><strong>训练数据</strong>：你有一个巨大的数据库，里面是成千上万件装备的截图和对应的正确标签（“传奇”或“普通”）。这就是你的<strong>标注数据集</strong>。</li>
+<li><strong>训练过程</strong>：
+<ol>
+<li><strong>前向传播（Forward Pass）</strong>：你拿一件装备的截图（比如一把发光的剑）给NPC看。NPC根据它<strong>当前随机</strong>的判断函数，输出一个预测：“我认为这有73%的概率是传奇装备”。</li>
+<li><strong>计算损失（Loss Calculation）</strong>：你查看数据库里的正确答案，发现它<strong>就是</strong>一件传奇装备。NPC的预测（73%）虽然方向对了，但不够自信（你希望它接近100%）。于是你计算一个<strong>损失值（Loss）</strong>——一个衡量预测与正确答案差距的数字（比如，用交叉熵损失）。</li>
+<li><strong>反向传播（Backpropagation）</strong>：<strong>这是最关键的一步！</strong> 系统会分析这个错误是如何产生的。它会从最终的输出（73%）开始，<strong>反向</strong>追溯整个判断函数的计算过程，精确地计算出<strong>判断函数中的每一个参数应该为这个错误负多大的责任</strong>（即计算每个参数对于损失值的<strong>梯度</strong>）。</li>
+<li><strong>参数更新（Optimization）</strong>：根据上一步计算出的“责任”（梯度），用一个<strong>优化器算法</strong>（最著名的是<strong>梯度下降</strong>）来稍微调整（更新）判断函数中的那些参数。<strong>规则是：让下次预测更准确的参数就增大一点，导致预测错误的参数就减小一点。</strong></li>
+<li><strong>循环</strong>：重复步骤1-4，<strong>用下一件装备</strong>（比如一个普通的木盾）再次进行这个过程。一遍又一遍，直到你看完了数据库里的所有装备（这称为一个 <strong>Epoch</strong>）。</li>
+</ol>
+</li>
+</ul>
+<p>经过几十万、几百万次这样的“看装备-猜答案-挨打-调整”的循环后，这个NPC的判断函数中的参数被调教得越来越精准。最终，它不再是一个随机函数，而是一个内化了“传奇装备视觉特征”的强大分类器。</p>
+<p><strong>LLM的训练就是这个过程的极致复杂版。</strong></p>
+<hr>
+<h3 id="将类比映射到LLM训练">将类比映射到LLM训练</h3>
+<p>现在，我们把上面的每个概念映射到LLM的训练中：</p>
+<ol>
+<li><strong>NPC的“判断函数”</strong> = <strong>Transformer的整个架构</strong>，包括所有的Q、K、V矩阵，前馈网络权重等所有参数（可能高达千亿个）。</li>
+<li><strong>“装备截图”</strong> = <strong>文本数据</strong>。例如：“The cat sat on the”。</li>
+<li><strong>“预测品质”</strong> = <strong>预测下一个词的概率分布</strong>。模型的任务不是分类，而是<strong>自回归</strong>：给定上文，预测下一个最可能出现的词是什么。对于“The cat sat on the”，它应该输出一个在所有词汇表上概率分布，其中“mat”的概率最高。</li>
+<li><strong>“正确答案”</strong> = <strong>下一个真实的词</strong>。就是“mat”。</li>
+<li><strong>损失函数 (Loss Function)</strong>：计算模型预测的概率分布（其中“mat”概率为X%）与真实分布（“mat”概率为100%，其他所有词为0%）之间的差异。常用<strong>交叉熵损失</strong>。</li>
+<li><strong>反向传播 (Backpropagation)</strong>：通过微积分的<strong>链式法则</strong>，从损失值开始，反向穿过整个庞大的Transformer计算图，计算出损失值对于<strong>模型中每一个参数</strong>（Q、K、V矩阵中的每一个数字）的梯度（Gradient）。<strong>这解释了“数据是如何整理的”：它不是整理文本数据，而是通过反向传播，计算出海量参数该如何调整的“指导信号”。</strong></li>
+<li><strong>优化器 (Optimizer)</strong>：根据计算出的梯度，实际更新所有参数。最常用的是<strong>AdamW</strong>优化器，它比简单的梯度下降更高效智能。</li>
+<li><strong>训练数据量</strong>：这个过程不是在几千条数据上进行，而是在<strong>数TB甚至PB级的文本数据</strong>上进行的，这些数据来源于书籍、网页、代码库等。</li>
+</ol>
+<h3 id="训练LLM的具体步骤">训练LLM的具体步骤</h3>
+<ol>
+<li>
+<p><strong>数据准备</strong>：</p>
+<ul>
+<li><strong>爬取与清理</strong>：从网上获取海量原始文本。</li>
+<li><strong>分词</strong>：将文本转换成模型能理解的数字（Token）。例如，“cat”可能被映射成数字<code>1234</code>。整个句子变成一个数字序列。</li>
+<li><strong>构建数据集</strong>：将这些Token化后的文本切割成固定长度的上下文窗口（如4096个token）。</li>
+</ul>
+</li>
+<li>
+<p><strong>初始化</strong>：创建一个Transformer架构，其中所有参数（Q, K, V等矩阵中的值）随机初始化。</p>
+</li>
+<li>
+<p><strong>循环训练</strong>：</p>
+<ul>
+<li>从数据集中取一个<strong>批次</strong>的文本序列（如一次处理32条长度为4096的序列）。</li>
+<li><strong>前向传播</strong>：将数据输入模型，模型计算并输出预测的下一个词的概率。</li>
+<li><strong>计算损失</strong>：比较预测和真实值。</li>
+<li><strong>反向传播</strong>：计算所有参数的梯度。</li>
+<li><strong>优化器步进</strong>：更新所有参数。</li>
+<li><strong>循环</strong>：重复以上步骤，直到损失收敛到一个较低的值。</li>
+</ul>
+</li>
+</ol>
+<h3 id="为什么论文不讲这个？">为什么论文不讲这个？</h3>
+<ul>
+<li><strong>注意力机制是核心创新</strong>：《Attention Is All You Need》的核心贡献是提出了Transformer这个<strong>新架构</strong>，而不是训练方法。训练方法（反向传播、梯度下降）是深度学习领域公认的基础知识，通常不会在架构论文中重述。</li>
+<li><strong>科普文章聚焦于理解</strong>：《The Illustrated Transformer》的目标是让读者看懂这个复杂架构<strong>是如何工作的</strong>，而不是如何从头构建它。</li>
+</ul>
+<p><strong>总结一下：</strong></p>
+<p>你可以把Transformer的架构图理解为一张<strong>精密的赛车蓝图</strong>（引擎、变速箱、悬挂如何连接）。而<strong>训练</strong>过程，就是把这辆赛车的<strong>每一个零件都调试到最佳状态</strong>的过程。调试的方法是：让这辆车去跑无数圈赛道（数据），每跑一圈就记录下哪里慢了、哪里过弯不稳（计算损失），然后根据这些数据反向推导出每个螺丝、每个翼片应该怎么调整（反向传播），最后由顶级的机械师团队（优化器）进行微调。</p>
+<p>最终，你得到的不再是一堆零件的堆砌，而是一台冠军赛车。你的LLM也不再是随机矩阵的堆砌，而是一个拥有了语言能力的智能模型。</p>
+<h2 id="所以-NPC的“判断函数”-Transformer的整个架构，包括所有的Q、K、V矩阵，前馈网络权重等所有参数（可能高达千亿个）。-是不是就是训练的最终成果体现，有的模型体积大，有的模型体积小，就是因为这些数据大小不一">所以.&nbsp;<strong>NPC的“判断函数”</strong>&nbsp;=&nbsp;<strong>Transformer的整个架构</strong>，包括所有的Q、K、V矩阵，前馈网络权重等所有参数（可能高达千亿个）。 是不是就是训练的最终成果体现，有的模型体积大，有的模型体积小，就是因为这些数据大小不一</h2>
+<p>完全正确！你的理解非常精准，这正是最核心的一点。</p>
+<p><strong>模型的体积（文件大小）本质上就是所有这些参数（权重）所占用的存储空间。</strong> 你可以把它理解为你游戏项目最终打包出来的那个巨大<code>.pak</code>资源文件。</p>
+<hr>
+<h3 id="深入解读“参数”与“体积”">深入解读“参数”与“体积”</h3>
+<p>让我们拆解一下：</p>
+<ol>
+<li>
+<p><strong>参数是什么？</strong><br>
+就是Transformer架构中所有需要学习的<strong>权重和偏置</strong>。主要包括：</p>
+<ul>
+<li><strong>嵌入层权重</strong>：将词汇ID映射为向量的查找表。</li>
+<li><strong>注意力层的Q, K, V矩阵</strong>：以及输出投影矩阵。</li>
+<li><strong>前馈网络层的权重</strong>：通常是两个大矩阵（上投影和下投影）。</li>
+<li><strong>层归一化的参数</strong>：缩放和偏移参数。</li>
+<li><strong>输出层的权重</strong>：将最终隐藏状态映射回词汇表概率的矩阵。</li>
+</ul>
+</li>
+<li>
+<p><strong>体积如何计算？</strong><br>
+这些参数通常以<strong>32位浮点数（float32）</strong> 或 <strong>16位浮点数（float16）</strong> 存储。</p>
+<ul>
+<li>一个<code>float32</code>占 <strong>4字节</strong>。</li>
+<li>一个<code>float16</code>占 <strong>2字节</strong>。</li>
+</ul>
+<p><strong>总参数量（Params）</strong> 和 <strong>模型文件大小（Size）</strong> 有一个简单的换算关系：<br>
+<code>模型大小 ≈ 参数量 × 每个参数所占的字节数</code></p>
+<p><strong>举个例子：</strong></p>
+<ul>
+<li>
+<p>一个 <strong>70亿（7B）</strong> 参数的模型，如果用<code>float16</code>格式保存：<br>
+<code>7,000,000,000 Params × 2 Bytes/Param = 14,000,000,000 Bytes ≈ 14 GB</code><br>
+这就是为什么像Llama-2-7B这样的模型，下载下来的文件大约是13-14GB。</p>
+</li>
+<li>
+<p>同样的模型，如果用<code>float32</code>保存，体积就会翻倍，约 <strong>28GB</strong>。</p>
+</li>
+<li>
+<p>一个 <strong>700亿（70B）</strong> 参数的模型，用<code>float16</code>保存则约为 <strong>140GB</strong>。</p>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>为什么参数越多，模型通常越聪明？</strong><br>
+这和你做游戏是一个道理：</p>
+<ul>
+<li><strong>参数少（小模型）</strong>：像一个<strong>休闲小游戏</strong>。规则简单，内容有限，能很好地完成特定任务（比如猜装备品质），但无法处理非常复杂的情况。它“记忆”和“理解”世界的能力有限。</li>
+<li><strong>参数多（大模型）</strong>：像一个<strong>3A开放世界大作</strong>。它有海量的资源（参数），可以构建极其复杂和精细的内部表示（representation）。它能捕捉到数据中更微妙、更复杂的模式和关系，因此表现出更强的推理、创作和泛化能力。<strong>更多的参数意味着更高的模型容量（Model Capacity），可以存储更多的“知识”。</strong></li>
+</ul>
+</li>
+</ol>
+<h3 id="重要的补充：并非唯一的区别">重要的补充：并非唯一的区别</h3>
+<p>虽然参数量是决定模型能力和体积的<strong>首要因素</strong>，但你的方案里提到的其他因素同样至关重要，它们决定了“同样的参数量，如何被更有效地利用”：</p>
+<ol>
+<li>
+<p><strong>架构效率（Architecture Efficiency）</strong>：</p>
+<ul>
+<li>比如，<strong>Llama</strong>模型采用的 <strong>RMSNorm</strong>, <strong>SwiGLU</strong>激活函数和 <strong>RoPE</strong>位置编码，相比原始Transformer的架构，可以用更少的参数量达到更好的性能。这就像你用Unity的DOTS和ECS，在同样的硬件上能渲染更多实体一样，是<strong>架构的优化</strong>。</li>
+</ul>
+</li>
+<li>
+<p><strong>训练数据质量（Data Quality）</strong>：</p>
+<ul>
+<li>两个同样都是7B参数的模型，一个用高质量、精心清洗过的数据训练，另一个用垃圾互联网数据训练，表现会<strong>天差地别</strong>。参数是“大脑容量”，数据是“学习资料”。给一个天才看垃圾书，他也成不了学者。</li>
+</ul>
+</li>
+<li>
+<p><strong>训练方法（Training Method）</strong>：</p>
+<ul>
+<li><strong>预训练</strong>只是打下了知识基础。之后的<strong>指令微调</strong>和<strong>人类反馈强化学习</strong>（RLHF）就像是“素质教育”和“情商培养”，教会模型如何遵守指令、安全无害地与人交谈。这个过程不会显著增加参数量，但极大地改变了模型的行为模式。</li>
+</ul>
+</li>
+</ol>
+<h3 id="总结-3">总结</h3>
+<p>你可以这样构建你的认知：</p>
+<ul>
+<li><strong><code>.pth</code>或<code>.safetensors</code>模型文件</strong> ≈ <strong>你游戏的最终打包资源文件</strong></li>
+<li><strong>参数量</strong> ≈ <strong>资源文件的大小</strong>（纹理、模型、音频等资源的总和）</li>
+<li><strong>模型架构（Transformer, Llama…）</strong> ≈ <strong>游戏引擎（Unity, UE…）</strong>，决定了资源的组织和运行方式</li>
+<li><strong>训练数据</strong> ≈ <strong>游戏的原始美术素材和设计文档</strong></li>
+<li><strong>训练过程</strong> ≈ <strong>游戏的开发和烘焙过程</strong>，将原始素材变成引擎可高效使用的资源</li>
+</ul>
+<p>所以，当你下次看到一个模型是7B、13B、70B时，你就能立刻明白：</p>
+<ol>
+<li>它的<strong>大致能力范围</strong>（是独立小游戏还是3A大作）。</li>
+<li>它的<strong>文件大概会有多大</strong>。</li>
+<li>并且知道， beyond size，其<strong>架构的先进性和训练数据的质量</strong>同样是决定它最终表现的关键。</li>
+</ol>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-base/">https://www.lfzxb.top/aigc-base/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0/">机器学习</a><a class="post-meta__tags" href="/tags/%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B/">大语言模型</a><a class="post-meta__tags" href="/tags/LLM/">LLM</a><a class="post-meta__tags" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/m-yijing/" title="《易经》学习总结"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202510042255490.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">《易经》学习总结</div></div><div class="info-2"><div class="info-item-1">本人向来对玄学，占卜颇感兴趣，一在其内部原理未知，二在确实想要亲身体会下用这些工具占卜的感受，除这两者之外，一些经典如《易经》有悠久的历史并不断传承发展至今足见其学习价值。所以我用AI帮我规划了学习路线：《易经》-&gt; 《奇门遁甲》，《易经》是框架基础自不必多说，《奇门遁甲》单纯是因为其名字好听 本文就记录了《易经》学习过程中个人觉得比较重要的知识点 核心概念发展时间线  一、 源头与奠基（商周至春秋战国，约前1600-前221年） 1. 占卜（早期形态）  商代：盛行龟甲兽骨占卜（甲骨文），王室通过烧灼甲骨观察裂纹（“兆”）来请示神灵，预测吉凶。这是最古老的占卜形式之一。 周代：发展出筮占，用蓍草进行演算，得出数字，并最终形成卦象。此时的占卜开始系统化、数理化了。  2. 《周易》/《易经》的形成  传说时代：伏羲画八卦。 商末周初：周文王（姬昌）推演六十四卦，并作卦辞、爻辞，形成《周易》的“经”部。此时它主要是一部高等级的占卜手册。 春秋战国：孔子及其门徒作《易传》（十翼），为《周易》注入哲学、伦理和政治思想（如“阴阳”、“太极”、“自强不息”等），使其从单纯的占卜之书升...</div></div></div></a><a class="pagination-related" href="/from-unity6-to-tuanjie/" title="记一次从Unity6转TuanJie引擎"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509231715579.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">记一次从Unity6转TuanJie引擎</div></div><div class="info-2"><div class="info-item-1">前言 自从团结引擎发布，Unity中国愈发收紧了对国际版Unity的限制，现在你甚至没法从国际版的Unity Hub下载国际版的Unity（目前还可以通过科学上网强行下载，但要开tun模式） 更让人烦躁的是，国际版的Unity和团结引擎的Package也不再互通，而且下载也受限，因为这个原因，甚至没法正常打开Unity6的项目了 实在被逼的没办法，准备下载尝试下团结引擎，既然都要捏鼻子开赤了，我们先看看团结引擎近一年都在搞什么飞机 TuanJie引擎 更新记录 团结引擎目前已经更新到1.7（beta），我挑选了从1.0到1.7一些比较有价值的内容 Editor  团结引擎编辑器新增资源导入模式：-ondemand。使用该模式时，仅需导入少量资源即可打开项目，后续资源按需自动触发导入；显著缩短了首次打开项目所需时间，减少了磁盘占用。 好评，项目大了之后每次初始化工程都要几分钟时间。希望以后的版本能顺带优化大项目代码编译后需要扫描资源带来的超高耗时  Shader Graph  ShaderGraph支持UGUIShader 好评，和UGUI无缝衔接，再也不用手写UGUI Shade...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/aigc-computer/" title="开源免费的AI装机助手"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-10</div><div class="info-item-2">开源免费的AI装机助手</div></div><div class="info-2"><div class="info-item-1">前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：集成 DeepSeek AI 模型，提供流畅的对话体验   深度思考模式：启用推理模型（Reasoning Model），让 AI 进行深度分析和推理   多会话管理：支持创建、切换、重命名和删除多个独立对话会话   流式响应：实时显示 AI 生成的内容，提供即时反馈   会话自动保存：对话内容自动保存到本地，应用重启后可恢复   🔍 智能搜索  多引擎支持：  - 百度搜索：国内主流搜索引擎 - Bing 搜索：国际化搜索体验 - SearxNG：开源隐私保护元搜索引擎（支持实例测试和切换）   混合搜索策略：优先使用浏览器搜索，失败后自动降级到 SearxNG   搜索结果整合：A...</div></div></div></a><a class="pagination-related" href="/aigc-weixin-miniprogram/" title="基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202510111049941.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-10-10</div><div class="info-item-2">基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录</div></div><div class="info-2"><div class="info-item-1">前言 这几天心血来潮，在空闲时间做了款AI微信小程序，可以借助AI来评估用户的配置，给出完整的装机配置单等  整个开发过程在AI的帮助下还算流畅 做都做完了，可惜卡在了审核那一步，现在微信小程序如果涉及AI生成内容是要求企业主体的，需要非常多的证书。。。遂放弃，本文就记录下开发过程中踩过坑和心得 总结 AI开发进化 非常推荐安装context7 MCP，这样AI就可以自己联网搜索对应的API 也推荐将需要的官网文档下载成Markdown文件，然后让AI读取文件内容，可以保证代码更稳定和准确，网页转markdown插件：WebInk: 智能网页转Markdown工具 微信云函数 默认云函数是个简单的RPC调用，无法实现AI流式输出的功能，如果需要AI流式输出，就得在客户端使用wx.AIExtend，但是整体来说拓展性较差，比如联网搜索和MCP拓展都不支持 火山引擎 如果需要接入AI功能我推荐字节家的火山引擎，可以非常方便的创建无代码应用，然后在微信小程序通过http调用，而且拓展性极佳，例如联网搜索都是一键配置的 可惜的是自定义MCP的接入非常麻烦，而且目前后台还有bug，下载了高...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-12-20</div><div class="info-item-2">AI GC在游戏中的应用</div></div><div class="info-2"><div class="info-item-1">前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大用 当时Stable Diffuse开源（泄漏）的时候我也本地部署了WebUI玩了下，确实有抽卡炼丹的感觉，不过没深入研究，玩了两下就放那了 今年春节DeepSeek横空出世，也是赚足了眼球，我也试用了下，发现幻觉比OpenAI少很多，起码。。。他不会一直骗我，但应用还是仅限于简单的问答，没感觉对生产力有什么帮助 AI代码方面也试用过 Github Copilot，讲道理感觉一般，和之前用过Chatbox问答模式生成的代码感觉差不多，没有很惊艳的感觉，顶多就是和IDE结合紧密更方便些 前阵子也是没抱什么希望试用了下Cursor，但两周时间之后，我完全变成Cursor的形状了，只能乖乖年费...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-11</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">基础概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E6%A0%B8%E5%BF%83%E6%A6%82%E5%BF%B5%E8%A7%A3%E8%AF%BB"><span class="toc-number">2.0.1.</span> <span class="toc-text">1. 核心概念解读</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0-Machine-Learning-ML"><span class="toc-number">2.0.1.1.</span> <span class="toc-text">机器学习 (Machine Learning, ML)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C-Neural-Network-NN"><span class="toc-number">2.0.1.2.</span> <span class="toc-text">神经网络 (Neural Network, NN)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0-Deep-Learning-DL"><span class="toc-number">2.0.1.3.</span> <span class="toc-text">深度学习 (Deep Learning, DL)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B-Large-Language-Model-LLM"><span class="toc-number">2.0.1.4.</span> <span class="toc-text">大语言模型 (Large Language Model, LLM)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E8%81%94%E7%B3%BB%E4%B8%8E%E5%8C%BA%E5%88%AB"><span class="toc-number">2.0.2.</span> <span class="toc-text">2. 联系与区别</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%81%94%E7%B3%BB%EF%BC%88%E5%B1%82%E6%AC%A1%E5%85%B3%E7%B3%BB%EF%BC%89"><span class="toc-number">2.0.2.1.</span> <span class="toc-text">联系（层次关系）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%8C%BA%E5%88%AB%EF%BC%88%E5%AF%B9%E6%AF%94%E6%80%BB%E7%BB%93%EF%BC%89"><span class="toc-number">2.0.2.2.</span> <span class="toc-text">区别（对比总结）</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%E4%B8%80%E5%BC%A0%E5%9B%BE"><span class="toc-number">2.0.3.</span> <span class="toc-text">总结一张图</span></a></li></ol></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">LLM学习路线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BD%A0%E7%9A%84%E4%BC%98%E5%8A%BF%E5%88%86%E6%9E%90"><span class="toc-number">3.0.1.</span> <span class="toc-text">你的优势分析</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%9A%E5%88%B6%E5%8C%96%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%A1%88%EF%BC%9A%E2%80%9C%E4%BB%8E%E7%90%86%E8%AE%BA%E5%88%B0%E6%B8%B8%E6%88%8F%E9%9B%86%E6%88%90%E2%80%9D"><span class="toc-number">3.0.2.</span> <span class="toc-text">定制化学习方案：“从理论到游戏集成”</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%80%EF%BC%9A%E9%AB%98%E9%80%9F%E7%9B%B4%E9%80%9A%E6%A0%B8%E5%BF%83%EF%BC%88%E5%88%A9%E7%94%A8%E4%BD%A0%E7%9A%84%E5%9F%BA%E7%A1%80%EF%BC%89"><span class="toc-number">3.0.2.1.</span> <span class="toc-text">阶段一：高速直通核心（利用你的基础）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%8C%EF%BC%9A%E5%8A%A8%E6%89%8B%E5%AE%9E%E8%B7%B5%E4%B8%8E%E6%8E%A8%E7%90%86%EF%BC%88%E5%8F%91%E6%8C%A5%E4%BD%A0%E7%9A%84%E5%B7%A5%E7%A8%8B%E4%BC%98%E5%8A%BF%EF%BC%89"><span class="toc-number">3.0.2.2.</span> <span class="toc-text">阶段二：动手实践与推理（发挥你的工程优势）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%B8%89%EF%BC%9A%E5%BE%AE%E8%B0%83%E4%B8%8E%E5%AE%9A%E5%88%B6%E5%8C%96%EF%BC%88%E8%BF%9E%E6%8E%A5%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91%EF%BC%89"><span class="toc-number">3.0.2.3.</span> <span class="toc-text">阶段三：微调与定制化（连接游戏开发）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E5%9B%9B%EF%BC%9A%E9%9B%86%E6%88%90%E4%B8%8E%E9%83%A8%E7%BD%B2%EF%BC%88%E5%8F%91%E6%8C%A5%E5%BC%95%E6%93%8E%E7%BB%8F%E9%AA%8C%EF%BC%89"><span class="toc-number">3.0.2.4.</span> <span class="toc-text">阶段四：集成与部署（发挥引擎经验）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E4%BA%94%EF%BC%9A%E6%8E%A2%E7%B4%A2%E5%89%8D%E6%B2%BF%E4%B8%8E%E5%BA%94%E7%94%A8"><span class="toc-number">3.0.2.5.</span> <span class="toc-text">阶段五：探索前沿与应用</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BD%A0%E6%8E%A8%E8%8D%90%E7%9A%84%E2%80%9C%E6%8A%80%E6%9C%AF%E6%A0%88%E2%80%9D"><span class="toc-number">3.0.3.</span> <span class="toc-text">为你推荐的“技术栈”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.0.4.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">MCP开发建议</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%BD%E5%8F%AF%E8%83%BD%E5%88%A9%E7%94%A8await-async%E7%89%B9%E6%80%A7%E6%9D%A5%E4%B8%B2%E8%A1%8C%E5%A4%A7%E4%BB%BB%E5%8A%A1"><span class="toc-number">4.1.</span> <span class="toc-text">尽可能利用await/async特性来串行大任务</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%8E%8B%E7%BC%A9%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="toc-number">4.2.</span> <span class="toc-text">数据压缩的重要性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MCP-Prompt-%E7%B3%BB%E7%BB%9F%E8%AF%A6%E8%A7%A3"><span class="toc-number">4.3.</span> <span class="toc-text">MCP Prompt 系统详解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-MCP-Prompt%EF%BC%9F"><span class="toc-number">4.3.1.</span> <span class="toc-text">什么是 MCP Prompt？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%A3%E7%A0%81%E7%A4%BA%E4%BE%8B"><span class="toc-number">4.3.2.</span> <span class="toc-text">代码示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="toc-number">4.3.3.</span> <span class="toc-text">工作原理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">4.3.4.</span> <span class="toc-text">应用场景</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#MCP-Tool-vs-MCP-Prompt-%E5%AF%B9%E6%AF%94%E5%88%86%E6%9E%90"><span class="toc-number">4.4.</span> <span class="toc-text">MCP Tool vs MCP Prompt 对比分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E5%8C%BA%E5%88%AB"><span class="toc-number">4.4.1.</span> <span class="toc-text">核心区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MCP-Tool-%E7%A4%BA%E4%BE%8B"><span class="toc-number">4.4.2.</span> <span class="toc-text">MCP Tool 示例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%E5%AF%B9%E6%AF%94"><span class="toc-number">4.4.3.</span> <span class="toc-text">工作流程对比</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Tool-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.4.3.1.</span> <span class="toc-text">Tool 工作流程</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Prompt-%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B"><span class="toc-number">4.4.3.2.</span> <span class="toc-text">Prompt 工作流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">4.4.4.</span> <span class="toc-text">适用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#MCP-Tool-%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">4.4.4.1.</span> <span class="toc-text">MCP Tool 适用场景</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#MCP-Prompt-%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-number">4.4.4.2.</span> <span class="toc-text">MCP Prompt 适用场景</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E5%90%88%E4%BD%BF%E7%94%A8%E7%A4%BA%E4%BE%8B"><span class="toc-number">4.4.5.</span> <span class="toc-text">组合使用示例</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-2"><span class="toc-number">4.5.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">5.</span> <span class="toc-text">技能配置实践建议</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Deepseek"><span class="toc-number">5.1.</span> <span class="toc-text">Deepseek</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%82%A8%E7%9A%84%E5%9C%BA%E6%99%AF%E9%9C%80%E8%A6%81MCP%EF%BC%9F"><span class="toc-number">5.1.1.</span> <span class="toc-text">为什么您的场景需要MCP？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%82%A8%E7%9A%84MCP%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%BA%94%E5%85%B7%E5%A4%87%E7%9A%84%E6%A0%B8%E5%BF%83%E5%B7%A5%E5%85%B7%EF%BC%88Tools%EF%BC%89"><span class="toc-number">5.1.2.</span> <span class="toc-text">您的MCP服务器应具备的核心工具（Tools）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E6%9C%AF%E6%96%B9%E6%A1%88%E4%B8%8E%E5%BC%80%E5%8F%91%E8%B7%AF%E7%BA%BF"><span class="toc-number">5.1.3.</span> <span class="toc-text">技术方案与开发路线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA%E4%B8%8E%E8%AF%84%E4%BC%B0"><span class="toc-number">5.1.4.</span> <span class="toc-text">结论与评估</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Claude-Code-Sonnet4"><span class="toc-number">5.2.</span> <span class="toc-text">Claude Code Sonnet4</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Codex-GPT-5"><span class="toc-number">5.3.</span> <span class="toc-text">Codex GPT-5</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">6.</span> <span class="toc-text">FAQ</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%80%E4%BB%A5%E5%90%84%E7%A7%8D%E4%B8%8D%E5%90%8C%E7%9A%84%E5%A4%A7%E8%AF%AD%E8%A8%80%E6%A8%A1%E5%9E%8B%E4%B9%8B%E6%89%80%E4%BB%A5%E4%B8%8D%E5%90%8C%EF%BC%8C%E5%9C%A8%E7%BC%96%E7%A0%81%E5%92%8C%E8%A7%A3%E7%A0%81%E9%98%B6%E6%AE%B5%E7%94%A8%E7%9A%84Q-K-V%E7%9F%A9%E9%98%B5%E4%B8%8D%E5%90%8C%EF%BC%9F%E5%9B%A0%E4%B8%BA%E8%BF%99%E4%BA%9B%E7%9F%A9%E9%98%B5%E5%B0%B1%E6%98%AF%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%87%AA%E5%B7%B1%E8%AE%AD%E7%BB%83%E5%87%BA%E6%9D%A5%E7%9A%84%EF%BC%9F"><span class="toc-number">6.1.</span> <span class="toc-text">所以各种不同的大语言模型之所以不同，在编码和解码阶段用的Q,K,V矩阵不同？因为这些矩阵就是大模型自己训练出来的？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Q-K-V-%E7%9F%A9%E9%98%B5%E7%9A%84%E6%9C%AC%E8%B4%A8%EF%BC%9A%E5%8F%AF%E5%AD%A6%E4%B9%A0%E7%9A%84%E5%8F%82%E6%95%B0"><span class="toc-number">6.1.1.</span> <span class="toc-text">1. Q, K, V 矩阵的本质：可学习的参数</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%A8%A1%E5%9E%8B%E4%B9%8B%E9%97%B4%E7%9A%84%E5%B7%AE%E5%BC%82%E8%BF%9C%E4%B8%8D%E6%AD%A2%E4%BA%8E%E6%AD%A4"><span class="toc-number">6.1.2.</span> <span class="toc-text">2. 模型之间的差异远不止于此</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%82%E7%BA%A7%E4%B8%80%EF%BC%9A%E6%95%B4%E4%BD%93%E6%9E%B6%E6%9E%84-Macro-Architecture"><span class="toc-number">6.1.2.1.</span> <span class="toc-text">层级一：整体架构 (Macro Architecture)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%82%E7%BA%A7%E4%BA%8C%EF%BC%9A%E6%A8%A1%E5%9E%8B%E8%B6%85%E5%8F%82%E6%95%B0-Hyperparameters"><span class="toc-number">6.1.2.2.</span> <span class="toc-text">层级二：模型超参数 (Hyperparameters)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%82%E7%BA%A7%E4%B8%89%EF%BC%9A%E5%BE%AE%E8%A7%82%E8%AE%BE%E8%AE%A1-Micro-Design"><span class="toc-number">6.1.2.3.</span> <span class="toc-text">层级三：微观设计 (Micro Design)</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%B1%82%E7%BA%A7%E5%9B%9B%EF%BC%9A%E8%AE%AD%E7%BB%83%E6%95%B0%E6%8D%AE%E4%B8%8E%E7%9B%AE%E6%A0%87-Data-Objective"><span class="toc-number">6.1.2.4.</span> <span class="toc-text">层级四：训练数据与目标 (Data &amp; Objective)</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93%E4%B8%8E%E7%B1%BB%E6%AF%94"><span class="toc-number">6.1.3.</span> <span class="toc-text">总结与类比</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B6%E5%AE%9E%E6%88%91%E4%B8%8D%E5%A4%AA%E7%90%86%E8%A7%A3%E2%80%9C%E8%AE%AD%E7%BB%83%E2%80%9D%E8%BF%99%E4%B8%AA%E8%BF%87%E7%A8%8B%E5%88%B0%E5%BA%95%E6%98%AF%E6%80%8E%E4%B9%88%E6%A0%B7%E7%9A%84%EF%BC%8C%E5%9B%A0%E4%B8%BA%E6%88%91%E7%9C%8B%E4%BA%86Attention-Is-All-You-Need%E5%92%8C%E3%80%8AThe-Illustrated-Transformer%E3%80%8B%EF%BC%8C%E4%BC%BC%E4%B9%8E%E9%83%BD%E6%98%AF%E8%AE%B2%E8%A7%A3%E6%95%B4%E4%B8%AA%E5%A4%A7%E6%A8%A1%E5%9E%8B%E6%98%AF%E6%80%8E%E4%B9%88%E8%BF%90%E8%BD%AC%E7%9A%84%EF%BC%8C%E5%B9%B6%E6%B2%A1%E6%9C%89%E6%8F%90%E5%8F%8A%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%87%AA%E5%B7%B1%E5%86%85%E9%83%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E6%98%AF%E5%A6%82%E4%BD%95%E6%95%B4%E7%90%86%EF%BC%8C%E8%AE%AD%E7%BB%83%E5%87%BA%E6%9D%A5%E7%9A%84"><span class="toc-number">6.2.</span> <span class="toc-text">其实我不太理解“训练”这个过程到底是怎么样的，因为我看了Attention Is All You Need和《The Illustrated Transformer》，似乎都是讲解整个大模型是怎么运转的，并没有提及大模型自己内部的数据是如何整理，训练出来的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E7%B1%BB%E6%AF%94%EF%BC%9A%E6%B8%B8%E6%88%8F%E4%B8%AD%E7%9A%84%E2%80%9C%E8%87%AA%E5%8A%A8%E6%8C%82%E6%9C%BA%E5%88%B7%E5%AE%9D%E2%80%9D%E7%B3%BB%E7%BB%9F"><span class="toc-number">6.2.1.</span> <span class="toc-text">核心类比：游戏中的“自动挂机刷宝”系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E7%B1%BB%E6%AF%94%E6%98%A0%E5%B0%84%E5%88%B0LLM%E8%AE%AD%E7%BB%83"><span class="toc-number">6.2.2.</span> <span class="toc-text">将类比映射到LLM训练</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%AD%E7%BB%83LLM%E7%9A%84%E5%85%B7%E4%BD%93%E6%AD%A5%E9%AA%A4"><span class="toc-number">6.2.3.</span> <span class="toc-text">训练LLM的具体步骤</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%AE%BA%E6%96%87%E4%B8%8D%E8%AE%B2%E8%BF%99%E4%B8%AA%EF%BC%9F"><span class="toc-number">6.2.4.</span> <span class="toc-text">为什么论文不讲这个？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%80%E4%BB%A5-NPC%E7%9A%84%E2%80%9C%E5%88%A4%E6%96%AD%E5%87%BD%E6%95%B0%E2%80%9D-Transformer%E7%9A%84%E6%95%B4%E4%B8%AA%E6%9E%B6%E6%9E%84%EF%BC%8C%E5%8C%85%E6%8B%AC%E6%89%80%E6%9C%89%E7%9A%84Q%E3%80%81K%E3%80%81V%E7%9F%A9%E9%98%B5%EF%BC%8C%E5%89%8D%E9%A6%88%E7%BD%91%E7%BB%9C%E6%9D%83%E9%87%8D%E7%AD%89%E6%89%80%E6%9C%89%E5%8F%82%E6%95%B0%EF%BC%88%E5%8F%AF%E8%83%BD%E9%AB%98%E8%BE%BE%E5%8D%83%E4%BA%BF%E4%B8%AA%EF%BC%89%E3%80%82-%E6%98%AF%E4%B8%8D%E6%98%AF%E5%B0%B1%E6%98%AF%E8%AE%AD%E7%BB%83%E7%9A%84%E6%9C%80%E7%BB%88%E6%88%90%E6%9E%9C%E4%BD%93%E7%8E%B0%EF%BC%8C%E6%9C%89%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%BD%93%E7%A7%AF%E5%A4%A7%EF%BC%8C%E6%9C%89%E7%9A%84%E6%A8%A1%E5%9E%8B%E4%BD%93%E7%A7%AF%E5%B0%8F%EF%BC%8C%E5%B0%B1%E6%98%AF%E5%9B%A0%E4%B8%BA%E8%BF%99%E4%BA%9B%E6%95%B0%E6%8D%AE%E5%A4%A7%E5%B0%8F%E4%B8%8D%E4%B8%80"><span class="toc-number">6.3.</span> <span class="toc-text">所以.&nbsp;NPC的“判断函数”&nbsp;=&nbsp;Transformer的整个架构，包括所有的Q、K、V矩阵，前馈网络权重等所有参数（可能高达千亿个）。 是不是就是训练的最终成果体现，有的模型体积大，有的模型体积小，就是因为这些数据大小不一</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B7%B1%E5%85%A5%E8%A7%A3%E8%AF%BB%E2%80%9C%E5%8F%82%E6%95%B0%E2%80%9D%E4%B8%8E%E2%80%9C%E4%BD%93%E7%A7%AF%E2%80%9D"><span class="toc-number">6.3.1.</span> <span class="toc-text">深入解读“参数”与“体积”</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%87%8D%E8%A6%81%E7%9A%84%E8%A1%A5%E5%85%85%EF%BC%9A%E5%B9%B6%E9%9D%9E%E5%94%AF%E4%B8%80%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="toc-number">6.3.2.</span> <span class="toc-text">重要的补充：并非唯一的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-3"><span class="toc-number">6.3.3.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></li></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '9b0f17fdffe28cf362084795e6e989b0'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

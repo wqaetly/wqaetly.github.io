@@ -1,0 +1,356 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity Profiler学习笔记：监测你的应用 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 要在目标发布平台上配置您的应用程序，请将目标设备连接到您的网络或通过电缆（emmm，应该指的是usb，typec，雷电这种吧）直接连接到您的计算机。您还可以在Unity编辑器中直接对应用程序进行分析，以便在应用程序开发期间大致分析结果。 Remote profiling（远程性能分析） 你只能在Development Build勾选的情况下才能对应用程序进行性能分析。要设置此设置，请转到Bu">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity Profiler学习笔记：监测你的应用">
+<meta property="og:url" content="https://www.lfzxb.top/unity-profiler-profilingapp/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 要在目标发布平台上配置您的应用程序，请将目标设备连接到您的网络或通过电缆（emmm，应该指的是usb，typec，雷电这种吧）直接连接到您的计算机。您还可以在Unity编辑器中直接对应用程序进行分析，以便在应用程序开发期间大致分析结果。 Remote profiling（远程性能分析） 你只能在Development Build勾选的情况下才能对应用程序进行性能分析。要设置此设置，请转到Bu">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unity Profiler学习笔记：监测你的应用",
+  "url": "https://www.lfzxb.top/unity-profiler-profilingapp/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-profiler-profilingapp/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity Profiler学习笔记：监测你的应用',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Unity Profiler学习笔记：监测你的应用</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Unity Profiler学习笔记：监测你的应用</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>4分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unity-profiler-profilingapp/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h3 id="前言">前言</h3>
+<p>要在目标发布平台上配置您的应用程序，请将目标设备连接到您的网络或通过电缆（emmm，应该指的是usb，typec，雷电这种吧）直接连接到您的计算机。您还可以在Unity编辑器中直接对应用程序进行分析，以便在应用程序开发期间大致分析结果。</p>
+<h3 id="Remote-profiling（远程性能分析）">Remote profiling（远程性能分析）</h3>
+<p>你只能在Development Build勾选的情况下才能对应用程序进行性能分析。要设置此设置，请转到Build Settings(File &gt; Build Settings)并选择应用程序的目标平台。 您还可以选中Autoconnect Profiler，使Unity编辑器在构建过程中将其IP地址烘焙到内置播放器中。当你启动播放器时，它会尝试连接到分析器 指向位于烤好的IP地址的编辑器。 <img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp" alt="" loading='lazy'> 当您构建并运行应用程序时，播放器将出现在Profiler窗口的Attach to player下拉框中。“Attach to Player”下拉菜单显示所有运行在你本地网络上的Unity应用。您可以根据应用类型和运行应用的主机名(例如，iPhonePlayer (Toms iPhone))来识别这些应用。 然后单击Record开始收集应用程序上的性能信息。 如果在Build Settings中启用了Autoconnect to Profiler, Unity将在应用程序启动时自动开始收集数据。 要在应用程序运行时连续收集数据，请在应用设置Run In Background (Edit &gt; Project Settings &gt; Player &gt; Resolution and Presentation)。 当您启用此设置时，即使您让应用程序在后台运行，Profiler也会收集数据。 如果禁用它，则Profiler只在应用程序在活动窗口中运行时收集数据。</p>
+<h3 id="Profiling-in-the-Unity-Editor（在Unity编辑器中进行概要分析）">Profiling in the Unity Editor（在Unity编辑器中进行概要分析）</h3>
+<p>如果使用Profiler窗口在编辑器中运行和配置应用程序，那么结果只是和目标平台运行应用程序时差不多，并不准确。 因为Play模式运行在与编辑器相同的进程中，所以您不能完全将应用程序的CPU、GPU和内存使用与Unity隔离开来。 这进一步扭曲了结果分析数据。 为了获得更准确的分析结果，您应该始终在目标设备上分析应用程序。</p>
+<h3 id="WebGL">WebGL</h3>
+<p>你可以在WebGL中使用Unity分析器，但是你不能通过WebGL把Profiler附加到正在运行的应用身上。 这是因为WebGL使用WebSockets进行通信，它不允许在浏览器端引入连接。 要附加到正在运行的播放器，您需要在Build Settings(菜单:File &gt; Build Settings)中启用Autoconnect Profiler复选框。 <code>Unity不能为WebGL监测draw calls消耗。</code></p>
+<h3 id="Profiling-on-mobile-devices（监测移动端）">Profiling on mobile devices（监测移动端）</h3>
+<p>iOS和Android设备都支持通过网络进行远程分析。 如果您正在使用防火墙，请在防火墙的出站规则中打开端口54998到55511。 这些是Unity用于远程分析的端口。 注意:有时，当您设置远程概要时，Unity编辑器可能不会自动连接到设备。 如果发生这种情况，您可以手动启动Profiler连接。 为此，在Profiler窗口中选择Attach To Player下拉菜单并选择适当的设备。 您还可以将目标设备直接插入计算机，以避免网络或连接问题。</p>
+<h4 id="iOS远程配置">iOS远程配置</h4>
+<p>要在iOS设备上启用远程分析，请遵循以下步骤: 1. 将iOS设备连接到WiFi网络。分析器使用本地WiFi网络将分析数据从设备发送到Unity编辑器。 2. 通过电缆把你的设备连接到你的电脑上。转到Build Settings(菜单:File &gt; Build Settings)，启用Development Build和Autoconnect Profiler复选框，然后选择Build &amp; Run。 3. 当应用程序在设备上启动时，在Unity编辑器中打开Profiler窗口(菜单:window &gt; Analysis &gt; Profiler)。</p>
+<h4 id="Android远程配置">Android远程配置</h4>
+<p>Android设备支持两种远程分析方法:通过WiFi或通过Android Debug Bridge (adb)。 关于WiFi配置，请遵循以下步骤: 1. 禁用Android设备上的移动数据。 2. 将Android设备连接到WiFi网络。分析器使用本地WiFi网络将分析数据从设备发送到Unity编辑器。 3. 通过电缆把你的设备连接到你的电脑上。转到Build Settings(菜单:File &gt; Build Settings)，启用Development Build和Autoconnect Profiler复选框，然后选择Build &amp; Run。 4. 当应用程序在设备上启动时，在Unity编辑器中打开Profiler窗口(菜单:window &gt; Analysis &gt; Profiler)。 注意:运行Unity编辑器的Android设备和主机必须位于同一子网上，这样才能检测设备。 对于Android Debug Bridge (adb)概要，请遵循以下步骤:</p>
+<ol>
+<li>将您的设备通过电缆连接到计算机上，并确保它在adb中显示</li>
+<li>设备列表。</li>
+<li>转到Build Settings(菜单:File &gt; Build Settings)，启用Development Build复选框，然后选择Build &amp; Run</li>
+<li>当应用程序在设备上启动时，在Unity编辑器中打开Profiler窗口(菜单:window &gt; Analysis &gt; Profiler)。</li>
+<li>从“ Attach to Player ”下拉菜单中，选择AndroidProfiler(ADB@127.0.0.1:34999)。下拉菜单中的条目只有在所选目标为Android时才可见。 当您选择Build &amp; Run时，Unity编辑器会自动为您的应用程序创建一个adb通道。 如果希望配置另一个应用程序，或者重启adb服务器，则必须手动配置此隧道。 为此，打开终端窗口或CMD提示符并输入:</li>
+</ol>
+<p><code>adb forward tcp:34999 localabstract:Unity-{insert bundle identifier here}</code> 要在Android构建中使用 <code>Deep Profiling</code> ，你需要在Android Player设置中启用Mono Scripting Backend(菜单:Edit &gt; Project Settings &gt; Player &gt; Android &gt; Other Settings)，并输入以下命令，通过adb命令开始游戏: ~$ adb shell am start -n {insert bundle identifier here}/com.unity3d.player.UnityPlayerActivity -e ‘unity’ ‘-deepprofiling’</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-profiler-profilingapp/">https://www.lfzxb.top/unity-profiler-profilingapp/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a><a class="pagination-related" href="/unity-profiler-cpu-usage-profiler-module/" title="Unity Profiler学习笔记：CPU使用分析器模块"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-cpu-timeline-view.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity Profiler学习笔记：CPU使用分析器模块</div></div><div class="info-2"><div class="info-item-1">CPU Usage Profiler module CPU使用分析器模块的图表显示了在应用程序中花费的时间。它包含应用程序花费时间的所有重要领域的概述，比如渲染,它的脚本和动画[toc]。本文包括: - CPU使用图表 - CPU使用模块详细信息窗格 - Timeline视图 - 层次结构和原始层次结构视图 - 常见的样品 - 性能警告 - 分配调用堆栈 - 只有在编辑器模式下才会出现的样例 Chart categories（图表类） CPU使用分析器模块的图表跟踪应用程序主线程上花费的时间。时间花费分为九类。您可以通过在图表的图例中拖放类别来更改图表中的类别顺序。您还可以单击类别的彩色图例来切换其显示。 Rendering（渲染） 应用程序在渲染图形上花费的时间。 Scripts（脚本） 应用程序在运行脚本上花费的时间。 Physics（物理） 应用程序在物理引擎上花费的时间 Animation（动画） 您的应用程序在动画化SkinnedMeshRenderers、GameObjects上花费的时间 以及应用程序中的其他组件。这还包括用于系统动画和Animator组件的一些计算...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/a-visual-tool-for-npbahave/" title="为NPBehave而生的可视化编辑器介绍"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/01/QQ截图20200125144426.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">为NPBehave而生的可视化编辑器介绍</div></div><div class="info-2"><div class="info-item-1">介绍 什么是NPBehave？https://www.lfzxb.top/npbehave_doc/ 使用到的库 ET：一个基于C#的游戏客户端，服务端框架！ Node_Editor_Framework：一个强大的可视化工具！ Odin：Unity编辑器拓展神器！ 编辑器截图 这是一个官方例子的可视化版本  支持导出配置文件，供客户端或者服务端读取  运行结果与官方示例一致  使用方法 1.在Unity编辑器的菜单栏，选择Tools/其他实用工具/多功能可视化编辑器即可进入编辑界面 2.然后这样可以创建一个Canvas  3.随便找个空地进行右击  4.鼠标左键点击某一个数据结点即可在Inspector面板显示其包含的数据  5.然后按照自己想要的结果把他们连接起来 6.鼠标左键点击一个空地，即可调出导出配置界面，然后即可进行导出工作。 7.最后在代码里创建自己想要的行为树，Start即可，其中的ID即为我们导出配置时上面显示的根节点ID！ 12NP_RuntimeTree npRuntimeTree = NP_RuntimeTreeFactory.CreateNpRuntime...</div></div></div></a><a class="pagination-related" href="/achieve-lol-attack-speed/" title="理解并实现LOL中的攻速机制"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907003938.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">理解并实现LOL中的攻速机制</div></div><div class="info-2"><div class="info-item-1">前言 攻速机制是Moba游戏中非常重要的机制之一，他会和状态机制，Buff机制产生联系，但是网上却少有详细介绍攻速机制并实现的文章，故有此文。 名词定义 因为为了描述清楚攻速机制需要有一些专有名词，为了避免歧义，本文中的名词及其相关释义如下所示（下面提到的所有概念均为我们逻辑层概念，和动画没有任何关系）   基本攻速：也即基础攻击间隔（BAT）的倒数，即两次攻击之间的间隔时长，比如一个英雄BAT为0.5，即0.5s攻击一次，那么它的基本攻速就是2，大部分英雄基本攻速不一样   攻速收益：对于攻速加成的实际转换比例，比如一双攻速鞋+35%攻速，如果一个英雄攻速收益是50%，那么他真正获得的额外攻速就是17.5%，大部分攻速收益不一样   额外攻速：是指通过Buff，装备，技能，等级成长获得的攻速，计算公式为：额外攻速 = 额外攻速加成 * 攻速收益   总攻速：计算公式为：最终攻速 = 基本攻速 + 额外攻速   基础攻击前摇：攻击打出伤害之前的时间段，在此时间段中对攻击指令进行主动/被动取消都将终止此次攻击，并且没有伤害，大部分英雄基础攻击前摇不一样   攻击前摇：计算公式：基础...</div></div></div></a><a class="pagination-related" href="/blackboard-0gc-write/" title="实现行为树黑板模块0GC赋值功能"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">实现行为树黑板模块0GC赋值功能</div></div><div class="info-2"><div class="info-item-1">引言 因为行为树中的黑板模块可以存储任意类型的数据，并且默认是以System.Object存储的，所以我们在进行赋值的时候，难免会出现装箱的情况，偶尔的一次装箱也没什么，如果是每帧的装箱。。。不会真有人能忍吧，不会吧，不会吧，不会吧 再多说几句，目前我在使用行为树做技能编辑器，之所以可能会出现上面说的每帧的装箱的情况，是因为我打算把行为树中所有的关键数据都放到黑板中，这样有很多好处  方便状态预测/回滚 方便Debug，逐帧调试 方便满足策划的所见即所得需求  上面说的这些我会在实现之后再和大家分享，有兴趣的可以先关注我的开源Moba项目  正文 要实现黑板赋值的0GC，就是要把他的装箱那一步给去掉，所以理所当然的，我们要自己封装数据类型 基类 1234public abstract class ANP_BBValue{    public abstract Type NP_BBValueType { get; }} 12345public interface INP_BBValue&lt;T&gt;{    T GetValue...</div></div></div></a><a class="pagination-related" href="/box2d-advance/" title="Box2D篇：进阶知识整合（刚体操作，碰撞处理）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190706131958.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">Box2D篇：进阶知识整合（刚体操作，碰撞处理）</div></div><div class="info-2"><div class="info-item-1">刚体操作 DestroyFixture(b2Fixture) 删除b2Fixture组件 通过b2World.Raycast和b2World.QueryAABB来获取要删除的b2Fixture组件 ApplyForce(force,point) 添加作用力到刚体上 force：要施加的力的大小，单位是N point：要施加力的点,这是一个全局坐标（世界坐标） ApplyImpulse(impulse,point) 添加冲量,单位是N*m。 ApplyTorque(Torque) Torque:扭力大小，为正表示顺时针，为负表示逆时针，单位kg*rad/s GetLoaclXXX,GetWorldXXX 用来实现本地坐标，向量和全局坐标，向量之间的转换 GetLocalCenter 获取刚体重心的本地坐标 GerWorldCenter 获取刚体重心的全局坐标 GetLoalPoint(worldPoint) 获取全局坐标点worldpoint在刚体坐标系统中的本地坐标 GetWorldPoint(localPoint) 获取本地坐标点localPoint在舞台坐标系统中的全局坐标 ...</div></div></div></a><a class="pagination-related" href="/box2d-baseknowledge/" title="Box2D篇：基础知识整合"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190705163811.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">Box2D篇：基础知识整合</div></div><div class="info-2"><div class="info-item-1">初入Box2D 创建Box2D物理世界 12// Vector2为x与y方向加速度World = new World(new Vector2(0, -9.8f)); 明确换算单位 Box2D中的计量单位是米（m）,而目前大部分的平台渲染都是基于像素px的，所以在进行渲染计算时，要注意对坐标或形状尺寸进行转换。通常 $$1m=30px$$ 开启2D模拟 调用World.Step(float timeStep);函数进行世界的模拟与刷新。 注意Box2D中计时单位是秒，不是帧！ timeStep 每次调用刷新函数间隔，由于Box2D世界计时单位是秒，所以要进行转化。 比如你游戏想运行在60帧，即一秒刷新60次，每次耗时1/60秒，那么timeStep = 1/60; 初识刚体 什么是刚体 一个固态的物体，他至少包含看得见或者摸得着这两个特性之一。 b2Body是Box2D的核心类，是学习Box2D的基础，也是重中之重。 创建刚体 创建一个刚体，不单单是b2Body的事情，还要创建多个对象，包括b2BodyDef和b2FixtureDef对象，然后在这些对象的协同合作下，完成刚体的创建...</div></div></div></a><a class="pagination-related" href="/box2d-collisionrelationvisualeditor/" title="Box2D篇：碰撞关系可视化编辑器"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190801215422.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-08-01</div><div class="info-item-2">Box2D篇：碰撞关系可视化编辑器</div></div><div class="info-2"><div class="info-item-1">前言 我们在游戏中难免会有碰撞检测然后进行处理这一需求，那么，错综复杂的碰撞关系无疑就成了一大设计难点，规模和数量少点还好说，直接写在代码即可，规模一大，就需要借助excel的帮助下，但是也免不了使用true/false作为标识，在修改，拓展的时候麻烦，在读取数据的时候会造成不必要的空间浪费。（我明明没可能和这个东西碰撞，为什么还要单独给他一个bool字段呢？）。所以我就想着，能不能做个东西，稍微缓解一下这个问题，于是就有了今天这篇文章。 相关知识点  Node_Editor_Framework，开源地址:https://github.com/Seneral/Node_Editor_Framework Odin相关特性 Bson序列化反序列化数据  正文 先放一张编辑器图片  这就是使用了Node_Editor_Framework的编辑器，我们可以看到，在里面对不同的碰撞体进行了分组（分类）操作，然后根据需求进行连线即可。 至于数据的处理，我提供了很多一键傻瓜式按钮，只需要点一下就行。 创建数据  首先是Create Group，此操作将会创建一个Group，所有在此Group中...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Remote-profiling%EF%BC%88%E8%BF%9C%E7%A8%8B%E6%80%A7%E8%83%BD%E5%88%86%E6%9E%90%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">Remote profiling（远程性能分析）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Profiling-in-the-Unity-Editor%EF%BC%88%E5%9C%A8Unity%E7%BC%96%E8%BE%91%E5%99%A8%E4%B8%AD%E8%BF%9B%E8%A1%8C%E6%A6%82%E8%A6%81%E5%88%86%E6%9E%90%EF%BC%89"><span class="toc-number">3.</span> <span class="toc-text">Profiling in the Unity Editor（在Unity编辑器中进行概要分析）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#WebGL"><span class="toc-number">4.</span> <span class="toc-text">WebGL</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Profiling-on-mobile-devices%EF%BC%88%E7%9B%91%E6%B5%8B%E7%A7%BB%E5%8A%A8%E7%AB%AF%EF%BC%89"><span class="toc-number">5.</span> <span class="toc-text">Profiling on mobile devices（监测移动端）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#iOS%E8%BF%9C%E7%A8%8B%E9%85%8D%E7%BD%AE"><span class="toc-number">5.1.</span> <span class="toc-text">iOS远程配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Android%E8%BF%9C%E7%A8%8B%E9%85%8D%E7%BD%AE"><span class="toc-number">5.2.</span> <span class="toc-text">Android远程配置</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'eaf103746418b28828524a4f86b10843'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

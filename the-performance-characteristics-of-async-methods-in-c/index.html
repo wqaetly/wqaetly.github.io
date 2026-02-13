@@ -1,0 +1,461 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>C#篇：C#中异步方法的性能特征 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文翻译自 https://blogs.msdn.microsoft.com/seteplia/2018/01/25/the-performance-characteristics-of-async-methods/ 在前两篇博客文章中，我们讨论了c#中异步方法的内部原理，然后讨论了c#编译器为调整异步方法的行为提供的扩展点。今天我们将探讨异步方法的性能特征。 正如您在本系列的第一篇文章中已经知道">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C#篇：C#中异步方法的性能特征">
+<meta property="og:url" content="https://www.lfzxb.top/the-performance-characteristics-of-async-methods-in-c/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文翻译自 https://blogs.msdn.microsoft.com/seteplia/2018/01/25/the-performance-characteristics-of-async-methods/ 在前两篇博客文章中，我们讨论了c#中异步方法的内部原理，然后讨论了c#编译器为调整异步方法的行为提供的扩展点。今天我们将探讨异步方法的性能特征。 正如您在本系列的第一篇文章中已经知道">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="编程语言">
+<meta property="article:tag" content="CSharp">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "C#篇：C#中异步方法的性能特征",
+  "url": "https://www.lfzxb.top/the-performance-characteristics-of-async-methods-in-c/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/the-performance-characteristics-of-async-methods-in-c/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'C#篇：C#中异步方法的性能特征',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">C#篇：C#中异步方法的性能特征</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">C#篇：C#中异步方法的性能特征</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/CSharp/">CSharp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/the-performance-characteristics-of-async-methods-in-c/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="本文翻译自">本文翻译自</h2>
+<p><strong><a target="_blank" rel="noopener" href="https://blogs.msdn.microsoft.com/seteplia/2018/01/25/the-performance-characteristics-of-async-methods/">https://blogs.msdn.microsoft.com/seteplia/2018/01/25/the-performance-characteristics-of-async-methods/</a></strong> 在前两篇博客文章中，我们讨论了c#中异步方法的内部原理，然后讨论了c#编译器为调整异步方法的行为提供的扩展点。今天我们将探讨异步方法的性能特征。 正如您在本系列的第一篇文章中已经知道的，编译器做了很多转换，使异步编程体验与同步编程非常相似。但要做到这一点，编译器创建一个状态机实例，将它传递给一个异步方法构建器，调用task awaiter等。显然，所有这些逻辑都有自己的代价，但我们要付出多少代价呢? 在tpl之前，异步操作通常是相当粗粒度的，因此异步操作的开销可能可以忽略不计。但今天，即使是相对简单的应用程序每秒也可能有数百甚至数千次异步操作。TPL的设计考虑到了这种工作负载，但它并不神奇，它有一些开销。 要度量异步方法的开销，将使用我们在第一篇博客文章中使用的稍微修改过的示例。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">StockPrices</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="built_in">int</span> Count = <span class="number">100</span>;</span><br><span class="line">    <span class="keyword">private</span> List&lt;(<span class="built_in">string</span> name, <span class="built_in">decimal</span> price)&gt; _stockPricesCache;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Async version</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">async</span> Task&lt;<span class="built_in">decimal</span>&gt; <span class="title">GetStockPriceForAsync</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> InitializeMapIfNeededAsync();</span><br><span class="line">        <span class="keyword">return</span> DoGetPriceFromCache(companyId);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Sync version that calls async init</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceFor</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">    {</span><br><span class="line">        InitializeMapIfNeededAsync().GetAwaiter().GetResult();</span><br><span class="line">        <span class="keyword">return</span> DoGetPriceFromCache(companyId);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Purely sync version</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetPriceFromCacheFor</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">    {</span><br><span class="line">        InitializeMapIfNeeded();</span><br><span class="line">        <span class="keyword">return</span> DoGetPriceFromCache(companyId);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="built_in">decimal</span> <span class="title">DoGetPriceFromCache</span>(<span class="params"><span class="built_in">string</span> name</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">foreach</span> (<span class="keyword">var</span> kvp <span class="keyword">in</span> _stockPricesCache)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">if</span> (kvp.name == name)</span><br><span class="line">            {</span><br><span class="line">                <span class="keyword">return</span> kvp.price;</span><br><span class="line">            }</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> InvalidOperationException(<span class="string">$"Can't find price for '<span class="subst">{name}</span>'."</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    [<span class="meta">MethodImpl(MethodImplOptions.NoInlining)</span>]</span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">InitializeMapIfNeeded</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// Similar initialization logic.</span></span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">async</span> Task <span class="title">InitializeMapIfNeededAsync</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (_stockPricesCache != <span class="literal">null</span>)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        }</span><br><span class="line"></span><br><span class="line">        <span class="keyword">await</span> Task.Delay(<span class="number">42</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Getting the stock prices from the external source.</span></span><br><span class="line">        <span class="comment">// Generate 1000 items to make cache hit somewhat expensive</span></span><br><span class="line">        _stockPricesCache = Enumerable.Range(<span class="number">1</span>, Count)</span><br><span class="line">            .Select(n =&gt; (name: n.ToString(), price: (<span class="built_in">decimal</span>)n))</span><br><span class="line">            .ToList();</span><br><span class="line">        _stockPricesCache.Add((name: <span class="string">"MSFT"</span>, price: <span class="number">42</span>));</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>StockPrices类使用来自外部源的股票价格填充缓存，并提供一个API来查询它。与第一篇文章示例的主要区别在于从字典切换到价格列表。为了度量不同形式的异步方法与同步方法的开销，操作本身至少应该做一些工作，并对股票价格模型进行线性搜索。 GetPricesFromCache故意使用普通循环构建，以避免任何分配。</p>
+<h3 id="同步版本对比">同步版本对比</h3>
+<h4 id="基于任务的异步版本">基于任务的异步版本</h4>
+<p>在第一个基准测试中，我们比较了调用异步初始化方法的异步方法(GetStockPriceForAsync)、调用异步初始化方法的同步方法(GetStockPriceFor)和调用同步初始化方法的同步方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">readonly</span> StockPrices _stockPrices = <span class="keyword">new</span> StockPrices();</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SyncVsAsyncBenchmark</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// Warming up the cache</span></span><br><span class="line">    _stockPrices.GetStockPriceForAsync(<span class="string">"MSFT"</span>).GetAwaiter().GetResult();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetPricesDirectlyFromCache</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPrices.GetPriceFromCacheFor(<span class="string">"MSFT"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">Benchmark(Baseline = true)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceFor</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPrices.GetStockPriceFor(<span class="string">"MSFT"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceForAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPrices.GetStockPriceForAsync(<span class="string">"MSFT"</span>).GetAwaiter().GetResult();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>The results are:</p>
+<p>Method</p>
+<p>Mean</p>
+<p>Scaled</p>
+<p>Gen 0</p>
+<p>Allocated</p>
+<p>GetPricesDirectlyFromCache</p>
+<p>2.177 us</p>
+<p>0.96</p>
+<p>-</p>
+<p>0 B</p>
+<p>GetStockPriceFor</p>
+<p>2.268 us</p>
+<p>1.00</p>
+<p>-</p>
+<p>0 B</p>
+<p>GetStockPriceForAsync</p>
+<p>2.523 us</p>
+<p>1.11</p>
+<p>0.0267</p>
+<p>88 B</p>
+<p>这些数据已经非常有趣: 异步方法相当快。GetPricesForAsync在这个基准测试中同步完成，它比纯同步方法慢15%。 (调用异步InitializeMapIfNeededAsync方法的同步GetPricesFor方法具有更低的开销，但最令人惊讶的是它根本没有分配(上表中分配的列对于GetPricesDirectlyFromCache和GetStockPriceFor都是0)。 当然，对于所有可能的情况，您不能说异步方法同步运行时异步机制的开销是15%。百分比与方法所做的工作量非常相关。测量异步方法(不做任何事)和同步方法(不做任何事)的纯方法调用开销将显示出巨大的差异。这个基准测试的目的是表明，做相对少量工作的异步方法的开销是适度的。 调用InitializeMapIfNeededAsync怎么可能完全没有分配呢?我在本系列的第一篇文章中已经提到，异步方法必须在托管头中分配至少一个对象—任务实例本身。让我们来探索这方面。</p>
+<h3 id="优化">优化</h3>
+<h4 id="1。如果可能，缓存任务实例">1。如果可能，缓存任务实例</h4>
+<p>前一个问题的答案非常简单:AsyncMethodBuilder为每个成功完成的异步操作使用一个任务实例。返回任务的async方法依赖于AsyncMethodBuilder，它在SetResult方法中具有以下逻辑:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AsyncMethodBuilder.cs from mscorlib</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">SetResult</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// I.e. the resulting task for all successfully completed</span></span><br><span class="line">    <span class="comment">// methods is the same -- s_cachedCompleted.</span></span><br><span class="line"></span><br><span class="line">    m_builder.SetResult(s_cachedCompleted);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>SetResult方法只针对成功完成任务的异步方法调用，并且可以轻松共享每个基于任务的方法的成功结果。我们甚至可以通过下面的测试来观察这种行为:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Test</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AsyncVoidBuilderCachesResultingTask</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> t1 = Foo();</span><br><span class="line">    <span class="keyword">var</span> t2 = Foo();</span><br><span class="line"></span><br><span class="line">    Assert.AreSame(t1, t2);</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">async</span> Task <span class="title">Foo</span>()</span> { }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>但这不是唯一可能发生的优化。AsyncTaskMethodBuilder做了类似的优化:它缓存任务和其他一些基本类型的任务。例如，它缓存了一系列整数类型的所有默认值，并为Task提供了一个特殊的缓存，用于[-1;9)(更多信息请参见AsyncTaskMethodBuilder.gettaskforresult())。 下面的测试证明确实如此:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Test</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">AsyncTaskBuilderCachesResultingTask</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// These values are cached</span></span><br><span class="line">    Assert.AreSame(Foo(<span class="number">-1</span>), Foo(<span class="number">-1</span>));</span><br><span class="line">    Assert.AreSame(Foo(<span class="number">8</span>), Foo(<span class="number">8</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// But these are not</span></span><br><span class="line">    Assert.AreNotSame(Foo(<span class="number">9</span>), Foo(<span class="number">9</span>));</span><br><span class="line">    Assert.AreNotSame(Foo(<span class="built_in">int</span>.MaxValue), Foo(<span class="built_in">int</span>.MaxValue));</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">async</span> Task&lt;<span class="built_in">int</span>&gt; <span class="title">Foo</span>(<span class="params"><span class="built_in">int</span> n</span>)</span> =&gt; n;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>您不应该过分依赖这种行为，但是您应该知道，语言和框架的作者尽了最大的努力以各种可能的方式微调性能。缓存任务是一种常见的优化模式，也用于其他地方。例如，corefx repo中的新套接字实现严重依赖于这种优化，并尽可能使用缓存的任务。</p>
+<h4 id="2-使用ValueTask">2:使用ValueTask</h4>
+<p>上面提到的优化只在少数情况下有效。我们可以使用ValueTask(**)代替依赖它:一个特殊的类似于任务的值类型，如果方法同步完成，它将不会分配。 ValueTask实际上是T和Task的区别结合:如果完成了“value Task”，那么将使用底层值。如果底层承诺尚未完成，则将分配任务。 当操作同步完成时，这种特殊类型有助于避免不必要的堆分配。要使用ValueTask，我们只需要将GetStockPriceForAsync的返回类型从Task&lt;decimal更改为ValueTask:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">GetStockPriceForAsync</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> InitializeMapIfNeededAsync();</span><br><span class="line">    <span class="keyword">return</span> DoGetPriceFromCache(companyId);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>现在我们可以用这个额外的基准来衡量它们之间的差异:[toc]</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceWithValueTaskAsync_Await</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPricesThatYield.GetStockPriceValueTaskForAsync(<span class="string">"MSFT"</span>).GetAwaiter().GetResult();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>结果如下:</p>
+<p>Method</p>
+<p>Mean</p>
+<p>Scaled</p>
+<p>Gen 0</p>
+<p>Allocated</p>
+<p>GetPricesDirectlyFromCache</p>
+<p>1.260 us</p>
+<p>0.90</p>
+<p>-</p>
+<p>0B</p>
+<p>GetStockPriceFor</p>
+<p>1.399 us</p>
+<p>1.00</p>
+<p>-</p>
+<p>0B</p>
+<p>GetStockPriceForAsync</p>
+<p>1.552 us</p>
+<p>1.11</p>
+<p>0.0267</p>
+<p>88B</p>
+<p>GetStockPriceWithValueTaskAsync</p>
+<p>1.519 us</p>
+<p>1.09</p>
+<p>-</p>
+<p>0B</p>
+<p>正如您可能看到的，基于ValueTask的版本只是比基于Task的版本快一点。主要的区别是缺少堆分配。我们稍后将讨论是否值得进行这种切换，但在此之前，我想讨论一个棘手的优化问题。</p>
+<h4 id="3-避免在公共路径上使用异步机制">3.避免在公共路径上使用异步机制</h4>
+<p>如果您有一个使用非常广泛的异步方法，并且希望进一步减少开销，您可以考虑以下优化:您可以删除async修饰符，检查方法中的任务状态，并同步执行整个操作，而根本不需要处理异步机制。 听起来复杂吗?让我们来看看这个例子。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">GetStockPriceWithValueTaskAsync_Optimized</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> task = InitializeMapIfNeededAsync();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Optimizing for acommon case: no async machinery involved.</span></span><br><span class="line">    <span class="keyword">if</span> (task.IsCompleted)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> ValueTask&lt;<span class="built_in">decimal</span>&gt;(DoGetPriceFromCache(companyId));</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> DoGetStockPricesForAsync(task, companyId);</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">async</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">DoGetStockPricesForAsync</span>(<span class="params">Task initializeTask, <span class="built_in">string</span> localCompanyId</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> initializeTask;</span><br><span class="line">        <span class="keyword">return</span> DoGetPriceFromCache(localCompanyId);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在本例中，方法getstockpricewithvaluetaskasync_没有async修饰符，当它从InitializeMapIfNeededAsyncmethod获取任务时，它会检查任务是否已经完成。如果任务已经完成，它只调用DoGetPriceFromCache来立即获得结果。但如果初始化任务仍在运行，则调用本地函数等待结果。 使用局部函数不是唯一的选择，而是最简单的选择之一。但有一个警告。局部函数最自然的实现将捕获一个封闭状态:局部变量和参数:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">GetStockPriceWithValueTaskAsync_Optimized2</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// Oops! This will lead to a closure allocation at the beginning of the method!</span></span><br><span class="line">    <span class="keyword">var</span> task = InitializeMapIfNeededAsync();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Optimizing for acommon case: no async machinery involved.</span></span><br><span class="line">    <span class="keyword">if</span> (task.IsCompleted)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> ValueTask&lt;<span class="built_in">decimal</span>&gt;(DoGetPriceFromCache(companyId));</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> DoGetStockPricesForAsync();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">async</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">DoGetStockPricesForAsync</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> task;</span><br><span class="line">        <span class="keyword">return</span> DoGetPriceFromCache(companyId);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>但不幸的是，由于编译器错误，即使方法在公共路径上完成，这段代码也会分配一个闭包。下面是这个方法的内幕:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ValueTask&lt;<span class="built_in">decimal</span>&gt; <span class="title">GetStockPriceWithValueTaskAsync_Optimized</span>(<span class="params"><span class="built_in">string</span> companyId</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> closure = <span class="keyword">new</span> __DisplayClass0_0()</span><br><span class="line">    {</span><br><span class="line">        __this = <span class="keyword">this</span>,</span><br><span class="line">        companyId = companyId,</span><br><span class="line">        task = InitializeMapIfNeededAsync()</span><br><span class="line">    };</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (closure.task.IsCompleted)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> ...</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// The rest of the code</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>正如我们在“剖析c#中的局部函数”中讨论的，编译器对给定范围内的所有局部变量/参数使用共享闭包实例。因此，这种代码生成类型是有意义的，但它使整个堆分配斗争变得毫无意义。 提示:这种优化非常棘手。这样做的好处非常小，即使您正确地编写了原始的本地函数，您也可以在将来轻松地进行更改，并意外地捕获导致堆分配的封闭状态。如果您使用的是一个高度可重用的库，比如BCL，那么您仍然可以使用优化，方法肯定会在热路径上使用。 等待任务的开销 到目前为止，我们只讨论了一种特定的情况:同步完成的异步方法的开销。这是故意的。异步方法越“小”，它的总体性能开销就越明显。细粒度异步方法的工作量更少，并且更经常以同步方式完成。我们倾向于更频繁地给他们打电话。 但是，当一个方法“等待”一个未完成的任务时，我们应该知道异步机制的开销。为了测量这个开销，我们改变InitializeMapIfNeededAsync来调用Task.Yield()，即使缓存已经初始化:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">async</span> Task <span class="title">InitializeMapIfNeededAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (_stockPricesCache != <span class="literal">null</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> Task.Yield();</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Old initialization logic</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>让我们用以下方法扩展我们的性能基准测试套件:</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceFor_Await</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPricesThatYield.GetStockPriceFor(<span class="string">"MSFT"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceForAsync_Await</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPricesThatYield.GetStockPriceForAsync(<span class="string">"MSFT"</span>).GetAwaiter().GetResult();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line">[<span class="meta">Benchmark</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="built_in">decimal</span> <span class="title">GetStockPriceWithValueTaskAsync_Await</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">return</span> _stockPricesThatYield.GetStockPriceValueTaskForAsync(<span class="string">"MSFT"</span>).GetAwaiter().GetResult();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>结果如下</p>
+<p>Method</p>
+<p>Mean</p>
+<p>Scaled</p>
+<p>Gen 0</p>
+<p>Gen 1</p>
+<p>Allocated</p>
+<p>GetStockPriceFor</p>
+<p>2.332 us</p>
+<p>1.00</p>
+<p>-</p>
+<p>-</p>
+<p>0 B</p>
+<p>GetStockPriceForAsync</p>
+<p>2.505 us</p>
+<p>1.07</p>
+<p>0.0267</p>
+<p>-</p>
+<p>88 B</p>
+<p>GetStockPriceWithValueTaskAsync</p>
+<p>2.625 us</p>
+<p>1.13</p>
+<p>-</p>
+<p>-</p>
+<p>0 B</p>
+<p>GetStockPriceFor_Await</p>
+<p>6.441 us</p>
+<p>2.76</p>
+<p>0.0839</p>
+<p>0.0076</p>
+<p>296 B</p>
+<p>GetStockPriceForAsync_Await</p>
+<p>10.439 us</p>
+<p>4.48</p>
+<p>0.1577</p>
+<p>0.0122</p>
+<p>553 B</p>
+<p>GetStockPriceWithValueTaskAsync_Await</p>
+<p>10.455 us</p>
+<p>4.48</p>
+<p>0.1678</p>
+<p>0.0153</p>
+<p>577 B</p>
+<p>正如我们所看到的，无论是在速度还是内存方面，差异都更加明显。下面是对结果的简短解释。 对于未完成的任务，每个“wait”操作大约需要4us，每次调用分配近300B。这解释了为什么GetStockPriceFor的速度几乎是GetStockPriceForAsync的两倍，以及为什么它分配的内存更少。 当方法没有同步完成时，基于值的异步方法要比基于任务的异步方法慢一些。基于ValueTask方法的状态机需要比基于任务方法的状态机保存更多的数据。 它取决于平台(x64 vs. x86)和异步方法的一些局部变量/参数。 异步方法性能101 如果异步方法以同步方式完成，则性能开销相当小。 如果异步方法同步完成，则会发生以下内存开销:对于异步任务方法没有开销，对于异步任务方法，每个操作的开销为88字节(在x64平台上)。 ValueTask可以为同步完成的异步方法消除上述开销。 如果基于ValueTask的异步方法是同步完成的，那么它要比基于任务的异步方法快一点，否则会慢一点。 等待未完成任务的异步方法的性能开销要大得多(x64平台上的每个操作约300字节)。 和往常一样，先衡量。如果发现异步操作导致性能问题，可以从Task切换到ValueTask，缓存任务，或者尽可能使公共执行路径同步。但是您也可以尝试使异步操作的粒度更粗。这可以提高性能，简化调试，并使代码更容易推理。并不是每一小段代码都必须是异步的。</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/the-performance-characteristics-of-async-methods-in-c/">https://www.lfzxb.top/the-performance-characteristics-of-async-methods-in-c/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a><a class="post-meta__tags" href="/tags/CSharp/">CSharp</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/the-theory-of-lua-5-0/" title="Lua5.0原理探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/04/luaa.gif!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Lua5.0原理探究</div></div><div class="info-2"><div class="info-item-1">前言 马上要去公司搬砖了，想要提前做一下准备，emm。。。其他倒还好，Lua没用过，也没详细了解过，怕到时候拉胯，所以先准备一下Lua吧。  Lua作为一个内部的软件开发工具，诞生于学院实验室，然而，不知何故，很快被全世界的几个工业项目所采用，而且目前正被广泛运用于游戏行业。  Lua基础 解释与执行 首先，Lua是一个基于C而制作的的脚本语言（动态语言，弱类型语言），他与我们常使用的C++，C#这些编程语言（静态语言，强类型语言）的最大差别之一就是前者在运行时进行编译，后者则是在运行前就编译好 用图片表示就是这样  下面是我做了一个Lua与C#编译运行的对照表格    语言 编辑 预编译 运行时编译 执行     Lua 编写lua文件 无 虚拟机读取字节码并转换成虚拟机指令，汇编器编译成机器码 CPU执行机器码   C# 编写cs文件 被C#编译器编译成dll，包含IL代码 CLR使用JIT编译把IL转换成机器码 CPU执行机器码    我们可以看到，Lua较为核心和重要的点就是他的虚拟机了，接下来就看看虚拟机在这个过程中具体做了什么 编译系统 编译系统的工作就是将符合语法规...</div></div></div></a><a class="pagination-related" href="/the-diffrence-of-generic-between-c-and-c/" title="浅谈C++与C#泛型编程的区别与联系"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">浅谈C++与C#泛型编程的区别与联系</div></div><div class="info-2"><div class="info-item-1">前言 这阵子群友讨论了很多次C++模板元编程和C#泛型的区别，但是大家懂得，在QQ群讨论这种体量的论题，你一言我一语很难说清楚，尤其是大家对各种名词的理解和定义不一致的情况下，所以我决定今天整一篇文章，结合代码，浅谈一下C++和C#泛型编程的区别与联系。 个人水平有限，欢迎大家指正，补充。 名词定义 正如上面所说，每个人对于各种名词的认识之间可能存在着差别，所以在这里统一用我的方式定义一下以下名词  泛型：泛型是一种程序语言设计技术，具体体现为，我们事先写好一份泛型程序(这里叫模板更合适)，其中有一些部分或者全部是运行时根据我们的写法确定的，然后生成这部分的新实例，最后执行的是这些运行时生成的新实例 C#泛型：C#2.0新增的泛型技术 C++泛型/模板/模板元：即与template关键字相关的泛型技术  正文 由于C++的泛型功能可以算是C#泛型的超集，所以下面就以C++各项泛型功能为基准对比这两个语言的泛型功能 泛型函数 C++ 123456789101112class Generic_A{public:    //声明与定义    template&lt;typen...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/re0-c-generic-collections-analyze-with-source-code/" title="从零开始分析C#所有常用集合类的设计（源码向）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">从零开始分析C#所有常用集合类的设计（源码向）</div></div><div class="info-2"><div class="info-item-1">前言 此些天来，武疫兴然，吾甚惧焉，居家不出，项目做完，游戏玩腻，根亦秃噜，百无聊赖，猛然惊醒，吾当面试，基础犹菜，从何下手，唯有C#，C#之何，集合为多，多而不晓，遂有此文。 环境 .Net Framework 4.8 前置知识 Hash Hash算法无论是在项目开发还是底层语言设计上都是非常常见的一个算法，既然如此常用，那么它的重要性自然不必多说，这也是把它放在第一位讲的原因。 Hash算法与Hash函数 Hash算法是一种数字摘要算法，它能将不定长度的二进制数据集给映射到一个较短的二进制长度数据集。常见的MD5算法就是一种Hash算法，通过MD5算法可对任何数据生成数字摘要。而实现了Hash算法的函数我们叫它Hash函数。Hash函数有以下几点特征。  相同的数据进行Hash运算，得到的结果一定相同。 不同的数据进行Hash运算，其结果也可能会相同。 Hash运算是不可逆的，不能由key获取原始的数据。  常见的Hash算法  直接寻址法：取keyword或keyword的某个线性函数值为散列地址。即H(key)=key或H(key) = a•key + b，当中a和b为常...</div></div></div></a><a class="pagination-related" href="/c-dic/" title="C#篇：对字典引用内容的探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190723105243.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-07-23</div><div class="info-item-2">C#篇：对字典引用内容的探究</div></div><div class="info-2"><div class="info-item-1">前言 我现在在做的项目有这样一个需求，从二进制文件反序列化出一个类（HeroDataRes），这个类里包含一个英雄的所有基本信息，然后服务端缓存这个类，等到玩家第一次请求的时候就新建一个运行时HeroDataRT类，并将数据传输过去，由于项目采用的状态同步策略，所以服务端需要持有每个玩家操控的英雄基本信息。基本关系就是这样  那么现在就要面临一个问题，HeroDataRT是从HeroDataRes取得的数据，而HeroDataRes里面难免会有class，我们都知道，字典本身是引用类型的，那么修改HeroDataRT类中的数据会不会对HeroDataRes里面的数据产生影响呢？ 例子 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950using System;using System.Collections.Generic;namespace ConsoleApp1{    class Program    {        st...</div></div></div></a><a class="pagination-related" href="/cdelegate/" title="C#：委托和事件"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-04-29</div><div class="info-item-2">C#：委托和事件</div></div><div class="info-2"><div class="info-item-1">前言 委托是对函数的封装，可以当做给方法的特征指定一个名称。而事件则是委托的一种特殊形式，当发生有意义的事的时候，事件对象 处理通知过程。[toc]  委托是一种引用方法的类型。一旦为委托分配了方法，委托就与该方法具有完全相同的行为。 事件是对委托的封装，被用于表示一个委托对象， 事件是在发生其它类或对象关注的事情的时候，类或对象可通过事件通知他们。 委托用delegate声明，事件用event声明。 事件只能被外部订阅，不能在外部触发，而委托没有这个限制。  初始版本 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616263646566676869707172737475767778using System;internal class Program{    static void Main(string[] args)    {        Cat cat = new Cat(...</div></div></div></a><a class="pagination-related" href="/csharpexplore-the-release-principle-of-unmanaged-resources/" title="C#对于非托管资源的释放原理探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">C#对于非托管资源的释放原理探究</div></div><div class="info-2"><div class="info-item-1">前言 我们都知道CLR有一个使用根的可达性算法的垃圾回收机制来回收托管内存，那么对于那些本机资源（非托管内存）他又是怎么清理的呢？ 正文 要看他怎么清理资源，首先要知道这个资源是怎么来的，这里我们用FileStream这一经典类来探讨这些问题。 首先是它的构造函数 12345678910111213141516171819202122[SecuritySafeCritical]public FileStream(string path, FileMode mode)  : this(path, mode, mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite, FileShare.Read, 4096, FileOptions.None, Path.GetFileName(path), false){}[SecurityCritical]internal FileStream(  string path,  FileMode mode,  FileAccess access,  Fi...</div></div></div></a><a class="pagination-related" href="/dissecting-the-async-methods-in-c/" title="C#篇：剖析c#中的异步方法"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/Async_sequence_state_machine_thumb.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">C#篇：剖析c#中的异步方法</div></div><div class="info-2"><div class="info-item-1">本文翻译自 https://blogs.msdn.microsoft.com/seteplia/2017/11/30/dissecting-the-async-methods-in-c/ 前言 c#语言对于开发人员的工作效率非常好，我很高兴最近的努力使它更适合于高性能应用程序。 下面是一个例子:C#5引入了“async”方法。从用户的角度来看，该特性非常有用，因为它有助于将几个基于任务的操作组合成一个操作。但是这种抽象是有代价的。任务是引用类型，在创建它们的任何地方都会导致堆分配，即使在“async”方法同步完成的情况下也是如此。使用C#7，异步方法可以返回类似于任务的类型，比如ValueTask，以减少堆分配的数量，或者在某些场景中完全避免它们。 为了理解所有这些是如何实现的，我们需要深入了解异步方法是如何实现的。 历史回顾 但首先，让我们回顾一下历史。 类Task和Task&lt;T&gt;是在.Net 4.0中引入的，在我看来，在.Net中的异步和并行编程领域发生了巨大的思想转变。与以前的异步模式(如.Net 1.0中的BeginXXX/EndXXX模式，也称为“异步编程模...</div></div></div></a><a class="pagination-related" href="/explore-how-much-memory-size-of-valuetype-and-referencetype-in-csharp/" title="探索C#中值类型/引用类型为空时所占用的内存大小"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200208225348.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-22</div><div class="info-item-2">探索C#中值类型/引用类型为空时所占用的内存大小</div></div><div class="info-2"><div class="info-item-1">前言 又看到一个比较让人害怕的面试题，实例化一个C#的空class会占用多少内存空间。 。。。为什么会有这种问题，当时第一反应肯定不是零，至少要像C++那样有一个区别地址的偏移吧，不然找都找不到，所以就猜了1。 结果果然不出我所料，我蒙错了，不会就学。 找了一大圈，终于找到一个讲的全面的帖子：https://docs.microsoft.com/en-us/archive/msdn-magazine/2005/may/net-framework-internals-how-the-clr-creates-runtime-objects 下面的内容基本就是围绕这篇文章来说的，也可以直接去看原文。 正文 环境：.Net Framework 4.7.2 IDE：Rider 2019.3.3 编译环境：Debug prefer x86（32bit） 值类型 值类型相较于引用类型好理解多了，他直接分配到栈上，不需要GC，不需要引用机制。所以它空间的计算也是最简单的。直接计算其中包含的字段空间即可（有一些特性会影响内存的编排，不过不在本篇文章讨论范围内了）。 计算机中的内存通常以字节的形式组...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%AC%E6%96%87%E7%BF%BB%E8%AF%91%E8%87%AA"><span class="toc-number">1.</span> <span class="toc-text">本文翻译自</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5%E7%89%88%E6%9C%AC%E5%AF%B9%E6%AF%94"><span class="toc-number">1.1.</span> <span class="toc-text">同步版本对比</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%9F%BA%E4%BA%8E%E4%BB%BB%E5%8A%A1%E7%9A%84%E5%BC%82%E6%AD%A5%E7%89%88%E6%9C%AC"><span class="toc-number">1.1.1.</span> <span class="toc-text">基于任务的异步版本</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%8C%96"><span class="toc-number">1.2.</span> <span class="toc-text">优化</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%82%E5%A6%82%E6%9E%9C%E5%8F%AF%E8%83%BD%EF%BC%8C%E7%BC%93%E5%AD%98%E4%BB%BB%E5%8A%A1%E5%AE%9E%E4%BE%8B"><span class="toc-number">1.2.1.</span> <span class="toc-text">1。如果可能，缓存任务实例</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E4%BD%BF%E7%94%A8ValueTask"><span class="toc-number">1.2.2.</span> <span class="toc-text">2:使用ValueTask</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E9%81%BF%E5%85%8D%E5%9C%A8%E5%85%AC%E5%85%B1%E8%B7%AF%E5%BE%84%E4%B8%8A%E4%BD%BF%E7%94%A8%E5%BC%82%E6%AD%A5%E6%9C%BA%E5%88%B6"><span class="toc-number">1.2.3.</span> <span class="toc-text">3.避免在公共路径上使用异步机制</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '87c25d2204d0177bd9567eb9d3e3a31b'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

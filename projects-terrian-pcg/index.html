@@ -1,0 +1,517 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ProjectS中的地形系统-Procedural Content Generation（PCG） | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本篇文章是对ProjectS中地形PCG模块的总结，可能需要一些前置知识，可以前往本文的 参考 部分进行相关引用 先明确下项目需求  20km x 20km的世界大小 大多数地貌为起伏幅度较小的平原 需要分tile编辑，预览 需要导出LOD高度图 支持植被和物件Instance的纹理生成和手工修改 需要一个工具统筹管理整个PCG管线，并实时查看每一步的结果  最终选择Houdini作为目标软件，因">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ProjectS中的地形系统-Procedural Content Generation（PCG）">
+<meta property="og:url" content="https://www.lfzxb.top/projects-terrian-pcg/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本篇文章是对ProjectS中地形PCG模块的总结，可能需要一些前置知识，可以前往本文的 参考 部分进行相关引用 先明确下项目需求  20km x 20km的世界大小 大多数地貌为起伏幅度较小的平原 需要分tile编辑，预览 需要导出LOD高度图 支持植被和物件Instance的纹理生成和手工修改 需要一个工具统筹管理整个PCG管线，并实时查看每一步的结果  最终选择Houdini作为目标软件，因">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp">
+<meta property="article:published_time" content="2023-07-22T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-06-23T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GPU Driven">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="PCG">
+<meta property="article:tag" content="Houdini">
+<meta property="article:tag" content="PDG">
+<meta property="article:tag" content="Procedural content generation">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ProjectS中的地形系统-Procedural Content Generation（PCG）",
+  "url": "https://www.lfzxb.top/projects-terrian-pcg/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp",
+  "datePublished": "2023-07-22T00:00:00.000Z",
+  "dateModified": "2024-06-23T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/projects-terrian-pcg/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ProjectS中的地形系统-Procedural Content Generation（PCG）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ProjectS中的地形系统-Procedural Content Generation（PCG）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ProjectS中的地形系统-Procedural Content Generation（PCG）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-07-22T00:00:00.000Z" title="发表于 2023-07-22 00:00:00">2023-07-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-06-23T00:00:00.000Z" title="更新于 2024-06-23 00:00:00">2024-06-23</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98/">应用实战</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/projects-terrian-pcg/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2024-06-23 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>本篇文章是对ProjectS中地形PCG模块的总结，可能需要一些前置知识，可以前往本文的 参考 部分进行相关引用</p>
+<p>先明确下项目需求</p>
+<ul>
+<li>20km x 20km的世界大小</li>
+<li>大多数地貌为起伏幅度较小的平原</li>
+<li>需要分tile编辑，预览</li>
+<li>需要导出LOD高度图</li>
+<li>支持植被和物件Instance的纹理生成和手工修改</li>
+<li>需要一个工具统筹管理整个PCG管线，并实时查看每一步的结果</li>
+</ul>
+<p>最终选择Houdini作为目标软件，因为Houdini作为一款相当成熟的PCG向的DCC软件，提供了相当多地形创建，编辑和工作流工具，应对我这个个人项目的简单地形PCG工作自然不成问题</p>
+<h1>项目概览</h1>
+<p>项目结构如下：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302309493.png" alt="image-20230830230855423" loading='lazy'></p>
+<ul>
+<li>terrian_pdg：地形PDG模块，组织整个地形的PCG流程</li>
+<li>terrian_sop：地形PCG中用到的所有SOP集合，大部分都导出成了HDA，供PDG使用<img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302335047.png" alt="image-20230830233525023" loading='lazy'></li>
+</ul>
+<h1>PDG流程</h1>
+<p>我在学习和解构一个对象的时候习惯从宏观看起，大概掌握每个环节的功能，有个全局的概念，再看具体细节的时候不会有一头雾水的感觉，所以我们从PDG开始看起</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302355457.png!webp" alt="image-20230830235553419" loading='lazy'></p>
+<p>整个流程非常的直观</p>
+<ul>
+<li>创建地形骨架</li>
+<li>拆分地形</li>
+<li>根据地形编号查找hda文件，如果存在则进行处理，否则直接输出</li>
+<li>整合分类所有tile结果，即把经过hda处理的tile和原始tile统一通过编号分类，确保输出的为最终的结果</li>
+<li>Merge所有tile</li>
+<li>导出纹理（如果需要分tile导出，则需要再次进行split后导出）</li>
+</ul>
+<p>唯一需要注意的一点是通过PythonProcessor将tile信息透传到merge节点的时候，需要做一些处理</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Called when this node should generate new work items from upstream items.</span></span><br><span class="line"><span class="comment">#</span></span><br><span class="line"><span class="comment"># self             -   A reference to the current pdg.Node instance</span></span><br><span class="line"><span class="comment"># item_holder      -   A pdg.WorkItemHolder for constructing and adding work items</span></span><br><span class="line"><span class="comment"># upstream_items   -   The list of work items in the node above, or empty list if there are no inputs</span></span><br><span class="line"><span class="comment"># generation_type  -   The type of generation, e.g. pdg.generationType.Static, Dynamic, or Regenerate</span></span><br><span class="line"><span class="keyword">import</span> pdg</span><br><span class="line"><span class="keyword">import</span> hou</span><br><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line">merge_tile_hda_processor_node = hou.node(<span class="string">'/obj/terrain_pdg/topnet1/merge_tile'</span>)</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> upstream_item <span class="keyword">in</span> upstream_items:</span><br><span class="line">    new_item = item_holder.addWorkItem(parent=upstream_item)</span><br><span class="line">    output_data = upstream_item.resultData</span><br><span class="line">    final_tile_map = {}</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> name <span class="keyword">in</span> output_data:</span><br><span class="line">        final_tile_map[name.local_path] = name.local_path</span><br><span class="line">    final_tile_map_json = json.dumps(final_tile_map)</span><br><span class="line">    merge_tile_hda_processor_node.parm(<span class="string">"hdap_tile_file_path_map"</span>).<span class="built_in">set</span>(final_tile_map_json)</span><br><span class="line">    <span class="keyword">break</span></span><br></pre></td></tr></tbody></table></figure>
+<h1>地形制作</h1>
+<h2 id="整体流程">整体流程</h2>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="width:100%; height:800px;" src="https://www.processon.com/embed/64c4cc6864bc18582779fb9d"></iframe>
+<h2 id="基础地形骨架">基础地形骨架</h2>
+<p>由于暗黑like游戏大部分的地貌都偏平坦，所以以比较低的噪声频率和迭代次数就能的得到一个合适的地形骨架</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302318883.png!webp" alt="image-20230830231815623" loading='lazy'></p>
+<p>即使是如此简单的地形骨架，生成也是需要花费一定事件的，而且后续可能会有一些额外的全局处理，例如一些世界级的标志地貌，所以不能每次都重新生成，这里使用switch节点来根据传递的参数决定是否需要重生成地形，如果需要重新生成，则调用file cache节点来强制触发重建地形</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">node = hou.pwd()</span><br><span class="line">geo = node.geometry()</span><br><span class="line"></span><br><span class="line">hda_node = hou.node(node.path() + <span class="string">"/../"</span>)</span><br><span class="line"><span class="keyword">if</span> hda_node <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">    <span class="keyword">if</span> hda_node.parm(<span class="string">"regenerate_terrian"</span>).<span class="built_in">eval</span>() == <span class="number">1</span>:</span><br><span class="line">        node_name = node.path() + <span class="string">"/../terrian_base_file_cache"</span></span><br><span class="line">        node_obj = hou.node(node_name)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> node_obj <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">            node_obj.parm(<span class="string">'execute'</span>).pressButton()</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="地形拆分">地形拆分</h2>
+<p>拆分单位由HDA暴露的参数决定</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302333918.png" alt="image-20230830233352886" loading='lazy'></p>
+<h2 id="地形Tile处理">地形Tile处理</h2>
+<p><code>可以针对每个Tile制作一个HDA用于处理这个Tile，也可以制作一个HDA支持同时处理多个Tile</code>，这里以前者为例，名称为<code>terrian_tile_handle_*</code>(星号为tile编号)</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302337298.png" alt="image-20230830233703277" loading='lazy'></p>
+<p>这里的示例就是对0号tile做了手工处理：</p>
+<ul>
+<li>通过绘制line来构筑一些山脉</li>
+<li>增强地表细节</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302338665.png!webp" alt="image-20230830233831429" loading='lazy'></p>
+<p>需要注意的是，我们需要通过bound来构造一个mask，用于限定编辑区域（最好对Bound的Mask开启Blur，效果更好一些），这样可以避免tile merge时产生过大的接缝</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302340711.png" alt="image-20230830234032531" loading='lazy'></p>
+<h1>地形Tile合并</h1>
+<p>处理好所有Tile之后，我们需要将Tile合并起来，全局处理一下，预览最终的世界效果</p>
+<p>本来是使用foreach block + python节点进行处理，但实践下来发现python节点内部的逻辑只会在cook的时候执行一次，不能保证foreach循环中每次都执行</p>
+<p>而且Houdini中的Channel表达式对嵌套的支持并不友好，我尝试使用string+map的时候就失败了，无法计算map的value</p>
+<p>所以最终方案是自己书写Python节点处理所有Tile，最终通过tilesplice进行Volumn合并</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308302343010.png" alt="image-20230830234307984" loading='lazy'></p>
+<p>Python节点内容如下：</p>
+<p>可以看到读取了tile_file_path_map channel值，这是从PDG传递到HDA的参数，包含了所有Tile数据</p>
+<p>（吐槽一下：Houdini到19为止都还没有数组类型的参数，只能用key-value Dictionary，而key-value Dictionary在通过Python或VEX，HScript传递时总是会报出 <code>TypeError: Cannot set a numeric parm to a non-numeric value</code>，所以这里通过string进行参数透传，最后在Python转回key-value Dictionary）</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> json</span><br><span class="line"></span><br><span class="line">node = hou.pwd()</span><br><span class="line">geo = node.geometry()</span><br><span class="line"></span><br><span class="line"><span class="comment"># Add code to modify contents of geo.</span></span><br><span class="line"><span class="comment"># Use drop down menu to select examples.</span></span><br><span class="line"></span><br><span class="line">hda_node_env = node.path() + <span class="string">"/../"</span></span><br><span class="line">hda_node = hou.node(hda_node_env)</span><br><span class="line"></span><br><span class="line">geo1 = hou.Geometry()</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> hda_node <span class="keyword">is</span> <span class="keyword">not</span> <span class="literal">None</span>:</span><br><span class="line">    tile_file_path_dict_json = hda_node.parm(<span class="string">"tile_file_path_map"</span>).<span class="built_in">eval</span>()</span><br><span class="line">    tile_file_path_dict = json.loads(tile_file_path_dict_json)</span><br><span class="line">    <span class="keyword">for</span> key, value <span class="keyword">in</span> tile_file_path_dict.items():</span><br><span class="line">        geotemp = hou.Geometry()</span><br><span class="line">        geotemp.loadFromFile(value)</span><br><span class="line">        geo1.merge(geotemp)</span><br><span class="line">    node.geometry().copy(geo1)</span><br></pre></td></tr></tbody></table></figure>
+<p>最终Merge结果如下：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png" alt="image-20230831001220388" loading='lazy'></p>
+<h1>纹理切分导出</h1>
+<p>根据 <a href="https://www.lfzxb.top/projects-terrian-rendering/">ProjectS中的地形系统-Terrian Rendering</a> 中提及的世界大小规划：</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="width:100%; height:500px;" src="https://www.processon.com/embed/649066e249c3ea6f151c26a0"></iframe>
+<p>可以得知，对于各个LOD等级的高度纹理，假设为全地图覆盖纹理，我们需求如下：</p>
+<ul>
+<li>LOD0，覆盖64m，320x320个 = 102400</li>
+<li>LOD1，覆盖128m，160x160个 = 25600</li>
+<li>LOD2，覆盖256m，80x80个 = 6400</li>
+<li>LOD3，覆盖512m，40x40个 = 1600</li>
+<li>LOD4，覆盖1024m，20x20个 = 400</li>
+<li>LOD5，覆盖2048m，10x10个 = 100</li>
+</ul>
+<p>通过HeightField Output节点即可对高度图进行导出，对于上面的LOD需求，通过HDA参数暴露出去，然后通过foreach block进行流程控制即可</p>
+<p>假设已定义：</p>
+<ul>
+<li>terrian_size：传入的地形大小，默认2048</li>
+<li>terrian_lod_count：LOD等级数，[0, x)，即此处应为6</li>
+<li>sector_cover_size：sector大小</li>
+<li>height_texture_resolution：高度图分辨率，默认128</li>
+<li>iteration：foreach迭代index，来自terrian_lod_count</li>
+</ul>
+<p>则在每次for循环中，对于HeightField Output的参数设置遵循以下算法：</p>
+<ul>
+<li>resolution：<code>terrian_size * 2 * 1 / pow(2, iteration)</code>，各个LOD值分别为4096，2048，1024，512，256，128，因为这是目标贴图的大分辨率，所以0.5m为分辨率的话，LOD0对应分辨率就是4096，经过tile切分后是32x32块，即最终导出分辨率依旧为128，其余分辨率同理</li>
+<li>num_tiles：<code>resolution / height_texture_resolution</code>，各个LOD值分别为32，16，8，4，2，1</li>
+</ul>
+<p>PDG中的节点为</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202309030029884.png" alt="image-20230903002930810" loading='lazy'></p>
+<p>对于HeightField Output节点本身来说，为了达到更高的数值精度，我们使用16位的R通道深度图导出设置</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202310292034501.png" alt="image-20231029203445467" loading='lazy'></p>
+<p>同时，我们需要把地形高度remap，为了获取最高的数值精度，我们对于每个地块（<code>2048*2048</code>），都映射到0-1，比如-10~100的高度，映射到0-1会比映射到0.x-0.x精度高得多</p>
+<p>但代价就是在每个地块渲染的时候，需要指定这个地块的最高高度即1处的绝对高度值（在这个例子中就是110），才能得到正确的地形，我们可以只传递一次记录了这个信息的computebuffer（为AOS，10x10 = 100），然后在vs中取相应索引的数据即可</p>
+<p>这个数据我们可以通过在PDG中添加一个HDA Processor，导出json得到</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202311012338854.png" alt="image-20231101233821792" loading='lazy'></p>
+<p>由于Python节点编译特性限制，我们只能手动触发HeightField Output节点的导出操作</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br></pre></td><td class="code"><pre><span class="line">node = hou.pwd()</span><br><span class="line">geo = node.geometry()</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="comment"># Add code to modify contents of geo.</span></span><br><span class="line"><span class="comment"># Use drop down menu to select examples.</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取输出节点，设置通用参数</span></span><br><span class="line">output_node = hou.node(<span class="string">'../heightfield_output1'</span>)</span><br><span class="line">output_node.parm(<span class="string">"out_format"</span>).<span class="built_in">set</span>(<span class="string">"single"</span>)</span><br><span class="line"></span><br><span class="line">output_node.parm(<span class="string">"specify_res"</span>).<span class="built_in">set</span>(<span class="string">"1"</span>)</span><br><span class="line"></span><br><span class="line">output_node.parm(<span class="string">"fill_red_channel"</span>).<span class="built_in">set</span>(<span class="number">1</span>)</span><br><span class="line">output_node.parm(<span class="string">"red_channel"</span>).<span class="built_in">set</span>(<span class="string">"height"</span>)</span><br><span class="line">output_node.parm(<span class="string">"red_out_range"</span>).<span class="built_in">set</span>(<span class="string">"auto"</span>)</span><br><span class="line">output_node.parm(<span class="string">"tile_output"</span>).<span class="built_in">set</span>(<span class="string">"1"</span>)</span><br><span class="line">output_node.parm(<span class="string">"tile_method"</span>).<span class="built_in">set</span>(<span class="string">"numtiles"</span>)</span><br><span class="line">output_node.parm(<span class="string">"file_naming"</span>).<span class="built_in">set</span>(<span class="string">"xytile"</span>)</span><br><span class="line"></span><br><span class="line">output_node.parm(<span class="string">"tile_overlapx"</span>).<span class="built_in">set</span>(<span class="string">"1"</span>)</span><br><span class="line">output_node.parm(<span class="string">"tile_overlapy"</span>).<span class="built_in">set</span>(<span class="string">"1"</span>)</span><br><span class="line"></span><br><span class="line">terrian_size = hou.node(<span class="string">"../"</span>).parm(<span class="string">"terrian_size"</span>).<span class="built_in">eval</span>()</span><br><span class="line">iteration_count = hou.node(<span class="string">"../"</span>).parm(<span class="string">"terrian_lod_count"</span>).<span class="built_in">eval</span>()</span><br><span class="line">sector_cover_size = hou.node(<span class="string">"../"</span>).parm(<span class="string">"sector_cover_size"</span>).<span class="built_in">eval</span>()</span><br><span class="line">height_texture_resolution = hou.node(<span class="string">"../"</span>).parm(<span class="string">"height_texture_resolution"</span>).<span class="built_in">eval</span>()</span><br><span class="line"></span><br><span class="line">enable_export = hou.node(<span class="string">"../"</span>).parm(<span class="string">"enable_export"</span>).<span class="built_in">eval</span>()</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取节点的第一个输入端口连接的节点</span></span><br><span class="line">file_node = output_node.inputs()[<span class="number">0</span>]</span><br><span class="line">tile_index = os.path.basename(file_node.parm(<span class="string">"file"</span>).<span class="built_in">eval</span>()).split(<span class="string">"_"</span>)[<span class="number">2</span>]</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(iteration_count):</span><br><span class="line">    output_node.parm(<span class="string">"output"</span>).<span class="built_in">set</span>(<span class="string">"$HIP/texture/terrian_tile_{}_lod{}.png"</span>.<span class="built_in">format</span>(tile_index, i))</span><br><span class="line"></span><br><span class="line">    resolution_x = terrian_size * <span class="number">2</span> * <span class="number">1</span> / (<span class="number">2</span> ** i)</span><br><span class="line"></span><br><span class="line">    output_node.parm(<span class="string">"resolutionx"</span>).<span class="built_in">set</span>(resolution_x)</span><br><span class="line">    output_node.parm(<span class="string">"resolutiony"</span>).<span class="built_in">set</span>(resolution_x)</span><br><span class="line"></span><br><span class="line">    num_of_tile = resolution_x / height_texture_resolution</span><br><span class="line">    output_node.parm(<span class="string">"num_tilesx"</span>).<span class="built_in">set</span>(num_of_tile)</span><br><span class="line">    output_node.parm(<span class="string">"num_tilesy"</span>).<span class="built_in">set</span>(num_of_tile)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> enable_export == <span class="number">1</span>:</span><br><span class="line">        output_node.parm(<span class="string">'execute'</span>).pressButton()</span><br></pre></td></tr></tbody></table></figure>
+<p>最终导出的部分高度图如下</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310014975.png!webp" alt="image-20230831001454915" loading='lazy'></p>
+<h1>地形高度信息导出</h1>
+<p>由于流式加载的原因，为了正确的对地形进行渲染和剔除，我们还需要导出每个四叉树节点对应地形高度信息，所以需要新建一个专门用于导出地形高度的HDA</p>
+<p>我们只需要在划分正确区域范围后，再获取HeightField Split节点输出的Bound信息即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202311292133288.png" alt="image-20231129213350213" loading='lazy'></p>
+<p>假设已定义：</p>
+<ul>
+<li>terrian_size：传入的地形大小，默认2048</li>
+<li>terrian_lod_count：LOD等级数，[0, x)，即此处应为6</li>
+<li>sector_cover_size：sector大小</li>
+<li>iteration：foreach迭代index，来自terrian_lod_count</li>
+</ul>
+<p>则在每次for循环中，对于HeightField Split的参数设置遵循以下算法：</p>
+<ul>
+<li>tilecount：<code>terrian_size / pow(2, terrian_lod_count + iteration)</code>，各个LOD值分别为32，16，8，4，2，1</li>
+<li>num_tiles：[0, tilecount)，作为索引更新</li>
+</ul>
+<p>随后我们确认下要导出的数据结构：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">namespace</span> <span class="title">ET</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">class</span> <span class="title">TerrianHeightInfo</span></span><br><span class="line">    {</span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> tile的索引，此处的tile为2048*2048的地形，如果整个世界是20480*20480，那么这里索引就是0~99</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> tileIndex;</span><br><span class="line">        </span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> lod等级</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> lod;</span><br><span class="line"></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> tile内部继续细分的tile的x位置，例如一个tile被细分成32*32个tile，这里的索引就是0~31</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> tilePosX;</span><br><span class="line"></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> tile内部继续细分的tile的z位置，例如一个tile被细分成32*32个tile，这里的索引就是0~31</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">int</span> tilePosZ;</span><br><span class="line">        </span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> 代表的区域高度最小值</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">float</span> minHeight;</span><br><span class="line"></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> 代表的区域高度最大值</span></span><br><span class="line">        <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">        <span class="keyword">public</span> <span class="built_in">float</span> maxHeight;</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>所以python脚本如下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line">node = hou.pwd()</span><br><span class="line">geo = node.geometry()</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> os</span><br><span class="line"></span><br><span class="line"><span class="comment"># Add code to modify contents of geo.</span></span><br><span class="line"><span class="comment"># Use drop down menu to select examples.</span></span><br><span class="line"></span><br><span class="line">hip_dir = hou.getenv(<span class="string">'HIP'</span>)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 获取输出节点，设置通用参数</span></span><br><span class="line">terrian_split_node = hou.node(<span class="string">'../heightfield_tilesplit1'</span>)</span><br><span class="line"></span><br><span class="line">terrian_size = hou.node(<span class="string">"../"</span>).parm(<span class="string">"terrian_size"</span>).<span class="built_in">eval</span>()</span><br><span class="line">iteration_count = hou.node(<span class="string">"../"</span>).parm(<span class="string">"terrian_lod_count"</span>).<span class="built_in">eval</span>()</span><br><span class="line">sector_cover_size = hou.node(<span class="string">"../"</span>).parm(<span class="string">"sector_cover_size"</span>).<span class="built_in">eval</span>()</span><br><span class="line">enable_export = hou.node(<span class="string">"../"</span>).parm(<span class="string">"enable_export"</span>).<span class="built_in">eval</span>()</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(iteration_count):</span><br><span class="line">    tilecount_x = <span class="built_in">round</span>(terrian_size / (<span class="number">2</span> ** (iteration_count + i)))</span><br><span class="line">    tilecount_y = tilecount_x;</span><br><span class="line">    tilecount = tilecount_x * tilecount_y;</span><br><span class="line">    </span><br><span class="line">    terrian_split_node.parm(<span class="string">"tilecountx"</span>).<span class="built_in">set</span>(tilecount_x)</span><br><span class="line">    terrian_split_node.parm(<span class="string">"tilecounty"</span>).<span class="built_in">set</span>(tilecount_y)</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">for</span> tile_index_x <span class="keyword">in</span> <span class="built_in">range</span>(tilecount_x):</span><br><span class="line">        <span class="keyword">for</span> tile_index_y <span class="keyword">in</span> <span class="built_in">range</span>(tilecount_y):</span><br><span class="line">            terrian_split_node.parm(<span class="string">"tilenum"</span>).<span class="built_in">set</span>(tile_index_y * tilecount_y + tile_index_x)</span><br><span class="line">            terrian_split_node.cook()</span><br><span class="line">        </span><br><span class="line">            max_height = terrian_split_node.geometry().boundingBox().maxvec().y()</span><br><span class="line">            min_height = terrian_split_node.geometry().boundingBox().minvec().y()</span><br><span class="line">       </span><br><span class="line">            max_height_info = <span class="string">"\"lod\": {0}, \"posX\": {1}, \"posZ\": {2}, \"minHeight\": {3}, \"maxHeight\": {4} \n"</span>.<span class="built_in">format</span>(i, tile_index_x, tile_index_y, min_height, max_height)</span><br><span class="line">            </span><br><span class="line">            <span class="keyword">with</span> <span class="built_in">open</span>(<span class="string">'{0}/json/terrian_height_info.txt'</span>.<span class="built_in">format</span>(hip_dir), <span class="string">'a'</span>) <span class="keyword">as</span> file:</span><br><span class="line">                <span class="comment"># 要写入文件的字符串</span></span><br><span class="line">                string_to_write = max_height_info</span><br><span class="line">                <span class="comment"># 将字符串写入文件的末尾</span></span><br><span class="line">                file.write(string_to_write)</span><br><span class="line">                </span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>我们注意到，相当大一部分的数据y轴最小高度为-1</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">27.238351821899414</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">1</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">25.832469940185547</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">2</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">24.063087463378906</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">3</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-8.591848373413086</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">11.450308799743652</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">4</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-18.10664939880371</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">1.0</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">5</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-18.287702560424805</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">1.0</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">6</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-15.97429370880127</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">1.0</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">7</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-7.330552577972412</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">11.99618911743164</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">8</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">30.167404174804688</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">9</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">44.927547454833984</span> </span><br><span class="line"><span class="attr">"tileIndex"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"lod"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosX"</span><span class="punctuation">:</span> <span class="number">0</span><span class="punctuation">,</span> <span class="attr">"tilePosZ"</span><span class="punctuation">:</span> <span class="number">10</span><span class="punctuation">,</span> <span class="attr">"minHeight"</span><span class="punctuation">:</span> <span class="number">-1.0</span><span class="punctuation">,</span> <span class="attr">"maxHeight"</span><span class="punctuation">:</span> <span class="number">51.94204330444336</span> </span><br></pre></td></tr></tbody></table></figure>
+<p>这是lod0，x0，z0处的tile：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202312032228061.png" alt="可以看到，虽然整个tile都在y=0上方，但ymin仍然为-1" loading='lazy'></p>
+<p>这应该是houdini地形体素高度计算机制，<code>对于高于0的部分，最小值为-1，低于0的部分，为正常值</code>，留意下即可</p>
+<p>最后，我们将节点导出HDA，并在PDG中使用，需要注意的是，<code>由于我们无法保证PDG多线程写入文件内容的原子性，所以需要单独为导出高度节点设置一个新的Schedulers，保证其是单线程的</code></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202312032333699.png" alt="image-20231203233353651" loading='lazy'></p>
+<h1>地面 Mask</h1>
+<p>参考 <a href="https://www.lfzxb.top/projects-gpu-driven/">地面渲染部分</a> ，我们的目标是导出一个R8格式的splat texture，每个纹素值都代表所引用的MaterialId，最多支持256种纹理混合</p>
+<p>与高度图不同的是，SplatTexture不需要进行LOD的分离导出，只需要每个2048区域导出一份（2048x2048分辨率）即可，因为对于远处的地面渲染一般都基于预烘焙diffuse texture直接采样，所以不需要额外对SplatTexture进行LOD导出了</p>
+<p>整体过程也比较简单：</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="width:100%; height:300px;" src="https://www.processon.com/embed/667836b91048a427c2dd6d19?cid=667836b91048a427c2dd6d1c"></iframe>
+<p>注意需要关闭笔刷混合，否则会出现错误的纹素值，猜测是Houdini内部问题</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202407282323623.png" alt="在此方案中必须！" loading='lazy'></p>
+<p>还注意的是Houdini中的SOP处理的Mask不论生成时的数值为多少（0.003或者300）最后都会自动ReSample到0-1的范围，即其并不具备表示index的能力，所以对于每个Layer的Mask我们都需要单独生成：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406232305537.png" alt="image-20240623230519461" loading='lazy'></p>
+<p>最终通过SOP进行导出：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406232306999.png" alt="image-20240623230648942" loading='lazy'></p>
+<p>最终通过rop导出一份Splat Texture资源：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202406232307083.png" alt="不同灰度的数值代表不同的Material Id，可通过对ceiling(纹素x256)的形式还原出正确的Material Id" loading='lazy'></p>
+<h2 id="手动自定义工具开发思路">手动自定义工具开发思路</h2>
+<p>之所以需要这个自定义工具的理由有以下几点：</p>
+<ul>
+<li>特殊区域（Boss战，世界级地标）的自定义</li>
+<li>不同于既定的Mask覆盖规则</li>
+</ul>
+<p>这里着重解释下第二点，想象这样一个场景，一般情况下，岩石的Mask是要被草地的Mask进行覆盖的，但是某个区域我们就是想让岩石Mask覆盖草地Mask，这时候就得直接将岩石Mask的值强制覆盖指定纹素了，有反应比较迅速的读者可能会说：“何必多此一举，直接去改草地Mask，把这里的值Clear掉，再去岩石Mask把这里的值填充上，重新导出不就好了？”，固然是可行的，Layer Mask不多的情况下确实可以这样手动处理，但如果游戏超过100多种地表材质混合，这样改起来的人力成本和错误成本就非常大了，就像回到了Unity的Splat方案一样（每次修改混合数据得修改多个Layer Mask，才能保证数据正确）</p>
+<p>所以我们需要在Houdini/Game Engine中制作一个工具，可以让地编选择某个Material，直接使用笔刷即可覆盖指定区域的Material值，这样才是效率最高的方法</p>
+<ul>
+<li>Houdini：基于Houdini SDK和SOP进行自定义节点开发，直接修改Splat Texture</li>
+<li>GameEngine：基于编辑器拓展和Compute Shader进行修改Splat Texture，从而达到所见即所得的效果</li>
+</ul>
+<p>TODO</p>
+<h1>物件Instance Mask</h1>
+<h1>道路HDA</h1>
+<h1>河流HDA</h1>
+<h1>参考</h1>
+<p><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1iD4y1x7aD?p=21&amp;vd_source=37a9670f9f0010f4255041b068dbc9d9">PDG for Indie Gamedev</a></p>
+<p><a href="https://www.lfzxb.top/houdini-heightfield-manual/">Houdini HeightField手册</a></p>
+<p><a href="https://www.lfzxb.top/houdini-procedural-dependency-graph-manual/">Houdini Procedural Dependency Graph（PDG）手册</a></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/projects-terrian-pcg/">https://www.lfzxb.top/projects-terrian-pcg/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GPU-Driven/">GPU Driven</a><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/PCG/">PCG</a><a class="post-meta__tags" href="/tags/Houdini/">Houdini</a><a class="post-meta__tags" href="/tags/PDG/">PDG</a><a class="post-meta__tags" href="/tags/Procedural-content-generation/">Procedural content generation</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308310012616.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/houdini-procedural-dependency-graph-manual/" title="Houdini Procedural Dependency Graph（PDG）手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308102330018.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Houdini Procedural Dependency Graph（PDG）手册</div></div><div class="info-2"><div class="info-item-1">在使用PDG的时候，对于一个新的节点，总有一种云里雾里的感觉，看官方文档也是迷迷糊糊的，还好基本上每个节点都有提供相应的Sample，并标注了注意事项。 本篇就记录下PDG的一些重要节点，以及使用过程中的注意点 节点 Wedge 主要有以下几个作用   创建Work Item，驱动PDG   用于生成Attribute（可以多个），对于Wedge的Attribute，可以在整个TOP中通过@xxx来引用，当然，在和常规字符混排的的时候，需要加反向单引号例如： 1$HIP/geo/boxsphere_`@wedgeindex`.bgeo.sc   强制覆写某个参数，可以理解为非侵入式的一种数据注入方案   多个Wedege之前关系为嵌套关系，比如WedgeA的WedgeCount为2，WedgeB的WedgeCount为3，当B连接到A的出口，那么B将会输出2x3 = 6个WorkItem Partition by Index 它做的事情非常简单，就是将多个WorkItem按照index和一定的规则merge成一个WorkItem，每个WorkItem的index可以通过双击查看 ...</div></div></div></a><a class="pagination-related" href="/houdini-heightfield-manual/" title="Houdini HeightField手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Houdini HeightField手册</div></div><div class="info-2"><div class="info-item-1">Houdini中HeightField相关节点在地形生成中占据了非常重要的地位，虽然可以在Houdini里右键节点-Helper查看详细的官方文档，但未对整个HeightField系统有一个宏观认识的情况下，也不知道要用哪些节点。所以单独开篇文章来记录常用的HeightField几点以及使用心得 （但HeightField手册又何必只是HeightField手册^ ^        _） 基础高度场操作 HeightField 基础的高度场节点，用于指定高度场的大小，细分/模拟粒度等基础信息 这个节点用于生成两个 2D volume 基元：height体积和mask体积，具有给定的分辨率和初始值，这些基元可以由其他地形节点进行修改。 height体积 是一个 2D 网格，表示地图上每个点的地形距离地面平面的距离（这些值可以为负）。 mask体积 可以用作其他地形工具的“mask”输入。它指定了地形节点的效果应该应用于哪些区域：mask值为 0 的区域不受节点影响，掩模值为 1 的区域完全受节点影响。地形节点允许你绘制mask或从地形信息中生成mask（例如，阴影落在哪里，或低于某...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/projects-terrian-rendering/" title="ProjectS中的地形系统-Terrian Rendering"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202403020046066.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-03-02</div><div class="info-item-2">ProjectS中的地形系统-Terrian Rendering</div></div><div class="info-2"><div class="info-item-1">地形系统思路来自 ProjectS中的GPU Driven 架构 首先明确ProjectS的世界大小，目前暂定整个世界面积为 20.48km * 20.48km ，实际上可以再大很多，但考虑到资源量级以及对于世界内容的填充需要颇费心思，暂定这么大了  既然地形分了LOD，那么纹理自然也要根据LOD进行区分  LOD0的Node对应的纹理信息（高度纹理，Material Id纹理等）分辨率为128*128，覆盖区域为64m*64m即一个纹素对应0.5m，已经很可以了，再高点画质就要比原神好了 LOD1的Node纹理分辨率为128*128，但覆盖区域为128m*128m LOD2的Node纹理分辨率为128*128，覆盖区域为256m*256m LOD3的Node纹理分辨率为128*128，覆盖区域为512m*512m LOD4的Node纹理分辨率为128*128，覆盖区域为1024m*1024m LOD5的Node纹理分辨率为128*128，覆盖区域为2048m*2048m  这也就意味着我们需要对整个世界做六种不同覆盖区域的纹理，可以理解为Mipmap，不同的LOD Node采样...</div></div></div></a><a class="pagination-related" href="/projects-terrian-shading/" title="ProjectS中的地形系统-Terrian Shading（Material Id）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202410061425447.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-10-05</div><div class="info-item-2">ProjectS中的地形系统-Terrian Shading（Material Id）</div></div><div class="info-2"><div class="info-item-1">地形系统思路来自 ProjectS中的GPU Driven 前言 再来回顾下传统地表材质与我们定好的方案之间的对比：  传统Weight Blend方案：通过纹理 + Mask图实现多纹理混合渲染  每多一张纹理贴图，就要多一份遮罩数据。 由于每点的mask总和为1，所以改变一层需要动到其他所有层的数据，耦合度太高，不方面大规模修改迭代。 编辑器在处理edit layer时，由于需要全局的归一化操作，所以会让上层的layer表现非常奇怪。 随着edit layer的增加，内存和操作延时也会是个问题。 渲染时由于每个地块使用的weightmap各不相同，所以加大了合批处理的难度。   Material Id方案：确保每个点只有一种纹理贴图的情况下，通过一张Material Id图控制，最后通过双线性插值混合平滑，这里的材质不是指材质球，而是指一个数据结构，其中包含材质参数，贴图索引以及其他信息  优点是这张MaterialId，它相当于一个间接的索引，每个值表示一张纹理图。8位的单通道materialID图就足以支持超过200种纹理图。它的大小可控，不会随着纹理数量的增加而增加。同...</div></div></div></a><a class="pagination-related" href="/projects-gpu-driven/" title="ProjectS中的GPU Driven"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-05-22</div><div class="info-item-2">ProjectS中的GPU Driven</div></div><div class="info-2"><div class="info-item-1">架构 前阵子敲定了ProjectS GI方案的大体架构，但只对着那几个Cube可看不出落地效果，也没法做针对性的优化，所以准备启动地形相关的开发工作 立项之时就考虑到美术成本问题，所以采用程序化生成作为构建ProjectS世界的主要手段，程序化生成意味着大量重复instance和大地形，这时候就得利用GPU Driven来作为整个PCG系统的底层支柱之一了，我们常说的GPU Driven包括以下几个方面 地形渲染 制作  Houdini 生成高度图+Mask VS 直接生成Mesh  Houdini生成高度图+Mask方案对于Houdini来说更加轻量，不需要处理地形Mesh 直接生成最终Mesh可以离线对Mesh做处理，包括岩壁重展UV，LOD计算等 但对于ProjectS来说，没有太特殊的需求对Mesh做处理，一些岩壁拉伸问题也可以通过处理贴图渲染进行解决，最终选用高度图方案    渲染  DrawInstanceIndirectly通用Quad Mesh + LOD + 高度图采样 实现地形渲染 VS Mesh Cluster Rendering + LOD 实现地形渲染 ...</div></div></div></a><a class="pagination-related" href="/houdini-procedural-dependency-graph-manual/" title="Houdini Procedural Dependency Graph（PDG）手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202308102330018.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-06-19</div><div class="info-item-2">Houdini Procedural Dependency Graph（PDG）手册</div></div><div class="info-2"><div class="info-item-1">在使用PDG的时候，对于一个新的节点，总有一种云里雾里的感觉，看官方文档也是迷迷糊糊的，还好基本上每个节点都有提供相应的Sample，并标注了注意事项。 本篇就记录下PDG的一些重要节点，以及使用过程中的注意点 节点 Wedge 主要有以下几个作用   创建Work Item，驱动PDG   用于生成Attribute（可以多个），对于Wedge的Attribute，可以在整个TOP中通过@xxx来引用，当然，在和常规字符混排的的时候，需要加反向单引号例如： 1$HIP/geo/boxsphere_`@wedgeindex`.bgeo.sc   强制覆写某个参数，可以理解为非侵入式的一种数据注入方案   多个Wedege之前关系为嵌套关系，比如WedgeA的WedgeCount为2，WedgeB的WedgeCount为3，当B连接到A的出口，那么B将会输出2x3 = 6个WorkItem Partition by Index 它做的事情非常简单，就是将多个WorkItem按照index和一定的规则merge成一个WorkItem，每个WorkItem的index可以通过双击查看 ...</div></div></div></a><a class="pagination-related" href="/houdini-heightfield-manual/" title="Houdini HeightField手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202307222334574.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-06-19</div><div class="info-item-2">Houdini HeightField手册</div></div><div class="info-2"><div class="info-item-1">Houdini中HeightField相关节点在地形生成中占据了非常重要的地位，虽然可以在Houdini里右键节点-Helper查看详细的官方文档，但未对整个HeightField系统有一个宏观认识的情况下，也不知道要用哪些节点。所以单独开篇文章来记录常用的HeightField几点以及使用心得 （但HeightField手册又何必只是HeightField手册^ ^        _） 基础高度场操作 HeightField 基础的高度场节点，用于指定高度场的大小，细分/模拟粒度等基础信息 这个节点用于生成两个 2D volume 基元：height体积和mask体积，具有给定的分辨率和初始值，这些基元可以由其他地形节点进行修改。 height体积 是一个 2D 网格，表示地图上每个点的地形距离地面平面的距离（这些值可以为负）。 mask体积 可以用作其他地形工具的“mask”输入。它指定了地形节点的效果应该应用于哪些区域：mask值为 0 的区域不受节点影响，掩模值为 1 的区域完全受节点影响。地形节点允许你绘制mask或从地形信息中生成mask（例如，阴影落在哪里，或低于某...</div></div></div></a><a class="pagination-related" href="/adaptive-virtual-texture-rendering-in-far-cry-4/" title="Adaptive Virtual Texture Rendering in Far Cry 4"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2025/image-20250130155113039.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-01-31</div><div class="info-item-2">Adaptive Virtual Texture Rendering in Far Cry 4</div></div><div class="info-2"><div class="info-item-1">差不多该动手实现ProjectS中地形的RVT了，所以整理一波学习资料，依旧是以FarCry为主体 注意本文中同样的词汇在不同上下文中有不同的意思，以RVT为例，在Procedural Virtual Textures部分，RVT代表Procedural Virtual Textures，但在Adaptive Virtual Textures部分，RVT则代表Adaptive Virtual Textures，基于历史发展，简单排列下术语  VT：Virtual Texture，包含SVT（Mega-Texture），RVT（Procedural Virtual Textures，经典RVT），AVT（Adaptive Virtual Textures，Far Cry4提出的改良版RVT） Page：VT的其中一部分，其实叫Tile会更加合理一些，可以理解为VT是由一个个Page组成的，也是我们渲染到RT上的最小单位 Indirection Texture：VT和真实RT映射表，也叫Page Table Physical Texture Cache：最终用于渲染的的RenderT...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">项目概览</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">PDG流程</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">地形制作</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%95%B4%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="toc-number">3.1.</span> <span class="toc-text">整体流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E5%9C%B0%E5%BD%A2%E9%AA%A8%E6%9E%B6"><span class="toc-number">3.2.</span> <span class="toc-text">基础地形骨架</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2%E6%8B%86%E5%88%86"><span class="toc-number">3.3.</span> <span class="toc-text">地形拆分</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%B0%E5%BD%A2Tile%E5%A4%84%E7%90%86"><span class="toc-number">3.4.</span> <span class="toc-text">地形Tile处理</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">地形Tile合并</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">5.</span> <span class="toc-text">纹理切分导出</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">6.</span> <span class="toc-text">地形高度信息导出</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">7.</span> <span class="toc-text">地面 Mask</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E8%87%AA%E5%AE%9A%E4%B9%89%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91%E6%80%9D%E8%B7%AF"><span class="toc-number">7.1.</span> <span class="toc-text">手动自定义工具开发思路</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">8.</span> <span class="toc-text">物件Instance Mask</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">9.</span> <span class="toc-text">道路HDA</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">10.</span> <span class="toc-text">河流HDA</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">11.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '04635b5974cf7a90d48b129feb0ab743'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

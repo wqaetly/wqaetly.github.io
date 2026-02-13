@@ -1,0 +1,732 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>《守望先锋》网络脚本化的武器和技能系统 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原PDF链">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《守望先锋》网络脚本化的武器和技能系统">
+<meta property="og:url" content="https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原PDF链">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp">
+<meta property="article:published_time" content="2021-02-25T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-25T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="网络同步">
+<meta property="article:tag" content="文献翻译">
+<meta property="article:tag" content="GDC分享">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "《守望先锋》网络脚本化的武器和技能系统",
+  "url": "https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp",
+  "datePublished": "2021-02-25T00:00:00.000Z",
+  "dateModified": "2021-02-25T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '《守望先锋》网络脚本化的武器和技能系统',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">《守望先锋》网络脚本化的武器和技能系统</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">《守望先锋》网络脚本化的武器和技能系统</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-25T00:00:00.000Z" title="发表于 2021-02-25 00:00:00">2021-02-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-25T00:00:00.000Z" title="更新于 2021-02-25 00:00:00">2021-02-25</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">17.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>52分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/ow-gdc-weapon-and-skillsystem/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-25 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。</p>
+<p>重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。</p>
+<p>全系列链接：<a href="https://www.lfzxb.top/ow-gdc-share-table-of-contents/">《守望先锋》GDC2017技术分享精粹重制版总目录</a></p>
+<p>原PDF链接：本文部分图片如果想查看高清大图，可前往 <a target="_blank" rel="noopener" href="https://www.gdcvault.com/play/1024653/Networking-Scripted-Weapons-and-Abilities">《守望先锋》中网络脚本化的武器和技能系统 PDF</a> 下载PDF</p>
+<p>原视频链接：<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC">https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;ab_channel=GDC</a></p>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/ScyZjcjTlA4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe>
+<p>嗨，大家好，我叫 Dan Reed, 是暴雪娱乐的游戏工程师（gameplay engineer，译注：游戏机制工程师，或者游戏工程师，都可以），今天主要跟大家分享《守望先锋》（后面统一用Overwatch表示）中的网络脚本化的武器和技能系统。</p>
+<p>那么这里先简单介绍下我在Overwatch中的主要工作。</p>
+<ul>
+<li>
+<p>Statescript脚本系统，这也是今天我们要讲到的；</p>
+</li>
+<li>
+<p>抛射物和单局游戏模式；</p>
+</li>
+<li>
+<p>同时我也参与了一些特殊武器、技能和运动系统的设计；</p>
+</li>
+<li>
+<p>观战模式；</p>
+</li>
+<li>
+<p>一些UI也是我做的；</p>
+</li>
+<li>
+<p>再有就是一些我自己都不记得的工作了。</p>
+</li>
+</ul>
+<h2 id="概览">概览</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114651.jpg!webp" alt="doc_image_3_w601_h337" loading='lazy'></p>
+<p>Overwatch实现了一套自己的脚本系统来编写包括武器和技能在内的高层逻辑， 这套暴雪自有（proprietary）的脚本系统叫做Statescript。</p>
+<p>今天分享的内容包括关于Statescript的“为什么” 、“是什么”以及“如何做到的”。为什么我们决定实现这么特殊的一套系统，Statescript到底是什么？以及它背后的技术细节，这部分大约会耗时15分钟。</p>
+<p>另外会讨论网络通信需求及解决方案，包括脚本系统在Internet环境下遇到的那些限制，以及我们是怎么应对的，约30分钟。</p>
+<p>然后会分析一下这种方法的好处和挑战，这部分大约5分钟。</p>
+<p>最后声明一下本次分享不会包括的内容： 抛射物、命中检测以及一些特殊技能的实现。不是说这些不重要，这些都是很棒的特性值得作为独立的议题来讨论，只是超出了今天的分享范围 。</p>
+<h2 id="为什么要开发Statescript">为什么要开发Statescript</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114707.jpg!webp" alt="doc_image_4_w600_h336" loading='lazy'></p>
+<p>我们需要给“非程序员”提供开发上层逻辑的能力，因为我们知道需要创建大量的游戏逻辑，又不希望每个需求都要靠程序员手动编写解决方案。</p>
+<p>我们希望这个解决方案允许用户“定义”新的游戏状态，而不仅仅是“响应”这些状态。一般典型的游戏脚本系统都有一个相当不透明的游戏模拟过程，其中脚本也能编写逻辑以响应事先定义好的事件，通过用户自己定义变量、函数调用来微调，执行的结果最后都会消失回到黑盒状态。而我们更需要的是一个形式化的、明确的方式，使得脚本开发者（译注：scripter，下面统一用开发者）对状态和状态转移能直接地、完全地掌控。</p>
+<p>我们想要模块化的代码尽可能多地被复用，我们不会把一个特性（feature，也可译作功能）需求看作是一组垂直功能的堆叠，而是会去设计并实现那些这个特性所需的基础功能组件。</p>
+<p>我们需要一个无痛的、稳定的方式来实现一个能够通过网络同步的状态机。手写这些代码费时费力而且容易出错，所以，最好让计算机来替你完成这些工作。</p>
+<p>另外这个方案需要能够与项目引擎的其余部分协同工作，我们也对比了很多第三方脚本引擎，但是最终还是决定自己去开发一套能嵌入到我们的游戏引擎中的脚本语言，以得到最好的结果。</p>
+<h2 id="Statescript-是什么？">Statescript 是什么？</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114718.jpg!webp" alt="doc_image_5_w601_h338" loading='lazy'></p>
+<p>Statescript是一个可视化的脚本语言；每一个脚本都是一组互相连接的节点（node）形成的图（graph），代表了一段游戏逻辑的实现；这里举几个脚本的例子：猎空的“闪回”技能，卢西奥附近队友受到的加速、治疗buff，所有英雄都有的UI控件等。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114731.jpg!webp" alt="doc_image_6_w601_h338" loading='lazy'></p>
+<p>当一个脚本运行时，它会创建一个运行时对象，这里称之为脚本实例（instance），每一个实例都被一个实体（entity，不懂的同学可以参考另一篇分享：Overwatch Gameplay Architecture and Netcode）所拥有，例如每个“英雄”都是一个“实体”。如果你听过Tim Ford的分享，你肯定知道这是什么。</p>
+<p>实体上的脚本实例可以被动态地添加和删除，例如，无论何时你被麦克雷的闪光弹晕到，一段能够阻止你移动、瞄准行为的脚本实例就会动态加在你的身上，并且在一段时间内起作用，直到它被移除。</p>
+<p>同一个实体上可以同时运行同一脚本的多个实例。</p>
+<h3 id="Statescript-节点（node）">Statescript 节点（node）</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114743.jpg!webp" alt="doc_image_7_w601_h338" loading='lazy'></p>
+<p>在所有的节点中，首先我们有入口（Entry），Entry是脚本执行的起始点，它的作用很基础，就是在脚本开始执行时，触发一个脉冲给到它的输出（Output），当然也有好多其他类型的Entry会等待特定的消息（Message）才触发。</p>
+<p>然后是条件（Condition），Condition会影响脚本执行流程，上图中的布尔Condition仅仅基于一些表达式的结果来输出“真”或者“假”。</p>
+<p>接下来是动作（Action），Action基本上就是C++函数调用，这些函数在触发输出以前，会做一些立即完成的工作，像这个SetVar就是目前最常用的一个Action。</p>
+<p>最后是状态（State），State代表一些正在进行中的工作。一个State一直是处于未激活（Inactive）状态，直到它的Begin插头（Plug，可译作接口，但是会有概念混淆）上收到脉冲信号，它才激活自己。然后State就会一直保持在这个激活状态中，直到它自己决定关闭（Deactivate），或者是因为外部原因而被动结束。</p>
+<p>在这背后，每个State类型都是一个带有一堆虚函数的C++类（class），这些虚函数提供了一系列接口，包括OnActivate(激活)、OnDeactivate(关闭)、OnTick(轮询)、OnDependencyChange()等。这里面最重要的部分是他们都代表某种持续性的行为（behavior），而且这些行为都会在持续一段时间后停止。这个WaitState很简单，就像它的名字所描述的：“等待3秒钟就结束”。</p>
+<p>（译注：所有的节点类型，为了避免误解，后面统一用英文单词）</p>
+<h3 id="变量（Variables）">变量（Variables）</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114757.jpg!webp" alt="doc_image_8_w601_h338" loading='lazy'></p>
+<p>Statescript提供了大量的变量，包括“实例变量”和“所有者变量”来存放数值。</p>
+<p>每个实例都有只属于自己的一堆变量，叫实例变量。</p>
+<p>而实例所属的实体（译注：就是实例的“所有者”），一般也含有一堆共享变量。上图中，运行在猎空的脉冲枪脚本上的子弹（Ammo）和弹夹（Clip）变量，就是这个脚本的私有变量，但“AbilityLock”变量却可以被猎空英雄实体的所有Statescript实例共享，这就是“所有者变量”。</p>
+<p>一个变量既可以是单个的基本类型，也可以基本类型的数组。对于大部分需求来说，这已经足够了，但是至少还有一些时候，我们希望能支持嵌套结构体（nested struct）和集合（bags），我们将来会考虑实现这个功能。</p>
+<p>变量可以是“state-defined”（状态定义）的，它们当前的值是根据当前的StatescriptState来确定的，所以基本上可以通过询问State来得到一个变量的值。</p>
+<h3 id="属性Properties">属性Properties</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114813.jpg!webp" alt="doc_image_9_w601_h338" loading='lazy'></p>
+<p>Statescript节点的行为是根据属性定义的；从上图右边部分中能都看到，开发者可以从事先配置好的变量（Config Vars, 译注：翻译成配置参数比较好）列表里选择需要的变量来给每个“属性”赋值；</p>
+<p>Config Vars可以包含嵌套的属性，例如图中右上方有个“HeadPosition”配置变量里就有一个嵌套属性，你可以从另外一个Config Vars里选择，哪个实体会被赋予这个位置属性，在这里例子里就是此脚本的所有者实体。</p>
+<p>每一个Config Vars类型都是通过C++中的一个函数来实现的，这个函数可以把这些变量的值返回给这些脚本。下图是一些Config Vars的例子：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114820.jpg!webp" alt="doc_image_10_w601_h338" loading='lazy'></p>
+<p>常见Config Vars有：字面类型，变量，Utilities（基本就是一些C++函数）和表达式。表达式除了能做一些“foo是不是大于3”的无聊事情以外，还能够引用嵌套Config Vars列表，以支持更复杂的逻辑，例如：“源实体位置和目标实体位置之间的离是否大于3”。</p>
+<h3 id="其他Statescript功能">其他Statescript功能</h3>
+<p>大部分其他功能今天没时间讲了，但是有几个我认为值得一提的还是想拿出来说一下。</p>
+<h4 id="Subgraph">Subgraph</h4>
+<p>第一个是Subgraph（译注：子图，指的是每个节点还可以包含一个图）。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114827.jpg!webp" alt="doc_image_11_w601_h338" loading='lazy'></p>
+<p>每一个State都有一个Subgraph的输出，在State激活时就会产生脉冲，而在State关闭（Deactivated）时，所有Subgraph中的State也会随之关闭。有些State会包含其他类型的Subgraph插头，会在特定的时刻激活或者关闭State。</p>
+<p>上图中的Boolean Switch State就是个很常见的例子，它有1个TrueSubgraph和1个False Subgraph，会在条件达到时激活，条件未达到时关闭。</p>
+<h4 id="容器“Containers”">容器“Containers”</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114837.jpg!webp" alt="doc_image_12_w601_h338" loading='lazy'></p>
+<p>我们有不同的Containers变种。灰色边框的是最基本类型的Container，几乎没怎么组织，不会影响Behavior（行为）；红色边框的Container定义了哪些State是Subgraph的一部分，否则的话Subgraph只会跳转一次State；蓝色边框的Container是客户端专用的；紫色的是Server端专用的。这些可以在必要的时候，在客户端和Server端生成不同功能的Behavior。</p>
+<h3 id="Statescript-Theme（主题）">Statescript Theme（主题）</h3>
+<p>在我讲解第一个真实的脚本例子以前，我想简要的介绍一下两个重要的Statescript Theme（主题）。</p>
+<h4 id="“生命周期保障”（lifetime-guarantees）">“生命周期保障”（lifetime guarantees）</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114843.jpg!webp" alt="doc_image_13_w601_h338" loading='lazy'></p>
+<p>简单来说，也就是State的自我清理。在一个State关闭时，它的逻辑behavior执行完成，所以需要停止播放动画，清除它拥有的全部特效，重置所有改变过的变量，并关闭它激活的Subgraph，等等。</p>
+<p>一个实例被删除时会关闭所有状态。</p>
+<p>一个实体销毁时它会删除所有实例。</p>
+<p>游戏结束时它会销毁所有实体。</p>
+<p>这些都是显而易见的，但是当整个class都有bug时，开发者也不用担心，因为每个State的合约都是：如果需要清理，它自己必须实现完整的OnDeactivate接口。</p>
+<h4 id="Logic-Style（程序范式）">Logic Style（程序范式）</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114851.jpg!webp" alt="doc_image_14_w601_h338" loading='lazy'></p>
+<p>Statescript既支持指令式（Imperative）脚本：先做这个，再检查那个，再做那个；也支持声明式（Declarative）脚本，无论何时告诉电脑做什么，它就做什么，能做到这一点的部分原因是因为我们有生命周期管理。</p>
+<p>我们发现针对大型、复杂的需求建模，声明式脚本是最明智的选择。但是指令式也有它自己的一席之地，通常被用在声明式脚本的指令树的叶子节点上。</p>
+<h2 id="Statescript实例">Statescript实例</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114906.jpg!webp" alt="doc_image_15_w601_h338" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907114913.jpg!webp" alt="doc_image_16_w601_h338" loading='lazy'></p>
+<p>“死神”本来不能用右键开火，所以现在让我们赋予他一个新的技能，流程如下：玩家按住右键1秒钟，摄像机就切入第三人称视角，代表技能现在已经开始准备，然后玩家释放按键，死神就被发射到半空中。注意，如果玩家按住右键少于1秒钟的话，什么都不会发生。</p>
+<p>现在我们在编辑器里来搞定这个技能。</p>
+<p>先增加一个Entry，当“死神”出生时，脚本就可以开始执行了。然后增加一个叫“LogicalButton”的State，当右键被按住时触发一个Subgraph，还有另外一个在右键没有被按住时执行的Subgraph。当右键已经被按住了1秒钟，把“ReadyToLaunch”变量设置为True。然后进入第三人称视角。</p>
+<p>然后呆在这个状态直到右键被释放。注意：这里用来演示操作过程的视频已经被加速到2倍，实际上我是没办法弄得这么快的（众笑）。</p>
+<p>一旦右键被释放，我们立即就会去检查ReadyToLaunch是否为True，如果按住右键足够长时间的话，那它就一定是True。而且如果我们真的这么做了，就一定能把自己发射到空中。</p>
+<p>在那之前我先把ReadyToLaunch设置为False。</p>
+<p>正如你所见到的，这个脚本例子混合了一个声明式风格：这个行为当且仅当按键被按下时才激活，和一个指令式风格：等待一秒钟，把变量ReadyToLaunch设为True，然后进入第三人称视角。</p>
+<p>然后来测试这个新的技能。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115037.jpg!webp" alt="doc_image_20_w601_h338" loading='lazy'></p>
+<p>一切正如我们所期望的那样：右键按下，1秒钟以后，ReadyToLaunch变成True，然后进入第三人称视角，右键抬起，我被升到空中，同时ReadyToLaunch变成False。如果我只是轻轻点一下按键，则什么都没有发生。我至少要按住右键1秒钟才能进入准备发射状态，并进入第三人称视角。</p>
+<p>下面来做一个更加复杂的脚本。这是“猎空”的脉冲枪，嗯，这里我没时间讲解所有关于它如何运作的细节，但是你也能看出同样的原则在起作用，声明式脚本：这个为True的时候，这些事一定会发生；以及指令式脚本：先做这个事情，接着等待1秒钟然后做其他事。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115047.jpg!webp" alt="doc_image_21_w601_h338" loading='lazy'></p>
+<h2 id="Statescript是如何实现的">Statescript是如何实现的</h2>
+<p>在我们进入到网络部分以前，再花5分钟的时间来快速地过一遍整个Statescript系统是如何用C++实现的。</p>
+<h3 id="核心运行时（Core-Runtime）">核心运行时（Core Runtime）</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115138.jpg!webp" alt="doc_image_23_w601_h338" loading='lazy'></p>
+<p>整个Overwatch的计时器都是基于整数的Command Frames（命令帧，也可译作指令帧，代表服务器下发到客户端的数据单位）的，所以Statescript也利用了这个特性。</p>
+<p>每一帧是16毫秒，一秒钟刚好60帧；</p>
+<p>每个实体都需要挂载一个Statescript组件才能执行脚本。假如你错过了之前那个很重要的分享(Overwatch Gameplay Architecture and Netcode)， 那我告诉你，实体，以及Overwatch是建造在一系列组件之上的，这些组件允许系统可以执行特定的操作，这一切就是“实体组件系统模型”，简称ESC。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115155.jpg!webp" alt="doc_image_24_w601_h338" loading='lazy'></p>
+<p>Statescript组件包含了所有在一个实体上执行脚本所必需的数据，会简单浏览一遍。</p>
+<p>客户端上会有内部命令帧（Internal Command Frame），这个内部命令帧与当前正在模拟的来自Server的命令帧有所区别，后面会详细讲到。</p>
+<p>我们有一个Statescript实例数组和一堆所有者变量，还有同步管理器（sync manager），后面会深入讲。</p>
+<p>每一个Statescript实例都是在脚本开始、停止时动态分配的；都有唯一的实例ID用来做网络序列化；它还有一个指向Stu（译注：结构化数据的缩写，后面还会提到） Graph Asset资源的指针，Stu Graph对象里都是静态数据，不会在运行时改变；还有一个Statescript State数组，State是多态的，在脚本中首次用到时，通过一个工厂方法创建，然后就一直存在直到脚本被销毁。</p>
+<p>这里有一个未来事件Event的列表，这些都是准备好在将来的某个时刻在某个State或者是实例自己身上执行的。事件经常在与自己入队列时相同的命令帧上被触发，有时候会带有权重在未来触发。</p>
+<p>另外每个实例上都会有一堆实例变量。</p>
+<p>顺便说一句，这只是数据的粗略描述，真正深入到一个运行时的Statescript里， 会看到更多标志（flags）、缓存对象列表（cached list）来优化性能。我上面列出的仅是一些最重要的数据，而且与我后面讲到的内容会有关联。</p>
+<h3 id="States（状态）">States（状态）</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115214.jpg!webp" alt="doc_image_25_w601_h338" loading='lazy'></p>
+<p>Statescript的State基类提供了一些实用函数，例如“访问属性数据”、“事件调度”和“注册轮询回调（registering forticking）”。</p>
+<p>这个基类还提供了一些虚拟函数留给派生类去实现，所以我们就有了OnActivate，OnDeactivate，OnTimerEvent，OnFrameTick这些接口，如果State注册了轮询回调，那这些接口会在每个命令帧被调用到。</p>
+<p>GetStateDefinedValue这个函数允许State给一个特定的变量提供一个on-demand值；</p>
+<p>OnInternalDependencyChanged，接下来会马上讲到；</p>
+<p>最后三个虚函数是用来隐藏网络抖动的，稍后也会讲到。</p>
+<h3 id="所有的State都有一个StatescriptDependencyListener">所有的State都有一个StatescriptDependencyListener</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115247.jpg!webp" alt="doc_image_26_w601_h338" loading='lazy'></p>
+<p>它是一个指向StatescriptDependencyProvider的指针数组，反过来，每一个Provider也都有一个指回Listener的指针数组，这就形成了一个多对多的关系。</p>
+<p>Providers可以依赖于Statescript内部的变量，也可以依赖于那些Statescript以外的，被State依赖的对象。</p>
+<p>运行的时候，Listener是在某些需要特定Providers的属性第一次被计算的时候懒加载的。所以，如果一个属性请求查询某些实体的Health（血量），State的Listener就会获得一个指向那个实体的Health组件的Provider的指针，显然，这个Provider也会同时指回Listener。</p>
+<p>Provider变化时，会在所有Listening（译注：Listening的意思是与Provider互相指向）的State上调用OnInternalDependencyChanged。这是一个很重要的优化点，因为它意味着State不需要进行轮询（Pull）检查值是否变化，而是会收到通知。</p>
+<h3 id="变量Variables">变量Variables</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115257.jpg!webp" alt="doc_image_27_w601_h338" loading='lazy'></p>
+<p>StatescriptVarBags包含了一个指向StatescriptVars指针的字典表，这些StatescriptVars是在第一次使用到时才分配的。</p>
+<p>字典每个成员的key都是一个16位ID，映射到我们的Asset库中某个已注册的asset（译注：这里需要了解暴雪的Asset管理系统）。</p>
+<p>StatescriptVar可以是以下2种类型的任意1种：基本类型和基本类型的数组。每个基本类型都是一个128位（bit）长的联合体（Union），可以存下整形、动态数组、字符串指针等；</p>
+<p>StatescriptVar本身也是DepenencyProvider，有任何变化时都可以通知State。</p>
+<p>StatescriptVar也可以引用一个Statescript的State，可以获取到State的当前值。所以如果你想知道一个变量的值，只需要调用GetState即可获取当前引用的State上该变量的state-defined值。关于这一点，最常见的用法是ChaseVar State，这个State可以持续追踪变量的值变化。</p>
+<h3 id="结构化数据">结构化数据</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115316.jpg!webp" alt="doc_image_28_w601_h338" loading='lazy'></p>
+<p>Overwatch中的很多资源（assets）都是用一种我们称之为结构化数据的格式定义的，简称Stu。 这里会有一个步骤来把这些.stu文件编译成代码，我们的编辑器editor、资源编译器complier和运行时runtime都能够理解并使用这些代码。对类(class )类型和数据成员添加属性、反射也是支持的。这些属性对于Statescript编辑器和资源编译器（后面我会讲到）都是很有用的。</p>
+<h3 id="Wait-State-Data-Schema">Wait State Data Schema</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115325.jpg!webp" alt="doc_image_29_w601_h338" loading='lazy'></p>
+<p>这个例子里，不好意思，“在”这个例子里，有一个关于Wait State的结构化数据的定义，这里提醒一下，这个不是C++代码，而是Stu标记语言。Stu标记是用来生成描述这些数据对象的class的。</p>
+<p>现在看下这个Stu class的第一个成员，它只有一个属性（property），就是m_timeout持续时间，代表这个Wait State的超时结束 时间。</p>
+<p>它上方的Constraint标签告诉编辑器，把这个属性的下拉选择内容限制为那些能够提供数值型结果的ConfigVar，可以是整形或者浮点型。</p>
+<p>在底部我们还添加了2个插头（plug）,一个是用来在State被提早撤销时触发，另外一个是在等待结束时触发。</p>
+<h4 id="下面是Wait-State的C-运行时">下面是Wait State的C++运行时</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115337.jpg!webp" alt="doc_image_30_w601_h338" loading='lazy'></p>
+<p>你可以看出它是继承自StatescriptState基类的。</p>
+<p>顶部的宏定义DECLARE_STATESCRIPT_RTTI用来设置一些运行时类型信息（RTTI）。这个类的大部分代码都是关于重载函数OnActivate的。</p>
+<p>首先我们定义了一个指向Stu对象的指针，Stu对象包含了这个State所需的数据，这些数据需要在编辑器里填充。</p>
+<p>Stu对象的类是在上一页幻灯片中定义的。</p>
+<p>然后我们调用了函数GetFloat，并把timeout ConfigVar作为参数传递给它。这样就能得到用来传递给EnqueueFinishStateEvent函数的“秒”数。经过这个时间以后，State就会触发它的Finish插头（m_onFinishPlug），然后进入关闭状态。</p>
+<p>接下来又是2个宏定义，用来保证Abort和Finish这两个插头能够在期望的时间内触发。</p>
+<p>最后一行还是宏定义，是用来把运行时类型和Stu结构化数据类型关联起来，这样的话，Statescript系统在代码执行到这个阶段时，就知道用哪个class来初始化。</p>
+<p>显然我没有任何一个例子可以用来说明Actions，Conditions和ConfigVars是如何实现的，但是你们可以稍微把他们想象成State的更简化版本，他们每一个都有且仅有一个被调用的函数，而且他们的运行时版本不包含任何数据，在脚本执行时也不需要实例化任何东西，所以更简单。</p>
+<p>以上就是关于Statescript的简单介绍了。</p>
+<h2 id="如何用Statescript来做一个网络游戏">如何用Statescript来做一个网络游戏</h2>
+<h3 id="可用性">可用性</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115348.jpg!webp" alt="doc_image_32_w601_h338" loading='lazy'></p>
+<p>它不能干扰使用者，并且抽象了全部的网络通信细节 。最早的时候。我们不想区分服务器和客户端脚本，这种恐惧来自于，即使听起来很简单的Behavious行为，实现起来也需要大量额外的脚本来同步数据，写这样的代码很乏味也容易出错。我们的游戏开发团队对于那些本应由计算机完成的工作容忍度是很低的，所以很自然地也把这个原则应用到了Statescript网络版中。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115354.jpg!webp" alt="doc_image_33_w534_h300" loading='lazy'></p>
+<p>结果就是我们可以在服务器和客户端运行同样的脚本。我们发现其实也给开发者提供在必要时分离的脚本行为，但是这样做的机会不多。</p>
+<h3 id="响应性">响应性</h3>
+<p>必须能够适应快速响应的游戏。这意味着无论延迟有多高，玩家的操作必须能够立即有响应。这一点无需多言，否则的话，假设你开了一枪、用了一下技能或者开始冲刺，然后等待服务器回包才能收到视觉上的反馈，你一定会觉得这游戏逊毙了。</p>
+<h3 id="安全性">安全性</h3>
+<p>安全性是必须的，我们必须防止玩家通过发送恶意数据包来影响其他玩家的行为，没有人喜欢作弊者。</p>
+<h3 id="效率">效率</h3>
+<p>它必须足够高效，允许游戏在弱网络环境中正常进行。因为Overwatch需要运行在全世界的网络上，这就意味着有时必须面对“高延迟”、“丢包”等网络问题。</p>
+<h3 id="无缝">无缝</h3>
+<p>它必须是无缝的，能够最小化那些可察觉的、来自网络的影响。最开始我们只是想着在遇到问题时能够有办法处理就好了，但是当我们实现了越来越多的新节点类型（node types，就是上文中提到的state，action，condition等等）以后，清晰地感觉到，我们需要一个更加正规的方法，来处理那些因为使用特定武器和技能时遇到的肉眼可见的，丑陋的拉扯、卡顿问题。</p>
+<h2 id="网络同步解决方案">网络同步解决方案</h2>
+<p>那现在来讲一下我们是如何满足这些需求的。首先让我们来澄清一下，对于一个特定的Statescript实例，“网络同步”意味着什么。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115413.jpg!webp" alt="doc_image_39_w601_h338" loading='lazy'></p>
+<p>经过同步化以后，服务器和客户端可以在使用逻辑上相同的实例。就是说，因为无需关注网络细节，大家可以公平地讨论服务器和客户端都在模拟（simulate，译注：后面会多次提到，这里采用的翻译是模拟，用在本文里有运行、执行游戏逻辑代码的含义）的同一个逻辑实例。</p>
+<p>同步的结果是最终一致的，所以无论客户端做过什么样的预表现（Prediction，译注：翻译成预测、预演、预表现都可以），无论发生什么样的网络异常，服务器和客户端都能修正并最终回到彼此一致的状态。</p>
+<p>另外还有非同步的实例，这些实例依然可以收到来自同步化实例的消息，也可以从同步化实例读取变量，但除此以外，他们的内部逻辑又是完全独立的。</p>
+<h3 id="下面是一些同步化、非同步化脚本的例子">下面是一些同步化、非同步化脚本的例子</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115423.jpg!webp" alt="doc_image_40_w601_h338" loading='lazy'></p>
+<p>对于同步化的实例，我们有武器、技能、表情、单局游戏模式和地图实体（大门、血包等） 。</p>
+<p>对于非同步化的实例，我们有菜单、英雄收藏品、单局结束流程和音乐。</p>
+<p>再说一次，正因为脚本中可以在实例之间发送消息，甚至是同步化实例和非同步化实例之间，所以我们可以做到让单局游戏模式实例控制音乐实例来播放不同的音乐。</p>
+<h3 id="本地和远程实例">本地和远程实例</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115431.jpg!webp" alt="doc_image_41_w601_h338" loading='lazy'></p>
+<p>任何一个给定的客户端上， 任何一个网络化的、可以被玩家直接控制的实体，例如：你可能正在玩猎空或者源氏，我们把这个实体和它身上的Statescript实例叫做该客户端上的local，所有其他的网络化实体都叫该客户端上的remote。</p>
+<p>注意local实体并不是必须的，例如当播放死亡回放时，或者当前游戏内玩家没有任何可以操作的对象时，这时并没有local实体，你仅仅是在观看已经发生的一切。</p>
+<p>服务器会跟踪记录哪些实体对于哪些客户端是local的。</p>
+<h3 id="服务器权威">服务器权威</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115440.jpg!webp" alt="doc_image_42_w601_h338" loading='lazy'></p>
+<p>网络版Statescript 就是服务器权威的，这意味着服务器对于所有发生的事情，具有最终裁决权。通信通常是从服务器到客户端单向进行的，唯一的从客户端到服务器的通信就是按键输入和瞄准。</p>
+<h3 id="从客户端到服务器的输入操作">从客户端到服务器的输入操作</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115447.jpg!webp" alt="doc_image_43_w601_h338" loading='lazy'></p>
+<p>如果你听过Tim的分享，你肯定已经看过这个流程图了，而且是更加细节的。</p>
+<p>注意：这里的水平轴是现实世界的时间。首先，服务器下发一次更新，这是它处理过的最新的一个命令帧，在这个例子里，帧号是100。客户端收到以后，发现为了让自己可以对服务器正在发生的事情有影响，它的输入必须及时到达服务器以被正确处理。这就意味着它不能仅仅把输入操作作为100帧的回包发给服务器，因为服务器上的时间会一直流逝。所以它需要把输入作为未来的某个时刻发给服务器。但是应该有多“超前”呢？</p>
+<p>服务器和客户端形成了一个反馈环，服务器会分析命令帧到达时有多提前或者延后，然后通知客户端这些计算后的往返时延，简称</p>
+<p>RTT（round-triptime），所以这个例子里，假如客户端想要发送针对100帧加上RTT的时延的回包，那就是105帧，因而也就能及时到达服务器并处理。</p>
+<p>在实践中，我们实际上是在网络条件的基础上，再超前一点点。例如，如果你的RTT频繁变化，我们的补偿就会再超前一点点来确保输入及时到达服务器。</p>
+<p>本来我们应该再回头讲讲客户端的，但是现在我们已经知道服务器如何从客户端获取输入，那么我们可以更深入了解服务器的同步响应性。</p>
+<h3 id="服务端同步概览">服务端同步概览</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115454.jpg!webp" alt="doc_image_44_w601_h338" loading='lazy'></p>
+<p>首先服务器从客户端收集当前命令帧的所有实体的操作，然后我们在所有的实体上执行这个命令帧，并把所有发生的变化储存在StatescriptDeltas中，最后把这些Delta（直译为“变化”，这里不做翻译了直接用Delta表示）发给所有的客户端。</p>
+<h4 id="StatescriptDeltas">StatescriptDeltas</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115500.jpg!webp" alt="doc_image_45_w601_h338" loading='lazy'></p>
+<p>如果你还能记起早前讲过的，Statescript组件都包含一个Sync Manager，用来在服务器和客户端之间对实体保持同步。在服务器端，Sync Manager持续追踪一个StatescriptDeltas的数组，这些Delta代表了实体在一个特定命令帧上经历的变化。注意，我们只在那些有变化的帧上创建Delta对象，最后来看，这部分比例很小，因为大部分时候对于一个实体来说很少发生变化。</p>
+<p>现在过一遍StatescriptDeltas的数据结构，首先我们有命令帧，注意我们的Delta代表是一个实体在命令帧开始和结束之间的那些变化；我们还有一个包含所有发生变化且已经同步了的实例的数组，对于这个数组的每一个成员，都有这些属性：Instance ID；创建/销毁标志；以及所有发生变化的实例变量（Variable）数组，对于每个实例变量都有一个ID字段，对于数组类型实例变量，我们有一个字段代表“发生变化的数组下标范围”，通过追踪记录这个范围，我们可以避免传输整个数组；还有一个数组记录了所有发生变化的State的索引；再有一个数组记录了所有执行过的Action的索引；最后还是一个数组，记录了在一个给定命令帧上，发生过变化的所有者变量（Owner Variables）。</p>
+<p>每一个StatescriptDeltas在所有客户端都确认收到对应的命令帧前会一直保存在服务器，确认后就没必要在保存了，可以很安全地删除它。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115510.jpg!webp" alt="doc_image_46_w601_h338" loading='lazy'></p>
+<p>现在我们已经知道发生了哪些变化，但是到底应该把哪些变化发送给谁呢？这就是StatescriptGhosts的用处所在了。</p>
+<h4 id="StatescriptGhosts">StatescriptGhosts</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115517.jpg!webp" alt="doc_image_47_w601_h338" loading='lazy'></p>
+<p>StatescriptGhosts跟踪记录每个客户端对于服务器上的每一个实体的信息了解程度。现在看一下它的数据结构：客户端编号；最后一次确认的命令帧编号，证实客户端确实拥有了现在这个及之前命令帧的全部信息；一个指针数组，指向外部的StatescriptPackets数据包，这里的“外部”的意思是，我们已经发送了数据包但是还没有得到对方是否收到的答复。注意，当一个数据包被客户端确认接收（简称Ack），或者超时未接收表示发生丢包（简称Nack），Overwatch的网络底层会分别通知每一个系统模块，也包括Statescript系统。我们利用这个特性来维护StatescriptGhost对象：一旦我们得到某个数据包的Ack或者Nack，我们就把它从外部数据包列表中移除。</p>
+<p>客户端断开连接以后，StatescriptGhosts才会销毁。</p>
+<h4 id="StatescriptPacket">StatescriptPacket</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115523.jpg!webp" alt="doc_image_48_w601_h338" loading='lazy'></p>
+<p>还是先看数据结构：一个Local/Remote的标志，根据牵涉到的实体相对于接受者是否为Local，包数据格式会有所不同；命令帧范围起始和结束编号；最重要的payload（直译为有效载荷，指协议外的有效数据）字段，代表要传输的实际内容，为了生成这个payload，我们创建了一个命令帧范围内全部StatescriptDeltas的并集，这里的并集就是数学上的概念，基本上我们需要知道命令帧范围内的全部变化。然后我们对这个并集中引用到的所有对象的值进行序列化。</p>
+<p>如果命令帧范围是从0开始，那它肯定是一个刚刚建立连接的客户端，那就仅仅需要发送全部对象的“当前值”即可，我们把这叫做全量更新（full update），这种情况下完全不需要关心Delta。</p>
+<p>数据包在发送后会暂存。另外在命令帧范围相同，Local/Remote标志也相同的情况下，数据包可以重复利用。这是一个优化点：不需要花时间重新创建完全相同的payload了。</p>
+<p>与StatescriptDeltas的工作方式类似，一个数据包也是会一直保存，直到所有客户端都已经确认收到其中的“结束帧”。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115531.jpg!webp" alt="doc_image_49_w601_h338" loading='lazy'></p>
+<h4 id="服务器同步总结">服务器同步总结</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115537.jpg!webp" alt="doc_image_50_w601_h338" loading='lazy'></p>
+<p>StatescriptDeltas跟踪记录实体的最近的变化情况；StatescriptGhosts跟踪记录哪个客户端对于哪个StatescriptDeltas了解多少；StatescriptPackets是可重用的有效数据payload，绑定到客户端，对应于一个或者多个StatescriptDeltas。</p>
+<h4 id="演示实体的网络同步流程">演示实体的网络同步流程</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115542.jpg!webp" alt="doc_image_51_w601_h338" loading='lazy'></p>
+<p>在顶部的时间线(timeline)上，能看见2个不同的Delta，对应于期间 Statescript实体发生过变化的命令帧。第一个Delta发生在100帧，我们立即创建了一个数据包并下发到客户端。经过一段时间后，在103帧上，这个实体产生了另外一次Delta。由于之前的数据包还在传输过程中，没必要重传，所以我们创建了只包含103帧Delta的数据包并下发。</p>
+<p>等到第106帧的时候，服务器发现出问题了：它可能不会收到100帧的数据包的确认消息了。这种情况下服务器就要做决定了：重发哪些包呢？它至少必须重发100的包，但是是否重发103，现在决定还为时过早。</p>
+<p>在这个案例中，我们最终决定多走一步，还是发送100和103两个帧包的并集，避免因为103帧也发生丢包而引发的问题。但这就意味着客户端可能收到两次103包，如你所见确实发生了。如果说冗余可以帮助一个客户端更快地从一连串的丢包中恢复过来的话，那它就完全是值得的。</p>
+<p>客户端也懂得这种重复是服务器的策略之一，所以它不会处理第一个103包， 因为这样做不但会导致错误的执行状态（illegal simulationstate，只有103的变化，缺失了100的变化，这种状态在服务器上根本不存在），而且也没必要（后面无论如何都还会收到一次包含103包的合集，已经是最新的了，根本不需要第一个103包 ）。</p>
+<p>最后回到服务器端，收到了来自客户端关于2个数据包（译者注：一个是103的，一个是100和103合集的）的确认收到信息。事实上收到第一个确认包并不会对服务器有任何帮助，因为仅仅能够知道100包还在路上；第二个确认包则会让服务器很开心了，因为它知道100和103都确实被客户端收到了，一切都很顺利。</p>
+<h3 id="客户端同步概览">客户端同步概览</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115550.jpg!webp" alt="doc_image_52_w601_h338" loading='lazy'></p>
+<p>客户端当前Local实体在模拟（运行）时会缓存按键输入和预表现。正如你还能记得起来的那样，Local实体是运行在一个相对于下行包更加未来的时间线上的，我们发给服务器的上行包会在服务器处理该命令帧之前到达。Local实体跑在未来，所以它用预表现来保存未确认的操作。</p>
+<p>当收到一个来自服务器的StatescriptPacket时，首先发送一个确认收到的Ack信息，如果是超时冗余或者乱序的包，就整个忽略掉。正如之前的幻灯片中展示的例子那样。</p>
+<p>如果StatescriptPacket是Remote，就直接复制包数据就行了。</p>
+<p>否则，如果是Local，首先回滚所有已经执行的预表现，复制数据，然后使用之前缓存的输入，重新模拟执行到当前时刻，我们有时候管这个过程叫前滚（Roll forth）。这里要注意，执行前滚时，尽管我们使用了之前缓存的输入和瞄准操作，但新的预表现又需要被加进来。 另外，整个回滚、前滚过程都是实时发生在同一帧，玩家是发现不了的 。</p>
+<p>我们确实需要给Statescript State和Action添加一些实用函数来保持这个过程是无缝的，我等下就会再详细讲讲这个。</p>
+<h3 id="收到一个Remote包的处理过程">收到一个Remote包的处理过程</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115557.jpg!webp" alt="doc_image_53_w601_h338" loading='lazy'></p>
+<p>从上图中可以看到，客户端有一个Remote实体，从服务器收到几个StatescriptPackets以后，接受这些更新（Update），就这么简单。</p>
+<p>注意，在大多数情况下，Remote Statescript实例既不触发节点（Node）间的link，也不处理事件，他们仅仅是轮询（Tick）那些需要刷新的State。在这个例子里，他们都是“哑”的，依赖服务器告诉他们所有的事情。这里唯一的例外是Client专有的Subgraph，只要拥有这个Subgraph的State认为它是激活的，它就会一直全量地模拟执行。</p>
+<h4 id="预表现包的处理过程">预表现包的处理过程</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115603.jpg!webp" alt="doc_image_54_w601_h338" loading='lazy'></p>
+<p>上图显示了客户端的一个Local实体，进行一次预表现，并收到了一个StatescriptPacket回包，图中的灰色条代表一个按键被按住不放，灰色虚线是客户端把这个输入发回给服务器，哦对不起，是发给服务器。</p>
+<p>可以看见客户端在100帧做了一些预表现行为，来响应玩家按键。服务器上也是在同一帧执行同样的过程，然后下发一个StatescriptPackets。类似的事情也发生在103帧。</p>
+<p>等到105帧的时候，客户端收到一个描述活动的100帧回包，所以它回滚所有在103和100帧做过的预表现，图中用洋红色表示的，直接丢弃它们。然后复制服务器版本的100帧数据，图中是用青色表示的。然后重新执行从101到105帧的全部过程（虽然作者没说明，但明显是绿色表示的），这个过程中重新构造了103帧。</p>
+<p>注意这里的ICS代表内部命令帧（Internal Command Frame），这是Statescript系统当前正在模拟的帧。</p>
+<p>最后当客户端收到来自服务器的第二个活动时，我们会在108帧得到一些类似的过程。</p>
+<h3 id="收到预测错误的包如何处理">收到预测错误的包如何处理</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115646.jpg!webp" alt="doc_image_55_w601_h338" loading='lazy'></p>
+<p>在这个例子里， 客户端发生了一些没做预表现的事情，所以也无法进行回滚操作。引起这些的原因可能是外部的，例如被“眩晕”或者被“击杀”；假如在103帧客户端做了预表现，执行了一些操作但是服务器上并没有做，有可能是因为另外一个外部原因阻止服务器这样做了。一旦客户端意识到它在103帧上做的预表现永远收不到确认回包了它就会回滚，然后从104帧开始重新模拟到现在。</p>
+<p>现在回头看看这些同步是如何作用于咱们刚刚给死神新增加的右键技能上的。</p>
+<p>（译注：下面很长一段时间都是动态演示过程，最好结合视频，仅仅靠幻灯片是比较难以理解的，对应原视频时间<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;t=1950s">32:30</a>  -  <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;t=2090s">34:50</a>）</p>
+<p>现在按住右键，等待，切换到第三人称，释放，跳到空中。现在请把注意力放到屏幕右边的垂直方向的条上，这是Statescript调试器的时间线。我现在暂时停止收集数据，并回滚时间到过去来看看发生了什么事情。</p>
+<p>屏幕左上角，你可以看见View：Server字样，说明现在显示的内容是服务器上发生过的事情，接下来我们开始对整个命令帧单步调试，当我放开右键的时候，可以看到下面的Subgraph关闭了，包括Camera 3P这个State也是，然后就能看见bool condition的ReadyToLaunch变成True了。然后我们执行这个MovementMod Action，就会把我发射到空中。最后ReadyToLaunch会被设置为False。</p>
+<p>现在来看一下客户端都发生了什么。</p>
+<p>还是屏幕左上角，切换View到Client。我们还是单步跟踪发射技能的模拟预表现，可以看见时间线是绿色的。如果你观察时间线上光标旁边，可以看到CF字样，CF代表命令帧（Command Frame）。这就是死神这个实体当前正在进行模拟的一帧，ICF代表内部命令帧（Internal CommandFrame）,这是Statescript系统正在进行模拟的一帧。那么现在，因为我们已经执行一次预表现，这两个值（CF和ICF）是相同的，但是当我们前进几帧以后再看看会发生什么？光标进入洋红色区域，这就意味着我们从服务器收到了一个StatescriptPacket而且正在执行回滚。你会注意到现在ICF刚好在我们第一次做预表现的那一帧上。回滚完成以后，我们实际上已经处于更早的命令帧的开始阶段上了。</p>
+<p>接下来我们会进入青色区域，复制操作开始了。注意，复制不需要跟随links。为了节省带宽，尽量做到最小化：设置变量然后更新State。</p>
+<p>如果你很好奇为什么这些Action没有被复制，那是因为如果执行复制的话，SetVar和MovementMod这两个Action会冗余。前者是因为其中的变量已经被复制过了；后者是因为它会执行自己的复制操作。关于这些优化我会再多讲一些。</p>
+<p>在现在的情形下，我们需要模拟回到当前，这就需要执行“前滚”。但是因为什么都没做，调试器什么也没记录，这就是为什么看起来它好像不见了，但是我们肯定会确保回到现在的。现在可以看到命令帧和内部命令帧完全相同。</p>
+<p>那么，难道回滚和前滚不会使得程序员开发新节点（Node）类型变得更困难吗？毕竟谁也不想仅仅就是因为从服务器收到了一个包，就得重新开始播放动画或者重复播放一段声音，或者生成额外的粒子特效！</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115658.jpg!webp" alt="doc_image_58_w601_h338" loading='lazy'></p>
+<p>答案是：是的，它的确使得开发变难了。尽管Statescript很大程度上把开发者从网络细节下保护起来了，C++程序员还是偶尔不得不处理这种问题。为了帮助改善，State提供了很多实用函数，例如每个State的激活和关闭都有一个Reason参数，Reason可以是“服务器回滚复制”、“实体被销毁”等。State还提供了一些函数来帮助了解模拟过程当前处于哪个阶段，例如：“访问某一帧的某个State的所有活动和关闭信息” 。</p>
+<p>然后我们还有OnBecomeActiveThisTick和OnBecomeInactiveThisTick，在一帧的最后，如果你的State的激活状态与这一帧开始时不同，这两个函数就会被客户端的Sync Manager在你的State上调用。当你的State仅仅处理输出（例如特效或者声音或者UI）而且不需要自己反馈结果给到Statescript去模拟时，这就会很有用。这种情况下，完全不用担心OnActivate和OnDeactivate的实现， 只要等到一帧的最后对这些做响应就行了，这些可以帮助在回滚和前滚场景下避免因为状态关闭开启时带来干扰（pops）和额外影响。</p>
+<p>最后我们还有2个函数 PutUpdate和GetUpdate，用来从服务器向客户端传输State的数据，虽然很有用，但是这种函数写起来很乏味又容易出错，我们应该能够做到更好，后面会继续讲。</p>
+<p>Action也有一些实用（Utilities）函数，可以执行单独的回滚和访问临时回滚存储。这里需要有存储是因为Action都是单例（Singleton）对象没有自己的存储区。然而我们是需要存点东西的，来避免在复制或者前滚期间播放声音。这是对于整个Action的无状态原则的一种破坏，不怎么理想，但是看起来是值得让步的。</p>
+<p>幸运的是，我们不需要经常写这类可预测（predictable）的Action。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115707.jpg!webp" alt="doc_image_59_w601_h338" loading='lazy'></p>
+<p>即使有了这些实用函数，我还是觉得编写同步化的State有点困难。所以我们又想了另外一个办法。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115713.jpg!webp" alt="doc_image_60_w601_h338" loading='lazy'></p>
+<p>我们没有用PutUpdate和GetUpdate，而是用了结构化镜像数据库自动从服务器到客户端复制数据，自动处理回滚。有了这个以后，程序员从此不再需要手动编写传输State数据的代码，实现起来更快了，bug也少了。</p>
+<p>更好的是，程序员甚至都不需要编写定制化的逻辑来处理回滚时State的内部数据了。</p>
+<h4 id="现在来看另外一个例子：猎空开枪时的回滚和前滚">现在来看另外一个例子：猎空开枪时的回滚和前滚</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115803.jpg!webp" alt="doc_image_61_w601_h338" loading='lazy'></p>
+<p>这里可以看到WeaponVolley这个State，在我们做本地预表现时，忽略掉了所有单次的射击（译注：这个忽略过程一定要配合视频来理解，原视频<a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;t=2244s">37:24</a> - <a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=ScyZjcjTlA4&amp;t=2295s">38:15</a>）。</p>
+<p>这里开始回滚，因为收到服务器回包了。青色的这些是数据复制。然后这是服务器视图。最终我们模拟回到了现在。注意看，尽管WeaponVolly State在全力更新每个内部命令帧回到现在，它又是如何还能够重新处理那些已经忽略的单次射击呢？那是因为“抛射物”类型的子弹的模拟和同步都是由一个外部系统处理的，回滚的处理方式和Statescript是不同的。而WeaponVolly State需要知道这一点。（译注：这里没太弄清作者意图：猎空的手枪明显是hitscan类型的，这里提到projectiles抛射物类型，仅仅是用来对比嘛？）</p>
+<p>虽然Statescript提供了实用函数和功能来帮助State很好地处理回滚前滚场景，但最终能否处理正确还是依赖于每一个State自己。</p>
+<p>最后，当处理重新模拟和前滚回到现在时，清楚地知道每个正在处理的命令帧的哪些历史数据是精准的，就比较重要了。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115814.jpg!webp" alt="doc_image_62_w601_h338" loading='lazy'></p>
+<p>对于历史数据，包括Local实体的全部变量和状态，这很容易理解，毕竟我们正在处理的就是这些；还有按键输入和瞄准；以及所有实体的位置和姿态，位置对于技能系统来说尤其重要，因为技能施放成功或失败很依赖实体的相对位置。</p>
+<p>值得注意的是，服务器也有关于位置和姿态的历史数据，而且它还知道我们的RTT时间，所以它在执行模拟期间，是可以获取当时客户端位置和姿态的确切值的。</p>
+<p>在服务器和客户端同时记录这些数据，对于避免预测错误是至关重要的。</p>
+<p>我们还有些不需要历史数据的，包括Remote实体的变量和状态；其他实体组件（例如血量和过滤器）的数据。</p>
+<p>最后发现，只访问这些数据的最新、最全版本是ok的，因为不像位置和姿态信息，服务器是不会对它进行倒带（Rewind）的。无论如何，在重新模拟期间，换个方法访问数据的历史版本反而让我们更容易错误预测。</p>
+<h3 id="阶段总结">阶段总结</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115822.jpg!webp" alt="doc_image_63_w601_h338" loading='lazy'></p>
+<p>首先需要我们有足够的可用性，开发者不用关注网络细节。</p>
+<p>我们还有响应性，武器和技能的立即对玩家的输入做出预表现，然后再根据服务器的更新信息来回滚到正确状态。</p>
+<p>安全性也有保障，因为唯一需要发给服务器的就只有按键和瞄准，欺骗服务器权威性是不可能的。</p>
+<p>说到无缝，核心系统和Sync Manager（同步管理器）提供了多种方法来帮助工程师实现无缝的回滚、复制和前滚，在同一帧内可以全部完成。</p>
+<p>现在就只剩下“高效率”这一条还没有实现了。其实在讨论StatescriptDeltas、StatescriptGhosts和StatescriptPackets的时候已经覆盖到了一点点，但是还是有一些需要讲的。</p>
+<h2 id="高效概览">高效概览</h2>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115833.jpg!webp" alt="doc_image_64_w601_h338" loading='lazy'></p>
+<p>StatescriptDeltas、Deltas、Ghosts能够容忍丢包并能够从中恢复，而无需重发所有的中间状态的数据包，如果你还能记起来的话，这都是使用并集（Union）来包含多个Deltas带来的好处。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115839.jpg!webp" alt="doc_image_65_w601_h338" loading='lazy'></p>
+<p>为了使得带宽占用尽可能的低，Statescript在编译脚本期间，会自动分析并发现“同步”需求。对于Local实体，Statescript必须打包所有的东西，这样预表现就会很精确。下发给客户端的时候，任何内容都不能忽略，因为我们假定其中所有得都是为了做到精确模拟所必需的。</p>
+<p>现实中，我们或许还可以做得更多，例如找出哪些State变量和Action仅仅影响服务器，但是写个算法来证明这一点的话，编译过程就会变得复杂。</p>
+<p>另一方面，针对Remote对象进行优化对我们来说是更重要的，至少对于英雄来说，只有一个是Local的，其他11个都是Remote。这是我们必须考虑的实情。</p>
+<p>对于Remote实体，这就是我们能看到的带宽优化空间的所在。Remote实体不会模拟他们的同步化Statescript实例，他们仅仅是持有已注册需轮询的激活的State，而不会触发任何脚本中同步部分的下游链接。</p>
+<p>StatescriptPackets只需要包含Remote实例关心的State和Action以及他们引用到的变量和Action就够了。</p>
+<h3 id="Statescript如何知道该同步哪些内容">Statescript如何知道该同步哪些内容</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115848.jpg!webp" alt="doc_image_66_w601_h338" loading='lazy'></p>
+<p>为了指出哪些State和Action是Remote实例必须的，我们在Node类型的结构体里增加了一个属性，你可以看见，就叫SYNC_ALL。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115853.jpg!webp" alt="doc_image_67_w601_h338" loading='lazy'></p>
+<p>有了这个属性，State和Action在被同步到客户端的时候，除非他们特意指明要在运行时同步给Remote，否则就会被优化掉。</p>
+<p>有些时候，如果他们知道哪些修改过的变量不是Remote实例必需的，就可以优化掉。如果没有这个属性的话，State就会只下发给Local客户端；Action则完全不会下发。</p>
+<h3 id="编译">编译</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115906.jpg!webp" alt="doc_image_68_w601_h338" loading='lazy'></p>
+<p>在编译期间，对于每一个Statescript Graph资源，都通过反射来判断哪些节点是需要同步给Remote客户端。然后我们分析每个节点引用了哪些变量，用一个列表存起来。这些都是潜在的可能被Remote需要的变量。然后计算一下在创建Statescript数据包时，如果引用这些节点和变量需要多少个字节。这样就可以很快得到一个每个Statescript脚本对象唯一的优化协议，我们可以用这个协议来进行同步。</p>
+<p>因为服务器和客户端共享同样的脚本资源，所以我们可以做到这一点。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp" alt="doc_image_70_w574_h323" loading='lazy'></p>
+<p>首先，来观察一下这个Remote猎空，在服务器视图上开火。你可以看见所有节点都点亮了，因为服务器在模拟所有的操作。在右上角，可以看见这个实例正在使用的全部变量。为了Demo演示的需要，我隐藏了全部“所有者（Owner）变量”，这样你可以前后对比看得更清楚一些。</p>
+<p>现在切换到客户端视图。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120002.jpg!webp" alt="doc_image_71_w601_h338" loading='lazy'></p>
+<p>可以看到点亮的节点很少，而且实例使用的变量也没几个。需要执行的节点更少了，这不仅仅是带宽的极大降低，也是客户端性能的胜利。</p>
+<p>我知道你们中肯定有人对这里的流量很好奇，下面是猎空打完一个弹夹然后花2秒钟换弹的操作的Local和Remote消耗的字节数。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120050.jpg!webp" alt="doc_image_72_w601_h338" loading='lazy'></p>
+<p>如果你还记得起来的话，我们已经对Remote做过优化了，因为客户端只有一个Local实体，但Remote实体要多得多。</p>
+<p>如果包括Local在内，你一共有12个猎空一起按下主武器开火按钮的话，把上面的数字累加一下，总的字节数是大约5.4K每秒。</p>
+<p>现在时间（译注：视频时间）已经来到43分52秒了，我们学习了整个Statescript的网络版的实现。现在是时候来看看我们享受到的它的那些好处了。</p>
+<h2 id="得到的好处">得到的好处</h2>
+<h3 id="快速迭代">快速迭代</h3>
+<p>游戏开发完成的时候，我们的游戏策划们有了一个灵活的迭代工作流，在这个流程下，新的英雄可以很快的做出来。从原型到上线，基本不用怎么改代码。</p>
+<p>这一点其实很难量化，但是我这里有个图表，能说明些问题。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120118.jpg!webp" alt="doc_image_75_w601_h338" loading='lazy'></p>
+<p>从表中能看出我们为每个新英雄都增加了多少个新的节点类型。这个表是以游戏开发时间顺序排列的。顺便说一句，这绝对不是完整意义上的全表，基本上值是我能够想到的。</p>
+<p>如你所见，前几个英雄需要几乎全部的新节点类型，这很容易说得通，因为那时候我们还没有节点类型库。但是随着时间的推移，我们需要的新节点变得越来越少了。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120124.jpg!webp" alt="doc_image_76_w601_h338" loading='lazy'></p>
+<p>最后几个英雄，几乎不需要任何新节点。</p>
+<p>当然，还是有些bug需要改的，也有新的游戏玩法需要支持到旧的节点中，所以我们的游戏工程师永远都不会没活干。</p>
+<p>这些基础组件彻底释放了策划们的潜力，他们可以快速迭代、天马行空。</p>
+<h3 id="自动同步与状态机">自动同步与状态机</h3>
+<p>当程序员需要添加新的游戏时，基本不用写“同步”和状态机相关的代码。后来发现新节点类型的大多数，或者是纯服务器端实现，或者只需在客户端实现。现在，对于一个客户端节点来说，读取来自服务器的变量或者其他数据是完全可行的。同样对于服务器来说也能输出一些只有客户端才用得到的变量和数据。</p>
+<p>但是其实对于状态机来说，不太经常需要手写“同步”代码，因为它的主要逻辑是运行在内部的C++状态机负责实现的。但是大部分的Statescript异常情况也是状态机相关的。</p>
+<h3 id="生命周期和“不同步”的bug更少">生命周期和“不同步”的bug更少</h3>
+<p>包括生命周期问题和服务器客户端不同步在内的特定类型的bug不太常见。其实开发期间我就认为这些肯定是会经常来烦我的bug之一，但事实上我们很少遇到因为对象应该被销毁却还存在，服务器上有客户端上却没有，而产生的问题。</p>
+<p>我们在一个地方做好状态机和同步逻辑，然后锤炼多年希望它能正确工作。正因为我们做了这些，结果那里（译注：<a target="_blank" rel="noopener" href="http://xn--Reddit-ve8lq2sd94b.com">指的是Reddit.com</a>，美国最大的bbs）有一整版的bug我们都没怎么见过，现在我想说请不要再访问我们的Reddit上的论坛了（众笑）。只是开玩笑啦，我们爱你，Reddit！</p>
+<h2 id="挑战">挑战</h2>
+<h3 id="运行时、编辑器和调试器都是有实现成本的">运行时、编辑器和调试器都是有实现成本的</h3>
+<p>我们花了一大块时间去开发这些。从2013年晚期Overwatch开始预热起，一直到今天，我个人基本上有一半时间都是花在开发Statescript运行时、Sync Manager、编译器、调试器和一些核心特性上了。</p>
+<p>同样的时间，我们的游戏工程师和服务器程序员开发了无数的节点类型。说到编辑器，我们的工具工程师（tools engineer）花了好几个人月开发，一整年的时间来维护。真的是大投入。</p>
+<h3 id="学习曲线">学习曲线</h3>
+<p>这个系统对于工程师来说，是有学习成本的，尤其是要决定某个特性的哪个部分该放到代码里，哪块放到脚本里。Overwatch里我们有许许多多不同的系统，当一个新的复杂的特性要被加进来的时候，系统需要用Statescript来配置它，并在Statescript里创建一个节点来驱动整个特性。</p>
+<p>有时候一个特性过于复杂了，你可能会想要把它拆分成多个Statescript节点。这样节点的一部分都可以被重用。</p>
+<p>如果特性依赖状态机，那你就会很希望它是用脚本实现，而不是C++。毕竟这就是Statescript被创造出来的目的。</p>
+<p>然而我一直都有愧疚感，这可能有点扯远了，有时候你真的只需要一个节点就够了，但还是忍不住写更多代码增加了复杂性，同时保持表面上看起来还是个相对简单的任务。所以，需要花时间找到一个平衡点。</p>
+<p>对于程序员和策划来说，要适应我们的脚本主要使用的强大的”声明式”编程风格，还是有一些学习成本的。声明式逻辑编写方式区别于程序员日常使用的指令式编码风格。这种转变需要花点时间和努力。</p>
+<h3 id="临时方案">临时方案</h3>
+<p>“最终一致性”网络模型并不保证完美的100%（blow by blow）数据复制，意思是说，为了得到正确的结果，脚本里需要添加一些临时的解决方案。对于一个基于“状态”而不是“事件”的复制模型来说，这是个不幸的后果。</p>
+<p>简单来说，我们没有足够的带宽，来把服务器上所有的中间变化步骤都同步给客户端。取而代之的是，我们只在一帧的末尾才下发这些变量。</p>
+<p><strong>下面是个例子，可以用来说明，为什么“顺序”很重要</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907120157.jpg!webp" alt="doc_image_84_w601_h338" loading='lazy'></p>
+<p>“秩序之光”的右键开火，包含两个阶段：按下充能和抬起发射。按下时间越长，击中伤害越高。开火时我们会立即把变量Scalar设置为0，这在服务器上跑的好好。但是当所有的Remote客户端复制这个操作时，抛射物的体积都随着Scalar变成0了。</p>
+<p>这是因为我们是先复制的Scalar这个变量，然后才是VolleyWeapon State。</p>
+<p>幸运的是，这个bug修复起来很容易。需要做的就是加一个新的变量，存储VolleyWeapon State在客户端需要用到的“视觉缩放”信息。</p>
+<p>然而，这是反直觉的，存在这种事让人很紧张。幸运的是，这种事情发生的次数，用一只手就能数的过来。它实在没什么大不了的，只是有点烦人。</p>
+<h3 id="结论">结论</h3>
+<p>那么，考虑到所有的这些挑战，对于一个3A级游戏来说，开发一个自动同步的，基于状态的脚本系统，真的是个好主意嘛？我们觉得是。声明式编程看起来也很好地适应了我们的最终一致性网络模型。有了这一切，我们交付的游戏能够做到高性能、低带宽。我们的团队也变的足够高效，能快速开发出一些很酷的玩法。如果必须从头来过，我们可能还是会选择这样做。</p>
+<h2 id="提问时间">提问时间</h2>
+<p>Q: 有没有什么时候，你觉得用代码来实现一个行为会比脚本更好？能给一个例子嘛？</p>
+<p>A: 通常在有复杂的循环或者有性能顾虑时，我们都倾向于用代码实现。用脚本也可以做循序，但是会有点混乱，要用links互相前后乱指。说到性能考虑，射线检测（Raycasting）就是个最好的例子，你一般不会想在脚本里这么做。所以不会有一个Raycast State或者Action，Action需要每帧被触发，Raycast State每帧都给你一个计算结果。取而代之的是计算消耗巨大的Raycast是用C++实现的。</p>
+<p>Q: 对于Statescript二进制资源，假如多人工作在相同领域，你有什么办法来帮助合并（merging）嘛？避免依赖，方便检查（review）变化，甚至说回头还能记得一个Statescript到底是干嘛的嘛？</p>
+<p>A: 所有的Statescript二进制资源，都是独立捡出（Check out）的，所以，实际上（同一资源）在同一时间只有一个人有权限修改和提交。实际上我们也注意到了，确实有的时候，你的一个资源的本地修改只是想临时试一下，不想提交的，但是最后被误提交了。但其实也没问题，因为还是只有一个人能够成功提交。你提到的问题，在过去，确实一直都是个问题，我们的确有多个人需要操作同一个脚本。所以，解决方案就是把它分解为多个更小的脚本。这不是个完美方案，但是它也能在一定程度缓解这个问题。我们一直都注意到这个问题了。</p>
+<p>Q: （还是刚才那个人）你遇到过依赖性问题吗？就是有人修改了我依赖的脚本，但是他们的修改和我想做的冲突了。</p>
+<p>A: 这绝对不会发生。因为，通常你如果做了修改，你会主动告诉你周围跟你一起工作的同事的。所以这种特殊的情况没怎么发生过。</p>
+<p>Q: 最近多人游戏的开发已经趋向用“基于状态”的系统来实现玩法部分，我很好奇，你们是在多么早期的时候决定这么做的？</p>
+<p>A: 我们从2011年就开始开发Statescript了。在Overwatch以前，还在做“Titan”的时候，我们就在用Statescript。我想我们在早期就已经完成了一些原型了。总结下来，我想你也知道，手写一个同步化的状态机实在是太痛苦了。所以我们真的需要一些能够自动完成这些工作的方式了。Paul Keita和我，Paul是暴雪的另外一个开发，我们有了状态机系统（也就是Statescript）的时候就决定这么做了，我主要负责其中“同步”的工作。</p>
+<p>Q: 当你想到这个脚本方案时，在开发团队这边有很多反对意见吗？每个人都同意并认为是正确方向嘛？讨论过程是怎样的？</p>
+<p>A: 简单来说，是的！确实有那么一段时间来争取支持的，最是最终，感谢我的领导Tim Ford的勇气，嗯，我不知道他有没有在这里，哦，他在，在后排呢。他勇敢的支持了我，让每个人都知道这真的是个好主意，然后我们最终，把这个系统做出来了。</p>
+<p>Q: 客户端回滚的代价有多大？包括每个State的开发期和执行期。为什么不是仅仅把服务器最新的Update存下来然后恢复就行了。</p>
+<p>A: 先回答第二部分吧，基本上会有大量的状态需要保存，需要花时间去反序列化或者复制。无论你用什么方法，每一个State都有它自己的类要去实现，其实最主要的担心还是怕太慢。所以我们最终的方法是存储预表现，有点像是：嘿，这是先前的值，拿去用吧！这会比不停对我们积累的列表进行回滚更快速。它试图找到全量状态，然后变成那个状态就行了，仅需要一些内存拷贝。可能也有其他的方式值得思考，但基本上这是我们能够想到的最快的方式了。</p>
+<p>现在回答第一部分，实际上，你能重复一下第一部分问题吗？</p>
+<p>“在客户端上做回滚有多难？”</p>
+<p>确实很昂贵，它和“模拟快进”差不多昂贵，幸运的是，你只需要对一个Local实体做这个操作，不用对Remote实体做。而实际上对Remote实体的处理才是更费时的。</p>
+<p>“需要写很多额外代码去处理嘛？”</p>
+<p>就一个文件，大概2000行。都是代码，我不知道算不算多。（众笑）</p>
+<p>Q: 在早先的一页幻灯片里，看起来你好像能够对节点分组，并指定他们是Server-Only或者Client-Only。这好像与你的初衷是相反的：脚本开发者无需理解底层复制逻辑的本质！</p>
+<p>A: 这的确是我们的目标之一，但是谁也无法100%实现目标，对吧？有时候你确实需要这样，尤其是很多时候混合了UI、Local之类的问题。处理UI时，你可能倾向于使用Client-Only的Subgraph，因为你肯定知道本地玩家</p>
+<p>“曾经有那样的Subgraph嘛？必须包含Server-Only的组件和Client-Only的组件”</p>
+<p>绝对有，是的。</p>
+<p>Q: 这个系统的可移植性高吗？如果你现在想做个新项目，需要重新开发引擎吗？</p>
+<p>A: Statescript非常依赖我们自己的资源（Asset）系统、我们的网络层和结构化数据（也是资源系统的一个组成部分）。所以，现在来说，可移植性不好。我想其实你可以自己实现一个更加通用的版本，反正我们还没这么做。</p>
+<p>Q: 纯用脚本实现的业务逻辑的比例有多高？(Dan大神sorry了两次都没听懂问题，提问者听起来是个印度哥哥)</p>
+<p>A: 想要精确测量有点困难，我们开发一个新英雄时，基本上却都是用脚本写的。只有新的State、新的Node和类似的东西，才需要用C++实现。显然，在游戏过程模拟以外，还是需要大量代码的，而且渲染和网络底层，服务器侧，也都需要很多编码工作。</p>
+<p>Q: 感谢分享，去年的Overwatch分享里提到了“满足进攻者的精彩时刻”，这个是怎么和回滚已经预表现结合起来的呢？是像你说的那样嘛？不信任客户端是一件优先级很高的事情，现在还是这样吗？</p>
+<p>A: 我想我明白你的问题了，确实有一些技能能够阻止”倒带”（Rewind）。关于倒带，我解释一下，有人想要射击你，你用的是死神的幽灵形态，你不会受到伤害，虽然对手认为已经打中你了。甚至是服务器倒带回到他射你的那一帧，我们也不会让它发生，因为这都是你希望“缓和”的时刻，允许被攻击者有机会逃跑。实际上我们的Statescript里有个Node专门用了阻止倒带。不许倒带，不许倒带，因为我已经用了逃脱技能。</p>
+<p>Q: 能简单说一下Debuger调试器嘛？有bug出现时，模拟游戏，单步跟踪，是怎么做的？</p>
+<p>A: 是的，Debuger存储了所有的历史数据，记录了每个实体都发生了什么，它也是用C++写的。没有什么外部工具，就是直接开发出来的。它实际上会记录每个实体做的每件事情，为了查明bug原因，调试它们，你可以直接跳到你认为有问题的实体上，然后遍历历史过程，在服务器和客户端视图之间切换，这个回答你满意吗？</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/">https://www.lfzxb.top/ow-gdc-weapon-and-skillsystem/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5/">网络同步</a><a class="post-meta__tags" href="/tags/%E6%96%87%E7%8C%AE%E7%BF%BB%E8%AF%91/">文献翻译</a><a class="post-meta__tags" href="/tags/GDC%E5%88%86%E4%BA%AB/">GDC分享</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907115955.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/ow-gdc-share-table-of-contents/" title="《守望先锋》GDC2017技术分享精粹重制版总目录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">《守望先锋》GDC2017技术分享精粹重制版总目录</div></div><div class="info-2"><div class="info-item-1">本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和技能系统PDF，一些必要的地方我录制了Gif图，方便观看。 《守望先锋》GDC 2017技术分享视频内容大纲 《守望先锋》架构设计和网络同步 原视频链接  《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现 原视频链接  《守望先锋》网络脚本化的武器和技能系统 原视频链接  </div></div></div></a><a class="pagination-related" href="/ow-gdc-gameplay-architecture-and-netcode/" title="《守望先锋》架构设计和网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907113243.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">《守望先锋》架构设计和网络同步</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC  ECS ECS概述 哈喽，大家好，这次的分享是关于《守望先锋》（译注：下文统一简称为Overwatch）游戏架构设计和网络部分。老规矩，手机调成静音；离开时记得填写调查问卷；换下半藏，赶紧推车！（众笑） 我是Tim Ford，是暴雪公司Overwatch开发团队老大。自从2013年夏季项目启动以来就在这个团队了。在那之前，我在《Titan》项目组，不过这次分享跟Titan没有半毛钱关系。（众笑） 这次分享的一些技术，是用来降低不停增长的...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/ow-gdc-leading-principles/" title="《守望先锋》GDC 2017技术分享视频内容大纲"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20220201204924.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-01</div><div class="info-item-2">《守望先锋》GDC 2017技术分享视频内容大纲</div></div><div class="info-2"><div class="info-item-1">前言 最近开坑了一个状态帧同步战斗系统视频教程，总共有5个视频  其中第一个和最后一个都好说，我自己乱吹就可以了，但是中间三个重量级比较难处理，我的计划是实时录制原GDC视频 + 分享自己的理解和思路，原视频的平均时长都在一个小时左右，如果直接莽上去很有可能在讲解的时候思路断掉，所以我需要针对他们梳理出一个大纲来理清楚讲解思路，顺带方便大家自己在学习守望先锋GDC视频的时候有针对性的去了解自己需要了解的部分。 《守望先锋》架构设计和网络同步 原视频链接  视频内容大纲 00 : 00 - 1 : 00 ：守望先锋游戏与开发团队介绍 1 : 00 - 7 : 15：ECS概念介绍与守望先锋中使用ECS的示例 7 : 15 - 8 : 07：ECS VS OOP，核心问题还是庞大工程中引用和解耦问题。传统OOP中，抛开常知的继承炼狱问题不谈，一个类既是数据又是逻辑，那么当一个类会与多个不同的类进行交互的时候，就会面对如何拆解数据和逻辑提供给相对应的类的问题，如果选择不拆，那么就需要面对越来越庞大的类，如果拆了，那么一些只有其他类才需要用到的数据和逻辑就应当被其他类在Update或者其...</div></div></div></a><a class="pagination-related" href="/ow-gdc-gameplay-architecture-and-netcode/" title="《守望先锋》架构设计和网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907113243.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-25</div><div class="info-item-2">《守望先锋》架构设计和网络同步</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W3aieHjyNvw&amp;t=2886s&amp;ab_channel=GDC  ECS ECS概述 哈喽，大家好，这次的分享是关于《守望先锋》（译注：下文统一简称为Overwatch）游戏架构设计和网络部分。老规矩，手机调成静音；离开时记得填写调查问卷；换下半藏，赶紧推车！（众笑） 我是Tim Ford，是暴雪公司Overwatch开发团队老大。自从2013年夏季项目启动以来就在这个团队了。在那之前，我在《Titan》项目组，不过这次分享跟Titan没有半毛钱关系。（众笑） 这次分享的一些技术，是用来降低不停增长的...</div></div></div></a><a class="pagination-related" href="/ow-gdc-replay/" title="《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907121241.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-24</div><div class="info-item-2">《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现</div></div><div class="info-2"><div class="info-item-1">前言 《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，一些必要的地方我录制了Gif图，方便观看。 全系列链接：《守望先锋》GDC2017技术分享精粹重制版总目录 原视频链接：https://www.youtube.com/watch?v=W4oZq4tn57w&amp;ab_channel=GDC  设计目标 那么回放系统的概要设计(high level design)目标是什么呢？  这次分享的标题就预示着必须给出答案，对吧？概要需求是创建一个单一的中央系统，能够支持阵亡镜头、全场最佳和亮眼表现，除此之外我们还特别需要能够生成录像文件，在开发期间可以用来做内部调试。 下面开始深入介绍每个议题。 每次玩家死亡时，游戏里就会显示临死前几秒钟的――大部分情况是以凶手（killer）视角来看的――死因及死亡过程。阵亡镜头可以帮助玩家理解他们是怎么死的，以及为什么...</div></div></div></a><a class="pagination-related" href="/ow-gdc-share-table-of-contents/" title="《守望先锋》GDC2017技术分享精粹重制版总目录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122255.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-01</div><div class="info-item-2">《守望先锋》GDC2017技术分享精粹重制版总目录</div></div><div class="info-2"><div class="info-item-1">本文章已于2022.2.1更新，新增了每个视频的内容大纲所对应的时间点内容，以及个人对视频片段简单的内容概括  《守望先锋》2017 GDC系列的分享前几年给了我很多帮助，尤其是kevinan大神的翻译更让我受益良多，如今我再想温习一下相关技术却发现很多网络上的文章图片都已经坏掉了，故在此收集网络资源发布重置版，当成备份。 重制版内容：新增多级标题，方便分块阅读，部分图片已由本人重置，上传了武器和技能系统PDF，一些必要的地方我录制了Gif图，方便观看。 《守望先锋》GDC 2017技术分享视频内容大纲 《守望先锋》架构设计和网络同步 原视频链接  《守望先锋》回放技术-阵亡镜头、全场最佳和亮眼表现 原视频链接  《守望先锋》网络脚本化的武器和技能系统 原视频链接  </div></div></div></a><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/context-steering-behavior-driven-steering-at-the-macro-scale/" title="（译）上下文转向行为驱动的AI移动策略（Context Steering）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-02-02</div><div class="info-item-2">（译）上下文转向行为驱动的AI移动策略（Context Steering）</div></div><div class="info-2"><div class="info-item-1">本文是对GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale 进行的中文翻译 译文 介绍 在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。 然而，转向行为并不适合用于某些类型的游戏。当玩家能够挑选并监控单个实体时，避免碰撞和自然的移动就变得非常重要。为了实现这一目标可能会导致行为组件的膨胀并变得紧耦合，实体运动逻辑也会变得脆弱和难以维护。 在本章中，我们将概述如何识别那些转向行为不太适合的游戏，并提出一种针对这些问题的新方法，它被称之为上下文转向行为（Context Steering）。上下文转向行为（Context Steering Monobehaviours）是小巧的和无状态的（StateLess），并提供任何行为本身所期望的运动约束。当上下文转向行为用于取代游戏F1 2011上的原转向行为时，代码库减少了4000行，但AI在避免碰撞、超车和执行其他有趣的行为方面表现得...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E8%A7%88"><span class="toc-number">2.</span> <span class="toc-text">概览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E5%BC%80%E5%8F%91Statescript"><span class="toc-number">3.</span> <span class="toc-text">为什么要开发Statescript</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Statescript-%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">4.</span> <span class="toc-text">Statescript 是什么？</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Statescript-%E8%8A%82%E7%82%B9%EF%BC%88node%EF%BC%89"><span class="toc-number">4.1.</span> <span class="toc-text">Statescript 节点（node）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%98%E9%87%8F%EF%BC%88Variables%EF%BC%89"><span class="toc-number">4.2.</span> <span class="toc-text">变量（Variables）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B1%9E%E6%80%A7Properties"><span class="toc-number">4.3.</span> <span class="toc-text">属性Properties</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96Statescript%E5%8A%9F%E8%83%BD"><span class="toc-number">4.4.</span> <span class="toc-text">其他Statescript功能</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#Subgraph"><span class="toc-number">4.4.1.</span> <span class="toc-text">Subgraph</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%B9%E5%99%A8%E2%80%9CContainers%E2%80%9D"><span class="toc-number">4.4.2.</span> <span class="toc-text">容器“Containers”</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Statescript-Theme%EF%BC%88%E4%B8%BB%E9%A2%98%EF%BC%89"><span class="toc-number">4.5.</span> <span class="toc-text">Statescript Theme（主题）</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E2%80%9C%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E4%BF%9D%E9%9A%9C%E2%80%9D%EF%BC%88lifetime-guarantees%EF%BC%89"><span class="toc-number">4.5.1.</span> <span class="toc-text">“生命周期保障”（lifetime guarantees）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Logic-Style%EF%BC%88%E7%A8%8B%E5%BA%8F%E8%8C%83%E5%BC%8F%EF%BC%89"><span class="toc-number">4.5.2.</span> <span class="toc-text">Logic Style（程序范式）</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Statescript%E5%AE%9E%E4%BE%8B"><span class="toc-number">5.</span> <span class="toc-text">Statescript实例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Statescript%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E7%9A%84"><span class="toc-number">6.</span> <span class="toc-text">Statescript是如何实现的</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E8%BF%90%E8%A1%8C%E6%97%B6%EF%BC%88Core-Runtime%EF%BC%89"><span class="toc-number">6.1.</span> <span class="toc-text">核心运行时（Core Runtime）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#States%EF%BC%88%E7%8A%B6%E6%80%81%EF%BC%89"><span class="toc-number">6.2.</span> <span class="toc-text">States（状态）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%80%E6%9C%89%E7%9A%84State%E9%83%BD%E6%9C%89%E4%B8%80%E4%B8%AAStatescriptDependencyListener"><span class="toc-number">6.3.</span> <span class="toc-text">所有的State都有一个StatescriptDependencyListener</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%98%E9%87%8FVariables"><span class="toc-number">6.4.</span> <span class="toc-text">变量Variables</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E5%8C%96%E6%95%B0%E6%8D%AE"><span class="toc-number">6.5.</span> <span class="toc-text">结构化数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Wait-State-Data-Schema"><span class="toc-number">6.6.</span> <span class="toc-text">Wait State Data Schema</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%B8%8B%E9%9D%A2%E6%98%AFWait-State%E7%9A%84C-%E8%BF%90%E8%A1%8C%E6%97%B6"><span class="toc-number">6.6.1.</span> <span class="toc-text">下面是Wait State的C++运行时</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A6%82%E4%BD%95%E7%94%A8Statescript%E6%9D%A5%E5%81%9A%E4%B8%80%E4%B8%AA%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%88%8F"><span class="toc-number">7.</span> <span class="toc-text">如何用Statescript来做一个网络游戏</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%AF%E7%94%A8%E6%80%A7"><span class="toc-number">7.1.</span> <span class="toc-text">可用性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%93%8D%E5%BA%94%E6%80%A7"><span class="toc-number">7.2.</span> <span class="toc-text">响应性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E5%85%A8%E6%80%A7"><span class="toc-number">7.3.</span> <span class="toc-text">安全性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%88%E7%8E%87"><span class="toc-number">7.4.</span> <span class="toc-text">效率</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%97%A0%E7%BC%9D"><span class="toc-number">7.5.</span> <span class="toc-text">无缝</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="toc-number">8.</span> <span class="toc-text">网络同步解决方案</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8B%E9%9D%A2%E6%98%AF%E4%B8%80%E4%BA%9B%E5%90%8C%E6%AD%A5%E5%8C%96%E3%80%81%E9%9D%9E%E5%90%8C%E6%AD%A5%E5%8C%96%E8%84%9A%E6%9C%AC%E7%9A%84%E4%BE%8B%E5%AD%90"><span class="toc-number">8.1.</span> <span class="toc-text">下面是一些同步化、非同步化脚本的例子</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%AC%E5%9C%B0%E5%92%8C%E8%BF%9C%E7%A8%8B%E5%AE%9E%E4%BE%8B"><span class="toc-number">8.2.</span> <span class="toc-text">本地和远程实例</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%9D%83%E5%A8%81"><span class="toc-number">8.3.</span> <span class="toc-text">服务器权威</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%88%B0%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9A%84%E8%BE%93%E5%85%A5%E6%93%8D%E4%BD%9C"><span class="toc-number">8.4.</span> <span class="toc-text">从客户端到服务器的输入操作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%90%8C%E6%AD%A5%E6%A6%82%E8%A7%88"><span class="toc-number">8.5.</span> <span class="toc-text">服务端同步概览</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#StatescriptDeltas"><span class="toc-number">8.5.1.</span> <span class="toc-text">StatescriptDeltas</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#StatescriptGhosts"><span class="toc-number">8.5.2.</span> <span class="toc-text">StatescriptGhosts</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#StatescriptPacket"><span class="toc-number">8.5.3.</span> <span class="toc-text">StatescriptPacket</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%90%8C%E6%AD%A5%E6%80%BB%E7%BB%93"><span class="toc-number">8.5.4.</span> <span class="toc-text">服务器同步总结</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%BC%94%E7%A4%BA%E5%AE%9E%E4%BD%93%E7%9A%84%E7%BD%91%E7%BB%9C%E5%90%8C%E6%AD%A5%E6%B5%81%E7%A8%8B"><span class="toc-number">8.5.5.</span> <span class="toc-text">演示实体的网络同步流程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%90%8C%E6%AD%A5%E6%A6%82%E8%A7%88"><span class="toc-number">8.6.</span> <span class="toc-text">客户端同步概览</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B6%E5%88%B0%E4%B8%80%E4%B8%AARemote%E5%8C%85%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B"><span class="toc-number">8.7.</span> <span class="toc-text">收到一个Remote包的处理过程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%A2%84%E8%A1%A8%E7%8E%B0%E5%8C%85%E7%9A%84%E5%A4%84%E7%90%86%E8%BF%87%E7%A8%8B"><span class="toc-number">8.7.1.</span> <span class="toc-text">预表现包的处理过程</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%94%B6%E5%88%B0%E9%A2%84%E6%B5%8B%E9%94%99%E8%AF%AF%E7%9A%84%E5%8C%85%E5%A6%82%E4%BD%95%E5%A4%84%E7%90%86"><span class="toc-number">8.8.</span> <span class="toc-text">收到预测错误的包如何处理</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%8E%B0%E5%9C%A8%E6%9D%A5%E7%9C%8B%E5%8F%A6%E5%A4%96%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90%EF%BC%9A%E7%8C%8E%E7%A9%BA%E5%BC%80%E6%9E%AA%E6%97%B6%E7%9A%84%E5%9B%9E%E6%BB%9A%E5%92%8C%E5%89%8D%E6%BB%9A"><span class="toc-number">8.8.1.</span> <span class="toc-text">现在来看另外一个例子：猎空开枪时的回滚和前滚</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%98%B6%E6%AE%B5%E6%80%BB%E7%BB%93"><span class="toc-number">8.9.</span> <span class="toc-text">阶段总结</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%AB%98%E6%95%88%E6%A6%82%E8%A7%88"><span class="toc-number">9.</span> <span class="toc-text">高效概览</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Statescript%E5%A6%82%E4%BD%95%E7%9F%A5%E9%81%93%E8%AF%A5%E5%90%8C%E6%AD%A5%E5%93%AA%E4%BA%9B%E5%86%85%E5%AE%B9"><span class="toc-number">9.1.</span> <span class="toc-text">Statescript如何知道该同步哪些内容</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E8%AF%91"><span class="toc-number">9.2.</span> <span class="toc-text">编译</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%97%E5%88%B0%E7%9A%84%E5%A5%BD%E5%A4%84"><span class="toc-number">10.</span> <span class="toc-text">得到的好处</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BF%AB%E9%80%9F%E8%BF%AD%E4%BB%A3"><span class="toc-number">10.1.</span> <span class="toc-text">快速迭代</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%90%8C%E6%AD%A5%E4%B8%8E%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="toc-number">10.2.</span> <span class="toc-text">自动同步与状态机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%E5%92%8C%E2%80%9C%E4%B8%8D%E5%90%8C%E6%AD%A5%E2%80%9D%E7%9A%84bug%E6%9B%B4%E5%B0%91"><span class="toc-number">10.3.</span> <span class="toc-text">生命周期和“不同步”的bug更少</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%91%E6%88%98"><span class="toc-number">11.</span> <span class="toc-text">挑战</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%97%B6%E3%80%81%E7%BC%96%E8%BE%91%E5%99%A8%E5%92%8C%E8%B0%83%E8%AF%95%E5%99%A8%E9%83%BD%E6%98%AF%E6%9C%89%E5%AE%9E%E7%8E%B0%E6%88%90%E6%9C%AC%E7%9A%84"><span class="toc-number">11.1.</span> <span class="toc-text">运行时、编辑器和调试器都是有实现成本的</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AD%A6%E4%B9%A0%E6%9B%B2%E7%BA%BF"><span class="toc-number">11.2.</span> <span class="toc-text">学习曲线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%B4%E6%97%B6%E6%96%B9%E6%A1%88"><span class="toc-number">11.3.</span> <span class="toc-text">临时方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA"><span class="toc-number">11.4.</span> <span class="toc-text">结论</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8F%90%E9%97%AE%E6%97%B6%E9%97%B4"><span class="toc-number">12.</span> <span class="toc-text">提问时间</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '82485178fd934f2bdebf84ad0643c01f'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

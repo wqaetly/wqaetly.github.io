@@ -1,0 +1,1807 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity DOTS：使用ECS进行GamePlay开发 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本节包含有关如何在Unity Editor中创建基于DOTS的游戏和其他应用程序的信息。它还涵盖了ECS提供的可帮助您实现游戏功能的systems和components。 该systems包括：  Unity.Transforms：提供用于定义世界空间变换，3D对象层次结构以及管理它们的systems的components。 Unity.Hybrid.Renderer：提供components和s">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity DOTS：使用ECS进行GamePlay开发">
+<meta property="og:url" content="https://www.lfzxb.top/unity-dots-using-ecs-create-gameplay/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本节包含有关如何在Unity Editor中创建基于DOTS的游戏和其他应用程序的信息。它还涵盖了ECS提供的可帮助您实现游戏功能的systems和components。 该systems包括：  Unity.Transforms：提供用于定义世界空间变换，3D对象层次结构以及管理它们的systems的components。 Unity.Hybrid.Renderer：提供components和s">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="多线程">
+<meta property="article:tag" content="ECS">
+<meta property="article:tag" content="Unity DOTS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unity DOTS：使用ECS进行GamePlay开发",
+  "url": "https://www.lfzxb.top/unity-dots-using-ecs-create-gameplay/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-dots-using-ecs-create-gameplay/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity DOTS：使用ECS进行GamePlay开发',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Unity DOTS：使用ECS进行GamePlay开发</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Unity DOTS：使用ECS进行GamePlay开发</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/ECS/">ECS</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">6.8k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>28分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unity-dots-using-ecs-create-gameplay/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>本节包含有关如何在Unity Editor中创建基于DOTS的游戏和其他应用程序的信息。它还涵盖了ECS提供的可帮助您实现游戏功能的systems和components。</p>
+<p>该systems包括：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Transforms.html">Unity.Transforms</a>：提供用于定义世界空间变换，3D对象层次结构以及管理它们的systems的components。</li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.rendering.hybrid@latest">Unity.Hybrid.Renderer</a>：提供components和systems以在Unity运行时中渲染ECS entities。</li>
+</ul>
+<h2 id="GamePlayer支持包">GamePlayer支持包</h2>
+<p>DOTS中的某些游戏功能需要额外的程序包来支持它们。有关需要其他软件包的功能列表，请参见下表。</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left"><strong>Feature</strong></th>
+<th style="text-align:left"><strong>Packages</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left"><strong>DOTS ECS</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@latest">com.unity.entities</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Rendering</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.rendering.hybrid@latest">com.unity.rendering.hybrid</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Hybrid Renderer V2</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@latest">com.unity.render-pipelines.high-definition</a> or <a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@latest">com.unity.render-pipelines.universal</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Animation</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.animation@latest">com.unity.animation</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Audio</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.audio.dspgraph@latest">com.unity.audio.dspgraph</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Physics</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.physics@latest">com.unity.physics</a> or <a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Smooth Penetration Recovery</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Stable Object Stacking</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Remove Speculative Contacts</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Rigidbody Sleeping</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Visual Debugger</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.havok.physics@latest">com.havok.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Multiplayer</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.netcode@latest">com.unity.netcode</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Lag Compensation</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.physics@latest">com.unity.physics</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>Project Building</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms@latest">com.unity.platforms</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Android</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms.android@latest">com.unity.platforms.android</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Linux</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms.linux@latest">com.unity.platforms.linux</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- macOS</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms.macos@latest">com.unity.platforms.macos</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Web</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms.web@latest">com.unity.platforms.web</a></td>
+</tr>
+<tr>
+<td style="text-align:left"><strong>- Windows</strong></td>
+<td style="text-align:left"><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.platforms.windows@latest">com.unity.platforms.windows</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="创作概述">创作概述</h2>
+<p>您可以使用Unity Editor（带有必需的DOTS包）来创建基于DOTS的游戏。在编辑器中，您可以正常使用GameObjects来编写场景，而ECS代码会将GameObjects转换为entities。</p>
+<p>使用DOTS的最大区别在于，您无需<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/MonoBehaviour.html">定义</a>自己的<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/MonoBehaviour.html">MonoBehaviours</a>来存储实例数据和实现自定义游戏逻辑，而是可以定义<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/manual/ecs_components.html">ECS components</a>以在运行时存储数据，并为自定义逻辑编写<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/manual/ecs_systems.html">systems</a>。</p>
+<h3 id="GameObject转换">GameObject转换</h3>
+<p>在GameObject转换期间，各种转换系统会处理它们识别的MonoBehaviour组件，然后将它们转换为基于ECS的components。例如，一个Unity.Transforms转换系统将检查该<code>UnityEngine.Transform</code>组件并添加ECS component（例如<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Transforms.LocalToWorld.html">LocalToWorld</a>）来替换它。</p>
+<p>您可以实现<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.IConvertGameObjectToEntity.html">IConvertGameObjectToEntity</a> MonoBehaviour组件以指定自定义转换步骤。<em>ECS转换的GameObjects数量与它创建的entities数量之间通常没有一对一的关系。也不是在GameObject上的MonoBehaviours数量与它添加到entities上的ECS components数量之间。</em></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp" alt="image-20200817093035244" loading='lazy'></p>
+<p>如果ECS转换的代码具有<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.ConvertToEntity.html">ConvertToEntity</a> MonoBehaviour组件，或者它是SubScene的一部分，则ECS转换代码将转换GameObject。在任何一种情况下，为各种DOTS功能（例如Unity.Transforms和Unity.Hybrid.Render）提供的转换系统都会处理GameObject或Scene Asset及其任何子GameObject。</p>
+<p>用ConvertToEntity转换GameObjects和用SubScene转换之间的区别是：ECS将它从转换SubScene生成的entities数据序列化并保存到磁盘上。您可以在运行时非常快速地加载或流化此序列化数据。相比之下，ECS始终在运行时将具有ConvertToEntity MonoBehaviours的GameObjects进行转换。</p>
+<p>最佳实践是使用标准MonoBehaviours进行创作，并使用<code>IConvertGameObjectToEntity</code>将那些创作组件的值应用于<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.IComponentData.html">IComponentData</a>结构以供运行时使用。通常，最方便编写的数据布局不是运行时最高效的数据布局。</p>
+<p>您可以使用<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.IConvertGameObjectToEntity.html">IConvertGameObjectToEntity</a>来自定义SubScene中任何GameObject或具有<code>ConvertToEntity</code>MonoBehaviour 的GameObject或具有<code>ConvertToEntity</code>MonoBehaviour 的GameObject的子物体的转换。</p>
+<p>**注意：**基于DOTS的应用程序的创作工作流是活跃开发的领域。大致结构已经确定，但是后面可能还会有很多细节上的变化。</p>
+<h2 id="Generated-authoring-components">Generated authoring components</h2>
+<p>Unity可以自动为简单的运行时ECS components生成authoring components。Unity生成authoring components时，您可以将包含ECS IComponentData的脚本直接添加到编辑器中的GameObject。然后，您可以使用“ **Inspector”**窗口来设置component的初始值。</p>
+<h3 id="对于IComponentData">对于IComponentData</h3>
+<p>Unity可以自动为简单的<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.IComponentData.html">IComponentData</a> components生成创作authoring components。当Unity生成authoring components时，您可以在Unity编辑器中直接将<code>IComponentData</code>添加到场景中GameObject中。然后，您可以使用<strong>Inspector</strong>窗口来设置component的初始值。</p>
+<p>为了表示您要生成authoring components，请将<code>[GenerateAuthoringComponent]</code>attribute添加到IComponentData声明中。Unity自动生成一个MonoBehaviour类，该类包含component的公共字段，并提供一个Conversion方法，将这些字段转换为运行时component数据。</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">GenerateAuthoringComponent</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> RotationSpeed_ForEach : IComponentData</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">float</span> RadiansPerSecond;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>请注意以下限制：</p>
+<ul>
+<li>单个C＃文件中只有一个component可以具有生成的authoring component，并且C＃文件中不能包含另一个MonoBehaviour。</li>
+<li>ECS仅反射公共字段，并且与component中指定的名称相同。</li>
+<li>ECS将IComponentData中的Entity类型的字段反射为它生成的MonoBehaviour中的GameObject类型的字段。ECS将您分配给这些字段的GameObjects或Prefabs转换为引用的Prefabs。</li>
+<li>仅反射公共字段，它们的名称与组件中指定的名称相同。</li>
+<li>IComponentData中的Entity类型的字段在生成的MonoBehaviour中反射为GameObject类型的字段。您分配给这些字段的GameObjects或Prefabs会转换为引用的prefabs。</li>
+</ul>
+<h3 id="对于IBufferElementData">对于IBufferElementData</h3>
+<p>您还可以通过添加<code>[GenerateAuthoringComponent]</code>attribute来为实现<code>IBufferElementData</code>的类型生成authoring component：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">GenerateAuthoringComponent</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">struct</span> IntBufferElement: IBufferElementData</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">int</span> Value;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在此示例中，将生成一个名为<code>IntBufferElementAuthoring</code>（继承自<code>MonoBehaviour</code>）的类，并公开一个<code>List&lt;int&gt;</code>类型为public的字段。在转换过程中，此List将转换为<code>DynamicBuffer&lt;IntBufferElement&gt;</code>，然后添加到转换后的entity中。</p>
+<p>请注意以下限制：</p>
+<ul>
+<li>单个C＃文件中只有一个component可以有生成的authoring component，并且C＃文件中不能包含另一个MonoBehaviour。</li>
+<li><code>IBufferElementData</code> 对于包含2个或更多字段的类型，无法自动生成authoring component。</li>
+<li><code>IBufferElementData</code> 无法为具有显式布局的类型自动生成authoring component。</li>
+</ul>
+<h1>TransformSystem</h1>
+<hr>
+<h2 id="第1节-Non-hierarchical-Transforms-Basic">第1节: Non-hierarchical Transforms (Basic)</h2>
+<p>LocalToWorld（float4x4）表示从本地空间到世界空间的转换。它是规范的表示形式，并且是唯一可以依靠它在systems之间传递本地空间的component。</p>
+<ul>
+<li>某些DOTS功能可能依赖LocalToWorld的存在才能起作用。</li>
+<li>例如，RenderMesh component依赖存在的LocalToWorld component来渲染实例。</li>
+<li>如果仅存在LocalToWorld transform component，则任何transform system都不会写入或影响LocalToWorld数据。</li>
+<li>如果没有其他transform component与同一entity相关联，则用户代码可以直接写入LocalToWorld以定义实例的tranform。</li>
+</ul>
+<p>所有transform system和所有其他transform component的目的是提供用于写入LocalToWorld的接口。</p>
+<p>LocalToWorld = Translation * Rotation * Scale</p>
+<p>如果同时存在平移（float3），旋转（四元数）或缩放（float）components的任何组合(都和LocalToWorld component相关联，且同时存在)，则transform system将组合这些components并写入LocalToWorld。</p>
+<p>具体而言，这些components组合中的每一个将以以下形式写入LocalToWorld：</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * Rotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * Rotation * Scale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Rotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Rotation * Scale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Scale</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+</tbody>
+</table>
+<p>…所以transform system应该是:</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * Rotation</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817114319911.png!webp" alt="image-20200817114319911" loading='lazy'></p>
+<p>或者，当以下components存在时</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+</tbody>
+</table>
+<p>…所以transform system应该是:</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * Rotation * Scale</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817114517341.png!webp" alt="image-20200817114517341" loading='lazy'></p>
+<h2 id="第2节：Hierarchical-Transforms-Basic">第2节：Hierarchical Transforms (Basic)</h2>
+<p>transform system需要LocalToParent和Parent component才能基于分层transform编写LocalToWorld。</p>
+<ul>
+<li>LocalToParent（float4x4）表示从本地空间到父级本地空间的转换。</li>
+<li>父级（entity）引用父级的LocalToWorld。</li>
+<li>如果没有其他transform systems定义为写入用户代码的目标，则用户代码可以直接写入LocalToParent。</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left"></td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem]父级：如上文“Non-hierarchical Transforms (Basic)”中所定义的那样写入LocalToWorld</li>
+<li>[LocalToParentSystem]子级：LocalToWorld &lt;= LocalToWorld [Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817134717984.png!webp" alt="image-20200817134717984" loading='lazy'></p>
+<p>与父entity ID关联的LocalToWorld component在与子entity ID关联的LocalToParent相乘之前，自己一定要先计算。</p>
+<p>注意：循环图关系无效。结果是不确定的。</p>
+<p>当更改层次结构（拓扑）（即，添加，删除或更改任何父级component）时，内部状态作为SystemStateComponentData添加为：</p>
+<ul>
+<li>与父entity ID相关联的子component（entity的ISystemStateBufferElementData）</li>
+<li>与子entity ID相关联的PreviousParent component（entity的ISystemStateComponentData）</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left"></td>
+</tr>
+</tbody>
+</table>
+<p>这些component的添加，删除和更新由[ParentSystem]处理。我们希望transform system外部的system不会读取或写入这些components。</p>
+<p>LocalToParent = Translation * Rotation * Scale</p>
+<p>如果同时存在平移（float3），旋转（四元数）或缩放（float）component的任何组合(都和LocalToWorld component相关联，且同时存在)，则transform system将组合这些components并写入LocalToParent。</p>
+<p>具体而言，这些components组合中的每一个将以下方式写入LocalToParent：</p>
+<ul>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * Rotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Rotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Scale</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Scale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem]父级：如上文“Non-hierarchical Transforms (Basic)”中所定义的那样写入LocalToWorld</li>
+<li>[TRSToLocalToParentSystem]子级：写入LocalToParent &lt;= Translation * Rotation * Scale</li>
+<li>[LocalToParentSystem]子级：写入LocalToWorld &lt;= LocalToWorld [Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817135448128.png!webp" alt="image-20200817135448128" loading='lazy'></p>
+<p>父级当然可以成为LocalToWorld其他components的child。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">LocalToParent</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Parent</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">PreviousParent*</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left"></td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToParentSystem] Parent: Write LocalToParent &lt;= Translation * Rotation * Scale</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * Rotation * Scale</li>
+<li>[LocalToParentSystem] Parent: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817135933951.png!webp" alt="image-20200817135933951" loading='lazy'></p>
+<hr>
+<h2 id="第3节：Default-Conversion-Basic">第3节：Default Conversion (Basic)</h2>
+<p>混合转换：</p>
+<p>UnityEngine.Transform MonoBehaviours作为GameObjects一部分，包含在Sub Scenes中，或者在带有“Convert To Entity” Monobehaviours的GameObjects上，具有默认转换为Transform system components的功能。可以在Unity.Transforms.Hybrid程序集的TransformConversion system中找到该转换。</p>
+<ol>
+<li>与被转换的GameObject相关联的entity（且具有静态component），仅将LocalToWorld添加到生成的entities中。因此，在静态实例的情况下，在运行时不会发生任何transform system更新。</li>
+<li>对于非静态entities，（1）Positioncomponent将以Transform.position值填充自己。（2）Rotation 将以Transform.rotation值填充自己。（3）Transform.parent == null
+<ul>
+<li>对于非标准化的Transform.localScale，将为NonUniformScale component添加Transform.localScale值。（4）如果Transform.parent！= null，但在此要转换的层次结构的顶部：</li>
+<li>对于非标准化的Transform.lossyScale，将向NonUniformScale组件添加Transform.lossyScale值。（5）对于其他Transform.parent！= null的情况，</li>
+<li>父component将与entity一起添加，该entity引用转换后的Transform.parent GameObject。</li>
+<li>将添加LocalToParent component。</li>
+</ul>
+</li>
+</ol>
+<hr>
+<h2 id="第4节：Non-hierarchical-Transforms-Advanced">第4节：Non-hierarchical Transforms (Advanced)</h2>
+<p>NonUniformScale（float3）作为Scale的替代方法，用于指定每个轴的比例。请注意，并非所有DOTS功能都完全支持非均匀缩放。请务必查看这些功能的文档以了解其限制。</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * Rotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * Rotation * NonUniformScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Rotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Rotation * NonUniformScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= NonUniformScale</li>
+</ul>
+<p>同时存在Scale和NonUniform scale不是合法情况，但是还会有结果。将使用Scale，将忽略NonUniformScale。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">NonUniformScale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * Rotation * NonUniformScale</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817141223878.png!webp" alt="image-20200817141223878" loading='lazy'></p>
+<p>旋转分量可以由用户代码直接作为四元数写入。但是，如果首选Euler接口，则每个旋转顺序都可以使用相应component，这将导致对Rotation component的写入（如果存在）。</p>
+<ul>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerXYZ</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerXZY</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerYXZ</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerYZX</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerZXY</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerZYX</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会：</p>
+<ol>
+<li>[RotationEulerSystem] Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * Rotation * Scale</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903201506.png!webp" alt="img" loading='lazy'></p>
+<p>多个RotationEulerXXX组件与同一entity相关联是错误的，但是会有结果。将应用按优先级顺序找到的第一个。该命令是：</p>
+<ol>
+<li>RotationEulerXYZ</li>
+<li>RotationEulerXZY</li>
+<li>RotationEulerYXZ</li>
+<li>RotationEulerYZX</li>
+<li>RotationEulerZXY</li>
+<li>RotationEulerZYX</li>
+</ol>
+<p>对于更复杂的旋转要求，可以使用CompositeRotation（float4x4） component替代Rotation。</p>
+<p>对Rotation有效的所有组合对CompositeRotation也有效。即</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * CompositeRotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * CompositeRotation * Scale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeRotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeRotation * Scale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * CompositeRotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeRotation</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeRotation * NonUniformScale</li>
+</ul>
+<p>用户可以将CompositeRotation component直接写为float4x4。但是，如果首选Maya/FBX样式的接口，则可以使用将要写入CompositeRotation component（如果存在）的component。</p>
+<p>CompositeRotation = RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</p>
+<p>如果RotationPivotTranslation（float3），RotationPivot（float3），Rotation（四元数）或PostRotation（四元数）component与CompositeRotation component一起存在，则transform system将组合这些components并写入CompositeRotation。</p>
+<p>具体来说，这些components组合中的每一个都将以以下形式写如CompositeRotation：</p>
+<ul>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * Rotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * Rotation * PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivot * Rotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= Rotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= Rotation * PostRotation</li>
+</ul>
+<p>如果指定的RotationPivot不带任何Rotation，则PostRotation对CompositeRotation没有其他影响。</p>
+<p>注意，由于 Rotation 被重新用作CompositeRotation的源头之一，因此 Rotation 的替代数据接口仍然可用。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[CompositeRotationSystem] Write CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * CompositeRotation * Scale</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903201517.png!webp" alt="img" loading='lazy'></p>
+<p>用户可以将PostRotation component直接作为四元数写入。但是，如果首选Euler接口，则每个旋转顺序都可以使用components，这将导致写入PostRotation component（如果存在）。</p>
+<ul>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerXZY</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerYXZ</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerYZX</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerZXY</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerZYX</li>
+</ul>
+<p>例如，如果存在以下组件…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">PostRotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后 transform system 将会是：</p>
+<ol>
+<li>[RotationEulerSystem] Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[PostRotationEulerSystem] Write PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[CompositeRotationSystem] Write CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * CompositeRotation * Scale</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903201636.png!webp" alt="img" loading='lazy'></p>
+<p>对于更复杂的Scale要求，可以使用CompositeScale（float4x4）component替代Scale（或NonUniformScale）。</p>
+<p>对Scale或NonUniformScale有效的所有组合对CompositeScale也有效。即</p>
+<ul>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * Rotation * CompositeScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Rotation * CompositeScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= Translation * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToWorldSystem] LocalToWorld &lt;= CompositeRotation * CompositeScale</li>
+</ul>
+<p>用户可以将CompositeScale component直接写为float4x4。但是，如果首选Maya / FBX风格的接口，则可以使用可以写入CompositeScale component（如果存在）的components。</p>
+<p>CompositeScale = ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1 CompositeScale = ScalePivotTranslation * ScalePivot * NonUniformScale * ScalePivot^-1</p>
+<p>如果同时存在ScalePivotTranslation（float3），ScalePivot（float3），Scale（float）component与CompositeScale component的任何组合，则transform system将组合这些components并写入CompositeScale。</p>
+<p>或者，如果同时存在ScalePivotTranslation（float3），ScalePivot（float3），NonUniformScale（float3）component和CompositeScale component的任意组合，则transform system将组合这些components并写入CompositeScale。</p>
+<p>具体来说，这些components组合中的每一个都将写入CompositeRotation：</p>
+<ul>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * ScalePivot * NonUniformScale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivot * NonUniformScale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= NonUniformScale</li>
+</ul>
+<p>如果指定ScalePivot且不使用Scale或NonScale中的任何一个，则NonUniformScale都没有其他影响，对CompositeScale也没有其他影响。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">PostRotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left">CompositeScale</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left">ScalePivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">ScalePivot</td>
+</tr>
+</tbody>
+</table>
+<p>…然后 transform system 将会是：</p>
+<ol>
+<li>[RotationEulerSystem] Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[PostRotationEulerSystem] Write PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[CompositeScaleSystem] Write CompositeScale &lt;= ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeRotationSystem] Write CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToWorldSystem] Write LocalToWorld &lt;= Translation * CompositeRotation * CompositeScale</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903202027.png!webp" alt="img" loading='lazy'></p>
+<hr>
+<h2 id="第5节：Hierarchical-Transforms-Advanced">第5节：Hierarchical Transforms (Advanced)</h2>
+<p>注意：高级层次转换组件规则很大程度上反映了非层次组件的用法，只是它们正在写入LocalToParent（而不是LocalToWorld）。层次转换特有的额外component是ParentScaleInverse。</p>
+<hr>
+<p>NonUniformScale（float3）作为Scale的替代方法，用于指定每轴的比例。请注意，并非所有DOTS功能都完全支持非均匀缩放。请务必查看这些功能的文档以了解其限制。</p>
+<ul>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * Rotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Rotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= NonUniformScale</li>
+</ul>
+<p>同时存在Scale和NonUniform scale不是合法情况，但是定义了结果。将使用Scale，将忽略NonUniformScale。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">NonUniformScale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * Rotation * NonUniformScale</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903202314.png!webp" alt="img" loading='lazy'></p>
+<p>父级LocalToWorld乘以子级LocalToWorld，其中包括任何缩放比例。但是，如果首选删除“父级比例”（“AKA比例补偿”），则可以使用ParentScaleInverse。</p>
+<ul>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * Rotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * Rotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * Rotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * Rotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * Rotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * CompositeScale</li>
+</ul>
+<p>如果存在任何显式分配的父scale值的倒数，则将其写入ParentScaleInverse，如下所示：</p>
+<ul>
+<li>[arentScaleInverseSystem] ParentScaleInverse &lt;= CompositeScale[Parent]^-1</li>
+<li>[ParentScaleInverseSystem] ParentScaleInverse &lt;= Scale[Parent]^-1</li>
+<li>[ParentScaleInverseSystem] ParentScaleInverse &lt;= NonUniformScale[Parent]^-1</li>
+</ul>
+<p>如果LocalToWorld [Parent]由用户直接编写，或者以其他没有明确使用scale component的方式应用缩放，则不会将任何内容写入ParentScaleInverse。应用该缩放值的倒数写到ParentScaleInverse是system的责任。在这种情况下，system未更新ParentScaleInverse的结果是不确定的。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ParentScaleInverse</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[ParentScaleInverseSystem] Child: ParentScaleInverse &lt;= Scale[Parent]^-1</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * ParentScaleInverse * Rotation</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903202754.png!webp" alt="img" loading='lazy'></p>
+<p>旋转分量可以由用户直接作为四元数写入。但是，如果首选Euler接口，则每个旋转顺序都可以使用component，这将导致对Rotation component的写入（如果存在）。</p>
+<ul>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerXYZ</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerXZY</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerYXZ</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerYZX</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerZXY</li>
+<li>[RotationEulerSystem] Rotation &lt;= RotationEulerZYX</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[RotationEulerSystem] Child: Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * Rotation</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903202852.png!webp" alt="img" loading='lazy'></p>
+<p>对于更复杂的旋转要求，可以使用CompositeRotation（float4x4） component替代Rotation。</p>
+<p>对Rotation有效的所有组合对CompositeRotation也有效。即</p>
+<ul>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeRotation</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeRotation * Scale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeRotation * NonUniformScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeRotation * CompositeScale</li>
+</ul>
+<p>用户代码可以将CompositeRotation component直接写为float4x4。但是，如果首选Maya/FBX样式的接口，则可以使用将会写入CompositeRotation component（如果存在）的component。</p>
+<p>CompositeRotation = RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</p>
+<p>如果RotationPivotTranslation（float3），RotationPivot（float3），Rotation（四元数）或PostRotation（四元数）component与CompositeRotation component一起存在，则transform system将组合这些components并写入CompositeRotation。</p>
+<p>具体来说，这些component组合中的每一个都将写入CompositeRotation：</p>
+<ul>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * Rotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * Rotation * PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivotTranslation * PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivot * Rotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= PostRotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= Rotation</li>
+<li>[CompositeRotationSystem] CompositeRotation &lt;= Rotation * PostRotation</li>
+</ul>
+<p>如果指定的RotationPivot不带任何Rotation，则PostRotation对CompositeRotation没有其他影响。</p>
+<p>注意，由于Rotation被重新用作CompositeRotation的源头，因此Rotation的替代数据接口仍然可用。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Scale</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[RotationEulerSystem] Child: Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[CompositeRotationSystem] Child: Wirte CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * CompositeRotation * Scale</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903203338.png!webp" alt="img" loading='lazy'></p>
+<p>用户可以将PostRotation component直接作为四元数写入。但是，如果首选Euler接口，则每个旋转顺序都可以使用component，这将导致写入PostRotation component（如果存在）。</p>
+<ul>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerXZY</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerYXZ</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerYZX</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerZXY</li>
+<li>[PostRotationEulerSystem] PostRotation &lt;= PostRotationEulerZYX</li>
+</ul>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">PostRotationEulerXYZ</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[PostRotationEulerSystem] Child: Write PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[RotationEulerSystem] Child: Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[CompositeRotationSystem] Child: Wirte CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * CompositeRotation * Scale</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903203510.png!webp" alt="img" loading='lazy'></p>
+<p>多个PostRotationEulerXXX component与同一entity相关联是一个错误，但是定义了结果。将应用按优先级顺序找到的第一个。该顺序是：</p>
+<ol>
+<li>PostRotationEulerXYZ</li>
+<li>PostRotationEulerXZY</li>
+<li>PostRotationEulerYXZ</li>
+<li>PostRotationEulerYZX</li>
+<li>PostRotationEulerZXY</li>
+<li>PostRotationEulerZYX</li>
+</ol>
+<p>对于更复杂的Scale要求，可以使用CompositeScale（float4x4） component替代Scale（或NonUniformScale）。</p>
+<p>对Scale或NonUniformScale有效的所有组合对CompositeScale也有效。即</p>
+<ul>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= Translation * ParentScaleInverse * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * Rotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeRotation * CompositeScale</li>
+<li>[TRSToLocalToParentSystem] LocalToParent &lt;= ParentScaleInverse * CompositeScale</li>
+</ul>
+<p>用户代码可以将CompositeScale component直接写为float4x4。但是，如果首选Maya/FBX风格的接口，则可以使用可以写入CompositeScale component（如果存在）的component。</p>
+<p>CompositeScale = ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1 CompositeScale = ScalePivotTranslation * ScalePivot * NonUniformScale * ScalePivot^-1</p>
+<p>如果同时存在ScalePivotTranslation（float3），ScalePivot（float3），Scale（float）component与CompositeScale component的任何组合，则transform system将组合这些components并写入CompositeScale。</p>
+<p>或者，如果同时存在ScalePivotTranslation（float3），ScalePivot（float3），NonUniformScale（float3）component和CompositeScale component的任意组合，则transform system将组合这些components并写入CompositeScale。</p>
+<p>具体来说，这些components组合中的每一个都将写入CompositeRotation：</p>
+<ul>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * ScalePivot * NonUniformScale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivotTranslation * Scale</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= ScalePivot * NonUniformScale * ScalePivot^-1</li>
+<li>[CompositeScaleSystem] CompositeScale &lt;= NonUniformScale</li>
+</ul>
+<p>如果指定ScalePivot且不使用Scale或NonScale中的任何一个，则NonUniformScale都没有其他影响，对CompositeScale也没有其他影响。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Parent (Entity)</th>
+<th style="text-align:left">Child (Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+<td style="text-align:left">LocalToParent</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+<td style="text-align:left">Parent</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+<td style="text-align:left">PreviousParent*</td>
+</tr>
+<tr>
+<td style="text-align:left">Child*</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">RotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">PostRotationEulerXYZ</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">CompositeScale</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ScalePivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left"></td>
+<td style="text-align:left">ScalePivot</td>
+</tr>
+</tbody>
+</table>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[PostRotationEulerSystem] Child: Write PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[RotationEulerSystem] Child: Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[CompositeRotationSystem] Child: Wirte CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * CompositeRotation * Scale</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903203828.png!webp" alt="img" loading='lazy'></p>
+<p>…然后transform system将会是：</p>
+<ol>
+<li>[TRSToLocalToWorldSystem] Parent: Write LocalToWorld as defined above in “Non-hierarchical Transforms (Basic)”</li>
+<li>[PostRotationEulerSystem] Child: Write PostRotation &lt;= PostRotationEulerXYZ</li>
+<li>[RotationEulerSystem] Child: Write Rotation &lt;= RotationEulerXYZ</li>
+<li>[CompositeScaleSystem] Child: Write CompositeScale &lt;= ScalePivotTranslation * ScalePivot * Scale * ScalePivot^-1</li>
+<li>[CompositeRotationSystem] Child: Wirte CompositeRotation &lt;= RotationPivotTranslation * RotationPivot * Rotation * PostRotation * RotationPivot^-1</li>
+<li>[TRSToLocalToParentSystem] Child: Write LocalToParent &lt;= Translation * CompositeRotation * Scale</li>
+<li>[LocalToParentSystem] Child: Write LocalToWorld &lt;= LocalToWorld[Parent] * LocalToParent</li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/20200903203843.png!webp" alt="img" loading='lazy'></p>
+<hr>
+<h2 id="第6节：Custom-Transforms-Advanced">第6节：Custom Transforms (Advanced)</h2>
+<p>有两种编写与transform system完全兼容的用户定义转换的方法。</p>
+<ol>
+<li>重写trasnform components</li>
+<li>拓展trasnform components</li>
+</ol>
+<h2 id="重写trasnform-components">重写trasnform components</h2>
+<p>定义了一个用户 component（UserComponent）并将其添加到LocalToWorld WriteGroup中，如下所示：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Serializable</span>]</span><br><span class="line">[<span class="meta">WriteGroup(typeof(LocalToWorld))</span>]</span><br><span class="line"><span class="keyword">struct</span> UserComponent : IComponentData</span><br><span class="line">{</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>Overriding transform components意味着不可能有其他扩展。用户定义的transform是指定用户 component可以发生的唯一转换。</p>
+<p>在UserTransformSystem中，使用默认query方法来请求对LocalToWorld的写权限。</p>
+<p>例如</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">UserTransformSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Entities</span><br><span class="line">            .ForEach(</span><br><span class="line">                (<span class="keyword">ref</span> LocalToWorld localToWorld, <span class="keyword">in</span> UserComponent userComponent)=&gt;{</span><br><span class="line">                    localToWorld.Value = ... <span class="comment">// Assign localToWorld as needed for UserTransform</span></span><br><span class="line">                }).ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>写入UserTo的transform system将忽略所有写入LocalToWorld的其他transform components。</p>
+<p>例如，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent</td>
+</tr>
+</tbody>
+</table>
+<p>…然后：</p>
+<ul>
+<li>[TRSToLocalToWorldSystem]不会在此entity上运行</li>
+<li>[UserTransformSystem]将在此entity上运行</li>
+</ul>
+<p>但是，如果两个不同的system都覆盖LocalToWorld并且同时存在两个component，则可能导致意外行为。例如</p>
+<p>例如，如果还有：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Serializable</span>]</span><br><span class="line">[<span class="meta">WriteGroup(typeof(LocalToWorld))</span>]</span><br><span class="line"><span class="keyword">struct</span> UserComponent2 : IComponentData</span><br><span class="line">{</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>和等效的system：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">UserTransformSystem2</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Entities</span><br><span class="line">            .ForEach(</span><br><span class="line">                (<span class="keyword">ref</span> LocalToWorld localToWorld, <span class="keyword">in</span> UserComponent2 userComponent2)=&gt;{</span><br><span class="line">                    localToWorld.Value = ... <span class="comment">// Assign localToWorld as needed for UserTransform</span></span><br><span class="line">                }).ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后，如果存在以下components…</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent2</td>
+</tr>
+</tbody>
+</table>
+<p>两个systems都将尝试写入LocalToWorld，这可能会导致意外行为。在确定的上下文中这可能不是问题，但是在多线程中就说不准了。</p>
+<h2 id="Extending-transform-components">Extending transform components</h2>
+<p>为了确保多个重写的transform components可以以定义良好的方式进行交互，可以使用WriteGroup query仅显式地匹配所请求的component。</p>
+<p>例如，如果存在：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Serializable</span>]</span><br><span class="line">[<span class="meta">WriteGroup(typeof(LocalToWorld))</span>]</span><br><span class="line"><span class="keyword">struct</span> UserComponent : IComponentData</span><br><span class="line">{</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>以及一个基于LocalToWorld的WriteGroup进行过滤的system：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">UserTransformSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Entities</span><br><span class="line">            .WithEntityQueryOptions(EntityQueryOptions.FilterWriteGroup)</span><br><span class="line">            .ForEach(</span><br><span class="line">                (<span class="keyword">ref</span> LocalToWorld localToWorld, <span class="keyword">in</span> UserComponent userComponent)=&gt;{</span><br><span class="line">                    localToWorld.Value = ... <span class="comment">// Assign localToWorld as needed for UserTransform</span></span><br><span class="line">                }).ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>UserTransformSystem中的m_Query仅与明确提到的components匹配。</p>
+<p>例如，以下与match匹配并包含在EntityQuery中：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent</td>
+</tr>
+</tbody>
+</table>
+<p>但下面这样却不会：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">Scale</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent</td>
+</tr>
+</tbody>
+</table>
+<p>隐含的期望是UserComponent是要写入LocalToWorld的一组完全匹配的要求，因此不应存在同一WriteGroup中的其他（未声明的）components。</p>
+<p>但是，通过添加到query中，UserComponent system可能明确支持它们，如下所示：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">UserTransformExtensionSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Entities</span><br><span class="line">            .WithEntityQueryOptions(EntityQueryOptions.FilterWriteGroup)</span><br><span class="line">            .ForEach(</span><br><span class="line">                (<span class="keyword">ref</span> LocalToWorld localToWorld, </span><br><span class="line">                 <span class="keyword">in</span> UserComponent userComponent,</span><br><span class="line">                 <span class="keyword">in</span> Translation translation,</span><br><span class="line">                 <span class="keyword">in</span> Rotation rotation,</span><br><span class="line">                 <span class="keyword">in</span> Scale scale) =&gt; {</span><br><span class="line">                    localToWorld.Value = ... <span class="comment">// Assign localToWorld as needed for UserTransform</span></span><br><span class="line">                }).ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>同样，如果还有其他内容：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">Serializable</span>]</span><br><span class="line">[<span class="meta">WriteGroup(typeof(LocalToWorld))</span>]</span><br><span class="line"><span class="keyword">struct</span> UserComponent2 : IComponentData</span><br><span class="line">{</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>并且有：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">(Entity)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">LocalToWorld</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent</td>
+</tr>
+<tr>
+<td style="text-align:left">UserComponent2</td>
+</tr>
+</tbody>
+</table>
+<p>上面定义的UserTransformSystem将不匹配，因为没有明确提到UserComponent2，它位于LocalToWorld WriteGroup中。</p>
+<p>但是，可以创建一个明确的query，该query可以解决该问题并确保行为已正确定义。如：</p>
+<figure class="highlight cs"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">UserTransformComboSystem</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Entities</span><br><span class="line">            .ForEach(</span><br><span class="line">            (<span class="keyword">ref</span> LocalToWorld localToWorld, </span><br><span class="line">             <span class="keyword">in</span> UserComponent userComponent,</span><br><span class="line">             <span class="keyword">in</span> UserComponent2 userComponent2)=&gt;{</span><br><span class="line">                localToWorld.Value = ... <span class="comment">// Assign localToWorld as needed for UserTransform</span></span><br><span class="line">            }).ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后是以下system（或等效system）：</p>
+<ul>
+<li>UserTransformSystem (LocalToWorld FilterWriteGroup:UserComponent)</li>
+<li>UserTransformSystem2 (LocalToWorld FilterWriteGroup:UserComponent2)</li>
+<li>UserTransformComboSystem (LocalToWorld FilterWriteGroup:UserComponent, UserComponent2)</li>
+</ul>
+<p>将全部并行运行，query并在各自的component archtype上运行，并具有明确定义的行为。</p>
+<hr>
+<h2 id="第7节：Relationship-to-Maya-transform-nodes">第7节：Relationship to Maya transform nodes</h2>
+<p>有关Maya变换节点的参考，请参见：<a target="_blank" rel="noopener" href="https://download.autodesk.com/us/maya/2010help/Nodes/transform.html">https</a> : <a target="_blank" rel="noopener" href="https://download.autodesk.com/us/maya/2010help/Nodes/transform.html">//download.autodesk.com/us/maya/2010help/Nodes/transform.html</a></p>
+<p>Maya转换矩阵定义为：</p>
+<blockquote>
+<p>矩阵= SP ^ -1 * S * SH * SP * ST * RP ^ -1 * RA * R * RP * RT * T</p>
+</blockquote>
+<p>可以将它们映射为transform component，如下所示：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:left">Maya</th>
+<th style="text-align:left">Unity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">T</td>
+<td style="text-align:left">Translation</td>
+</tr>
+<tr>
+<td style="text-align:left">(RT * RP * R * RA * RP^-1)</td>
+<td style="text-align:left">CompositeRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RT</td>
+<td style="text-align:left">RotationPivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">RP</td>
+<td style="text-align:left">RotationPivot</td>
+</tr>
+<tr>
+<td style="text-align:left">R</td>
+<td style="text-align:left">Rotation</td>
+</tr>
+<tr>
+<td style="text-align:left">RA</td>
+<td style="text-align:left">PostRotation</td>
+</tr>
+<tr>
+<td style="text-align:left">(ST * SP * S * SP^-1)</td>
+<td style="text-align:left">CompositeScale</td>
+</tr>
+<tr>
+<td style="text-align:left">ST</td>
+<td style="text-align:left">ScalePivotTranslation</td>
+</tr>
+<tr>
+<td style="text-align:left">SP</td>
+<td style="text-align:left">ScalePivot</td>
+</tr>
+<tr>
+<td style="text-align:left">SH</td>
+<td style="text-align:left">— Unused —</td>
+</tr>
+<tr>
+<td style="text-align:left">S</td>
+<td style="text-align:left">NonUniformScale</td>
+</tr>
+</tbody>
+</table>
+<h1>渲染</h1>
+<p>Hybrid.Rendering包提供ECS system来渲染3D对象。</p>
+<p>有关当前与DOTS兼容的渲染API的信息，请参见<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.rendering.hybrid@latest/index.html">DOTS Hybrid Renderer</a>。</p>
+<h1>游戏代码中的常见模式</h1>
+<h2 id="使用Entities-ForEach构建代码">使用Entities.ForEach构建代码</h2>
+<p><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html#Unity_Entities_SystemBase_Entities">Entities.ForEach</a>允许您编写处理一组entities的内联job代码。在组织代码时，它可以帮助将功能封装到方法和结构中。以下模式提供了执行此操作的方法：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/manual/gp_common_patterns.html#static-methods">静态方法</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/manual/gp_common_patterns.html#encapsulation">封装数据和方法</a></li>
+</ul>
+<h3 id="从Entities-ForEach调用静态方法">从Entities.ForEach调用静态方法</h3>
+<p>此模式可帮助您在多个地方重用功能。它还可以帮助简化复杂system的结构，并使代码更具可读性。</p>
+<p>您可以将静态方法用作ForEach lambda函数，如以下示例所示。称为<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.burst@latest/index.html">Burst</a>的静态函数将被<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.burst@latest/index.html">Burst</a>编译（如果该函数与Burst不兼容，则将<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html#Unity_Entities_SystemBase_Entities">.WithoutBurst（）</a>添加到<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html#Unity_Entities_SystemBase_Entities">Entities.ForEach</a>构造中）。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">RotationSpeedSystem_ForEach</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">float</span> deltaTime = Time.DeltaTime;</span><br><span class="line">        Entities</span><br><span class="line">            .WithName(<span class="string">"RotationSpeedSystem_ForEach"</span>)</span><br><span class="line">            .ForEach((<span class="keyword">ref</span> Rotation rotation, <span class="keyword">in</span> RotationSpeed_ForEach rotationSpeed) </span><br><span class="line">                =&gt; DoRotation(<span class="keyword">ref</span> rotation, rotationSpeed.RadiansPerSecond * deltaTime))</span><br><span class="line">            .ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">DoRotation</span>(<span class="params"><span class="keyword">ref</span> Rotation rotation, <span class="built_in">float</span> amount</span>)</span></span><br><span class="line">    {</span><br><span class="line">        rotation.Value = math.mul(</span><br><span class="line">            math.normalize(rotation.Value), </span><br><span class="line">            quaternion.AxisAngle(math.up(), amount));</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>有关创建ECS系统的更多信息，请参阅：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/manual/ecs_systems.html">Systems</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html">SystemBase</a></li>
+</ul>
+<h3 id="将数据和方法封装为捕获的值类型：">将数据和方法封装为捕获的值类型：</h3>
+<p>此模式可帮助您组织数据并将它们放在一个单元中一起工作。</p>
+<p>您可以定义一个结构，该结构声明数据的本地字段以及<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html#Unity_Entities_SystemBase_Entities">Entities.ForEach</a>调用的方法。在系统<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.entities@0.14/api/Unity.Entities.SystemBase.html#Unity_Entities_SystemBase_OnUpdate_">OnUpdate（）</a>函数中，可以将结构的实例创建为局部变量，然后按以下示例所示调用该函数：</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">RotationSpeedSystem_ForEach</span> : <span class="title">SystemBase</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">struct</span> RotateData</span><br><span class="line">    {</span><br><span class="line">        float3 m_Direction;</span><br><span class="line">        <span class="built_in">float</span> m_DeltaTime;</span><br><span class="line">        <span class="built_in">float</span> m_Speed;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">RotateData</span>(<span class="params">float3 direction, <span class="built_in">float</span> deltaTime, <span class="built_in">float</span> speed</span>)</span> </span><br><span class="line">            =&gt; (m_Direction, m_DeltaTime, m_Speed) = (direction, deltaTime, speed);</span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">DoWork</span>(<span class="params"><span class="keyword">ref</span> Rotation rotation</span>)</span> </span><br><span class="line">            =&gt; rotation.Value = math.mul(math.normalize(rotation.Value), </span><br><span class="line">                quaternion.AxisAngle(m_Direction, m_Speed * m_DeltaTime));</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">OnUpdate</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">var</span> rotateUp = <span class="keyword">new</span> RotateData(math.up(), Time.DeltaTime, <span class="number">3.0f</span>);</span><br><span class="line">        Entities.ForEach((<span class="keyword">ref</span> Rotation rotation) </span><br><span class="line">            =&gt; rotateUp.DoWork(<span class="keyword">ref</span> rotation))</span><br><span class="line">            .ScheduleParallel();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>**注意：**此模式将数据复制到您的job结构中（如果与<code>.Run</code>一起使用，则将其备份）。如果使用非常大的job结构来执行此操作，由于结构的复制，可能会产生一些性能开销。在这种情况下，这可能表明您的job应分为多个较小的jobs。</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-dots-using-ecs-create-gameplay/">https://www.lfzxb.top/unity-dots-using-ecs-create-gameplay/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E5%A4%9A%E7%BA%BF%E7%A8%8B/">多线程</a><a class="post-meta__tags" href="/tags/ECS/">ECS</a><a class="post-meta__tags" href="/tags/Unity-DOTS/">Unity DOTS</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages/image-20200817093035244.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/unity-profiler-acquaintance/" title="Unity Profiler学习笔记：初识Profile性能分析工具"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-window-layout.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Unity Profiler学习笔记：初识Profile性能分析工具</div></div><div class="info-2"><div class="info-item-1">前言 本系列笔记内容参考自官方文档 什么是Profiler Unity Profiler是一个工具，您可以使用它来获取关于应用程序的性能信息。您可以将它连接到云端的设备或连接到本机器上的设备，以测试应用程序在预期的发布平台上如何运行。您还可以在编辑器中运行它，以在开发应用程序时获得资源分配的信息。[toc] Profiler收集并显示应用程序在CPU、内存、渲染和音频等方面的性能数据。可以定位应用程序中性能需要改进的地方，你可以精确定位你的代码，资产，场景设置,相机渲染，以及Build Setting影响应用程序的性能。它以一系列图表的形式显示结果，因此您可以可视化应用程序性能的峰值发生在何处。 如何查看Profiler Window &gt; Analysis &gt; Profiler 包含内容  开始使用Profiler窗口  分析应用程序   CPU使用分析器模块 呈现分析器模块 内存分析器模块 音频分析器模块 物理性能分析模块 GPU分析器模块 全局光照分析器模块 UI分析器模块  开始使用Profiler窗口 Profiler布局  A:Profiler控制菜单。使用...</div></div></div></a><a class="pagination-related" href="/unity-dots-table-of-contents/" title="Unity DOTS：目录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity DOTS：目录</div></div><div class="info-2"><div class="info-item-1">前言 本篇博客汇总个人Unity DOTS相关文章，方便好兄弟们查看 目录 Unity DOTS：入门简介：https://www.lfzxb.top/unity-dots-ecs-burst-complier-jobsystem/ Unity DOTS：ECS的核心部分：https://www.lfzxb.top/unity-dots-core-of-ecs/ Unity DOTS：拓展内容：https://www.lfzxb.top/unity-dots-extension/ Unity DOTS：Entities部分：https://www.lfzxb.top/unity-dots-part-of-entities/ Unity DOTS：Components部分：https://www.lfzxb.top/unity-dots-part-of-components/ Unity DOTS：Systems部分：https://www.lfzxb.top/unity-dots-systems/ Unity DOTS：使用ECS进行GamePlay开发：https://www....</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/dots-anything-about-isharedcomponent/" title="关于ISharedComponent的一切"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">关于ISharedComponent的一切</div></div><div class="info-2"><div class="info-item-1">前言 ECS中的ISharedComponent是一个非常重要的概念，但是理解起来却不是这么容易，前阵子找到一篇讲ISharedComponent的文章，感觉例子举的很好，讲的也很透彻，故翻译出来分享给大家。 本文翻译自：https://gametorrahod.com/everything-about-isharedcomponentdata/ 正文 这是ECS最容易被误解的功能之一。当您不知道它是如何设计的时候，通常会出现诸如“如何在工作中获取SCD数据？我不能？那有什么卵用！”这样的问题。因此，让我们开始了解它是如何工作的。 数据共享并不那么ECS 众所周知，ECS会紧密排布entity数据成为chunk。同样，高性能C＃（HPC＃）的限制是得确保您没有通往外界的任何“门户”。static无法使用。禁用别名。分析器无法通过公有字段引入job的引用类型。它也不会让您将指针潜入IComponentData其中。另外，存储器必须是线性的。 “共享”的概念听起来根本不像ECS。在ECS中，可以从chunk中获取任何用来工作的数据。您不会在任何地方跳转，这就是“默认情况下的性能”的来...</div></div></div></a><a class="pagination-related" href="/unity-dots-core-of-ecs/" title="Unity DOTS：ECS的核心部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：ECS的核心部分</div></div><div class="info-2"><div class="info-item-1">ECS的概念 实体组件系统（ECS）架构将身份（Entities，实体），数据（Components，组件）和行为（Systems，系统）分开。该架构专注于数据。Systems读取Components数据流，然后将数据从输入状态转换为输出状态，然后对这些实体进行索引。 下图说明了这三个基本部分如何协同工作：  在此图中，系统读取Translation和Rotation部分，将它们相乘，然后更新相应的LocalToWorld成分（L2W = T*R）。 实体A和B具有Renderer组件，而实体C则没有，但是这不会影响系统，因为系统并不关心Renderer组件。 您可以设置一个系统，使其需要一个Renderer组件，在这种情况下，系统将忽略实体C的组件。或者，您也可以设置系统以排除具有Renderer组件的实体，然后忽略实体A和B的组件。 Archetypes(原型) 组件类型的组合称为“原型”。例如，一个3D对象可能具有一个用于其世界变换的组件，一个用于其线性运动的组件，一个用于旋转的组件和一个用于渲染的组件。这些3D对象的每个实例都对应一个实体，但是由于它们共享相同的组件集，因...</div></div></div></a><a class="pagination-related" href="/unity-dots-ecs-burst-complier-jobsystem/" title="Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-13</div><div class="info-item-2">Unity DOTS：入门简介（ECS，Burst Complier，JobSystem）</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.4.13更新，修正了当时因为水平不足而导致的一些错误，拓展了部分内容。  前言 近期想从更深层次上学习ECS，之前一直停留在浅层次的编码模式（即ECS意识流），没有真正的去了解ECS的内部原理，Unity目前在维护一套以ECS为架构开发的DOTS技术栈，非常值得学习。 ECS 什么是ECS ECS即实体（Entity），组件（Component），系统（System），其中Entity，Component皆为纯数据向的类，System负责操控他们，这种模式会一定程度上优化我们的代码速度。  Entities：游戏中的事物，但在ECS中他只作为一个Id Components：与Entity相关的数据，但是这些数据应该由Component本身而不是Entity来组织。（这种组织上的差异正是面向对象和面向数据的设计之间的关键差异之一）。 Systems：Systems是把Components的数据从当前状态转换为下一个状态的逻辑，但System本身应当是无状态的。例如，一个system可能会通过他们的速度乘以从前一帧到这一帧的时间间隔来更新所有的移动中的entiti...</div></div></div></a><a class="pagination-related" href="/unity-dots-extension/" title="Unity DOTS：ECS拓展内容"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：ECS拓展内容</div></div><div class="info-2"><div class="info-item-1">Sync points synchronization poin（sync point）是程序执行中的一个点，它等待到目前为止已调度的所有job的完成。同步点会限制您一段时间内使用Job System中所有可用工作线程的能力。因此，通常应避免同步点。 Structural changes(结构变化) 同步点是由 您在任何其他job正在操作components时不能安全执行自己的操作所引起的。ECS中数据的结构更改是引发Sync points的主要原因。以下所有都是结构上的变化：  创建entities 删除entities 向entity添加component 从entity中删除component 更改sharedcomponent的value  广义上讲，任何更改entity archetype或导致chunk中entities顺序更改的操作都是结构性更改。这些结构更改只能在主线程上执行。 结构更改不仅需要Sync points，而且还会使对任何component数据的所有直接引用无效。这包括DynamicBuffer的实例以及提供对component（例如Component...</div></div></div></a><a class="pagination-related" href="/unity-dots-part-of-components/" title="Unity DOTS：Components部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Components部分</div></div><div class="info-2"><div class="info-item-1">组件 Components是ECS体系结构的三个主要元素之一。它们代表您的游戏或应用程序的数据。Entities是索引您的components集合的标识符，而systems提供了行为。 ECS中的Components是具有以下“标记接口”之一的结构体类型：  IComponentData —用于通用和[chunk components]。 IBufferElementData —将[动态缓冲区（dynamic buffers）]与entities相关联。 ISharedComponentData —按archetype中的值对entities进行分类或分组。有关更多信息，请参见[Shared Component Data]。 ISystemStateComponentData —将特定system的状态与entity相关联，并检测何时创建或销毁单个实体。有关更多信息，请参见System State Component。 ISharedSystemStateComponentData —共享状态和System状态 数据的组合。请参阅System State Component。 B...</div></div></div></a><a class="pagination-related" href="/unity-dots-part-of-entities/" title="Unity DOTS：Entities部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Entities部分</div></div><div class="info-2"><div class="info-item-1">Entities Entities是实体组件系统体系结构的三个主要元素之一。它们代表游戏或应用程序中的各个“事物”。Entities既没有行为也没有数据；取而代之的是，它担任索引各种数据的职责。Systems提供行为，而Components存储数据。 entity本质上是一个ID。最简单方法是把它作为一个超轻量级GameObject甚至没有名称。实体ID稳定；您可以使用它们来存储对另一个component或entities的引用。例如，Hierarchy中的子entity可能需要引用其父entity。 一个EntityManager管理在一个World中所有的entities。EntityManager维护entities列表并组织与entities相关联的数据以实现最佳性能。 尽管实体没有类型，但是可以按与entities相关联的components的类型对其进行分组。创建entities并向其添加components时，EntityManager会持续跟踪监控entities上components的唯一组合。这种独特的组合称为Archetype（原型）。将components...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#GamePlayer%E6%94%AF%E6%8C%81%E5%8C%85"><span class="toc-number">1.</span> <span class="toc-text">GamePlayer支持包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E4%BD%9C%E6%A6%82%E8%BF%B0"><span class="toc-number">2.</span> <span class="toc-text">创作概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#GameObject%E8%BD%AC%E6%8D%A2"><span class="toc-number">2.1.</span> <span class="toc-text">GameObject转换</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Generated-authoring-components"><span class="toc-number">3.</span> <span class="toc-text">Generated authoring components</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E4%BA%8EIComponentData"><span class="toc-number">3.1.</span> <span class="toc-text">对于IComponentData</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E4%BA%8EIBufferElementData"><span class="toc-number">3.2.</span> <span class="toc-text">对于IBufferElementData</span></a></li></ol></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number"></span> <span class="toc-text">TransformSystem</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC1%E8%8A%82-Non-hierarchical-Transforms-Basic"><span class="toc-number">1.</span> <span class="toc-text">第1节: Non-hierarchical Transforms (Basic)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC2%E8%8A%82%EF%BC%9AHierarchical-Transforms-Basic"><span class="toc-number">2.</span> <span class="toc-text">第2节：Hierarchical Transforms (Basic)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC3%E8%8A%82%EF%BC%9ADefault-Conversion-Basic"><span class="toc-number">3.</span> <span class="toc-text">第3节：Default Conversion (Basic)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC4%E8%8A%82%EF%BC%9ANon-hierarchical-Transforms-Advanced"><span class="toc-number">4.</span> <span class="toc-text">第4节：Non-hierarchical Transforms (Advanced)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC5%E8%8A%82%EF%BC%9AHierarchical-Transforms-Advanced"><span class="toc-number">5.</span> <span class="toc-text">第5节：Hierarchical Transforms (Advanced)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC6%E8%8A%82%EF%BC%9ACustom-Transforms-Advanced"><span class="toc-number">6.</span> <span class="toc-text">第6节：Custom Transforms (Advanced)</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%87%8D%E5%86%99trasnform-components"><span class="toc-number">7.</span> <span class="toc-text">重写trasnform components</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Extending-transform-components"><span class="toc-number">8.</span> <span class="toc-text">Extending transform components</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC7%E8%8A%82%EF%BC%9ARelationship-to-Maya-transform-nodes"><span class="toc-number">9.</span> <span class="toc-text">第7节：Relationship to Maya transform nodes</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number"></span> <span class="toc-text">渲染</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number"></span> <span class="toc-text">游戏代码中的常见模式</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BD%BF%E7%94%A8Entities-ForEach%E6%9E%84%E5%BB%BA%E4%BB%A3%E7%A0%81"><span class="toc-number">1.</span> <span class="toc-text">使用Entities.ForEach构建代码</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8EEntities-ForEach%E8%B0%83%E7%94%A8%E9%9D%99%E6%80%81%E6%96%B9%E6%B3%95"><span class="toc-number">1.1.</span> <span class="toc-text">从Entities.ForEach调用静态方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B0%86%E6%95%B0%E6%8D%AE%E5%92%8C%E6%96%B9%E6%B3%95%E5%B0%81%E8%A3%85%E4%B8%BA%E6%8D%95%E8%8E%B7%E7%9A%84%E5%80%BC%E7%B1%BB%E5%9E%8B%EF%BC%9A"><span class="toc-number">1.2.</span> <span class="toc-text">将数据和方法封装为捕获的值类型：</span></a></li></ol></li></ol></li></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'ea526564f16e3a7ed8307c1e1cfc9507'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>开源免费的AI装机助手 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="开源免费的AI装机助手">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-computer/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png">
+<meta property="article:published_time" content="2025-11-10T00:00:00.000Z">
+<meta property="article:modified_time" content="2025-11-10T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="深度学习">
+<meta property="article:tag" content="装机">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "开源免费的AI装机助手",
+  "url": "https://www.lfzxb.top/aigc-computer/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png",
+  "datePublished": "2025-11-10T00:00:00.000Z",
+  "dateModified": "2025-11-10T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-computer/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '开源免费的AI装机助手',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">开源免费的AI装机助手</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">开源免费的AI装机助手</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2025-11-10T00:00:00.000Z" title="发表于 2025-11-10 00:00:00">2025-11-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2025-11-10T00:00:00.000Z" title="更新于 2025-11-10 00:00:00">2025-11-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/%E5%AE%9E%E6%88%98%E5%BA%94%E7%94%A8/">实战应用</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>5分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-computer/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2025-11-10 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>前言</h1>
+<p>搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： <a target="_blank" rel="noopener" href="https://github.com/wqaetly/ai-computer">https://github.com/wqaetly/ai-computer</a><br>
+开发过程中也算是熟悉了一遍大模型API调用和function call的流程<br>
+<img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" alt="920x430.png" loading='lazy'></p>
+<h1>具体功能</h1>
+<p><strong>一款基于 Avalonia 的跨平台 AI 智能助手桌面应用</strong></p>
+<h2 id="✨-功能特性">✨ 功能特性</h2>
+<h3 id="🤖-智能对话系统">🤖 智能对话系统</h3>
+<ul>
+<li>
+<p><strong>AI 智能助手</strong>：集成 DeepSeek AI 模型，提供流畅的对话体验</p>
+</li>
+<li>
+<p><strong>深度思考模式</strong>：启用推理模型（Reasoning Model），让 AI 进行深度分析和推理</p>
+</li>
+<li>
+<p><strong>多会话管理</strong>：支持创建、切换、重命名和删除多个独立对话会话</p>
+</li>
+<li>
+<p><strong>流式响应</strong>：实时显示 AI 生成的内容，提供即时反馈</p>
+</li>
+<li>
+<p><strong>会话自动保存</strong>：对话内容自动保存到本地，应用重启后可恢复</p>
+</li>
+</ul>
+<h3 id="🔍-智能搜索">🔍 智能搜索</h3>
+<ul>
+<li><strong>多引擎支持</strong>：</li>
+</ul>
+<p>- 百度搜索：国内主流搜索引擎</p>
+<p>- Bing 搜索：国际化搜索体验</p>
+<p>- SearxNG：开源隐私保护元搜索引擎（支持实例测试和切换）</p>
+<ul>
+<li>
+<p><strong>混合搜索策略</strong>：优先使用浏览器搜索，失败后自动降级到 SearxNG</p>
+</li>
+<li>
+<p><strong>搜索结果整合</strong>：AI 自动分析搜索结果并给出综合回答</p>
+</li>
+</ul>
+<h3 id="🖼️-图片识别（OCR）">🖼️ 图片识别（OCR）</h3>
+<ul>
+<li>
+<p><strong>拖拽识别</strong>：支持拖拽图片到输入框进行 OCR 识别</p>
+</li>
+<li>
+<p><strong>粘贴识别</strong>：支持粘贴剪贴板中的图片进行识别</p>
+</li>
+<li>
+<p><strong>文件选择</strong>：支持通过文件选择器选择图片</p>
+</li>
+<li>
+<p><strong>自动识别</strong>：图片内容自动转换为文本，便于 AI 理解和处理</p>
+</li>
+<li>
+<p><strong>本地处理</strong>：使用 ONNX Runtime 本地 OCR 模型，保护隐私</p>
+</li>
+</ul>
+<h3 id="🎨-界面与体验">🎨 界面与体验</h3>
+<ul>
+<li>
+<p><strong>现代化 UI</strong>：基于 SukiUI 设计，界面美观简洁</p>
+</li>
+<li>
+<p><strong>主题切换</strong>：支持亮色/暗色主题切换，以及多种颜色主题</p>
+</li>
+<li>
+<p><strong>Markdown 渲染</strong>：聊天消息支持 Markdown 格式，代码高亮显示</p>
+</li>
+<li>
+<p><strong>自动滚动</strong>：消息自动滚动到底部，用户手动滚动时智能暂停</p>
+</li>
+<li>
+<p><strong>响应式布局</strong>：界面自适应不同窗口大小</p>
+</li>
+</ul>
+<h3 id="🌍-多语言支持">🌍 多语言支持</h3>
+<ul>
+<li>
+<p><strong>中文</strong>：简体中文界面</p>
+</li>
+<li>
+<p><strong>English</strong>：英文界面</p>
+</li>
+<li>
+<p><strong>动态切换</strong>：运行时切换语言，无需重启应用</p>
+</li>
+</ul>
+<h2 id="🛠️-技术栈">🛠️ 技术栈</h2>
+<h3 id="前端框架">前端框架</h3>
+<ul>
+<li>
+<p><strong>Avalonia 11.3.6</strong>：跨平台 XAML UI 框架</p>
+</li>
+<li>
+<p><strong>SukiUI 6.0.4</strong>：现代化 UI 组件库</p>
+</li>
+<li>
+<p><strong>IconPacks.Avalonia 1.2.0</strong>：丰富的图标库</p>
+</li>
+</ul>
+<h3 id="开发框架">开发框架</h3>
+<ul>
+<li>
+<p><strong>.NET 9.0</strong>：最新的 .NET 运行时</p>
+</li>
+<li>
+<p><strong>C# 13</strong>：现代化的 C# 语言特性</p>
+</li>
+</ul>
+<h3 id="MVVM-架构">MVVM 架构</h3>
+<ul>
+<li>
+<p><strong>CommunityToolkit.Mvvm 8.2.1</strong>：MVVM 辅助工具包</p>
+</li>
+<li>
+<p><strong>ReactiveUI</strong>：响应式编程支持</p>
+</li>
+</ul>
+<h3 id="AI-与-NLP">AI 与 NLP</h3>
+<ul>
+<li>
+<p><strong>DeepSeek API</strong>：强大的对话式 AI 模型</p>
+</li>
+<li>
+<p><strong>Microsoft.ML.OnnxRuntime 1.23.1</strong>：OCR 模型推理</p>
+</li>
+</ul>
+<h3 id="计算机视觉">计算机视觉</h3>
+<ul>
+<li><strong><a target="_blank" rel="noopener" href="http://Emgu.CV">Emgu.CV</a> 4.12.0</strong>：OpenCV .NET 封装，用于图像处理</li>
+</ul>
+<h3 id="网络与爬虫">网络与爬虫</h3>
+<ul>
+<li>
+<p><strong>PuppeteerSharp 20.2.4</strong>：浏览器自动化，用于网络搜索</p>
+</li>
+<li>
+<p><strong>HttpClient</strong>：HTTP 请求处理</p>
+</li>
+</ul>
+<h3 id="其他">其他</h3>
+<ul>
+<li>
+<p><strong>LiveMarkdown.Avalonia 1.3.5</strong>：Markdown 渲染</p>
+</li>
+<li>
+<p><strong>YamlDotNet 16.3.0</strong>：YAML 配置文件解析</p>
+</li>
+</ul>
+<h2 id="📦-安装与使用">📦 安装与使用</h2>
+<h3 id="系统要求">系统要求</h3>
+<ul>
+<li>
+<p><strong>操作系统</strong>：Windows 10/11（x64）</p>
+</li>
+<li>
+<p><strong>运行时</strong>：.NET 9.0 Runtime（自包含版本无需安装）</p>
+</li>
+</ul>
+<h3 id="安装步骤">安装步骤</h3>
+<h4 id="方式一：直接下载可执行文件（推荐）">方式一：直接下载可执行文件（推荐）</h4>
+<ol>
+<li>
+<p>从 <a target="_blank" rel="noopener" href="https://github.com/yourusername/ai-computer/releases">Releases</a> 页面下载最新版本</p>
+</li>
+<li>
+<p>解压到任意目录</p>
+</li>
+<li>
+<p>双击 <code>AiComputer.exe</code> 运行</p>
+</li>
+</ol>
+<h4 id="方式二：从源码编译">方式二：从源码编译</h4>
+<ol>
+<li>克隆仓库</li>
+</ol>
+<p></p><figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&nbsp; &nbsp;git <span class="built_in">clone</span> https://github.com/yourusername/ai-computer.git</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;<span class="built_in">cd</span> ai-computer</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure><p></p>
+<ol start="2">
+<li>安装 .NET 9.0 SDK</li>
+</ol>
+<p></p><figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&nbsp; &nbsp;<span class="comment"># 从官网下载安装：https://dotnet.microsoft.com/download/dotnet/9.0</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure><p></p>
+<ol start="3">
+<li>编译项目</li>
+</ol>
+<p></p><figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&nbsp; &nbsp;dotnet build</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure><p></p>
+<ol start="4">
+<li>运行项目</li>
+</ol>
+<p></p><figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">&nbsp; &nbsp;dotnet run</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure><p></p>
+<h3 id="首次使用">首次使用</h3>
+<ol>
+<li>
+<p>启动应用后，首次使用会显示欢迎界面</p>
+</li>
+<li>
+<p>在设置中配置搜索引擎（可选）</p>
+</li>
+<li>
+<p>选择电商平台（京东或拼多多）</p>
+</li>
+<li>
+<p>开始与 AI 对话</p>
+</li>
+</ol>
+<h2 id="🚀-使用指南">🚀 使用指南</h2>
+<h3 id="基本对话">基本对话</h3>
+<ul>
+<li>
+<p>在输入框中输入消息，按 <code>Enter</code> 或点击发送按钮</p>
+</li>
+<li>
+<p>AI 会流式响应，实时显示生成的内容</p>
+</li>
+<li>
+<p>点击"停止"按钮可中断 AI 生成</p>
+</li>
+</ul>
+<h3 id="多会话管理">多会话管理</h3>
+<ul>
+<li>
+<p>点击侧边栏的 <code>+</code> 按钮创建新会话</p>
+</li>
+<li>
+<p>点击会话名称切换到该会话</p>
+</li>
+<li>
+<p>右键点击会话名称可重命名或删除</p>
+</li>
+</ul>
+<h3 id="启用深度思考">启用深度思考</h3>
+<ul>
+<li>
+<p>进入设置 → AI 设置</p>
+</li>
+<li>
+<p>开启"深度思考模式"</p>
+</li>
+<li>
+<p>AI 会在回答前进行深度推理（显示思考过程）</p>
+</li>
+</ul>
+<h3 id="网络搜索">网络搜索</h3>
+<ul>
+<li>
+<p>直接询问需要搜索的问题（如"最新的科技新闻"）</p>
+</li>
+<li>
+<p>AI 会自动调用搜索工具</p>
+</li>
+<li>
+<p>搜索结果会以卡片形式展示，可展开/收起查看详情</p>
+</li>
+</ul>
+<h3 id="商品推荐">商品推荐</h3>
+<ul>
+<li>
+<p>询问商品相关问题（如"推荐一款性价比高的笔记本"）</p>
+</li>
+<li>
+<p>AI 会自动调用商品推荐工具</p>
+</li>
+<li>
+<p>展示商品名称、价格和推广链接</p>
+</li>
+<li>
+<p>点击链接购买可支持项目发展</p>
+</li>
+</ul>
+<h3 id="图片识别">图片识别</h3>
+<ul>
+<li>
+<p><strong>拖拽</strong>：将图片文件拖拽到输入框</p>
+</li>
+<li>
+<p><strong>粘贴</strong>：复制图片后在输入框按 <code>Ctrl+V</code></p>
+</li>
+<li>
+<p><strong>选择</strong>：点击输入框旁边的图片按钮选择文件</p>
+</li>
+<li>
+<p>图片内容会自动识别为文本，AI 可理解图片内容</p>
+</li>
+</ul>
+<h3 id="主题切换">主题切换</h3>
+<ul>
+<li>
+<p>进入设置 → 外观</p>
+</li>
+<li>
+<p>切换亮色/暗色主题</p>
+</li>
+<li>
+<p>选择喜欢的颜色主题</p>
+</li>
+</ul>
+<h3 id="语言切换">语言切换</h3>
+<ul>
+<li>
+<p>进入设置 → 语言</p>
+</li>
+<li>
+<p>选择中文或英文</p>
+</li>
+<li>
+<p>界面立即切换语言</p>
+</li>
+</ul>
+<h2 id="📂-项目结构">📂 项目结构</h2>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">ai-computer/</span><br><span class="line"></span><br><span class="line">├── Models/ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 数据模型</span><br><span class="line"></span><br><span class="line">├── ViewModels/ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 视图模型（MVVM）</span><br><span class="line"></span><br><span class="line">├── Views/ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; # 视图（XAML）</span><br><span class="line"></span><br><span class="line">├── Services/ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 业务逻辑服务</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── DeepSeekService.cs &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# AI 对话服务</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── HybridSearchService.cs &nbsp; &nbsp; &nbsp;# 混合搜索服务</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── JDGoodsRecommendService.cs &nbsp;# 京东商品推荐</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── PDDGoodsRecommendService.cs # 拼多多商品推荐</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── OcrService.cs &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; # OCR 识别服务</span><br><span class="line"></span><br><span class="line">│ &nbsp; └── ...</span><br><span class="line"></span><br><span class="line">├── Assets/ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 静态资源</span><br><span class="line"></span><br><span class="line">│ &nbsp; ├── chrome-win64/ &nbsp; &nbsp;# Chrome 浏览器（用于搜索）</span><br><span class="line"></span><br><span class="line">│ &nbsp; └── OCRModels/ &nbsp; &nbsp; &nbsp; # OCR 模型文件</span><br><span class="line"></span><br><span class="line">├── App.axaml &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 应用程序 XAML</span><br><span class="line"></span><br><span class="line">├── App.axaml.cs &nbsp; &nbsp; &nbsp; &nbsp; # 应用程序逻辑</span><br><span class="line"></span><br><span class="line">├── Program.cs &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; # 程序入口</span><br><span class="line"></span><br><span class="line">└── README.md &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;# 项目说明</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h2 id="🔧-配置说明">🔧 配置说明</h2>
+<h3 id="应用配置文件">应用配置文件</h3>
+<p>配置文件保存在 <code>%AppData%/AiComputer/settings.json</code></p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="punctuation">{</span></span><br><span class="line"></span><br><span class="line">&nbsp; <span class="attr">"Language"</span><span class="punctuation">:</span> <span class="string">"zh-CN"</span><span class="punctuation">,</span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="comment">// 语言设置</span></span><br><span class="line"></span><br><span class="line">&nbsp; <span class="attr">"SearchProvider"</span><span class="punctuation">:</span> <span class="string">"Bing"</span><span class="punctuation">,</span> &nbsp; &nbsp; &nbsp; &nbsp; <span class="comment">// 搜索引擎</span></span><br><span class="line"></span><br><span class="line">&nbsp; <span class="attr">"ECommerceProvider"</span><span class="punctuation">:</span> <span class="string">"JingDong"</span><span class="punctuation">,</span> &nbsp;<span class="comment">// 电商平台</span></span><br><span class="line"></span><br><span class="line">&nbsp; <span class="attr">"EnableDeepThinking"</span><span class="punctuation">:</span> <span class="literal"><span class="keyword">false</span></span> &nbsp; &nbsp; &nbsp; <span class="comment">// 是否启用深度思考</span></span><br><span class="line"></span><br><span class="line"><span class="punctuation">}</span></span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="会话存档">会话存档</h3>
+<p>对话会话保存在 <code>%AppData%/AiComputer/chat_sessions.json</code></p>
+<h2 id="❓-常见问题">❓ 常见问题</h2>
+<h3 id="Q-如何更换搜索引擎？">Q: 如何更换搜索引擎？</h3>
+<p>A: 进入设置 → 联网搜索，选择百度、Bing 或 SearxNG。</p>
+<h3 id="Q-深度思考模式有什么用？">Q: 深度思考模式有什么用？</h3>
+<p>A: 启用后，AI 会在回答前进行深度推理，给出更准确的答案（但速度会稍慢）。</p>
+<h3 id="Q-如何切换电商平台？">Q: 如何切换电商平台？</h3>
+<p>A: 进入设置 → AI 设置，选择京东或拼多多。</p>
+<h3 id="Q-OCR-识别不准确怎么办？">Q: OCR 识别不准确怎么办？</h3>
+<p>A: OCR 基于本地模型，识别率取决于图片质量。请确保图片清晰、文字大小合适。</p>
+<h3 id="Q-应用启动慢怎么办？">Q: 应用启动慢怎么办？</h3>
+<p>A: 首次启动会初始化 Chrome 浏览器和 OCR 模型，需要一定时间。后续启动会更快。</p>
+<h2 id="📄-许可证">📄 许可证</h2>
+<p>本项目采用 <a href="LICENSE">MIT License</a> 开源协议。</p>
+<h2 id="🙏-致谢">🙏 致谢</h2>
+<p>感谢以下开源项目：</p>
+<ul>
+<li>
+<p><a target="_blank" rel="noopener" href="https://avaloniaui.net/">Avalonia</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://github.com/kikipoulet/SukiUI">SukiUI</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.deepseek.com/">DeepSeek</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.puppeteersharp.com/">PuppeteerSharp</a></p>
+</li>
+<li>
+<p><a target="_blank" rel="noopener" href="https://www.emgu.com/">Emgu CV</a></p>
+</li>
+</ul>
+<h2 id="📧-联系方式">📧 联系方式</h2>
+<p>如有问题或建议，欢迎通过以下方式联系：</p>
+<ul>
+<li>GitHub Issues：<a target="_blank" rel="noopener" href="https://github.com/yourusername/ai-computer/issues">提交问题</a></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-computer/">https://www.lfzxb.top/aigc-computer/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/LLM/">LLM</a><a class="post-meta__tags" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a><a class="post-meta__tags" href="/tags/%E8%A3%85%E6%9C%BA/">装机</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a><a class="pagination-related" href="/steamframework-guide/" title="个人开发者上架Steam游戏全流程指南"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">个人开发者上架Steam游戏全流程指南</div></div><div class="info-2"><div class="info-item-1">前言 记录下Steam上架步骤和坑点（我发现了，凡是类似于SDK，注册信息一类的流程，就没有不踩坑的，真是奇了怪哉 完整流程： 设置 Steamworks 帐户 https://partner.steamgames.com/ 入门第一步是注册成为 Steamworks 合作伙伴。也可以使用自己的Steam账号直接登录，选择注册开发者账号 一旦您设置好您的帐户，并且银行、税务和公司信息已受验证，您就可以添加更多用户并开始设置您的第一款产品，或“应用程序”。 注册账户与税务信息注意点 整个注册过程中只有这里有坑，但是这里的坑也最多，流程上是没什么问题，指引的很好，就是细节要注意 通用的，这个流程所有的信息都需要用英文填写，不论是姓名，地址，银行信息，全都是  自己的姓名，必须按顺序全部大写，例如：张三，就需要填ZHANG SAN，空格加不加都行 地址，填写身份证上的地址，注意需要使用谷歌翻译翻译成英文，例如：深圳市南山区深南大道9037号，就需要填9037 Shennan Avenue, Nanshan District, Shenzhen  具体的州，镇，省其实随便对应下就行，只要...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/aigc-base/" title="AI GC基础知识"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-09-29</div><div class="info-item-2">AI GC基础知识</div></div><div class="info-2"><div class="info-item-1">前言 准备学习下当前火热且流行的大语言模型相关知识，在此之前我在人工智能领域是零基础的，但是没有关系，现在有AI辅助了，直接让AI给出学习路线，在我多方对比后，对于学习路线的制定，推荐DeepSeek 基础概念 1. 核心概念解读 机器学习 (Machine Learning, ML)  含义：人工智能的一个子领域。它的核心思想是：不直接编写程序来解决问题，而是让计算机通过“学习”数据中的模式，自己找到解决方案。 关键：“学习”意味着模型会通过数据自动调整其内部的参数，从而提升在特定任务（如预测、分类）上的性能。 比喻：教孩子识别猫。你不是给他一套严格的规则（比如有胡子、尖耳朵），而是给他看成千上万张猫和狗的图片，让他自己总结出猫的特征。  神经网络 (Neural Network, NN)  含义：一种模仿人脑神经元连接方式的计算模型，是实现机器学习的一种方法/算法。 结构：由大量相互连接的“神经元”（节点）组成。每个神经元接收输入，进行简单计算，然后产生输出并传递给下一层神经元。 关键：通过调整神经元之间的连接强度（权重）来学习。 比喻：一个复杂的投票系统。初级神经元（输入层...</div></div></div></a><a class="pagination-related" href="/aigc-weixin-miniprogram/" title="基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202510111049941.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-10-10</div><div class="info-item-2">基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录</div></div><div class="info-2"><div class="info-item-1">前言 这几天心血来潮，在空闲时间做了款AI微信小程序，可以借助AI来评估用户的配置，给出完整的装机配置单等  整个开发过程在AI的帮助下还算流畅 做都做完了，可惜卡在了审核那一步，现在微信小程序如果涉及AI生成内容是要求企业主体的，需要非常多的证书。。。遂放弃，本文就记录下开发过程中踩过坑和心得 总结 AI开发进化 非常推荐安装context7 MCP，这样AI就可以自己联网搜索对应的API 也推荐将需要的官网文档下载成Markdown文件，然后让AI读取文件内容，可以保证代码更稳定和准确，网页转markdown插件：WebInk: 智能网页转Markdown工具 微信云函数 默认云函数是个简单的RPC调用，无法实现AI流式输出的功能，如果需要AI流式输出，就得在客户端使用wx.AIExtend，但是整体来说拓展性较差，比如联网搜索和MCP拓展都不支持 火山引擎 如果需要接入AI功能我推荐字节家的火山引擎，可以非常方便的创建无代码应用，然后在微信小程序通过http调用，而且拓展性极佳，例如联网搜索都是一键配置的 可惜的是自定义MCP的接入非常麻烦，而且目前后台还有bug，下载了高...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-12-20</div><div class="info-item-2">AI GC在游戏中的应用</div></div><div class="info-2"><div class="info-item-1">前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大用 当时Stable Diffuse开源（泄漏）的时候我也本地部署了WebUI玩了下，确实有抽卡炼丹的感觉，不过没深入研究，玩了两下就放那了 今年春节DeepSeek横空出世，也是赚足了眼球，我也试用了下，发现幻觉比OpenAI少很多，起码。。。他不会一直骗我，但应用还是仅限于简单的问答，没感觉对生产力有什么帮助 AI代码方面也试用过 Github Copilot，讲道理感觉一般，和之前用过Chatbox问答模式生成的代码感觉差不多，没有很惊艳的感觉，顶多就是和IDE结合紧密更方便些 前阵子也是没抱什么希望试用了下Cursor，但两周时间之后，我完全变成Cursor的形状了，只能乖乖年费...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-11</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">具体功能</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%9C%A8-%E5%8A%9F%E8%83%BD%E7%89%B9%E6%80%A7"><span class="toc-number">2.1.</span> <span class="toc-text">✨ 功能特性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%A4%96-%E6%99%BA%E8%83%BD%E5%AF%B9%E8%AF%9D%E7%B3%BB%E7%BB%9F"><span class="toc-number">2.1.1.</span> <span class="toc-text">🤖 智能对话系统</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%94%8D-%E6%99%BA%E8%83%BD%E6%90%9C%E7%B4%A2"><span class="toc-number">2.1.2.</span> <span class="toc-text">🔍 智能搜索</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%96%BC%EF%B8%8F-%E5%9B%BE%E7%89%87%E8%AF%86%E5%88%AB%EF%BC%88OCR%EF%BC%89"><span class="toc-number">2.1.3.</span> <span class="toc-text">🖼️ 图片识别（OCR）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%8E%A8-%E7%95%8C%E9%9D%A2%E4%B8%8E%E4%BD%93%E9%AA%8C"><span class="toc-number">2.1.4.</span> <span class="toc-text">🎨 界面与体验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%F0%9F%8C%8D-%E5%A4%9A%E8%AF%AD%E8%A8%80%E6%94%AF%E6%8C%81"><span class="toc-number">2.1.5.</span> <span class="toc-text">🌍 多语言支持</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%9B%A0%EF%B8%8F-%E6%8A%80%E6%9C%AF%E6%A0%88"><span class="toc-number">2.2.</span> <span class="toc-text">🛠️ 技术栈</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E7%AB%AF%E6%A1%86%E6%9E%B6"><span class="toc-number">2.2.1.</span> <span class="toc-text">前端框架</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BC%80%E5%8F%91%E6%A1%86%E6%9E%B6"><span class="toc-number">2.2.2.</span> <span class="toc-text">开发框架</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#MVVM-%E6%9E%B6%E6%9E%84"><span class="toc-number">2.2.3.</span> <span class="toc-text">MVVM 架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AI-%E4%B8%8E-NLP"><span class="toc-number">2.2.4.</span> <span class="toc-text">AI 与 NLP</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A1%E7%AE%97%E6%9C%BA%E8%A7%86%E8%A7%89"><span class="toc-number">2.2.5.</span> <span class="toc-text">计算机视觉</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E4%B8%8E%E7%88%AC%E8%99%AB"><span class="toc-number">2.2.6.</span> <span class="toc-text">网络与爬虫</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%B6%E4%BB%96"><span class="toc-number">2.2.7.</span> <span class="toc-text">其他</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%93%A6-%E5%AE%89%E8%A3%85%E4%B8%8E%E4%BD%BF%E7%94%A8"><span class="toc-number">2.3.</span> <span class="toc-text">📦 安装与使用</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%B3%BB%E7%BB%9F%E8%A6%81%E6%B1%82"><span class="toc-number">2.3.1.</span> <span class="toc-text">系统要求</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%89%E8%A3%85%E6%AD%A5%E9%AA%A4"><span class="toc-number">2.3.2.</span> <span class="toc-text">安装步骤</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F%E4%B8%80%EF%BC%9A%E7%9B%B4%E6%8E%A5%E4%B8%8B%E8%BD%BD%E5%8F%AF%E6%89%A7%E8%A1%8C%E6%96%87%E4%BB%B6%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">2.3.2.1.</span> <span class="toc-text">方式一：直接下载可执行文件（推荐）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%96%B9%E5%BC%8F%E4%BA%8C%EF%BC%9A%E4%BB%8E%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91"><span class="toc-number">2.3.2.2.</span> <span class="toc-text">方式二：从源码编译</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A6%96%E6%AC%A1%E4%BD%BF%E7%94%A8"><span class="toc-number">2.3.3.</span> <span class="toc-text">首次使用</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%9A%80-%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97"><span class="toc-number">2.4.</span> <span class="toc-text">🚀 使用指南</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E5%AF%B9%E8%AF%9D"><span class="toc-number">2.4.1.</span> <span class="toc-text">基本对话</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%9A%E4%BC%9A%E8%AF%9D%E7%AE%A1%E7%90%86"><span class="toc-number">2.4.2.</span> <span class="toc-text">多会话管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%AF%E7%94%A8%E6%B7%B1%E5%BA%A6%E6%80%9D%E8%80%83"><span class="toc-number">2.4.3.</span> <span class="toc-text">启用深度思考</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E6%90%9C%E7%B4%A2"><span class="toc-number">2.4.4.</span> <span class="toc-text">网络搜索</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%95%86%E5%93%81%E6%8E%A8%E8%8D%90"><span class="toc-number">2.4.5.</span> <span class="toc-text">商品推荐</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BE%E7%89%87%E8%AF%86%E5%88%AB"><span class="toc-number">2.4.6.</span> <span class="toc-text">图片识别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BB%E9%A2%98%E5%88%87%E6%8D%A2"><span class="toc-number">2.4.7.</span> <span class="toc-text">主题切换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AF%AD%E8%A8%80%E5%88%87%E6%8D%A2"><span class="toc-number">2.4.8.</span> <span class="toc-text">语言切换</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%93%82-%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84"><span class="toc-number">2.5.</span> <span class="toc-text">📂 项目结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%94%A7-%E9%85%8D%E7%BD%AE%E8%AF%B4%E6%98%8E"><span class="toc-number">2.6.</span> <span class="toc-text">🔧 配置说明</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6"><span class="toc-number">2.6.1.</span> <span class="toc-text">应用配置文件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%9A%E8%AF%9D%E5%AD%98%E6%A1%A3"><span class="toc-number">2.6.2.</span> <span class="toc-text">会话存档</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E2%9D%93-%E5%B8%B8%E8%A7%81%E9%97%AE%E9%A2%98"><span class="toc-number">2.7.</span> <span class="toc-text">❓ 常见问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Q-%E5%A6%82%E4%BD%95%E6%9B%B4%E6%8D%A2%E6%90%9C%E7%B4%A2%E5%BC%95%E6%93%8E%EF%BC%9F"><span class="toc-number">2.7.1.</span> <span class="toc-text">Q: 如何更换搜索引擎？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q-%E6%B7%B1%E5%BA%A6%E6%80%9D%E8%80%83%E6%A8%A1%E5%BC%8F%E6%9C%89%E4%BB%80%E4%B9%88%E7%94%A8%EF%BC%9F"><span class="toc-number">2.7.2.</span> <span class="toc-text">Q: 深度思考模式有什么用？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q-%E5%A6%82%E4%BD%95%E5%88%87%E6%8D%A2%E7%94%B5%E5%95%86%E5%B9%B3%E5%8F%B0%EF%BC%9F"><span class="toc-number">2.7.3.</span> <span class="toc-text">Q: 如何切换电商平台？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q-OCR-%E8%AF%86%E5%88%AB%E4%B8%8D%E5%87%86%E7%A1%AE%E6%80%8E%E4%B9%88%E5%8A%9E%EF%BC%9F"><span class="toc-number">2.7.4.</span> <span class="toc-text">Q: OCR 识别不准确怎么办？</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Q-%E5%BA%94%E7%94%A8%E5%90%AF%E5%8A%A8%E6%85%A2%E6%80%8E%E4%B9%88%E5%8A%9E%EF%BC%9F"><span class="toc-number">2.7.5.</span> <span class="toc-text">Q: 应用启动慢怎么办？</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%93%84-%E8%AE%B8%E5%8F%AF%E8%AF%81"><span class="toc-number">2.8.</span> <span class="toc-text">📄 许可证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%99%8F-%E8%87%B4%E8%B0%A2"><span class="toc-number">2.9.</span> <span class="toc-text">🙏 致谢</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%F0%9F%93%A7-%E8%81%94%E7%B3%BB%E6%96%B9%E5%BC%8F"><span class="toc-number">2.10.</span> <span class="toc-text">📧 联系方式</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '4726bf7e17e558fdfb9212bbcae2e109'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>
