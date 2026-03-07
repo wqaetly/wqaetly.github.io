@@ -1,0 +1,476 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ET6.0学习笔记 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 由于之前已经写过很多ET相关教程，本篇文章主要提及ET6.0的新概念和新特性，其实6.0很多知识点和之前版本一样适用，想看ET之前版本教程的，可以前往：ET篇：个人笔记汇总 本文写作时对应的commit版本：https://github.com/egametang/ET/commit/43abb90cd05445f2e9a0625ac12caaab59486672 基础概念 此部分内容参考：">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ET6.0学习笔记">
+<meta property="og:url" content="https://www.lfzxb.top/et6.0-study/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 由于之前已经写过很多ET相关教程，本篇文章主要提及ET6.0的新概念和新特性，其实6.0很多知识点和之前版本一样适用，想看ET之前版本教程的，可以前往：ET篇：个人笔记汇总 本文写作时对应的commit版本：https://github.com/egametang/ET/commit/43abb90cd05445f2e9a0625ac12caaab59486672 基础概念 此部分内容参考：">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp">
+<meta property="article:published_time" content="2021-08-22T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-22T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="GameFramework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ET6.0学习笔记",
+  "url": "https://www.lfzxb.top/et6.0-study/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp",
+  "datePublished": "2021-08-22T00:00:00.000Z",
+  "dateModified": "2021-08-22T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/et6.0-study/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ET6.0学习笔记',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ET6.0学习笔记</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ET6.0学习笔记</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-08-22T00:00:00.000Z" title="发表于 2021-08-22 00:00:00">2021-08-22</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-08-22T00:00:00.000Z" title="更新于 2021-08-22 00:00:00">2021-08-22</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>16分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/et6.0-study/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-08-22 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="前言">前言</h2>
+<p>由于之前已经写过很多ET相关教程，本篇文章主要提及ET6.0的新概念和新特性，其实6.0很多知识点和之前版本一样适用，想看ET之前版本教程的，可以前往：<a href="https://www.lfzxb.top/et-all/">ET篇：个人笔记汇总</a></p>
+<p>本文写作时对应的commit版本：<a target="_blank" rel="noopener" href="https://github.com/egametang/ET/commit/43abb90cd05445f2e9a0625ac12caaab59486672">https://github.com/egametang/ET/commit/43abb90cd05445f2e9a0625ac12caaab59486672</a></p>
+<h2 id="基础概念">基础概念</h2>
+<p>此部分内容参考：<a target="_blank" rel="noopener" href="https://et-framework.cn/d/16-et60">ET6.0的设计思路</a> 推荐大家有问题先去ET论坛逛逛，里面有很多管理员整理好的日常讨论答案，技术教程，以及其他朋友提出的问题，可以学到很多知识。</p>
+<h3 id="ET-6-0创新概览">ET 6.0创新概览</h3>
+<ol>
+<li>之前每个功能是一个进程，比如realm gate location map，现在改成<strong>每个功能是一个Scene</strong>，一个Scene可以放到一个进程中。这样一台物理机先启动固定的进程，然后各个scene放到进程中运行。非常类似docker。</li>
+<li>所有的Scene放在一个进程就变成了AllServer模式</li>
+<li>服务器内部全部使用actor发送消息，比如realm发给gate，其实是发个actor消息到gate scene</li>
+<li>dbserver将取消，每个进程直连mongodb，使用异步调用存取数据</li>
+<li>协程锁简化了很多实现，例如location队列，actor队列，mailbox消息队列，全部使用协程锁实现，代码非常精简。</li>
+<li>Scene可以开服前配置好在哪个进程（比如realm gate）也可以动态创建（比如副本，分线场景）。动态创建Scene回收Scene非常简单。</li>
+<li>view层跟逻辑层完全分离，可以利用逻辑层代码写机器人。服务端分区支持，多个分区都能放到一个进程。</li>
+<li>一个端就能完成任何测试，还能写机器人测试用例。这个解决大问题了，因为大家都知道游戏逻辑因为耦合非常严重，是很难写方法级别的单元测试，et6的这个设计可以非常方便的让大家写出协议级别的单元测试。并且一键开启上万个机器人来压测，把并发bug扼杀在摇篮里，开个客户端，同时点几下按钮就加了几个机器人，类似组队这种逻辑就可以一个人测试完成</li>
+</ol>
+<h3 id="Domain">Domain</h3>
+<p><strong>domain就是指这个entity属于哪个scene，毕竟一个进程上可以容纳多个scene</strong><br>
+domain还有个很重要的作用，就是设置domain的时候才会执行反序列化system，还有注册eventsystem<br>
+domain简单说是指属于哪个scene, 每个entity都有个domain字段，这样写逻辑方便能拿到自己scene上的数据</p>
+<p>多进程多scene，具体scene放到那个进程完全取决于配制，全放到一个进程就是allserver了</p>
+<p>如果是个很大的scene，需要容纳很多人，可能就需要单独占用一个进程，这样才能完全利用一个核</p>
+<p>把每个scene都分配一个进程，就跟5.0差不多了</p>
+<blockquote>
+<p>Ray:<br>
+et一开始就是多进程嘛…没毛病.不过现在是在进程内又开辟了相对独立的容器.熊猫能说说这么改的实际应用场景吗…什么实际需求促使了你做这个大刀阔斧的改动<br>
+熊猫:<br>
+@Ray 原因是很多动态副本跟分线的需求，现在可以16核机器起16个进程，然后动态分配副本跟分线到进程上.<br>
+比如很多单人副本，没必要一下子开很多进程来支持。需要的时候找一个负载低的进程动态创建一个就行了，用完就可以回收了</p>
+</blockquote>
+<h3 id="客户端">客户端</h3>
+<p>客户端domain也有用，客户端也会存在多个scenes。比如Game.Scene是永久存在的，再搞个Scene挂在Game.Scene下面作为当前进入的场景，切换场景的时候删除这个scene再创建一个scene。</p>
+<blockquote>
+<p>Justin沙特王子:<br>
+我还是期待ET6.0能把客户端层给删掉。。。<br>
+熊猫:<br>
+删掉客户端？等6.0出来就知道et双端威力了。机器人框架就是服务端跟客户端合成一个程序，机器人直接使用客户端代码跑在linux上.<br>
+还有测试用例框架，直接调用客户端代码发送消息给服务端，不双端怎么能做到？</p>
+</blockquote>
+<h3 id="Entity-Component">Entity&amp;&amp;Component</h3>
+<p>6.0把child集成到了Entity，跟Component并列，一个Entity必须设置Parent。这样删除一个Entity能把他的所有组件跟children全部删掉</p>
+<h3 id="热更新方案">热更新方案</h3>
+<p>没用了解过cs2lua，怕有坑，对于6.0咬定cs.lua本人持观望态度</p>
+<p>因为对ILRuntime比较了解，并且与ET相性较好（基本上不需要跨域继承，仅这一点可以避免很多坑）个人选择仍然是ILRuntime，目前已经自己接入了，还包含了资源热更新：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/ET">ET6.0 with ILRuntime &amp;&amp; xAsset</a></p>
+<h2 id="流程">流程</h2>
+<p>和大家一起过一下官方Demo的运行和通信流程</p>
+<h3 id="服务端初始化流程">服务端初始化流程</h3>
+<p>老规矩还是我们的Server.App项目作为启动项</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">List&lt;Type&gt; types = <span class="keyword">new</span> List&lt;Type&gt;();</span><br><span class="line">types.AddRange( <span class="keyword">typeof</span>(Game).Assembly.GetTypes());</span><br><span class="line">types.AddRange( DllHelper.GetHotfixAssembly().GetTypes());</span><br><span class="line">Game.EventSystem.AddRangeType(types);</span><br><span class="line">Game.EventSystem.TypeMonoInit();</span><br><span class="line">Game.EventSystem.EventSystemInit();</span><br></pre></td></tr></tbody></table></figure>
+<p>先注册全部的类型到事件系统，作为ET框架的驱动基石</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ProtobufHelper.Init();</span><br><span class="line">MongoHelper.Init();</span><br></pre></td></tr></tbody></table></figure>
+<p>这两句代码主要是对两个序列化库做的初始化，大多是一些注册类型的操作</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 命令行参数</span></span><br><span class="line">Options options = <span class="literal">null</span>;</span><br><span class="line">Parser.Default.ParseArguments&lt;Options&gt;(<span class="keyword">args</span>)</span><br><span class="line">        .WithNotParsed(error =&gt; <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">$"命令行格式错误!"</span>))</span><br><span class="line">        .WithParsed(o =&gt; { options = o; });</span><br><span class="line">GloabDefine.Options = options;</span><br><span class="line">GloabDefine.ILog = <span class="keyword">new</span> NLogger(GloabDefine.Options.AppType.ToString());</span><br><span class="line">LogManager.Configuration.Variables[<span class="string">"appIdFormat"</span>] = <span class="string">$"<span class="subst">{GloabDefine.Options.Process:<span class="number">000000</span>}</span>"</span>;</span><br><span class="line">Log.Info(<span class="string">$"server start........................ <span class="subst">{Game.Scene.Id}</span>"</span>);</span><br></pre></td></tr></tbody></table></figure>
+<p>这些全都是配置操作，由于我们传入程序的启动参数args为空所以会使用Options定义的默认值。</p>
+<p>注意第7行会为NLog配置Log格式。注意我们在Option里面配置了Log等级，如果目标Log的等级没有达到我们配置的等级，就将不会打印</p>
+<p>我们默认使用了NLog作为Log方案：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/zhangchengye/p/6297685.html">NLog简单入门</a> ，项目Log输出目录位于 <code>ET/Log/</code> 文件夹中</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Game.EventSystem.Publish(<span class="keyword">new</span> EventType.AppStart());</span><br></pre></td></tr></tbody></table></figure>
+<p>第一行抛出事件开启内部初始化流程，注意ET6.0的事件系统参数已经改为支持参数的struct类型，下面是抛出的事件会执行的逻辑</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AppStart_Init</span>: <span class="title">AEvent</span>&lt;<span class="title">EventType.AppStart</span>&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">async</span> ETTask <span class="title">Run</span>(<span class="params">EventType.AppStart <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Game.Scene.AddComponent&lt;ConfigComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        <span class="keyword">await</span> ConfigComponent.Instance.LoadAsync();</span><br><span class="line">        <span class="comment">//读取StartProcessConfig中id为Game.Options.Process（这里值为1）的整行配置</span></span><br><span class="line">        <span class="comment">//ET6.0由于使用了protobuffer作为导表工具，所以请去Excel文件夹查看原数据</span></span><br><span class="line">        StartProcessConfig processConfig = StartProcessConfigCategory.Instance.Get(GloabDefine.Options.Process);</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;TimerComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;OpcodeTypeComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;MessageDispatcherComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;CoroutineLockComponent&gt;();</span><br><span class="line">        <span class="comment">// 发送普通actor消息</span></span><br><span class="line">        Game.Scene.AddComponent&lt;ActorMessageSenderComponent&gt;();</span><br><span class="line">        <span class="comment">// 发送location actor消息</span></span><br><span class="line">        Game.Scene.AddComponent&lt;ActorLocationSenderComponent&gt;();</span><br><span class="line">        <span class="comment">// 访问location server的组件</span></span><br><span class="line">        Game.Scene.AddComponent&lt;LocationProxyComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;ActorMessageDispatcherComponent&gt;();</span><br><span class="line">        <span class="comment">// 数值订阅组件</span></span><br><span class="line">        Game.Scene.AddComponent&lt;NumericWatcherComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;NetThreadComponent&gt;();</span><br><span class="line">        <span class="keyword">switch</span> (GloabDefine.Options.AppType)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">case</span> AppType.Server:</span><br><span class="line">            {</span><br><span class="line">                Game.Scene.AddComponent&lt;NetInnerComponent, IPEndPoint&gt;(processConfig.InnerIPPort);</span><br><span class="line">                List&lt;StartSceneConfig&gt; processScenes = StartSceneConfigCategory.Instance.GetByProcess(GloabDefine.Options.Process);</span><br><span class="line">                <span class="keyword">foreach</span> (StartSceneConfig startConfig <span class="keyword">in</span> processScenes)</span><br><span class="line">                {</span><br><span class="line">                    <span class="keyword">await</span> SceneFactory.Create(Game.Scene, startConfig.Id, startConfig.InstanceId, startConfig.Zone, startConfig.Name,</span><br><span class="line">                        startConfig.Type, startConfig);</span><br><span class="line">                }</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">case</span> AppType.Watcher:</span><br><span class="line">            {</span><br><span class="line">                StartMachineConfig startMachineConfig = WatcherHelper.GetThisMachineConfig();</span><br><span class="line">                WatcherComponent watcherComponent = Game.Scene.AddComponent&lt;WatcherComponent&gt;();</span><br><span class="line">                watcherComponent.Start(GloabDefine.Options.CreateScenes);</span><br><span class="line">                Game.Scene.AddComponent&lt;NetInnerComponent, IPEndPoint&gt;(NetworkHelper.ToIPEndPoint(<span class="string">$"<span class="subst">{startMachineConfig.InnerIP}</span>:<span class="subst">{startMachineConfig.WatcherPort}</span>"</span>));</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            }</span><br><span class="line">            <span class="keyword">case</span> AppType.GameTool:</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">if</span> (GloabDefine.Options.Console == <span class="number">1</span>)</span><br><span class="line">        {</span><br><span class="line">            Game.Scene.AddComponent&lt;ConsoleComponent&gt;();</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>对于创建Scene的代码如下所示，会根据Scene类型不同而添加不同的组件</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">async</span> ETTask&lt;Scene&gt; <span class="title">Create</span>(<span class="params">Entity parent, <span class="built_in">long</span> id, <span class="built_in">long</span> instanceId, <span class="built_in">int</span> zone, <span class="built_in">string</span> name, SceneType sceneType, StartSceneConfig startSceneConfig = <span class="literal">null</span></span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> ETTask.CompletedTask;</span><br><span class="line">    Scene scene = EntitySceneFactory.CreateScene(id, instanceId, zone, sceneType, name, parent);</span><br><span class="line">    <span class="comment">// 添加注册邮箱，因为内网通信都是通过Actor消息</span></span><br><span class="line">    scene.AddComponent&lt;MailBoxComponent, MailboxType&gt;(MailboxType.UnOrderMessageDispatcher);</span><br><span class="line">    <span class="keyword">switch</span> (scene.SceneType)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">case</span> SceneType.Realm:</span><br><span class="line">            scene.AddComponent&lt;NetKcpComponent, IPEndPoint&gt;(startSceneConfig.OuterIPPort);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> SceneType.Gate:</span><br><span class="line">            scene.AddComponent&lt;NetKcpComponent, IPEndPoint&gt;(startSceneConfig.OuterIPPort);</span><br><span class="line">            scene.AddComponent&lt;PlayerComponent&gt;();</span><br><span class="line">            scene.AddComponent&lt;GateSessionKeyComponent&gt;();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> SceneType.Map:</span><br><span class="line">            scene.AddComponent&lt;UnitComponent&gt;();</span><br><span class="line">            scene.AddComponent&lt;RecastPathComponent&gt;();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        <span class="keyword">case</span> SceneType.Location:</span><br><span class="line">            scene.AddComponent&lt;LocationComponent&gt;();</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> scene;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>之后会进入轮询，不断地更新框架状态</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">while</span> (<span class="literal">true</span>)</span><br><span class="line">{</span><br><span class="line">	<span class="keyword">try</span></span><br><span class="line">	{</span><br><span class="line">		Thread.Sleep(<span class="number">1</span>);</span><br><span class="line">		ThreadSynchronizationContext.Instance.Update();</span><br><span class="line">		Game.Update();</span><br><span class="line">		Game.LateUpdate();</span><br><span class="line">		Game.FrameFinish();</span><br><span class="line">	}</span><br><span class="line">	<span class="keyword">catch</span> (Exception e)</span><br><span class="line">	{</span><br><span class="line">		Log.Error(e);</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="总结">总结</h4>
+<ul>
+<li>
+<p>通过启动参数确定Option的数据（如果启动参数为空，则使用默认的Option数据），其中记录了进程Id（Option.Process）等关键数据</p>
+</li>
+<li>
+<p>拿着这个Option.Process去StartProcessConfig得到此进程对应的物理机器Id以及此进程对应的内网端口</p>
+</li>
+<li>
+<p>拿着这个物理机器Id去StartMachineConfig获取物理机的内网IP和外网IP，以供下面Scene中网络组件的初始化</p>
+</li>
+<li>
+<p>进行进程基础组件的添加，例如Actor组件，协程锁组件等</p>
+</li>
+<li>
+<p>拿着这个进程Option.Process去StartSceneConfig获取所有归属于此进程的Scenes以及Scene的外网端口，并且创建这些Scene</p>
+</li>
+</ul>
+<p>至此，完成服务端所有初始化工作</p>
+<p>但是对于StartZoneConfig的使用，Demo并未给出，个人猜测Zone号是每个Scene所对应的区号，不同的区号会连接到不同的数据库</p>
+<h3 id="客户端初始化流程">客户端初始化流程</h3>
+<p>现在我们来到客户端，走一下初始化流程</p>
+<p>前面说过了Server的AppStart事件通知流程，所以这里我们直接来到客户端AppStart事件通知后的地方</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AppStart_Init</span>: <span class="title">AEvent</span>&lt;<span class="title">EventType.AppStart</span>&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">async</span> ETTask <span class="title">Run</span>(<span class="params">EventType.AppStart <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Game.Scene.AddComponent&lt;TimerComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;CoroutineLockComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;ConfigComponent&gt;();</span><br><span class="line">        <span class="keyword">await</span> ConfigComponent.Instance.LoadAsync();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;OpcodeTypeComponent&gt;();</span><br><span class="line">        Game.Scene.AddComponent&lt;MessageDispatcherComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;NetThreadComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;ZoneSceneManagerComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;GlobalComponent&gt;();</span><br><span class="line">        </span><br><span class="line">        Game.Scene.AddComponent&lt;AIDispatcherComponent&gt;();</span><br><span class="line">        Scene zoneScene = <span class="keyword">await</span> SceneFactory.CreateZoneScene(<span class="number">1</span>, <span class="string">"Game"</span>, Game.Scene);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">//显示登陆界面</span></span><br><span class="line">        <span class="keyword">await</span> Game.EventSystem.Publish(<span class="keyword">new</span> EventType.AppStartInitFinish() { ZoneScene = zoneScene });</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>需要注意的是20行的创建Scene代码，他会涉及网络组件和UI组件的添加</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">async</span> ETTask&lt;Scene&gt; <span class="title">CreateZoneScene</span>(<span class="params"><span class="built_in">int</span> zone, <span class="built_in">string</span> name, Entity parent</span>)</span></span><br><span class="line">{</span><br><span class="line">    Scene zoneScene = EntitySceneFactory.CreateScene(Game.IdGenerater.GenerateInstanceId(), zone, SceneType.Zone, name, parent);</span><br><span class="line">    </span><br><span class="line">    zoneScene.AddComponent&lt;ZoneSceneFlagComponent&gt;();</span><br><span class="line">    zoneScene.AddComponent&lt;NetKcpComponent&gt;();</span><br><span class="line">    zoneScene.AddComponent&lt;UnitComponent&gt;();</span><br><span class="line">    zoneScene.AddComponent&lt;AIComponent, <span class="built_in">int</span>&gt;(<span class="number">1</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// UI层的初始化</span></span><br><span class="line">    <span class="keyword">await</span> Game.EventSystem.Publish(<span class="keyword">new</span> EventType.AfterCreateZoneScene() {ZoneScene = zoneScene});</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">return</span> zoneScene;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>至此，客户端的初始化也结束了</p>
+<h3 id="双端通信流程">双端通信流程</h3>
+<p>然后我们来走一下双端的通信流程</p>
+<h4 id="客户端发起RPC调用，服务端接受外网消息">客户端发起RPC调用，服务端接受外网消息</h4>
+<p>以客户端发起登录请求，服务器处理为例</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建一个ETModel层的Session</span></span><br><span class="line">R2C_Login r2CLogin;</span><br><span class="line"><span class="comment">//这里的address是我们Realm服务器的外网地址和端口</span></span><br><span class="line">Session session = zoneScene.GetComponent&lt;NetKcpComponent&gt;().Create(NetworkHelper.ToIPEndPoint(address));</span><br><span class="line">{</span><br><span class="line">    r2CLogin = (R2C_Login) <span class="keyword">await</span> session.Call(<span class="keyword">new</span> C2R_Login() { Account = account, Password = password });</span><br><span class="line">}</span><br><span class="line">session.Dispose();</span><br></pre></td></tr></tbody></table></figure>
+<p>Session.Send函数，注意当Service是内网类型时，会比外网类型多在包头写入一个long类型的的actor id，当然我们这里是客户端，是Outer类型，就不需要写入了</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Send</span>(<span class="params">IMessage message</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">switch</span> (<span class="keyword">this</span>.AService.ServiceType)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">case</span> ServiceType.Inner:</span><br><span class="line">        {</span><br><span class="line">            (<span class="built_in">ushort</span> opcode, MemoryStream stream) = MessageSerializeHelper.MessageToStream(<span class="number">0</span>, message);</span><br><span class="line">            OpcodeHelper.LogMsg(<span class="keyword">this</span>.DomainZone(), opcode, message);</span><br><span class="line">            <span class="keyword">this</span>.Send(<span class="number">0</span>, stream);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">        <span class="keyword">case</span> ServiceType.Outer:</span><br><span class="line">        {</span><br><span class="line">            (<span class="built_in">ushort</span> opcode, MemoryStream stream) = MessageSerializeHelper.MessageToStream(message);</span><br><span class="line">            OpcodeHelper.LogMsg(<span class="keyword">this</span>.DomainZone(), opcode, message);</span><br><span class="line">            <span class="keyword">this</span>.Send(<span class="number">0</span>, stream);</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后消息来到服务器这边，服务端的AService负责将接收到的服务端二进制数据流传递给NetKcpComponentSystem.OnRead函数，因为我们在创建NetKcpComponent时就将OnRead注册到ReadCallback回调里了</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">ObjectSystem</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">NetKcpComponentAwakeSystem</span>: <span class="title">AwakeSystem</span>&lt;<span class="title">NetKcpComponent</span>&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Awake</span>(<span class="params">NetKcpComponent self</span>)</span></span><br><span class="line">    {</span><br><span class="line">        self.MessageDispatcher = <span class="keyword">new</span> OuterMessageDispatcher();</span><br><span class="line">        </span><br><span class="line">        self.Service = <span class="keyword">new</span> TService(NetThreadComponent.Instance.ThreadSynchronizationContext, ServiceType.Outer);</span><br><span class="line">        self.Service.ErrorCallback += (channelId, error) =&gt; self.OnError(channelId, error);</span><br><span class="line">        self.Service.ReadCallback += (channelId, Memory) =&gt; self.OnRead(channelId, Memory);</span><br><span class="line">        </span><br><span class="line">        NetThreadComponent.Instance.Add(self.Service);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后通过OuterMessageDispatcher.Dispatch进行消息的反序列化和分发，也就会来到C2R_LoginHandler</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">MessageHandler</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">C2R_LoginHandler</span> : <span class="title">AMRpcHandler</span>&lt;<span class="title">C2R_Login</span>, <span class="title">R2C_Login</span>&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">async</span> ETTask <span class="title">Run</span>(<span class="params">Session session, C2R_Login request, R2C_Login response, Action reply</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 从当前大区的Gate服务器随机分配一个</span></span><br><span class="line">        StartSceneConfig config = RealmGateAddressHelper.GetGate(session.DomainZone());</span><br><span class="line">        <span class="comment">//Log.Debug($"gate address: {MongoHelper.ToJson(config)}");</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 向gate请求一个key,客户端可以拿着这个key连接gate</span></span><br><span class="line">        <span class="comment">// 注意G2R这个消息是一个内网的Actor消息</span></span><br><span class="line">        <span class="comment">// config.InstanceId（Gate的ActorId，因为我们要把这个消息从Realm（自己）发送到这个Gate嘛）为StartSceneConfig.EndInit通过算法计算出的InstanceId</span></span><br><span class="line">        <span class="comment">// public override void EndInit()</span></span><br><span class="line">        <span class="comment">// {</span></span><br><span class="line">        <span class="comment">//    	this.Type = EnumHelper.FromString&lt;SceneType&gt;(this.SceneType);</span></span><br><span class="line">        <span class="comment">// 		InstanceIdStruct instanceIdStruct = new InstanceIdStruct(this.Process, (uint) this.Id);</span></span><br><span class="line">        <span class="comment">//		this.InstanceId = instanceIdStruct.ToLong();</span></span><br><span class="line">        <span class="comment">// }</span></span><br><span class="line">        G2R_GetLoginKey g2RGetLoginKey = (G2R_GetLoginKey) <span class="keyword">await</span> ActorMessageSenderComponent.Instance.Call(</span><br><span class="line">            config.InstanceId, <span class="keyword">new</span> R2G_GetLoginKey() {Account = request.Account});</span><br><span class="line">        response.Address = config.OuterIPPort.ToString();</span><br><span class="line">        response.Key = g2RGetLoginKey.Key;</span><br><span class="line">        response.GateId = g2RGetLoginKey.GateId;</span><br><span class="line">        reply();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h4 id="服务端内网消息流转">服务端内网消息流转</h4>
+<p>ActorMessageSenderComponent.Instance.Call会来到这里，其中NetInnerComponent.Instance.Get初次处理会因为我们没有为其创建Session而新建一个Session，IP和端口号就是我们配置表里的Process的IP和内网端口号</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Send</span>(<span class="params"><span class="keyword">this</span> ActorMessageSenderComponent self, <span class="built_in">long</span> actorId, MemoryStream memoryStream</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (actorId == <span class="number">0</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">$"actor id is 0: <span class="subst">{memoryStream.ToActorMessage()}</span>"</span>);</span><br><span class="line">    }</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 为了自己到目标Process的通信创建一个Session</span></span><br><span class="line">    ProcessActorId processActorId = <span class="keyword">new</span> ProcessActorId(actorId);</span><br><span class="line">    Session session = NetInnerComponent.Instance.Get(processActorId.Process);</span><br><span class="line">    session.Send(processActorId.ActorId, memoryStream);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 内网actor session，channelId是进程号</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> Session NetInnerComponent.Instance.Get(<span class="keyword">this</span> NetInnerComponent self, <span class="built_in">long</span> channelId)</span><br><span class="line">{</span><br><span class="line">    Session session = self.GetChild&lt;Session&gt;(channelId);</span><br><span class="line">    <span class="keyword">if</span> (session == <span class="literal">null</span>)</span><br><span class="line">    {</span><br><span class="line">        IPEndPoint ipEndPoint = StartProcessConfigCategory.Instance.Get((<span class="built_in">int</span>) channelId).InnerIPPort;</span><br><span class="line">        session = self.CreateInner(channelId, ipEndPoint);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">return</span> session;</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在Demo中就是自己给自己发送消息（AllServer模式），会来到R2G_GetLoginKeyHandler类，获取到loginKey之后就会给客户端回复消息，也就是会把分配的Gate的IP和端口号以及GateId返回给客户端</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">ActorMessageHandler</span>]</span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">R2G_GetLoginKeyHandler</span> : <span class="title">AMActorRpcHandler</span>&lt;<span class="title">Scene</span>, <span class="title">R2G_GetLoginKey</span>, <span class="title">G2R_GetLoginKey</span>&gt;</span><br><span class="line">{</span><br><span class="line">	<span class="function"><span class="keyword">protected</span> <span class="keyword">override</span> <span class="keyword">async</span> ETTask <span class="title">Run</span>(<span class="params">Scene scene, R2G_GetLoginKey request, G2R_GetLoginKey response, Action reply</span>)</span></span><br><span class="line">	{</span><br><span class="line">		<span class="built_in">long</span> key = RandomHelper.RandInt64();</span><br><span class="line">		scene.GetComponent&lt;GateSessionKeyComponent&gt;().Add(key, request.Account);</span><br><span class="line">		response.Key = key;</span><br><span class="line">		response.GateId = scene.Id;</span><br><span class="line">		reply();</span><br><span class="line">		<span class="keyword">await</span> ETTask.CompletedTask;</span><br><span class="line">	}</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后客户端拿着这个gateSession往由服务器分配给自己的GateSession发送登陆信息</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 创建一个gate Session,并且保存到SessionComponent中</span></span><br><span class="line">Session gateSession = zoneScene.GetComponent&lt;NetKcpComponent().Create(NetworkHelper.ToIPEndPoint(r2CLogin.Address));</span><br><span class="line">gateSession.AddComponent&lt;PingComponent&gt;();</span><br><span class="line">zoneScene.AddComponent&lt;SessionComponent&gt;().Session = gateSession;</span><br><span class="line">G2C_LoginGate g2CLoginGate = (G2C_LoginGate)<span class="keyword">await</span> gateSession.Call(</span><br><span class="line">    <span class="keyword">new</span> C2G_LoginGate() { Key = r2CLogin.Key, GateId = r2CLogin.GateId});</span><br></pre></td></tr></tbody></table></figure>
+<p>然后服务器接收，处理后告知客户端结果，此次交互结束，消息流程图如下</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:500px;" src="https://www.processon.com/embed/61220b070791297c64e22516"></iframe>
+<p><code>顺带提一嘴Actor模型在ET6.0的消息流转，核心就是由IdGenerater引申出的几个Id类，这个几个Id类通过内部的算法可以实现数据的压缩和反解密操作，从而方便的实现Id的转换和获取</code></p>
+<h2 id="机器人模块">机器人模块</h2>
+<p>机器人模块本质上是一个单独的工程，引用了客户端与服务端的代码，使用方式是通过命令行的方式进行控制，具体来说</p>
+<p>编译并启动机器人工程相当于提供了一个完全虚拟的客户端+服务端环境，我们可以通过在终端中输入指定的命令来进行调试和测试</p>
+<p>实现方式也非常的简洁，通过监听终端的输入，然后解析输入的内容，对应到Handler进行处理，核心代码位于</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">ET/Robot/Hotfix/Robot/</span><br><span class="line">ET/Robot/Hotfix/Module/RobotBase/</span><br><span class="line">ET/Robot/Model/Robot/</span><br><span class="line">ET/Robot/Model/Module/RobotBase/</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="总结-2">总结</h2>
+<h3 id="结构总结">结构总结</h3>
+<p>ET6相对于ET5的架构发生了翻天覆地的变化</p>
+<p>首先是ECS结构的变化，从Entity-Component-System变为了Entity-System模式，利用Entity必须设定Parent的限制来模拟ECS下的层级结构，非常方便，</p>
+<p>其次是客户端分了5个程序集，这是为了方便机器人进程引用代码进行测试，其中除了Unity.Mono其余4个程序集都是热更的。更加详细的：</p>
+<ul>
+<li>Unity.Mono：所有冷更层代码</li>
+<li>Unity.Model：热更层的Model，纯数据</li>
+<li>Unity.ModelView：热更层的ModelView，涉及到Unity交互的都可以放在这里，例如相机类，UI类等，依旧是纯数据</li>
+<li>Unity.Hotfix：对应Unity.Model的纯逻辑</li>
+<li>Unity.HotfixView：对应Unity.ModeView的纯逻辑</li>
+</ul>
+<p>然后是服务端，也发生了一些变化，完整的结构从外往里依次为</p>
+<ul>
+<li>Zone：一个大区，可以包含多个物理服务器</li>
+<li>Process：一个进程，一个物理服务器可以包含多个进程，可以直接对位计算机操作系统的进程概念</li>
+<li>Scene：一个功能组件，一个进程可以包含多个Scene</li>
+</ul>
+<p>最后献上一张ET6.0网络层架构图</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:500px;" src="https://www.processon.com/embed/612202481e08534545451ff7"></iframe>
+<h3 id="功能总结">功能总结</h3>
+<p>可以看出ET6相对于ET5增添了很多革命性的功能和组件，个人感觉最厉害的是ETTask的优化和完善，支持了WaitAll这种操作，进一步提升了程序性能</p>
+<p>然后就是机器人模块，可以非常方便的利用机器人进行测试，能够发现非常多隐蔽的BUG</p>
+<p>至于AI模块，仅仅从功能来说的话，个人感觉中规中矩，处理简单的AI逻辑可能还行，复杂起来终究不如可视化的行为树来的更直观，但是如果配合上机器人模块就有的玩了，可以非常方便的写出机器人AI，组队，打怪，商城购物等等。</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/et6.0-study/">https://www.lfzxb.top/et6.0-study/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/GameFramework/">GameFramework</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/fgui-plugin-develop-guide/" title="FGUI插件开发指南（Lua）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">FGUI插件开发指南（Lua）</div></div><div class="info-2"><div class="info-item-1">前言 前几天给ET6.0写了一份FGUI代码生成插件，期间被一些容易混淆的变量名折磨的不轻，这篇文章就记录下从零开始的FGUI插件开发过程。 正文 环境   IDE：Rider 2020.3   Unity 2020.3.17f LTS   EmmyLua 1.3.6.215   FGUI Plugin Lua API 首先下载FGUI-Editor，然后解压，定位到 FairyGUI-Editor/plugin/LuaAPI 目录，记住这个目录，我们后面需要用到他 安装EmmyLua插件 直接在Rider的应用市场下载安装即可 搭建插件开发环境 使用Rider随便新建一个项目，然后在这个项目里添加上面那个FGUI Plugin Lua API文件夹引用 然后再如法炮制，添加我们要开发的插件目录引用，比如 ET/FGUIProject/FGUI_ET/plugins/NKGCodeGenForET6 目前为止，我们插件的开发环境已经集成完毕了，并且得力于EmmyLua插件，我们还有了完善的Lua API提示（前提是在开发插件的过程中严格按照 EmmyLua官方推荐的注释方式 进行...</div></div></div></a><a class="pagination-related" href="/xasset-7-study/" title="xasset 7.0入门指南"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">xasset 7.0入门指南</div></div><div class="info-2"><div class="info-item-1">前言 这阵子终于有空来整框架相关的内容了，目前处理到资源管理相关，自然还是选择我们的老朋友xAsset，简洁强大的资源管理框架！老版本的xAsset（4.0）我也写过一篇入门笔记，前阵子它发布了7.0版本 对比上一个开源版本（4.x），7.0 最大的变化是：  编辑器和运行时高度剥离，代码结构更精炼和模块化。 使用只读的物理文件数据进行版本管理，版本检测稳定性和效率得到前所未有的提高。 打包后的文件的文件名自带文件内容的版本信息，天生可以避免CDN缓存问题以及一些其他的冲突。 全新的多线程文件下载组件，真机环境比之前 UnityWebRequest 版本更稳定。 自动分帧机制为程序运行的流畅度提供保障。 加载资源默认支持自动更新。 相对详细的官方文档  今天就来学习下 正文 下载 xAsset地址，也是本文写作时的Commit版本：https://github.com/xasset/xasset/commit/69f04a06e4a900ce1f77f46e7a494fd19037c579 下载好之后直接将其中的Versions和Versions.Example放到项目根目录即可...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/et-all/" title="ET篇：个人笔记汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/b14.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-07-06</div><div class="info-item-2">ET篇：个人笔记汇总</div></div><div class="info-2"><div class="info-item-1">ET系列教程视频  B站视频教程  ETBook学习笔记  ETBook笔记汇总  FairyGUI学习笔记  ET使用FairyGUI开发的完整工作流 基于FGUI的小地图制作  ET 5.0学习笔记  运行master master项目结构梳理 master客户端初始化流程 master服务端初始化流程 master消息机制  ET 6.0学习笔记  ET 6.0学习笔记 ET6.0接入ILRuntime  ET 7.0学习笔记  ET7+FariyGUI+huatuo+luban+yooasset接入教程  ET 斗地主学习笔记  运行斗地主 斗地主的资源工作流  ET 其他笔记  ETTask和ETVoid相关知识 ET中那些千万不能踩的坑 ET&amp;&amp;FGUI接入xasset流程  </div></div></div></a><a class="pagination-related" href="/et-cloud-ecs/" title="ET篇：云端分布式服务器部署教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907230548.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-09-07</div><div class="info-item-2">ET篇：云端分布式服务器部署教程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.9.7更新，更正ET 6.0的地址配置以及含义，新增Linux实操步骤  前言 对于Linux部署的实操部分，参见：https://www.lfzxb.top/recastnavigation-and-et-to-linux 正文 ET6.0版本配置 现在大多人用的都是云服务器，会将外网IP映射到内网IP（网卡IP），所以一般外网地址和内网地址都是内网IP。 实际上我试过将Socket绑定到云服务器的公网IP，会直接报错 但是服务端会将外网地址传递回客户端让客户端连接Gate，但是我们外网IP只能填服务器的内网IP，也就会导致客户端无法和服务端通信，所以我们要多做一列地址专门告诉客户端服务端的外网地址 总结一下 我们约定，服务器公网IP为192.168.0.1，内网IP为44.117.7.8  </div></div></div></a><a class="pagination-related" href="/et-doudizhu-res/" title="ET篇：斗地主的资源工作流"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190421155442833.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：斗地主的资源工作流</div></div><div class="info-2"><div class="info-item-1">有了master的学习经验，斗地主的学习将不会太多精细化，更多细节大家可以自行查看，本系列文章旨在帮助大家理解整个开发流程 资源划分策略 先来到Asset下的Bundles文件夹，这里是游戏内用到的所有的资源，都被打成ab包，正式发布时将会删除，从资源服务器下载文件 Independent   Code 包含热更新模块的dll文件   Config 包含客户端的配置文件（连接配置，所用到的玩家，敌人等数据结构） UI   Landlords/Altas 包含游戏内用到的所有图集   Landlords/Content 玩家正式开局游戏内的个人信息   Landlords/HandCard 玩家手牌UI   Landlords/LandlordsEnd 游戏结束界面   Landlords/Interaction 玩家的正式游戏内操作界面（出牌，不要，抢地主，不抢等）   Landlords/LandlordsLobby 游戏大厅   Landlords/LandlordsLogin 登录界面   Landlords/LandlordsRoom 正式游戏界面UI   Landlor...</div></div></div></a><a class="pagination-related" href="/et-doudizhu-run/" title="ET篇：运行斗地主Demo"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190205205414947.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：运行斗地主Demo</div></div><div class="info-2"><div class="info-item-1">环境准备： 下载斗地主Demo https://github.com/Viagi/LandlordsCore.git 准备2017.4.0版本的Unity https://unity3d.com/cn/get-unity/download/archive 下载并配置MongoDB以及Studio 3T MongoDB地址：****https://www.mongodb.com/download-center/community  选择Custom  我是在D盘新建了MongoDB文件夹来作为安装目录   这个可视化工具看个人喜好，我这里没有安装   找到电脑上的cmd.exe  复制一份到MongoDB安装目录的bin文件夹下面 打开刚刚复制的cmd.exe 执行以下命令(_dbpath后面的路径为你的MongoDB安装路径下的的data文件夹路径) 1mongod -dbpath D:\MongoDB\data 然后他可能会这样  打开浏览器,输入** http://localhost:27017/如果显示如下信息,表示连接成功**  Studio 3T的下载 https://...</div></div></div></a><a class="pagination-related" href="/et-ettask-etvoid/" title="ET篇：ETVoid和void，ETTask和Task的区别与使用时机"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190505103623.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：ETVoid和void，ETTask和Task的区别与使用时机</div></div><div class="info-2"><div class="info-item-1">在学习ET的过程中，我们经常看到ETVoid和ETTask的身影 比如 1234567891011121314151617181920/// &lt;summary&gt;/// 异步加载assetbundle/// &lt;/summary&gt;/// &lt;param name="assetBundleName"&gt;&lt;/param&gt;/// &lt;returns&gt;&lt;/returns&gt;public async ETTask LoadBundleAsync(string assetBundleName){    assetBundleName = assetBundleName.ToLower();    string[] dependencies = AssetBundleHelper.GetSortedDependencies(assetBundleName);    // Log.Debug($"-----------dep load {assetBundleName} dep...</div></div></div></a><a class="pagination-related" href="/et-fgui-smallmap/" title="ET篇：基于FGUI的小地图制作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190523125800.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：基于FGUI的小地图制作</div></div><div class="info-2"><div class="info-item-1">前言 小地图开发对于我们来说是再常见不过的需求了，单用Unity中的UGUI来说倒也方便，但是用FGUI又如何呢？ 正式开始 FGUI资源的搭建 注意小地图图片要用装载器来包装，不然他将会是不可触摸的，小地图宽高我们设置为200，大地图我们设置大小为100  然后导出到Unity FGUI坐标系统 http://www.fairygui.com/guide/unity/transform.html 小地图到大地图的坐标映射  落实到代码就是 12345678910111213141516     public override void Start(FUI5V5Map self)     {//为小地图图片添加点击事件         self.SmallMapSprite.onRightClick.Add(this.AnyEventHandler);     }     void AnyEventHandler(EventContext context)     {         //Log.Info("点击了小地图");  ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E6%A6%82%E5%BF%B5"><span class="toc-number">2.</span> <span class="toc-text">基础概念</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#ET-6-0%E5%88%9B%E6%96%B0%E6%A6%82%E8%A7%88"><span class="toc-number">2.1.</span> <span class="toc-text">ET 6.0创新概览</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Domain"><span class="toc-number">2.2.</span> <span class="toc-text">Domain</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF"><span class="toc-number">2.3.</span> <span class="toc-text">客户端</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Entity-Component"><span class="toc-number">2.4.</span> <span class="toc-text">Entity&amp;&amp;Component</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%83%AD%E6%9B%B4%E6%96%B0%E6%96%B9%E6%A1%88"><span class="toc-number">2.5.</span> <span class="toc-text">热更新方案</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B5%81%E7%A8%8B"><span class="toc-number">3.</span> <span class="toc-text">流程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E6%B5%81%E7%A8%8B"><span class="toc-number">3.1.</span> <span class="toc-text">服务端初始化流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">3.1.1.</span> <span class="toc-text">总结</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%88%9D%E5%A7%8B%E5%8C%96%E6%B5%81%E7%A8%8B"><span class="toc-number">3.2.</span> <span class="toc-text">客户端初始化流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%8C%E7%AB%AF%E9%80%9A%E4%BF%A1%E6%B5%81%E7%A8%8B"><span class="toc-number">3.3.</span> <span class="toc-text">双端通信流程</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%8F%91%E8%B5%B7RPC%E8%B0%83%E7%94%A8%EF%BC%8C%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%8E%A5%E5%8F%97%E5%A4%96%E7%BD%91%E6%B6%88%E6%81%AF"><span class="toc-number">3.3.1.</span> <span class="toc-text">客户端发起RPC调用，服务端接受外网消息</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E5%86%85%E7%BD%91%E6%B6%88%E6%81%AF%E6%B5%81%E8%BD%AC"><span class="toc-number">3.3.2.</span> <span class="toc-text">服务端内网消息流转</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%BA%E5%99%A8%E4%BA%BA%E6%A8%A1%E5%9D%97"><span class="toc-number">4.</span> <span class="toc-text">机器人模块</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E7%BB%93-2"><span class="toc-number">5.</span> <span class="toc-text">总结</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%93%E6%9E%84%E6%80%BB%E7%BB%93"><span class="toc-number">5.1.</span> <span class="toc-text">结构总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%9F%E8%83%BD%E6%80%BB%E7%BB%93"><span class="toc-number">5.2.</span> <span class="toc-text">功能总结</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '6deaa4795cc1c36b6f063b6b8dd45525'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

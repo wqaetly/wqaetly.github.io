@@ -1,0 +1,348 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>C#：委托和事件 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 委托是对函数的封装，可以当做给方法的特征指定一个名称。而事件则是委托的一种特殊形式，当发生有意义的事的时候，事件对象 处理通知过程。[toc]  委托是一种引用方法的类型。一旦为委托分配了方法，委托就与该方法具有完全相同的行为。 事件是对委托的封装，被用于表示一个委托对象， 事件是在发生其它类或对象关注的事情的时候，类或对象可通过事件通知他们。 委托用delegate声明，事件用event声">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C#：委托和事件">
+<meta property="og:url" content="https://www.lfzxb.top/cdelegate/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 委托是对函数的封装，可以当做给方法的特征指定一个名称。而事件则是委托的一种特殊形式，当发生有意义的事的时候，事件对象 处理通知过程。[toc]  委托是一种引用方法的类型。一旦为委托分配了方法，委托就与该方法具有完全相同的行为。 事件是对委托的封装，被用于表示一个委托对象， 事件是在发生其它类或对象关注的事情的时候，类或对象可通过事件通知他们。 委托用delegate声明，事件用event声">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2019-04-29T00:00:00.000Z">
+<meta property="article:modified_time" content="2019-04-29T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="编程语言">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "C#：委托和事件",
+  "url": "https://www.lfzxb.top/cdelegate/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2019-04-29T00:00:00.000Z",
+  "dateModified": "2019-04-29T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/cdelegate/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'C#：委托和事件',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">C#：委托和事件</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">C#：委托和事件</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2019-04-29T00:00:00.000Z" title="发表于 2019-04-29 00:00:00">2019-04-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2019-04-29T00:00:00.000Z" title="更新于 2019-04-29 00:00:00">2019-04-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/CSharp/">CSharp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">867</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/cdelegate/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2019-04-29 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h3 id="前言">前言</h3>
+<p>委托是对函数的封装，可以当做给方法的特征指定一个名称。而事件则是委托的一种特殊形式，当发生有意义的事的时候，事件对象 处理通知过程。[toc]</p>
+<ol>
+<li>委托是一种引用方法的类型。一旦为委托分配了方法，委托就与该方法具有完全相同的行为。</li>
+<li>事件是对委托的封装，被用于表示一个委托对象，</li>
+<li>事件是在发生其它类或对象关注的事情的时候，类或对象可通过事件通知他们。</li>
+<li>委托用delegate声明，事件用event声明。</li>
+<li>事件只能被外部订阅，不能在外部触发，而委托没有这个限制。</li>
+</ol>
+<h3 id="初始版本">初始版本</h3>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">class</span> <span class="title">Program</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Cat cat = <span class="keyword">new</span> Cat(<span class="string">"Tom"</span>);</span><br><span class="line">        Mouse mouse1 = <span class="keyword">new</span> Mouse(<span class="string">"Jerry"</span>);</span><br><span class="line">        Mouse mouse2 = <span class="keyword">new</span> Mouse(<span class="string">"Jack"</span>);</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 表示将Mouse的Run方法通过实例化委托Cat.CatShoutEventHandler登记到Cat的事件CatShout当中，</span></span><br><span class="line"><span class="comment">         * 其中+=表示‘add_CatShout’的意思。即给委托事件添加方法。同理-=给委托事件减少方法</span></span><br><span class="line"><span class="comment">         * 注意，添加的方法参数必须与委托的参数一致。（个数，类型）！！！</span></span><br><span class="line"><span class="comment">         * */</span></span><br><span class="line">        cat.CatShoutEventHandler += mouse1.Run;</span><br><span class="line">        cat.CatShoutEventHandler += mouse2.Run;</span><br><span class="line">        <span class="comment">//当事件触发时，通知所有登记过的对象，并将发送通知的自己以及需要的数据传递过去。</span></span><br><span class="line">        cat.Shout();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Cat</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Cat</span>(<span class="params"><span class="built_in">string</span> name</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="built_in">delegate</span> <span class="keyword">void</span> <span class="title">CatShoutDelegate</span>(<span class="params"><span class="built_in">object</span> sender, CatShoutEventArgs catShoutEventArgs</span>)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">//声明事件CatShout，它的事件类型是委托CatShoutEventHandler</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">event</span> CatShoutDelegate CatShoutEventHandler;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Shout</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Debug.Log(<span class="string">"喵，我是"</span> + name);</span><br><span class="line">        <span class="comment">//当执行Shout()方法时，如果CatShout中有对象登记事件，则执行CatShout()</span></span><br><span class="line">        <span class="keyword">if</span> (CatShoutEventHandler != <span class="literal">null</span>)</span><br><span class="line">        {</span><br><span class="line">            CatShoutEventArgs e = <span class="keyword">new</span> CatShoutEventArgs();</span><br><span class="line">            e.Name = <span class="keyword">this</span>.name;</span><br><span class="line">            CatShoutEventHandler(<span class="keyword">this</span>, e);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Mouse</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Mouse</span>(<span class="params"><span class="built_in">string</span> name</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Run</span>(<span class="params"><span class="built_in">object</span> sender, CatShoutEventArgs <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Debug.Log(<span class="keyword">args</span>.Name + <span class="string">"来了，"</span> + name + <span class="string">"快跑！"</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CatShoutEventArgs</span> : <span class="title">EventArgs</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Name { <span class="keyword">get</span>; <span class="keyword">set</span>; }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Debug</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Log</span>(<span class="params"><span class="built_in">string</span> content</span>)</span></span><br><span class="line">    {</span><br><span class="line">        Console.WriteLine(content);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="简化版本">简化版本</h3>
+<p>系统内置了EventHandler这个委托类，我们可以直接使用这个泛型委托类来简化我们的代码</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">internal</span> <span class="keyword">class</span> <span class="title">Program</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Main</span>(<span class="params"><span class="built_in">string</span>[] <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Cat cat = <span class="keyword">new</span> Cat(<span class="string">"Tom"</span>);</span><br><span class="line">        Mouse mouse1 = <span class="keyword">new</span> Mouse(<span class="string">"Jerry"</span>);</span><br><span class="line">        Mouse mouse2 = <span class="keyword">new</span> Mouse(<span class="string">"Jack"</span>);</span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 表示将Mouse的Run方法通过实例化委托Cat.CatShoutEventHandler登记到Cat的事件CatShout当中，</span></span><br><span class="line"><span class="comment">         * 其中+=表示‘add_CatShout’的意思。即给委托事件添加方法。同理-=给委托事件减少方法</span></span><br><span class="line"><span class="comment">         * 注意，添加的方法参数必须与委托的参数一致。（个数，类型）！！！</span></span><br><span class="line"><span class="comment">         * */</span></span><br><span class="line">        cat.CatShoutEventHandler += mouse1.Run;</span><br><span class="line">        cat.CatShoutEventHandler += mouse2.Run;</span><br><span class="line">        <span class="comment">//当事件触发时，通知所有登记过的对象，并将发送通知的自己以及需要的数据传递过去。</span></span><br><span class="line">        <span class="comment">//因为event不能直接在外部触发，所以需要调用函数</span></span><br><span class="line">        cat.Shout();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Cat</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Cat</span>(<span class="params"><span class="built_in">string</span> name</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">event</span> EventHandler&lt;CatShoutEventArgs&gt; CatShoutEventHandler;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Shout</span>()</span></span><br><span class="line">    {</span><br><span class="line">        Debug.Log(<span class="string">"喵，我是"</span> + name);</span><br><span class="line">        <span class="comment">//当执行Shout()方法时，如果CatShout中有对象登记事件，则执行CatShout()</span></span><br><span class="line">        <span class="keyword">if</span> (CatShoutEventHandler != <span class="literal">null</span>)</span><br><span class="line">        {</span><br><span class="line">            CatShoutEventArgs e = <span class="keyword">new</span> CatShoutEventArgs();</span><br><span class="line">            e.Name = <span class="keyword">this</span>.name;</span><br><span class="line">            CatShoutEventHandler(<span class="keyword">this</span>, e);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title">Mouse</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">private</span> <span class="built_in">string</span> name;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">Mouse</span>(<span class="params"><span class="built_in">string</span> name</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">this</span>.name = name;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Run</span>(<span class="params"><span class="built_in">object</span> sender, CatShoutEventArgs <span class="keyword">args</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        Debug.Log(<span class="keyword">args</span>.Name + <span class="string">"来了，"</span> + name + <span class="string">"快跑！"</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">CatShoutEventArgs</span> : <span class="title">EventArgs</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">public</span> <span class="built_in">string</span> Name { <span class="keyword">get</span>; <span class="keyword">set</span>; }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Debug</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Log</span>(<span class="params"><span class="built_in">string</span> content</span>)</span></span><br><span class="line">    {</span><br><span class="line">        Console.WriteLine(content);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/cdelegate/">https://www.lfzxb.top/cdelegate/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/box2d-unityvistualeditor/" title="Box2D篇：在Unity开发Box2D可视化编辑器拓展"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190717174309.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Box2D篇：在Unity开发Box2D可视化编辑器拓展</div></div><div class="info-2"><div class="info-item-1">前言 我们需要把Box2D的碰撞体数据导入到服务端，然后让服务端读取这些数据，重建2D物理世界。那么，这些碰撞数据从哪来，怎么做的呢？ Box2D官方手册里有提到两个比较出名的编辑器。 PhysicsEditor和RUBE 这两个编辑器都很出色，但是他们都有一个共同的痛点——编辑的碰撞体对于Unity不是所见即所得的。 还有比较特殊的应用场景，比如做Moba这种伪3D游戏，物理世界完全是可以用Box2D做的，但是，游戏里许多模型都是3D的，而PhysicsEditor和RUBE都只支持导入图片，所以也不妥当。 在仔细研究了官方文档后对比Unity自带的2D物理系统有很多共同点，我就想能不能借助Unity自身物理系统的力量做一个Box2D编辑器呢，这样可以所见即所得。 其实硬要说技术含量的话，在Odin的帮助下，这个可视化编辑器还真没啥技术含量。所以我在这主要说一下思路和历程，希望能对大家以后解决类似问题有帮助。文中代码尽量采用伪代码的形式，方便大家理解。 正文 先放出一张UML图，方便大家理解下面的代码  涉及到的相关知识点 - 编辑器拓展插件：Odin - 序列化反序列化：Bs...</div></div></div></a><a class="pagination-related" href="/yhzrxm/" title="英魂之刃口袋版——西门飞雪教学"><img class="cover" src="http://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/02/1920x1200.jpg!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">英魂之刃口袋版——西门飞雪教学</div></div><div class="info-2"><div class="info-item-1">前言 西门飞雪这一英雄在玩家群体里可谓炙手可热，因为他的强势，在排位Ban局里面很难拿得到。。。我个人十分喜欢这个英雄，操作得当的话，后期翻盘也就一波的事，但我发现很多小伙伴并不能玩好这个英雄，或者说操作有了，对英雄的理解不够。。。所以就有了这篇教学（我最高段位也才大师2，如果有说的不对的地方请各位神仙不吝赐教。） 英雄名称 西门飞雪 官方英雄定位 近战，控制，游走 个人英雄定位 刺客，爆发，剑神 英雄特点 成型快，伤害高，灵活，连招帅气，身板脆，怕控制，容错率较低，到较高分段对英雄的理解要求高 英雄经典语录 我的剑，不是用来看的! 找寻剑术的巅峰！ 只有剑法高强的高手才能填满我的欲望！ 一剑西来，天外飞仙！ 你感觉到剑风的凉意了么？ 用你的血来祭剑吧！ 剑道，既无道。 心中有剑，落叶飞花，皆是兵器。 英雄技能 二技能介绍[toc]   个人理解：西门除大招之外唯一保命和突进技能，非打野情况下能不用这个技能就不用就不用这个技能，或者说留一段技能保命，当然了，你有百分百把握全身而退，也可以两段全用，有同学要问了，你西门放个大还出来作甚？错了，你放大之后，就是你队友的时间了，输也好，...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/c-dic/" title="C#篇：对字典引用内容的探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190723105243.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-07-23</div><div class="info-item-2">C#篇：对字典引用内容的探究</div></div><div class="info-2"><div class="info-item-1">前言 我现在在做的项目有这样一个需求，从二进制文件反序列化出一个类（HeroDataRes），这个类里包含一个英雄的所有基本信息，然后服务端缓存这个类，等到玩家第一次请求的时候就新建一个运行时HeroDataRT类，并将数据传输过去，由于项目采用的状态同步策略，所以服务端需要持有每个玩家操控的英雄基本信息。基本关系就是这样  那么现在就要面临一个问题，HeroDataRT是从HeroDataRes取得的数据，而HeroDataRes里面难免会有class，我们都知道，字典本身是引用类型的，那么修改HeroDataRT类中的数据会不会对HeroDataRes里面的数据产生影响呢？ 例子 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950using System;using System.Collections.Generic;namespace ConsoleApp1{    class Program    {        st...</div></div></div></a><a class="pagination-related" href="/csharpexplore-the-release-principle-of-unmanaged-resources/" title="C#对于非托管资源的释放原理探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">C#对于非托管资源的释放原理探究</div></div><div class="info-2"><div class="info-item-1">前言 我们都知道CLR有一个使用根的可达性算法的垃圾回收机制来回收托管内存，那么对于那些本机资源（非托管内存）他又是怎么清理的呢？ 正文 要看他怎么清理资源，首先要知道这个资源是怎么来的，这里我们用FileStream这一经典类来探讨这些问题。 首先是它的构造函数 12345678910111213141516171819202122[SecuritySafeCritical]public FileStream(string path, FileMode mode)  : this(path, mode, mode == FileMode.Append ? FileAccess.Write : FileAccess.ReadWrite, FileShare.Read, 4096, FileOptions.None, Path.GetFileName(path), false){}[SecurityCritical]internal FileStream(  string path,  FileMode mode,  FileAccess access,  Fi...</div></div></div></a><a class="pagination-related" href="/dissecting-the-async-methods-in-c/" title="C#篇：剖析c#中的异步方法"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/Async_sequence_state_machine_thumb.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">C#篇：剖析c#中的异步方法</div></div><div class="info-2"><div class="info-item-1">本文翻译自 https://blogs.msdn.microsoft.com/seteplia/2017/11/30/dissecting-the-async-methods-in-c/ 前言 c#语言对于开发人员的工作效率非常好，我很高兴最近的努力使它更适合于高性能应用程序。 下面是一个例子:C#5引入了“async”方法。从用户的角度来看，该特性非常有用，因为它有助于将几个基于任务的操作组合成一个操作。但是这种抽象是有代价的。任务是引用类型，在创建它们的任何地方都会导致堆分配，即使在“async”方法同步完成的情况下也是如此。使用C#7，异步方法可以返回类似于任务的类型，比如ValueTask，以减少堆分配的数量，或者在某些场景中完全避免它们。 为了理解所有这些是如何实现的，我们需要深入了解异步方法是如何实现的。 历史回顾 但首先，让我们回顾一下历史。 类Task和Task&lt;T&gt;是在.Net 4.0中引入的，在我看来，在.Net中的异步和并行编程领域发生了巨大的思想转变。与以前的异步模式(如.Net 1.0中的BeginXXX/EndXXX模式，也称为“异步编程模...</div></div></div></a><a class="pagination-related" href="/explore-how-much-memory-size-of-valuetype-and-referencetype-in-csharp/" title="探索C#中值类型/引用类型为空时所占用的内存大小"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200208225348.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-22</div><div class="info-item-2">探索C#中值类型/引用类型为空时所占用的内存大小</div></div><div class="info-2"><div class="info-item-1">前言 又看到一个比较让人害怕的面试题，实例化一个C#的空class会占用多少内存空间。 。。。为什么会有这种问题，当时第一反应肯定不是零，至少要像C++那样有一个区别地址的偏移吧，不然找都找不到，所以就猜了1。 结果果然不出我所料，我蒙错了，不会就学。 找了一大圈，终于找到一个讲的全面的帖子：https://docs.microsoft.com/en-us/archive/msdn-magazine/2005/may/net-framework-internals-how-the-clr-creates-runtime-objects 下面的内容基本就是围绕这篇文章来说的，也可以直接去看原文。 正文 环境：.Net Framework 4.7.2 IDE：Rider 2019.3.3 编译环境：Debug prefer x86（32bit） 值类型 值类型相较于引用类型好理解多了，他直接分配到栈上，不需要GC，不需要引用机制。所以它空间的计算也是最简单的。直接计算其中包含的字段空间即可（有一些特性会影响内存的编排，不过不在本篇文章讨论范围内了）。 计算机中的内存通常以字节的形式组...</div></div></div></a><a class="pagination-related" href="/extending-the-async-methods-in-c/" title="C#篇：扩展C#中的异步方法"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/Async_sequence_state_machine_thumb.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">C#篇：扩展C#中的异步方法</div></div><div class="info-2"><div class="info-item-1">本文翻译自 https://blogs.msdn.microsoft.com/seteplia/2018/01/11/extending-the-async-methods-in-c/ 在前一篇博客文章中，我们讨论了c#编译器如何转换异步方法。在这篇文章中，我们将关注c#编译器为定制异步方法的行为提供的扩展点。 有三种方法可以控制异步方法的机制: 1.在System.Runtime.CompilerServices中提供您自己的async方法构建器。 2.使用自定义task awaiter。 3.定义自己的任务类型。 自定义在System.Runtime.CompilerServices命名空间的类型[toc] 从上一篇文章中我们知道，c#编译器将异步方法转换成一个生成的状态机，它依赖于一些预定义的类型。但是c#编译器并不期望这些已知的类型来自特定的程序集。例如，您可以在项目中提供自己的AsyncVoidMethodBuilder实现，c#编译器将“绑定”异步机制到您的自定义类型。 这是一个很好的方法来探索底层的转换是什么，看看在运行时发生了什么: 123456789101112...</div></div></div></a><a class="pagination-related" href="/re0-c-generic-collections-analyze-with-source-code/" title="从零开始分析C#所有常用集合类的设计（源码向）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">从零开始分析C#所有常用集合类的设计（源码向）</div></div><div class="info-2"><div class="info-item-1">前言 此些天来，武疫兴然，吾甚惧焉，居家不出，项目做完，游戏玩腻，根亦秃噜，百无聊赖，猛然惊醒，吾当面试，基础犹菜，从何下手，唯有C#，C#之何，集合为多，多而不晓，遂有此文。 环境 .Net Framework 4.8 前置知识 Hash Hash算法无论是在项目开发还是底层语言设计上都是非常常见的一个算法，既然如此常用，那么它的重要性自然不必多说，这也是把它放在第一位讲的原因。 Hash算法与Hash函数 Hash算法是一种数字摘要算法，它能将不定长度的二进制数据集给映射到一个较短的二进制长度数据集。常见的MD5算法就是一种Hash算法，通过MD5算法可对任何数据生成数字摘要。而实现了Hash算法的函数我们叫它Hash函数。Hash函数有以下几点特征。  相同的数据进行Hash运算，得到的结果一定相同。 不同的数据进行Hash运算，其结果也可能会相同。 Hash运算是不可逆的，不能由key获取原始的数据。  常见的Hash算法  直接寻址法：取keyword或keyword的某个线性函数值为散列地址。即H(key)=key或H(key) = a•key + b，当中a和b为常...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E7%89%88%E6%9C%AC"><span class="toc-number">2.</span> <span class="toc-text">初始版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AE%80%E5%8C%96%E7%89%88%E6%9C%AC"><span class="toc-number">3.</span> <span class="toc-text">简化版本</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '4be3c4f49ed5a8dadef1f797f0bcbbf8'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

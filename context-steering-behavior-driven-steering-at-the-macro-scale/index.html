@@ -1,0 +1,438 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>（译）上下文转向行为驱动的AI移动策略（Context Steering） | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文是对GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale 进行的中文翻译 译文 介绍 在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。 然而，转向行为并不适合用于某些类型的游戏。当玩家能够">
+<meta property="og:type" content="article">
+<meta property="og:title" content="（译）上下文转向行为驱动的AI移动策略（Context Steering）">
+<meta property="og:url" content="https://www.lfzxb.top/context-steering-behavior-driven-steering-at-the-macro-scale/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文是对GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale 进行的中文翻译 译文 介绍 在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。 然而，转向行为并不适合用于某些类型的游戏。当玩家能够">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png">
+<meta property="article:published_time" content="2023-02-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2023-02-02T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="AI">
+<meta property="article:tag" content="Context Steering">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "（译）上下文转向行为驱动的AI移动策略（Context Steering）",
+  "url": "https://www.lfzxb.top/context-steering-behavior-driven-steering-at-the-macro-scale/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png",
+  "datePublished": "2023-02-01T00:00:00.000Z",
+  "dateModified": "2023-02-02T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/context-steering-behavior-driven-steering-at-the-macro-scale/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '（译）上下文转向行为驱动的AI移动策略（Context Steering）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">（译）上下文转向行为驱动的AI移动策略（Context Steering）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">（译）上下文转向行为驱动的AI移动策略（Context Steering）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2023-02-01T00:00:00.000Z" title="发表于 2023-02-01 00:00:00">2023-02-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2023-02-02T00:00:00.000Z" title="更新于 2023-02-02 00:00:00">2023-02-02</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/AI/">AI</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">6.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>19分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/context-steering-behavior-driven-steering-at-the-macro-scale/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2023-02-02 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p>本文是对<a target="_blank" rel="noopener" href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale.pdf">GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale</a> 进行的中文翻译</p>
+<h1>译文</h1>
+<h2 id="介绍">介绍</h2>
+<p>在游戏行业中，转向行为（Steering Behaviour）是非常普遍的。他们之所以这么流行，是因为其只需要使用简单组件就可以快速实现核心功能。</p>
+<p>然而，转向行为并不适合用于某些类型的游戏。当玩家能够挑选并监控单个实体时，避免碰撞和自然的移动就变得非常重要。为了实现这一目标可能会导致行为组件的膨胀并变得紧耦合，实体运动逻辑也会变得脆弱和难以维护。</p>
+<p>在本章中，我们将概述如何识别那些转向行为不太适合的游戏，并提出一种针对这些问题的新方法，它被称之为<code>上下文转向行为</code>（Context Steering）。上下文转向行为（Context Steering Monobehaviours）是小巧的和无状态的（StateLess），并提供任何行为本身所期望的运动约束。当上下文转向行为用于取代游戏F1 2011上的原转向行为时，代码库减少了4000行，但AI在避免碰撞、超车和执行其他有趣的行为方面表现得更好。</p>
+<h2 id="转向行为将会在何时表现得糟糕">转向行为将会在何时表现得糟糕</h2>
+<p>转向行为系统用于在世界中移动一个实体。该系统由多个子行为组成。在每次Tick过程中，每个子行为被要求产出一个向量，表示它们希望实体如何移动。这些向量组合产生最终向量，呐，这就是Context Steering；这个系统原理如此简单也是它的优势之一。</p>
+<p>请注意，行为产出的向量可以是期望的最终速度，也可以是对当前速度的修正力。本文章将会把行为输出的向量可视化为最终速度，它不会改变任何数据，但它会使图表更容易排列和理解。</p>
+<p>想象一个在二维平面上可以自由移动的实体。该实体只想避开障碍和追逐目标。在图18.1所示的时间瞬间，场景中有两个可能的目标和一个障碍。</p>
+<p>这里的理想结果是什么？假设我们在选择目标时唯一关心的是距离权重，实体应该向目标a移动，但是在路上存在障碍，所以向目标B移动是最好的。这个最终决定（向目标B移动）能由一些简单的行为衡量计算之后得出吗？</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302030016730.png" alt="image-20230203001607669" loading='lazy'></p>
+<p>我们从两种简单的转向行为开始：追逐以接近目标，以及躲避障碍物。我们的躲避行为是看到了附近的障碍，并返回一个向量来避开它。追逐行为对障碍物一无所知，因此将返回到最近的目标（A）的一个向量。</p>
+<p>行为系统结合了这些行为。让我们假设它们值是相同的。最终的向量非常接近于0，并且实体几乎不移动。玩家不会认为这是一个智能的实体！</p>
+<p>多年来，转向行为系统已经发展出了一些补丁来应对这种情况。这里有一些可以解决这个僵局的方法：</p>
+<ul>
+<li>我们可以为行为添加<code>权重</code>，所以当附近有障碍时，躲避行为的权重会超过追逐行为。现在这个实体有一个强大的向北（上北下南）的速度，但在某个时刻，它将再次达到平衡。我们只是以一个新的权重参数为代价，成功地解决了这个问题。但是，当我们改变任何受这个权重影响的行为时，该权重参数值总是需要进行调整。</li>
+<li>我们可以为行为添加<code>优先级</code>，躲避是唯一一种在接近障碍时运行的行为，但在障碍附近的运动是非常单一的，并且不是很有表现力。最后，我们可以在追逐行为中添加一些对障碍的意识。它可以拒绝没有明确的目标路径或路径查找的目标，选择路径最短的目标。这两种方法都引入了追逐中的障碍的概念，从而增加了耦合。在大多数游戏引擎中，射线检测和路径查找要么是昂贵的，要么是异步的，这两者都引入了不同类型的复杂性。这使得追逐既不是“小巧的”，也不是“无状态的”。似乎没有一个好办法来解决这个问题。</li>
+</ul>
+<p>这听起来像是一个刻意制造的例子，但它是基于一个真实的经验。在F1 2010中，躲避行为必须是非常强鲁棒的，这意味着它经常要求频繁和孤立地运行，主导AI赛车的移动方式。为了在AI中加入一些表达力，我们一遍又一次地扩展躲避行为，将其与多个其他行为相结合，并使其成为整体。到最后，它已经成一个老式的if/else块序列，只是包了层的转向行为的皮而已，这是一个维护噩梦。</p>
+<h3 id="AI对象成群结队时（Flocks-versus-Groups）">AI对象成群结队时（Flocks versus Groups）</h3>
+<p>如果转向行为会如此糟糕，为什么它们如此受欢迎？因为不是所有的游戏都满足了上述条件来使问题明显。转向行为是一种统计学上的转向方法。大多数时候，他们会给你大致正确的方向。他们多久给你一次不一致或糟糕的结果，以及这对玩家有多糟糕，这些东西每个游戏对其重视程度或需求不一样。</p>
+<p>转向行为最著名的应用是成群聚集，这并非巧合。在群集过程中，玩家通常是把这些实体当成一个行动组进行移动。这个行动组似乎有逼真的属性和不可预测但可信的（指不会互相残杀，哈哈）行为。鸟群的大小可以隐藏个体之间奇怪的不一致的运动或碰撞。在赛车类型中，玩家通常是在“行动组”中。此时，不一致的动作可能是显眼的和沉浸式的打破（军训的时候教官经常说，不要以为自己动作不到位我看不到，别人整齐划一，就你出岔子，我看的一清二楚）。它们可能导致错过超车机会，严重的超车堵塞，或在最坏的情况下与其他汽车发生碰撞。所以一般的转向行为并不太适合F1。</p>
+<h3 id="AI对象缺少对世界的感知时（Lack-of-Context）">AI对象缺少对世界的感知时（Lack of Context）</h3>
+<p>我们现在了解了转向行为失败是什么样子的，以及什么类型的游戏都很重要。但我们还不知道为什么转向行为系统会有这个缺陷。一旦我们理解了这一点，我们就可以设计出一个解决方案。</p>
+<p>一个单一的转向行为组件被要求返回一个表示其决策的向量，考虑到世界的当前状态。然后，该框架将尝试合并多个决策。然而，只是没有足够的信息来使合并这些决策成为可能。增加优先级或权重试图通过在行为结果中添加更多信息来使合并更容易，但这会转化为更大的麻烦。通过让追逐意识到障碍，我们可以使它产生更明智的结果，但这只是特殊的黑魔法合并步骤，并不是一个可扩展的解决方案。</p>
+<p>有时候，导致一个行为无论如何都不想被执行的原因是：做出决定的背景和决定本身一样重要。这是避免碰撞行为的一个特殊问题，因为行为之间只能用期望速度这一语言进行交流，而不是不期望的速度。</p>
+<h2 id="聚焦于为什么，而不是怎么做（Toward-Why-Not-How）">聚焦于为什么，而不是怎么做（Toward Why, Not How）</h2>
+<p>直接返回一个决定，但有一些额外数据用于和其他行为做通信结合做决定，这不好。相反，如果我们可以询问一个行为是什么原因导致它将做出的决策，但跳过实际的决策步骤呢？如果我们能以某种方式合并所有这些上下文，一些与外部行为无关的处理器就会产生一个考虑到一切环境因素的最终的决定。</p>
+<p>躲避的原因可能是，“我强烈地觉得我们不应该南”。追逐的原因可能是，“西有点有趣，南也很有趣”。这是一个整体的观点，而不是一个最后的决定。然后，这个框架挥舞着一根魔杖，结合了这些原因，揭示了最好的的决定是去西部。</p>
+<p>最终的结果是，就好像追逐者意识到了障碍，并忽视了它感兴趣的目标，因为它被阻止了，而每个行为依旧只关注他们的所需要关注的。该系统是灵活多变的并且具有一致的躲避碰撞行为和小的无状态行为。</p>
+<h3 id="上下文映射（Context-Maps）">上下文映射（Context Maps）</h3>
+<p>上下文转向框架会处理上下文映射的内容。想象一下实体所关心的一切，投射到实体周围的圆周上，如图18.2所示。它就像一个一维图像，事实上，我们将在后面的章节中向你展示许多技巧。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041402757.png" alt="image-20230204140212684" loading='lazy'></p>
+<p>实际上，上下文映射是一个标量值数组，数组的每个槽位表示一个选择，槽位的内容表示行为对这个标题的强度。数组有多少个插槽是上下文映射的“分辨率”。通过使用这种数组格式，我们可以很容易地关联和合并不同的上下文映射。这就我们在不同行为之间进行仲裁的数据结构。</p>
+<p>在每一帧中，该框架将会对每个行为访问两种不同的上下文映射：危险映射和兴趣映射。危险映射是对行为想要远离的目标内容。兴趣列表是行为想要走向的目标内容。</p>
+<h2 id="通过例子理解上下文映射（Context-Maps-by-Example）">通过例子理解上下文映射（Context Maps by Example）</h2>
+<p>还记得我们之前的实体示例吗，让我们重写为使用上下文映射。我们可以通过考虑告知旧行为的决定的信息，并将这些信息存储在正确的上下文映射中来进行重写</p>
+<h3 id="追逐行为（Chase-Behavior）">追逐行为（Chase Behavior）</h3>
+<p>追逐行为希望实体向目标移动，更喜欢靠近目标。然而，选择最佳目标需要做出决定，而我们并不想这样做。所以我们要把所有的目标写入兴趣列表中，用更低的强度表示更远的目标。</p>
+<p>我们可以直接将一个向量指向一个目标，将其转换为一个地图槽，然后只写入该槽。这样一来，就可以捕捉到想要靠近期望目标而需要的移动方向。然而，我们也可以以目标（A）为中心，以往实体圆周发出的射线做垂线，垂线段越长，强度衰减越厉害（即<code>向量点乘，重合程度越大，值越大，权重越大</code>）。这捕捉了传递目标但错过它也是一件有趣的事情，即使这不是最好的行为。这种衰减的工作方式有很多力量和细微差别，让你对实体如何移动有很大的控制权。所有这些都可以通过对所有目标进行快速处理，使用一些调优常数和无状态函数来完成。所生成的兴趣列表如图18.3所示。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041454325.png" alt="image-20230204145430301" loading='lazy'></p>
+<h3 id="躲避行为（Avoid-Behavior）">躲避行为（Avoid Behavior）</h3>
+<p>躲避行为希望实体至少与障碍物保持一个最小距离。我们将所有的障碍写入危险映射。危险映射中障碍物的强度表示到障碍物的距离。如果实体与障碍物超过了最小距离，则可以忽略它。同样，在障碍物周围的槽位值规律衰减也是一种有趣的做法，它会产生贴墙移动的效果。在这里实体需要绕过它而不是进入它自身以及其周围的隔离区。这种行为也是无状态且很小巧的。躲避行为如图18.4所示。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041515221.png" alt="image-20230204151535199" loading='lazy'></p>
+<h3 id="组合数据并进行解析（Combining-and-Parsing）">组合数据并进行解析（Combining and Parsing）</h3>
+<p>通过在多个映射上比较每个槽并取最大值，每个行为的输出可以与其他行为相结合。我们可以相加或平均这些插槽值，但我们不会再因为它后面有另一个障碍而避免一个特定的障碍，因为我们已经避开第一个障碍，而这就掩盖了来自第二个障碍的任何危险。通过组合，我们可以将所有的输出减少为一个单一的兴趣和危险映射。</p>
+<p>下一步处理映射，将整个共享上下文萃取为一个单一的最终速度。这是如何发生的是游戏特定的；赛车游戏示例将有自己的实现。</p>
+<p>首先，我们遍历危险映射，只取最低的危险，并剔除所有有更高危险的插槽。在我们的示例中，在危险图中有一些空的插槽，因此我们的最低危险为零，因此，我们屏蔽了任何具有非零危险的插槽，如图18.5(i)所示。我们取这个掩码并将其应用到兴趣映射中，排除相应掩码槽（ii）。最后，我们选择剩余兴趣最高的兴趣地图插槽（iii），并向这个方向移动（iv）。我们移动的速度与对插槽的兴趣强度成正比；<code>兴趣值越大意味着我们行动得越快</code>。最后的决定是正确的决定。它是在追逐合理目标的同时保持紧急的碰撞避免——但我们是用小的、无状态的、解耦的行为来做的。这是在宏观尺度上的转向行为的承诺。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041535807.png" alt="image-20230204153526786" loading='lazy'></p>
+<h3 id="插值平滑槽位值（Subslot-Movement）">插值平滑槽位值（Subslot Movement）</h3>
+<p>您最初可能会认为上下文映射对系统的限制太大。实体总是被锁定在一个槽方向，所以你需要设定一整圈的槽位，否则你只能得到一个看起来脑子不太好（只能非常粗糙的方向移动的）的实体，这听起来很昂贵。</p>
+<p>事实证明，我们可以为了性能保持少量的槽位，但运动要在一个连续的范围。一旦我们有了目标插槽，我们就可以评估它周围的兴趣梯度（即<code>插值</code>），并估计这些梯度应该满足的位置。然后，我们将这个虚拟插槽索引反向投影到世界空间中，产生一个要导向的方向，如图18.6所示。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041542183.png" alt="image-20230204154206161" loading='lazy'></p>
+<h2 id="在赛车游戏中使用Context-Steering（Racing-with-Context）">在赛车游戏中使用Context Steering（Racing with Context）</h2>
+<p>上下文转向并不仅仅适用于平面上的2D实体。事实上，它很容易被移植到在一维或二维空间中做出的决策的游戏中。让我们来看看F1的上下文转向是如何实现的，以及它与传统转向示例有何不同</p>
+<h3 id="维度系统（Coordinate-System）">维度系统（Coordinate System）</h3>
+<p>我们可以假装赛车在2D空间中自由移动。在F1中，一个低水平的驾驶员系统遵循一个手动放置的<code>标准赛道曲线</code>，刹车的弯道和加速向下的直道。行为系统只需要管理赛道上的位置，而不是驾驶。这是通过在标准赛道曲线上的一个标量的左或右偏移。这是我们的一个维度。虽然司机会为我们刹车，但行为系统必须处理避免碰撞，所以它需要能够在紧急情况下减速。我们想要放慢多少速度，这是另一个构成我们第二维的标量。</p>
+<p>您可以将上下文映射可视化为赛道的横截面，每个插槽代表比赛线的特定偏移量，如图18.7所示。上下文映射自适应轨道的宽度，映射的左右边缘与轨道边缘对齐。标准赛道曲线并不总是映射到同一个位置；当它在轨道上移动时，它将从地图的一边扫到另一边。在这个图和下面的图中，AI汽车是白色的。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041548789.png" alt="image-20230204154818767" loading='lazy'></p>
+<h3 id="标准赛道曲线限制行为（Racing-Line-Behavior）">标准赛道曲线限制行为（Racing Line Behavior）</h3>
+<p>标准赛道曲线贯穿整个地图，兴趣映射列表每个槽位值的与标准赛道线距离成反比，但永远不可能为0，因为要能保证任意位置都能回正到标准赛道线，所以如果汽车被困在赛道的远边缘，它总是知道哪条路更接近比赛线。</p>
+<p>这种行为将会在标准线附近对应的槽位写入最大兴趣值，但不会太大。能够到达赛车线应该是很好的，但我们希望有很多空间来表达其他兴趣列表的行为，这些其他行为在整个地图上仍然有重要的差异。</p>
+<h3 id="躲避行为（Avoid-Behavior）-2">躲避行为（Avoid Behavior）</h3>
+<p>对于一个老司机来说，避免碰撞是至关重要的。任何类型的撞车（侧对侧或前到后）都将是灾难性的。躲避行为评估附近的所有车辆，并将危险写入与另一辆车的赛车线偏移量对应的映射中，其强度与所呈现的危险成正比，如图18.8所示。评估一辆汽车的危险是很复杂的。如果一辆车在前面，但以赛车的速度，那么你应该忽略它们——写入它们的危险只会让超车变得困难。然而，如果一辆车大大低于赛车速度，你可能需要采取规避行动，所以应该写下危险。旁边的汽车总是被认为是危险的。这是使用标准赛道曲线的一个很好的好处：行为系统可以意识到一个和自己相对静止的汽车，在这种情况下，射线投射的方法可能直到转弯后才看到它。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041612985.png" alt="image-20230204161258963" loading='lazy'></p>
+<p>我们已经看到了上下文转向如何保证避免碰撞，但它也可以更巧妙地使用。F1在上下文映射上写了另一辆车的高度危险，但边缘的危险正在减少。这使得汽车之间的横向间距保持在最小的限度。这取决于司机的性格，更谨慎地司机会写入更高的危险值。</p>
+<h3 id="超车行为（Drafting-Behavior）">超车行为（Drafting Behavior）</h3>
+<p>这两种行为足以在赛道上避免碰撞，但这将使一场相当枯燥的比赛。F1还有四五种其他行为使AI更具表现力，但我们这里篇幅有限，只简单概述下超车行为。</p>
+<p>当一辆车高速紧跟另一辆车时，就会发生超车行为。尾车不需要做那么多的工作来突破空气限制，所以它可以在不使用那么多的能量的情况下匹配领先的车的速度。在适当的时刻，多余的能量可以用来超车。</p>
+<p>F1的超车行为评估了AI前的所有汽车，并对每辆车的“可超越性”进行了评分。快速靠近我们的汽车会得到很多分数。然后，该行为将把相应的兴趣值写到每辆车相应的赛车线偏移量处的上下文映射中，如图18.9所示。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041619927.png" alt="image-20230204161927903" loading='lazy'></p>
+<h3 id="处理上下文映射（Processing-Context-Maps）">处理上下文映射（Processing Context Maps）</h3>
+<p>现在我们有了一对复杂的映射，在不同的地方都有危险和兴趣。我们如何从它变成一个真正的运动？可能有几种方法可以产生良好的一致的运动，F1就是这样做的。</p>
+<p>首先，我们找到与汽车当前在轨道上的位置相对应的危险图的插槽，如图18.10(i)所示。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302041620857.png" alt="image-20230204162032836" loading='lazy'></p>
+<p>然后我们遍历上下文映射，只要下一个槽的危险小于当前值就继续。当我们无法再遍历下去时，将会剔除所有我们未到达的槽位，我们将掩码应用于兴趣映射（iii），并选择剩余的最高插槽（iv）。由此产生的运动选择了在实体的最右边的车，避免了更近的车，因为它不能不发生碰撞就能到达。</p>
+<p>这种方法避免了进入更严重的危险，这可能代表了一个物理障碍。它也阻止我们保持在高度危险中，因为当有明显的逃跑路线时，AI会很感兴趣。一旦我们有了所有有效的动作，它就会选出其中最有趣的动作。</p>
+<p>为了确定我们是否需要进行紧急制动，我们来看看从我们目前的槽位到最有趣的槽位遍历过程中的最高危险。如果任何槽超过某个危险阈值，我们要求刹车，强度与危险强度成正比例。我们使用一个阈值，是因为一些危险可以提供信息，而不一定是一个真正的危险，一个需要注意的正在发展中的情况，而不是一个真正的危险。</p>
+<h2 id="进阶技术">进阶技术</h2>
+<p>我们可以对所概述的简单实现进行几个改进。这些改进通常比它们的行为更容易实现和维护，因为它们在上下文映射的级别上工作，而不是单个行为组件</p>
+<h3 id="后处理（Post-Processing）">后处理（Post-Processing）</h3>
+<p>为了避免突变的的峰值或波谷，我们可以在行为起作用后，在上下文映射上应用一个模糊函数。由于这是一种全局效果，因此很容易进行调整，而且实施起来成本也很低。如果最近的目标在两个选择之间来回振荡，那么我们最初的转向行为例子中的追逐行为就会发生翻转。我们可以用每个行为的滞后来解决这个问题，但这增加了行为的状态和复杂性。上下文转向使我们更容易避免翻转。我们可以获取上次更新的上下文图，并将其与当前的上下文映射混合，使高值随着时间的慢慢变化而不是立即出现。</p>
+<h3 id="优化（Optimizations）">优化（Optimizations）</h3>
+<p>系统的整体复杂性取决于您的实现，但我们在这里概述的一切在内存和CPU中都是线性的，与上下文映射的分辨率成比例。将上下文映射的大小增加一倍将需要两倍的内存，而且可能需要两倍的耗时。另一方面，将地图减半将使性能翻一番。</p>
+<p>因为即使使用低分辨率的地图，系统仍然可以提供一致的防碰撞和连续转向，所以您可以构建一个非常细粒度的详细级别控制器来管理系统负载。远离玩家的实体可以被分配给小映射列表，产生更粗糙的动作，但需要更少的系统资源。玩家附近的实体可以有更大的分辨率，这可以对地图上非常精细的细节做出反应。找到一个可以在如此微妙地调整的情况下不损害完整性的AI系统是不常见的。</p>
+<p>由于上下文映射本质上是一维列表，我们可以使用图形编程技术进一步优化它们。我们可以使用向量内部技术（SIMD）写入上下文转向，并以chunk处理映射列表，提供一个巨大的速度。F1是这样发布的，尽管它使代码更难阅读，但回报是值得的。因为这些行为是无状态的，而且上下文映射很容易合并，所以我们可以将它们多线程或将它们放在PS3 SPU上。您还可以考虑在计算着色器中执行行为和处理。一定要进行详细的Profile，因为有些行为可能非常简单，这种解决方案的装配和卸载成本将占主导地位。将行为批处理到Job中或以面向数据的方式构建整个系统也是可能的。使用基于状态和耦合的传统转向行为想做到这一点将是困难的。</p>
+<h2 id="结论">结论</h2>
+<p>转向行为在许多情况下非常有用。但如果你的游戏有一个将被玩家密切关注的个体实体，以及一个具有强大物理约束的世界（这是主要原因，因为计算出的转向行为会和物理约束冲突，但似乎我们直接把物理约束考虑进去即可？就像NavMesh那样），那么引导行为就会崩坏。对于可以用二维形式表示的游戏，上下文转向提供了强大的移动保证和简单、无状态、解耦的行为。</p>
+<h2 id="引用">引用</h2>
+<p>[Reynolds 87] Reynolds, C. 1987. Flocks, herds and schools: A distributed behavioral</p>
+<p>model. <em>International Conference and Exhibition on Computer Graphics and Interactive</em></p>
+<p><em>Techniques,</em> Anaheim, CA, pp. 25–34.</p>
+<p>[Reynolds 99] Reynolds, C. 1999. Steering behaviors for autonomous characters. <em>Game</em></p>
+<p><em>Developers Conference,</em> San Francisco, CA.</p>
+<h1>Reference</h1>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/wqaetly/ContextSteering">ContextSteering-Unity Developed by friedforfun</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/RubenFrans/ContextSteering-Unity">ContextSteering-Unity Developed by RubenFrans</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.gameaipro.com/GameAIPro2/GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale.pdf">GameAIPro2_Chapter18_Context_Steering_Behavior-Driven_Steering_at_the_Macro_Scale</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.gameaipro.com/">Game AI Pro WebSite</a></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/context-steering-behavior-driven-steering-at-the-macro-scale/">https://www.lfzxb.top/context-steering-behavior-driven-steering-at-the-macro-scale/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/AI/">AI</a><a class="post-meta__tags" href="/tags/Context-Steering/">Context Steering</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302012311835.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/projects-ai-steering/" title="ProjectS中的AI转向系统（Context Steering）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302191949831.gif!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">ProjectS中的AI转向系统（Context Steering）</div></div><div class="info-2"><div class="info-item-1">前言 前阵子在处理ProjectS中的AI行为时，发现怪物AI规划出的行为很容易造成怪物重叠，这归根到底是个动态避障问题，而当前游戏AI有以下几种常见动态避障算法：  VO : 提出速度域的概念，Velocity Obstacle 就是VO的由来。通过相对位置，并从自身出发考虑一个安全的移动方向，即避开VO区域（速度危险区）。但在移动过程中会出现抖动。原因就是反复计算安全区，当第一次避开危险区到达安全区之后，发现最佳移动方向（不一定安全，一般指朝向目标点方向）可能不再危险，就将移动方向转回来，结果发现其他寻路对象也这么考虑，也将移动方向转回来，所以第三次就又将方向转向其他方向。由此引发了移动时的方向抖动 RVO: 在VO的基础上，每次转动方向时，只转动计算出来的变化量的一半。从数学计算角度去减少出错（抖动）概率 RVO2/ORCA: VO与RVO都是在空间计算上来规划一个安全区域，而RVO2则是将其转化成了一个线性规划的问题（即用一个个平面将自己与需要考虑的对象的安全区域分割开来再采取一个共面区域，这个区域就是安全区）  对于这三种算法的详细解析，可参见：GameAIPro3_C...</div></div></div></a><a class="pagination-related" href="/game-design-gems-5/" title="游戏设计精粹《五》"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">游戏设计精粹《五》</div></div><div class="info-2"><div class="info-item-1">游戏设计精粹《总目录》 游戏叙事设计：游戏故事主题设计探讨-50个故事主题设计汇总 文章摘要个人总结 创造游戏重复可玩性的14种方法及解说 文章摘要个人总结 超越罐头：艾尔登法环与下一代开放世界 文章摘要个人总结 辐射挽歌：永远不要背叛你的核心用户 文章摘要个人总结</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/projects-ai-steering/" title="ProjectS中的AI转向系统（Context Steering）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202302191949831.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-03-26</div><div class="info-item-2">ProjectS中的AI转向系统（Context Steering）</div></div><div class="info-2"><div class="info-item-1">前言 前阵子在处理ProjectS中的AI行为时，发现怪物AI规划出的行为很容易造成怪物重叠，这归根到底是个动态避障问题，而当前游戏AI有以下几种常见动态避障算法：  VO : 提出速度域的概念，Velocity Obstacle 就是VO的由来。通过相对位置，并从自身出发考虑一个安全的移动方向，即避开VO区域（速度危险区）。但在移动过程中会出现抖动。原因就是反复计算安全区，当第一次避开危险区到达安全区之后，发现最佳移动方向（不一定安全，一般指朝向目标点方向）可能不再危险，就将移动方向转回来，结果发现其他寻路对象也这么考虑，也将移动方向转回来，所以第三次就又将方向转向其他方向。由此引发了移动时的方向抖动 RVO: 在VO的基础上，每次转动方向时，只转动计算出来的变化量的一半。从数学计算角度去减少出错（抖动）概率 RVO2/ORCA: VO与RVO都是在空间计算上来规划一个安全区域，而RVO2则是将其转化成了一个线性规划的问题（即用一个个平面将自己与需要考虑的对象的安全区域分割开来再采取一个共面区域，这个区域就是安全区）  对于这三种算法的详细解析，可参见：GameAIPro3_C...</div></div></div></a><a class="pagination-related" href="/gdc-sharing-of-ai-system-based-on-goap-in-fear-simple-cn/" title="FEAR基于GOAP的AI系统GDC分享（中英双语）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/04/QQ截图20200419125955.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">FEAR基于GOAP的AI系统GDC分享（中英双语）</div></div><div class="info-2"><div class="info-item-1">前言 经过前一篇对于GitHub开源库ReGoap的介绍，想必大家都对GOAP这一AI方案有一定的了解了，那么今天，我们就来更加深入的了解一下，FEAR这款游戏是如何运用GOAP技术的吧。 注：  正文中的规划/计划系统字样一般都可以当做GOAP系统。 正文中的动作/行为/操作字样一般都可以当做Action。 正文中的效果/影响字样一般都可以当做Effect。 正文中的目标/目的字样一般都可以当做Goal。 正文中的记忆/内存字样一般都可以当做Memory。  资源链接 ReGoap开源库：https://link.zhihu.com/?target=https%3A//github.com/luxkun/ReGoap ReGoap开源库中文文档：https://link.zhihu.com/?target=https%3A//www.lfzxb.top/goal-oriented-action-planning-chinese-document/ PDF链接：https://link.zhihu.com/?target=http%3A//alumni.media.mit.edu...</div></div></div></a><a class="pagination-related" href="/goal-oriented-action-planning-chinese-document/" title="ReGoap（目标导向的AI系统）中文文档"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210916152958.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">ReGoap（目标导向的AI系统）中文文档</div></div><div class="info-2"><div class="info-item-1">前言 昨天听群友提到了GOAP（Goal Oriented Action Planning）目标导向的AI系统，百度稍微了解了一下，看起来要比行为树高级一些，所以今天来好好研究一下，看看他的庐山真面目。 因为国内资料较少，所以就准备去Github找一下。就找到了这个库：https://github.com/luxkun/ReGoap。 本篇文档对于Goap本身介绍并不多，想要详细了解的可以去看FEAR在GDC做的分享：https://www.lfzxb.top/gdc-sharing-of-ai-system-based-on-goap-in-fear-simple-cn/ 或者去这个网站了解GOAP更多相关内容：http://alumni.media.mit.edu/~jorkin/goap.html 我的Goap开源库（多线程，JobSystem，路径规划算法优化）：https://gitee.com/NKG_admin/NKGGOAP 出于学习的目的，我来翻译一下它的Readme。文章中的一些链接将省略。 注：  正文中的规划/计划系统字样一般都可以当做GOAP系统。 正文...</div></div></div></a><a class="pagination-related" href="/goal-oriented-action-planning-tech-share/" title="目标导向的AI系统（GOAP）技术分享"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210916152958.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-09-14</div><div class="info-item-2">目标导向的AI系统（GOAP）技术分享</div></div><div class="info-2"><div class="info-item-1">如果让大家设计一个AI框架的话，相信很多人都会选择FSM或者行为树之类的插件或框架。其实这两种方案都可以归类于我们提前写死AI逻辑然后运行时直接或间接遍历整个逻辑图/树来表现AI这一大类里，也正是因为他们这种特性，我们会被越来越复杂的AI逻辑折磨的痛不欲生，往往加入一个新的AI功能，整个AI逻辑都要发生巨大的变动。而GOAP则是我们只需要提前做好各个Action和Goal，不用考虑太多状态的切换，他会在运行时根据Goal来自动给出AI方案，是不是听起来很神奇？那接下来我来带领大家一点点揭开GOAP的神秘面纱。 GOAP的思想 GOAP思想受STRIPS启发，STRIPS是由斯坦福大学于1970年开发的，名称是斯坦福研究所问题解决者（Stanford Research Problem Solver）的首字母缩写。 一个Action只有在其所有前提条件都得到满足的情况下才能执行，并且每个动作都会以某种方式改变世界的状态。 GOAP的功能组件大致分为Action，Goal，Memory，Sensor，他们各司其职，构成整个GOAP框架。   Action：它由前提条件（PreCondi...</div></div></div></a><a class="pagination-related" href="/npbehave-doc/" title="NPBehave（行为树）中文文档"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">NPBehave（行为树）中文文档</div></div><div class="info-2"><div class="info-item-1">前言 NPBahave是GitHub上开源的一个行为树，其代码简洁有力，与Unity耦合较低，适合拿来做双端行为树。注意，由于时间关系，原文中的链接这里将不再提供引用。 开源链接 https://github.com/meniku/NPBehave 正文  NPBehave致力于：  轻量，快速，简洁 事件驱动 易于拓展 一个用代码定义AI行为的框架，目前没有可视化编辑器支持（本人将为其贡献一个）  NPBehave基于功能强大且灵活的基于代码的方法，从behavior库定义行为树，并混合了虚幻引擎的一些很棒的行为树概念。与传统的行为树不同，事件驱动的行为树不需要每帧从根节点遍历。它们保持当前状态，只有在实际需要时才继续遍历。这使得它们的性能更高，使用起来也更简单。 在NPBehave中，您将发现大多数节点类型来自传统的行为树，但也有一些类似于虚幻引擎中的节点类型。不过，添加您自己的自定义节点类型也相当容易。 安装 只需将NPBehave文件夹放入Unity项目中。还有一个Examples子文件夹，其中有一些您可能想要参考的示例场景。 例子：“Hello World” 行为树 让...</div></div></div></a><a class="pagination-related" href="/the-architecture-of-npbehave/" title="NPBehave行为树架构"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">NPBehave行为树架构</div></div><div class="info-2"><div class="info-item-1">前提概要 为了避免歧义，我修改了Node.cs文件中一些函数命名 12DoStop-&gt;DoCancelStop-&gt;CancelWithoutReturnResult 我们都知道行为树中有三大组合节点，分别是  Selector：选择组合器，一遇到子结点返回成功则其本身返回成功，否则继续执行下一个子结点，全部失败则其本身返回失败 Sequence：序列组合器，一遇到子结点返回失败则其本身返回失败，否则继续执行下一个子结点。全部成功则其本身返回成功 Parallel：并行组合器，全部子节点执行成功则其本身成功，有一个子结点执行失败，则终止其余子结点执行，其本身返回失败  架构流程图 NPBehave本身就是通过Start，DoStart，Stop，DoStop以及Stopped来控制整个行为树运转的，但是有一些函数命名容易引起起义，所以我做了修改  与生命周期相关的函数基本就这几个，最重要的，也就是最开始提到的会影响我们三个组合器运行状态结果的，就是Stopped函数 示例 举个例子，就以Selector为例 开始执行时，会开始处理子节点 1234567891011121...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">译文</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.1.</span> <span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BD%AC%E5%90%91%E8%A1%8C%E4%B8%BA%E5%B0%86%E4%BC%9A%E5%9C%A8%E4%BD%95%E6%97%B6%E8%A1%A8%E7%8E%B0%E5%BE%97%E7%B3%9F%E7%B3%95"><span class="toc-number">1.2.</span> <span class="toc-text">转向行为将会在何时表现得糟糕</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#AI%E5%AF%B9%E8%B1%A1%E6%88%90%E7%BE%A4%E7%BB%93%E9%98%9F%E6%97%B6%EF%BC%88Flocks-versus-Groups%EF%BC%89"><span class="toc-number">1.2.1.</span> <span class="toc-text">AI对象成群结队时（Flocks versus Groups）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#AI%E5%AF%B9%E8%B1%A1%E7%BC%BA%E5%B0%91%E5%AF%B9%E4%B8%96%E7%95%8C%E7%9A%84%E6%84%9F%E7%9F%A5%E6%97%B6%EF%BC%88Lack-of-Context%EF%BC%89"><span class="toc-number">1.2.2.</span> <span class="toc-text">AI对象缺少对世界的感知时（Lack of Context）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%81%9A%E7%84%A6%E4%BA%8E%E4%B8%BA%E4%BB%80%E4%B9%88%EF%BC%8C%E8%80%8C%E4%B8%8D%E6%98%AF%E6%80%8E%E4%B9%88%E5%81%9A%EF%BC%88Toward-Why-Not-How%EF%BC%89"><span class="toc-number">1.3.</span> <span class="toc-text">聚焦于为什么，而不是怎么做（Toward Why, Not How）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%8A%E4%B8%8B%E6%96%87%E6%98%A0%E5%B0%84%EF%BC%88Context-Maps%EF%BC%89"><span class="toc-number">1.3.1.</span> <span class="toc-text">上下文映射（Context Maps）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%9A%E8%BF%87%E4%BE%8B%E5%AD%90%E7%90%86%E8%A7%A3%E4%B8%8A%E4%B8%8B%E6%96%87%E6%98%A0%E5%B0%84%EF%BC%88Context-Maps-by-Example%EF%BC%89"><span class="toc-number">1.4.</span> <span class="toc-text">通过例子理解上下文映射（Context Maps by Example）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%BD%E9%80%90%E8%A1%8C%E4%B8%BA%EF%BC%88Chase-Behavior%EF%BC%89"><span class="toc-number">1.4.1.</span> <span class="toc-text">追逐行为（Chase Behavior）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BA%B2%E9%81%BF%E8%A1%8C%E4%B8%BA%EF%BC%88Avoid-Behavior%EF%BC%89"><span class="toc-number">1.4.2.</span> <span class="toc-text">躲避行为（Avoid Behavior）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%84%E5%90%88%E6%95%B0%E6%8D%AE%E5%B9%B6%E8%BF%9B%E8%A1%8C%E8%A7%A3%E6%9E%90%EF%BC%88Combining-and-Parsing%EF%BC%89"><span class="toc-number">1.4.3.</span> <span class="toc-text">组合数据并进行解析（Combining and Parsing）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8F%92%E5%80%BC%E5%B9%B3%E6%BB%91%E6%A7%BD%E4%BD%8D%E5%80%BC%EF%BC%88Subslot-Movement%EF%BC%89"><span class="toc-number">1.4.4.</span> <span class="toc-text">插值平滑槽位值（Subslot Movement）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9C%A8%E8%B5%9B%E8%BD%A6%E6%B8%B8%E6%88%8F%E4%B8%AD%E4%BD%BF%E7%94%A8Context-Steering%EF%BC%88Racing-with-Context%EF%BC%89"><span class="toc-number">1.5.</span> <span class="toc-text">在赛车游戏中使用Context Steering（Racing with Context）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BB%B4%E5%BA%A6%E7%B3%BB%E7%BB%9F%EF%BC%88Coordinate-System%EF%BC%89"><span class="toc-number">1.5.1.</span> <span class="toc-text">维度系统（Coordinate System）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A0%87%E5%87%86%E8%B5%9B%E9%81%93%E6%9B%B2%E7%BA%BF%E9%99%90%E5%88%B6%E8%A1%8C%E4%B8%BA%EF%BC%88Racing-Line-Behavior%EF%BC%89"><span class="toc-number">1.5.2.</span> <span class="toc-text">标准赛道曲线限制行为（Racing Line Behavior）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BA%B2%E9%81%BF%E8%A1%8C%E4%B8%BA%EF%BC%88Avoid-Behavior%EF%BC%89-2"><span class="toc-number">1.5.3.</span> <span class="toc-text">躲避行为（Avoid Behavior）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%B6%85%E8%BD%A6%E8%A1%8C%E4%B8%BA%EF%BC%88Drafting-Behavior%EF%BC%89"><span class="toc-number">1.5.4.</span> <span class="toc-text">超车行为（Drafting Behavior）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%84%E7%90%86%E4%B8%8A%E4%B8%8B%E6%96%87%E6%98%A0%E5%B0%84%EF%BC%88Processing-Context-Maps%EF%BC%89"><span class="toc-number">1.5.5.</span> <span class="toc-text">处理上下文映射（Processing Context Maps）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E9%98%B6%E6%8A%80%E6%9C%AF"><span class="toc-number">1.6.</span> <span class="toc-text">进阶技术</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%90%8E%E5%A4%84%E7%90%86%EF%BC%88Post-Processing%EF%BC%89"><span class="toc-number">1.6.1.</span> <span class="toc-text">后处理（Post-Processing）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BC%98%E5%8C%96%EF%BC%88Optimizations%EF%BC%89"><span class="toc-number">1.6.2.</span> <span class="toc-text">优化（Optimizations）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA"><span class="toc-number">1.7.</span> <span class="toc-text">结论</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BC%95%E7%94%A8"><span class="toc-number">1.8.</span> <span class="toc-text">引用</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">Reference</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '6714759f3a4e0d151f66867d64ce3267'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

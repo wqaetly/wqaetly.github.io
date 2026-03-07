@@ -1,0 +1,366 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>GameFramework篇：自定义事件并订阅的流程 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="自定义事件并订阅 正如木头大佬所说  在GF里面创建和使用自定义事件还是比较容易的 这里举个例子 我们进行场景切换,要加载完下一场景所有资源才能切换吧,不然黑屏是什么鬼 这里我是切换场景后,开始生成多个实体,所有实体生成完毕,关闭过渡UI,显示游戏界面 创建  这个事件类里面的变量可以随意定义(至少要包括Clear()方法和Id变量) 其中Fill()函数是用来填充事件类里面的数据的(可有可无,视">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GameFramework篇：自定义事件并订阅的流程">
+<meta property="og:url" content="https://www.lfzxb.top/gameframework-diyevent/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="自定义事件并订阅 正如木头大佬所说  在GF里面创建和使用自定义事件还是比较容易的 这里举个例子 我们进行场景切换,要加载完下一场景所有资源才能切换吧,不然黑屏是什么鬼 这里我是切换场景后,开始生成多个实体,所有实体生成完毕,关闭过渡UI,显示游戏界面 创建  这个事件类里面的变量可以随意定义(至少要包括Clear()方法和Id变量) 其中Fill()函数是用来填充事件类里面的数据的(可有可无,视">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp">
+<meta property="article:published_time" content="2021-01-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-03-15T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="GameFramework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "GameFramework篇：自定义事件并订阅的流程",
+  "url": "https://www.lfzxb.top/gameframework-diyevent/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp",
+  "datePublished": "2021-01-01T00:00:00.000Z",
+  "dateModified": "2021-03-15T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/gameframework-diyevent/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'GameFramework篇：自定义事件并订阅的流程',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">GameFramework篇：自定义事件并订阅的流程</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">GameFramework篇：自定义事件并订阅的流程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-01-01T00:00:00.000Z" title="发表于 2021-01-01 00:00:00">2021-01-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-03-15T00:00:00.000Z" title="更新于 2021-03-15 00:00:00">2021-03-15</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">370</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>1分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/gameframework-diyevent/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-03-15 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h2 id="自定义事件并订阅">自定义事件并订阅</h2>
+<p><strong>正如木头大佬所说</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128114151449.png!webp" alt="" loading='lazy'></p>
+<p><strong>在GF里面创建和使用自定义事件还是比较容易的</strong></p>
+<p><strong>这里举个例子</strong></p>
+<p><strong>我们进行场景切换,要加载完下一场景所有资源才能切换吧,不然黑屏是什么鬼</strong></p>
+<p><strong>这里我是切换场景后,开始生成多个实体,所有实体生成完毕,关闭过渡UI,显示游戏界面</strong></p>
+<p><strong>创建</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128114443281.png!webp" alt="" loading='lazy'></p>
+<p><strong>这个事件类里面的变量可以随意定义(至少要包括Clear()方法和Id变量)</strong></p>
+<p><strong>其中Fill()函数是用来填充事件类里面的数据的(可有可无,视情况而定),将LoadNextResourcesSuccess设为true</strong></p>
+<p><strong>定义好了事件,我们要怎么使用呢</strong></p>
+<p><strong>先订阅</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128115611121.png!webp" alt="" loading='lazy'></p>
+<p><strong>HideUI为回调函数的名称,参数必须为(委托的原因)</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128115823523.png!webp" alt="" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128120246624.png!webp" alt="" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128115107770.png!webp" alt="" loading='lazy'></p>
+<p><strong>在最后一行执行Fire,意为抛出事件,所有订阅这个事件的回调函数都将被执行</strong></p>
+<p><strong>最后,用完了,要放回去,取消订阅(在UI关闭的时候)</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128121756479.png!webp" alt="" loading='lazy'></p>
+<h3 id="总结"><strong>总结</strong></h3>
+<p><strong>在GF里自定义事件主要分为以下步骤</strong></p>
+<ol>
+<li><strong>创建自定义事件</strong></li>
+<li><strong>订阅自定义事件并指定回调函数</strong></li>
+<li><strong>达成条件,抛出事件</strong></li>
+<li><strong>取消订阅</strong> <strong>其实我们不难发现,GF的内置事件执行流程也和这大致一样,不过更复杂点就是了,大家可以自行查看内置事件,循着源码过一遍,就理解了</strong></li>
+</ol>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190128120106898.png!webp" alt="" loading='lazy'></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/gameframework-diyevent/">https://www.lfzxb.top/gameframework-diyevent/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/GameFramework/">GameFramework</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/gameframework-fornew/" title="GameFramework篇：新项目使用GameFramework框架需知"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">GameFramework篇：新项目使用GameFramework框架需知</div></div><div class="info-2"><div class="info-item-1">1.AB包相关配置 GF资源管理实属牛批，但要使用它，并不是全自动的，还是要配置一下 创建一个静态类，类名随意，注意里面至少要包含以下三个属性，后面的地址所指就是打AB包所必须的三个配置文件（这个地址可以自己更改，注意改变路径就行） 12345678 [AssetBundleBuilderConfigPath] public static string AssetBundleBuilderConfig =    Utility.Path.GetCombinePath(Application.dataPath, "GameMain/Configs/AssetBundleBuilder.xml");[AssetBundleEditorConfigPath] public static string AssetBundleEditorConfig =    Utility.Path.GetCombinePath(Application.dataPath, "GameMain/Configs/AssetBundleEditor.xml");[Ass...</div></div></div></a><a class="pagination-related" href="/gameframework-base/" title="GameFramework篇：框架基本理解和源码下载"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">GameFramework篇：框架基本理解和源码下载</div></div><div class="info-2"><div class="info-item-1">先偷偷观察一下E神的GitHub  只有三个项目，尽管如此，我还是感受到来自E神的压迫感。 我们再来看一下官网的描述  什么个意思呢？ 我们先看UGF 可以看到有GameFramework的dll文件，那么它是从哪来的呢？  它来自GameFramework  再看UGF的Scripts，里面就是UnityGameFramework.Runtime和UnityGameFramework.Editor模块啦  我们可以这样理解，GameFramework是完全和Unity分离的的，由它衍生出与Unity相交互的UnityGameFramework，这也是我们在Unity中使用GameFramework框架必不可少的部分，我们可以把UGF当成平时使用的插件。最后UGF和Unity相结合，就做出游戏啦~ 然后就是演示Demo——StarForce（一目了然） 然后我们要把这三个项目都下载 为什么全都要呢，因为我们平时学习肯定要顺藤摸瓜来看代码实现而，GF是GF.dll的来源，也就是最终源码，相对于反编译dll，我更习惯于直接看源码~所以三个都不能少 打开StarForce项目，如果有报...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/et-all/" title="ET篇：个人笔记汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/b14.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-07-06</div><div class="info-item-2">ET篇：个人笔记汇总</div></div><div class="info-2"><div class="info-item-1">ET系列教程视频  B站视频教程  ETBook学习笔记  ETBook笔记汇总  FairyGUI学习笔记  ET使用FairyGUI开发的完整工作流 基于FGUI的小地图制作  ET 5.0学习笔记  运行master master项目结构梳理 master客户端初始化流程 master服务端初始化流程 master消息机制  ET 6.0学习笔记  ET 6.0学习笔记 ET6.0接入ILRuntime  ET 7.0学习笔记  ET7+FariyGUI+huatuo+luban+yooasset接入教程  ET 斗地主学习笔记  运行斗地主 斗地主的资源工作流  ET 其他笔记  ETTask和ETVoid相关知识 ET中那些千万不能踩的坑 ET&amp;&amp;FGUI接入xasset流程  </div></div></div></a><a class="pagination-related" href="/et-cloud-ecs/" title="ET篇：云端分布式服务器部署教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907230548.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-09-07</div><div class="info-item-2">ET篇：云端分布式服务器部署教程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.9.7更新，更正ET 6.0的地址配置以及含义，新增Linux实操步骤  前言 对于Linux部署的实操部分，参见：https://www.lfzxb.top/recastnavigation-and-et-to-linux 正文 ET6.0版本配置 现在大多人用的都是云服务器，会将外网IP映射到内网IP（网卡IP），所以一般外网地址和内网地址都是内网IP。 实际上我试过将Socket绑定到云服务器的公网IP，会直接报错 但是服务端会将外网地址传递回客户端让客户端连接Gate，但是我们外网IP只能填服务器的内网IP，也就会导致客户端无法和服务端通信，所以我们要多做一列地址专门告诉客户端服务端的外网地址 总结一下 我们约定，服务器公网IP为192.168.0.1，内网IP为44.117.7.8  </div></div></div></a><a class="pagination-related" href="/et-doudizhu-res/" title="ET篇：斗地主的资源工作流"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190421155442833.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：斗地主的资源工作流</div></div><div class="info-2"><div class="info-item-1">有了master的学习经验，斗地主的学习将不会太多精细化，更多细节大家可以自行查看，本系列文章旨在帮助大家理解整个开发流程 资源划分策略 先来到Asset下的Bundles文件夹，这里是游戏内用到的所有的资源，都被打成ab包，正式发布时将会删除，从资源服务器下载文件 Independent   Code 包含热更新模块的dll文件   Config 包含客户端的配置文件（连接配置，所用到的玩家，敌人等数据结构） UI   Landlords/Altas 包含游戏内用到的所有图集   Landlords/Content 玩家正式开局游戏内的个人信息   Landlords/HandCard 玩家手牌UI   Landlords/LandlordsEnd 游戏结束界面   Landlords/Interaction 玩家的正式游戏内操作界面（出牌，不要，抢地主，不抢等）   Landlords/LandlordsLobby 游戏大厅   Landlords/LandlordsLogin 登录界面   Landlords/LandlordsRoom 正式游戏界面UI   Landlor...</div></div></div></a><a class="pagination-related" href="/et-doudizhu-run/" title="ET篇：运行斗地主Demo"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190205205414947.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：运行斗地主Demo</div></div><div class="info-2"><div class="info-item-1">环境准备： 下载斗地主Demo https://github.com/Viagi/LandlordsCore.git 准备2017.4.0版本的Unity https://unity3d.com/cn/get-unity/download/archive 下载并配置MongoDB以及Studio 3T MongoDB地址：****https://www.mongodb.com/download-center/community  选择Custom  我是在D盘新建了MongoDB文件夹来作为安装目录   这个可视化工具看个人喜好，我这里没有安装   找到电脑上的cmd.exe  复制一份到MongoDB安装目录的bin文件夹下面 打开刚刚复制的cmd.exe 执行以下命令(_dbpath后面的路径为你的MongoDB安装路径下的的data文件夹路径) 1mongod -dbpath D:\MongoDB\data 然后他可能会这样  打开浏览器,输入** http://localhost:27017/如果显示如下信息,表示连接成功**  Studio 3T的下载 https://...</div></div></div></a><a class="pagination-related" href="/et-ettask-etvoid/" title="ET篇：ETVoid和void，ETTask和Task的区别与使用时机"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190505103623.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：ETVoid和void，ETTask和Task的区别与使用时机</div></div><div class="info-2"><div class="info-item-1">在学习ET的过程中，我们经常看到ETVoid和ETTask的身影 比如 1234567891011121314151617181920/// &lt;summary&gt;/// 异步加载assetbundle/// &lt;/summary&gt;/// &lt;param name="assetBundleName"&gt;&lt;/param&gt;/// &lt;returns&gt;&lt;/returns&gt;public async ETTask LoadBundleAsync(string assetBundleName){    assetBundleName = assetBundleName.ToLower();    string[] dependencies = AssetBundleHelper.GetSortedDependencies(assetBundleName);    // Log.Debug($"-----------dep load {assetBundleName} dep...</div></div></div></a><a class="pagination-related" href="/et-fgui-smallmap/" title="ET篇：基于FGUI的小地图制作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190523125800.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：基于FGUI的小地图制作</div></div><div class="info-2"><div class="info-item-1">前言 小地图开发对于我们来说是再常见不过的需求了，单用Unity中的UGUI来说倒也方便，但是用FGUI又如何呢？ 正式开始 FGUI资源的搭建 注意小地图图片要用装载器来包装，不然他将会是不可触摸的，小地图宽高我们设置为200，大地图我们设置大小为100  然后导出到Unity FGUI坐标系统 http://www.fairygui.com/guide/unity/transform.html 小地图到大地图的坐标映射  落实到代码就是 12345678910111213141516     public override void Start(FUI5V5Map self)     {//为小地图图片添加点击事件         self.SmallMapSprite.onRightClick.Add(this.AnyEventHandler);     }     void AnyEventHandler(EventContext context)     {         //Log.Info("点击了小地图");  ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6%E5%B9%B6%E8%AE%A2%E9%98%85"><span class="toc-number">1.</span> <span class="toc-text">自定义事件并订阅</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">1.1.</span> <span class="toc-text">总结</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '4d0e50d7dbcd8761ed1d1ac0de49afc5'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

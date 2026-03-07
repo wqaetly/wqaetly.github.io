@@ -1,0 +1,461 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>从零开始基于TeamCity搭建项目的CI工作流 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="CI的介绍和意义 CI简单来说就是把一些流程化，重复性的人力操作放在机器上去执行的过程，从而节省大量用户的时间，并且保证构建得出的产物一定是主干最新的。 所以CI对于工程项目来说意义重大，当然对于Unity，UE这种游戏研发项目更是如此，因为稍微大点的项目出一次版本可能要10-20分钟，此外还有一些工程特化的功能例如AB构建，Shader变体搜集，各种本地缓存构建，甚至是性能监测报告，GI烘焙，P">
+<meta property="og:type" content="article">
+<meta property="og:title" content="从零开始基于TeamCity搭建项目的CI工作流">
+<meta property="og:url" content="https://www.lfzxb.top/ci-with-teamcity/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="CI的介绍和意义 CI简单来说就是把一些流程化，重复性的人力操作放在机器上去执行的过程，从而节省大量用户的时间，并且保证构建得出的产物一定是主干最新的。 所以CI对于工程项目来说意义重大，当然对于Unity，UE这种游戏研发项目更是如此，因为稍微大点的项目出一次版本可能要10-20分钟，此外还有一些工程特化的功能例如AB构建，Shader变体搜集，各种本地缓存构建，甚至是性能监测报告，GI烘焙，P">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp">
+<meta property="article:published_time" content="2022-07-30T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-07-30T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="CI">
+<meta property="article:tag" content="TeamCity">
+<meta property="article:tag" content="自动化持续集成">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "从零开始基于TeamCity搭建项目的CI工作流",
+  "url": "https://www.lfzxb.top/ci-with-teamcity/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp",
+  "datePublished": "2022-07-30T00:00:00.000Z",
+  "dateModified": "2022-07-30T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/ci-with-teamcity/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '从零开始基于TeamCity搭建项目的CI工作流',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">从零开始基于TeamCity搭建项目的CI工作流</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">从零开始基于TeamCity搭建项目的CI工作流</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-30T00:00:00.000Z" title="发表于 2022-07-30 00:00:00">2022-07-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-07-30T00:00:00.000Z" title="更新于 2022-07-30 00:00:00">2022-07-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%B7%A5%E5%85%B7%E6%B5%81/">工具流</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/ci-with-teamcity/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2022-07-30 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>CI的介绍和意义</h1>
+<p>CI简单来说就是把一些<code>流程化，重复性</code>的人力操作放在机器上去执行的过程，从而节省大量用户的时间，并且保证构建得出的产物一定是主干最新的。</p>
+<p>所以CI对于工程项目来说意义重大，当然对于Unity，UE这种游戏研发项目更是如此，因为稍微大点的项目出一次版本可能要10-20分钟，此外还有一些工程特化的功能例如AB构建，Shader变体搜集，各种本地缓存构建，甚至是性能监测报告，GI烘焙，PCG生成，场景切割等重度流程，很难想象这些不放在流水线上让机器自动执行，会浪费大家多少时间</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:500px;" src="https://www.processon.com/embed/62e4877907912907913240a7"></iframe>
+<h1>为什么是TeamCity</h1>
+<p>对比Jenkins和TeamCity的使用感受，TeamCity有几个非常明显的优势</p>
+<ul>
+<li>环境搭建简单，不论是Server还是Client</li>
+<li>界面友好，美观大方</li>
+<li>流水线拓展支持更加丰富的语言类型</li>
+<li>环境变量提示友好，更不容易出错</li>
+<li>Docker支持完善，方便做云服务器迁移</li>
+<li>一些其他的基础设施比Jenkins更加完善（例如自动化单元测试），使用起来更加友好</li>
+</ul>
+<p>综上，TeamCity相对于Jenkins是一个更加现代化的方案，所以我们也选择TeamCity作为CI方案</p>
+<h1>搭建教程</h1>
+<h2 id="总览">总览</h2>
+<p>目前CI环境的搭建有这样几种方式</p>
+<ul>
+<li>纯本地方案：本地电脑同时做CI Server和CI Agent，最不推荐的方式，因为执行CI的时候电脑会卡顿，基本上做不了其他工作，失去了CI的意义</li>
+<li>局域网方案：一台电脑做CI Server，其余电脑注册到CI Server上作为CI Agent，个人项目推荐</li>
+<li>云端方案：云端服务器作为CI Server，其余电脑注册到CI Server作为CI Agent，工作室，公司项目推荐</li>
+</ul>
+<p>其中云端方案提供了最大的操作自由度，因为云端部署的方式可以让我们对版本控制模块做Commit Hook从而自动触发流水线，更加快速的发现问题</p>
+<p><strong>本教程将使用Github作为版本管理库，Windows作为CI Server，MAC作为CI Agent搭建一套局域网的CI方案</strong>，云端搭建与此类似，只是需要将本地IP改为云端IP即可</p>
+<p>TeamCity官方文档：<a target="_blank" rel="noopener" href="https://www.jetbrains.com/help/teamcity/2022.04/teamcity-documentation.html">https://www.jetbrains.com/help/teamcity/2022.04/teamcity-documentation.html</a></p>
+<h2 id="下载安装TeamCity">下载安装TeamCity</h2>
+<p>前往TeamCity下载：<a target="_blank" rel="noopener" href="https://www.jetbrains.com/teamcity/download/">https://www.jetbrains.com/teamcity/download/</a> 注意选择自己需要的环境，在这里下载的TeamCity默认包含Server + Agent内容</p>
+<p>需要注意的是，TeamCity要求Java8，请确保自己已经安装Java8并配置了环境变量</p>
+<ul>
+<li>Java下载地址 <a target="_blank" rel="noopener" href="https://www.oracle.com/java/technologies/downloads/">https://www.oracle.com/java/technologies/downloads/</a> 拉到最下面下载 Java SE Development Kit 8u341</li>
+<li>Java环境变量配置
+<ul>
+<li>Win10 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/340402458">https://zhuanlan.zhihu.com/p/340402458</a></li>
+<li>MAC <a target="_blank" rel="noopener" href="https://www.zhihu.com/question/29114464/answer/332272237">https://www.zhihu.com/question/29114464/answer/332272237</a>
+<ul>
+<li>需要额外注意的是，MAC的JAVA_HOME一定要指向*/Library/Java/JavaVirtualMachines*，并且这个文件夹中一定有相应地Java包</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<p>由于我们Windows作为CI Server，所以不需要安装Agent相关模块</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301016871.png" alt="image-20220730101553803" loading='lazy'></p>
+<p>端口号我们填写一个不会与其他程序占用冲突的即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301018928.png" alt="image-20220730101828908" loading='lazy'></p>
+<p>随后一路Next，等待安装完成后会打开一个网页，表示TeamCity已安装完成并正常运行，这里选定一个文件夹，TeamCity所有的数据都会保存在这里</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301029009.png" alt="image-20220730102927977" loading='lazy'></p>
+<p>数据库按需求选一个</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301030371.png" alt="image-20220730103018342" loading='lazy'></p>
+<p>随后有一长串谁也不会看的协议声明，直接同意，然后创建管理员账号，至此，我们Windows CI Server环境的搭建部署已经完成了，随后即可创建项目了</p>
+<h2 id="TeamCity的管理架构">TeamCity的管理架构</h2>
+<p>在正式开始创建工程之前，还是有必要把TeamCity的架构讲清楚</p>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="display:block;width:100%; height:500px;" src="https://www.processon.com/embed/62e52942e401fd0727ad215e"></iframe>
+<p>其中Root Project为TeamCity初始化时就创建的一个Project，可以当成系统自带的一个项目管理容器，可以配置一些全局设置</p>
+<p>具体的项目则对应我们生产开发中的一个项目，例如一个项目是连连看，另一个项目是蜘蛛纸牌</p>
+<p>而Build Configurations则对应具体项目中一个个具体的流水线，比如连连看项目中有一个构建AB流水线，一个构建EXE流水线，一个打包图集流水线等</p>
+<h2 id="创建通用构建流水线Template">创建通用构建流水线Template</h2>
+<p>在正式开始创建Project之前，我们最好先创建一个通用模板Project，这个通用模板Project里的配置可以在各个<code>不同的Project</code>的<code>不同流水线</code>中进行复用，从而便于管理，节约成本</p>
+<p>当然了，我们也可以在每个具体的Project里创建模板，来进行差异化管理，这里我就直接在Root Project下创建了</p>
+<p>通过点击右上角Administration-Projects-Root Project-Create Template来创建一个模板，这里假如我们创建了一个名为SharedBuildPipline的模板，选择其Parameters进行如下配置</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302038947.png" alt="image-20220730203816901" loading='lazy'></p>
+<p>这样我们就得到了可以复用在各个流水线上的几个变量，其他的例如Build Steps，Trigger也是同理</p>
+<h2 id="创建Project">创建Project</h2>
+<p>这里的Project代表TeamCity的一个项目，其中可以包含多个构建流水线（Build Configurations）配置</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301041386.png" alt="image-20220730104144361" loading='lazy'></p>
+<p>这里我们填入项目地址，创建工程，如果目标工程是私有的，则需要前往 <a target="_blank" rel="noopener" href="http://localhost:8866/admin/editProject.html?projectId=_Root&amp;tab=oauthConnections">http://localhost:8866/admin/editProject.html?projectId=_Root&amp;tab=oauthConnections</a> 配置相应的鉴权信息（其实就是仓库访问权限所需要的账号密码验证啦）</p>
+<p>当然了，其实TeamCity本身的Project并不是和我们具体的项目仓库强相关的，这里通过这种方式创建是因为它可以自动帮我们配置好VCS，你也可以选择直接创建一个空项目</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301044228.png" alt="image-20220730104441196" loading='lazy'></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302106183.png" alt="image-20220730210646152" loading='lazy'></p>
+<p>鉴权完成后会来到项目配置界面（需要点击Show advanced options来让他显示所有选项）</p>
+<h2 id="配置Project">配置Project</h2>
+<h3 id="配置Proejct主体">配置Proejct主体</h3>
+<h4 id="通用配置">通用配置</h4>
+<p>可以看到Default template已经为我们默认从Root Project继承了SharedBuildPipline了</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302108894.png" alt="image-20220730210824842" loading='lazy'></p>
+<h4 id="VCS配置">VCS配置</h4>
+<p>VCS的配置其实就是用来为不同的Build Agent实时同步更新云端仓库的，其中的参数也是一目了然，顾名思义，这里因为我们在配置局域网CI，所以其实并没有什么卵用，毕竟我们局域网IP对于Github来说是隐藏的，所以Webhook是没用的</p>
+<h4 id="其他配置">其他配置</h4>
+<p>大家可以根据自己的需求去官方文档查看使用说明</p>
+<h3 id="配置Project的构建流水线">配置Project的构建流水线</h3>
+<p>刚才我们在创建Project的时候已经顺带创建了名为MAC_Build_AB流水线，选中即可进行配置</p>
+<h4 id="通用配置-2">通用配置</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301419514.png" alt="image-20220730141914455" loading='lazy'></p>
+<h4 id="VCS配置-2">VCS配置</h4>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207301429892.png" alt="image-20220730142933831" loading='lazy'></p>
+<h4 id="创建流水线节点">创建流水线节点</h4>
+<p>选中Build Steps-Add build step，可以看到TeamCity提供了非常多的脚本支持，这里我们直接选择最常用的命令行脚本</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302117719.png" alt="image-20220730211738681" loading='lazy'></p>
+<p>这里以执行Unity SVC收集工作为例</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> <span class="string">"开始收集SVC"</span></span><br><span class="line"></span><br><span class="line">%Projects_UnityEngine_Path% -batchmode -projectPath %Projects_UnityProject_Path% -executeMethod ET.CIHelper.CollectSVC -logFile %Projects_UnityProject_Path%/Logs/CIBuildSVC.<span class="built_in">log</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">cat</span> %Projects_UnityProject_Path%/Logs/CIBuildSVC.<span class="built_in">log</span> | <span class="keyword">while</span> <span class="built_in">read</span> LINE; <span class="keyword">do</span></span><br><span class="line">    <span class="built_in">echo</span> <span class="variable">${LINE}</span></span><br><span class="line"><span class="keyword">done</span></span><br><span class="line"></span><br><span class="line"><span class="built_in">exit</span></span><br></pre></td></tr></tbody></table></figure>
+<p>我们还可以在面板上配置流水线节点执行的其他选项，例如执行条件</p>
+<p>ps：我们可以通过输入 <code>%</code> 来呼出所有环境变量选择界面，非常贴心的功能</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302120980.png" alt="image-20220730212010955" loading='lazy'></p>
+<h4 id="配置环境变量具体内容">配置环境变量具体内容</h4>
+<p>还记得我们前面从SharedBuildPipline继承的那几个参数吗，我们想在这个MAC_Build_AB流水线里进行自定义的话，需要来到 Parameters ，勾选Show inherited parameter，即可进行编辑</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302123853.png" alt="image-20220730212338804" loading='lazy'></p>
+<h2 id="增加CI-Build-Agent">增加CI Build Agent</h2>
+<p>现在我们项目也创建好了，流水线也搭建好了，就要开始执行构建了，想要执行构建就必须要有具体的构建机器，也就是CI Build Agent，这里我们选择同一个局域网下的MAC电脑作为CI Build Agent</p>
+<p>选中Toolbar的Agent，然后点击下载Agent包</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302130278.png" alt="image-20220730213022249" loading='lazy'></p>
+<p>将下载的zip包传给MAC电脑，进行解压，解压好之后其实就算是安装完毕了，由于我们要将MAC作为Build Agent连接到Server，我们还需要进行一些配置操作</p>
+<h3 id="Server-IP确认">Server IP确认</h3>
+<p>回到我们的Windows上面，运行cmd，输入ipconfig查看自己的局域网ip地址，这里假设为<code>192.168.1.2</code></p>
+<h3 id="配置修改">配置修改</h3>
+<p>来到MAC上打开解压后的文件夹，将 conf/buildAgent.dist.properties 文件重命名为 conf/buildAgent.properties</p>
+<p>然后用文本编辑器打开文件，将 <code>serverUrl=http://localhost:8866/</code> 修改为  <code>serverUrl=http://192.168.1.2:8866/</code> ，当然也可以对这个配置文件中的其他内容进行修改，例如修改Agent名字之类的</p>
+<p>随后cd到解压文件夹，执行如下命令：</p>
+<figure class="highlight sh"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sh bin/agent.sh start</span><br></pre></td></tr></tbody></table></figure>
+<p>运行结果应当如下，如果出现任何错误，说明Java环境配置不正确，请按照文章开头环境配置指引进行操作</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">% sh bin/agent.sh start     </span><br><span class="line">Starting TeamCity build agent...</span><br><span class="line">Java executable is found: '/Library/Java/JavaVirtualMachines/jdk1.8.0_341.jdk/Contents/Home/jre/bin/java'</span><br><span class="line">Starting TeamCity Build Agent Launcher...</span><br><span class="line">Agent home directory is /Users/UserName/TeamCity/TeamCity/buildAgent</span><br><span class="line">Done [42950], see log at /Users/UserName/TeamCity/TeamCity/buildAgent/logs/teamcity-agent.log</span><br></pre></td></tr></tbody></table></figure>
+<h3 id="CI-Server授权认证">CI Server授权认证</h3>
+<p>随后我们回到Window这边，发现Unauthorized多了一个设备，需要对他进行授权</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302149784.png" alt="image-20220730214919762" loading='lazy'></p>
+<p>进行授权后，这台MAC就会注册到我们的AgentPool中，可以执行构建流水线了</p>
+<h2 id="执行构建流水线">执行构建流水线</h2>
+<p>通过Administration-Projects-Root project-ProjectS-MAC_Build_AB来到我们的MAC_Build_AB流水线，点击Run，选择我们刚刚注册的MAC Agent，最后点击Run Build即可</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302159208.png" alt="image-20220730215918174" loading='lazy'></p>
+<p>我们可以通过BuildLog界面查看流水线执行情况</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png" alt="image-20220730220936628" loading='lazy'></p>
+<p>在流水线执行完毕后，也可以直接查看构件列表</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302207141.png" alt="image-20220730220733083" loading='lazy'></p>
+<h2 id="后记">后记</h2>
+<p>本文只是介绍TeamCity最基础的一些功能，权当抛砖引玉，还有很多实用功能大家可以按需使用，官方文档也非常的详细友好</p>
+<p>最后还是要说一句，做好CI真的很重要，不论是个人独立游戏，还是工作室还是公司，都是如此</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/ci-with-teamcity/">https://www.lfzxb.top/ci-with-teamcity/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/CI/">CI</a><a class="post-meta__tags" href="/tags/TeamCity/">TeamCity</a><a class="post-meta__tags" href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96%E6%8C%81%E7%BB%AD%E9%9B%86%E6%88%90/">自动化持续集成</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/dream-scaper/" title="《层层梦境》一个ACT Roguelite的巅峰之作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202209111635589.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">《层层梦境》一个ACT Roguelite的巅峰之作</div></div><div class="info-2"><div class="info-item-1">故事还是要从我偶然在油管上看到的一个GDC分享说起  封面很炫酷嘛，颜色明艳，画面清晰又朦胧，看标题应该是讲ACT连招动作设计的，于是就怀着好奇的心态点进去看了看，这一看，直接被圈粉了 演讲者从0开始，细致入微的讲解ACT游戏中的动作该如何设计才能增强表现力和打击感，并且附带了相当丰富的示例用于佐证，也正是这些示例深深吸引了我，我发现这游戏和我之前玩过的肉鸽战斗设计侧重点完全不一样，相比于《黑帝斯》，《暖雪》之流，《层层梦境》更注重核心单局的动作交互与体验，而不是一味的堆叠Build，从而演变成暗黑类的刷刷刷游戏，嗯，硬要说的话，可以归类于和《死亡细胞》同类的肉鸽，但我认为，《层层梦境》的战斗体验和玩法设计是当今ACT肉鸽最强，没有之一。 也是趁中秋节把游戏通关了，多有感触，遂有此文 （我不允许有肉鸽玩家没玩过层层梦境，也不允许有游戏开发者没看过这个动作设计的GDC分享） 2024.7.26发现了一片机核上的文章：《层层梦境》：小型独立团队如何打造杀手级战斗系统 游戏整体结构 游戏整体结构是相当正统的Roguelite，局外持续养成，局内永久死亡  剧情 由于游戏本身采用碎片化的...</div></div></div></a><a class="pagination-related" href="/unitask_reademe_cn/" title="UniTask中文文档"><img class="cover" src="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">UniTask中文文档</div></div><div class="info-2"><div class="info-item-1">UniTask 为Unity提供一个高性能，0GC的async/await异步方案。  基于值类型的UniTask&lt;T&gt;和自定义的 AsyncMethodBuilder 来实现0GC 使所有 Unity 的 AsyncOperations 和 Coroutines 可等待 基于 PlayerLoop 的任务( UniTask.Yield, UniTask.Delay, UniTask.DelayFrame, etc…) 可以替换所有协程操作 对MonoBehaviour 消息事件和 uGUI 事件进行 可等待/异步枚举 拓展 完全在 Unity 的 PlayerLoop 上运行，因此不使用Thread，并且同样能在 WebGL、wasm 等平台上运行。 带有 Channel 和 AsyncReactiveProperty的异步 LINQ， 提供一个 TaskTracker EditorWindow 以追踪所有UniTask分配来预防内存泄漏 与原生 Task/ValueTask/IValueTaskSource 高度兼容的行为  有关技术细节，请参阅博客文章：UniT...</div></div></div></a></nav><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">CI的介绍和意义</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">为什么是TeamCity</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">搭建教程</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%80%BB%E8%A7%88"><span class="toc-number">3.1.</span> <span class="toc-text">总览</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8B%E8%BD%BD%E5%AE%89%E8%A3%85TeamCity"><span class="toc-number">3.2.</span> <span class="toc-text">下载安装TeamCity</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TeamCity%E7%9A%84%E7%AE%A1%E7%90%86%E6%9E%B6%E6%9E%84"><span class="toc-number">3.3.</span> <span class="toc-text">TeamCity的管理架构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E9%80%9A%E7%94%A8%E6%9E%84%E5%BB%BA%E6%B5%81%E6%B0%B4%E7%BA%BFTemplate"><span class="toc-number">3.4.</span> <span class="toc-text">创建通用构建流水线Template</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%88%9B%E5%BB%BAProject"><span class="toc-number">3.5.</span> <span class="toc-text">创建Project</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%85%8D%E7%BD%AEProject"><span class="toc-number">3.6.</span> <span class="toc-text">配置Project</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AEProejct%E4%B8%BB%E4%BD%93"><span class="toc-number">3.6.1.</span> <span class="toc-text">配置Proejct主体</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E9%85%8D%E7%BD%AE"><span class="toc-number">3.6.1.1.</span> <span class="toc-text">通用配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#VCS%E9%85%8D%E7%BD%AE"><span class="toc-number">3.6.1.2.</span> <span class="toc-text">VCS配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%85%B6%E4%BB%96%E9%85%8D%E7%BD%AE"><span class="toc-number">3.6.1.3.</span> <span class="toc-text">其他配置</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AEProject%E7%9A%84%E6%9E%84%E5%BB%BA%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">3.6.2.</span> <span class="toc-text">配置Project的构建流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%80%9A%E7%94%A8%E9%85%8D%E7%BD%AE-2"><span class="toc-number">3.6.2.1.</span> <span class="toc-text">通用配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#VCS%E9%85%8D%E7%BD%AE-2"><span class="toc-number">3.6.2.2.</span> <span class="toc-text">VCS配置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%9B%E5%BB%BA%E6%B5%81%E6%B0%B4%E7%BA%BF%E8%8A%82%E7%82%B9"><span class="toc-number">3.6.2.3.</span> <span class="toc-text">创建流水线节点</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E5%85%B7%E4%BD%93%E5%86%85%E5%AE%B9"><span class="toc-number">3.6.2.4.</span> <span class="toc-text">配置环境变量具体内容</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A2%9E%E5%8A%A0CI-Build-Agent"><span class="toc-number">3.7.</span> <span class="toc-text">增加CI Build Agent</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Server-IP%E7%A1%AE%E8%AE%A4"><span class="toc-number">3.7.1.</span> <span class="toc-text">Server IP确认</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%85%8D%E7%BD%AE%E4%BF%AE%E6%94%B9"><span class="toc-number">3.7.2.</span> <span class="toc-text">配置修改</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#CI-Server%E6%8E%88%E6%9D%83%E8%AE%A4%E8%AF%81"><span class="toc-number">3.7.3.</span> <span class="toc-text">CI Server授权认证</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%A7%E8%A1%8C%E6%9E%84%E5%BB%BA%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">3.8.</span> <span class="toc-text">执行构建流水线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8E%E8%AE%B0"><span class="toc-number">3.9.</span> <span class="toc-text">后记</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '673a82706cbed09567a4b801968ef276'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

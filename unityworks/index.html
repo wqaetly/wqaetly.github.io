@@ -1,0 +1,385 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>个人开源项目展示 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本博客持续更新。欢迎大家和我交流讨论。所有美术素材均来自网络，如有侵权，联系我删除。 视频介绍 相关视频介绍 游戏作品  Space Shooter Tutorial For Android（紧张刺激的太空飞机大战） 源码链接： LinkUp（经典连连看游戏，集成死局判定功能） 源码链接： Battle City Based On GF (经典的坦克大战,微创新) 源码链接： NKG Moba B">
+<meta property="og:type" content="article">
+<meta property="og:title" content="个人开源项目展示">
+<meta property="og:url" content="https://www.lfzxb.top/unityworks/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本博客持续更新。欢迎大家和我交流讨论。所有美术素材均来自网络，如有侵权，联系我删除。 视频介绍 相关视频介绍 游戏作品  Space Shooter Tutorial For Android（紧张刺激的太空飞机大战） 源码链接： LinkUp（经典连连看游戏，集成死局判定功能） 源码链接： Battle City Based On GF (经典的坦克大战,微创新) 源码链接： NKG Moba B">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/Login.png!webp">
+<meta property="article:published_time" content="2020-06-19T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-06-19T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="个人作品">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/Login.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "个人开源项目展示",
+  "url": "https://www.lfzxb.top/unityworks/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/Login.png!webp",
+  "datePublished": "2020-06-19T00:00:00.000Z",
+  "dateModified": "2020-06-19T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unityworks/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '个人开源项目展示',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/Login.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">个人开源项目展示</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">个人开源项目展示</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-06-19T00:00:00.000Z" title="发表于 2020-06-19 00:00:00">2020-06-19</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-06-19T00:00:00.000Z" title="更新于 2020-06-19 00:00:00">2020-06-19</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81%E9%9B%86/">个人作品集</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">390</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>1分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unityworks/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2020-06-19 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><p><strong>本博客持续更新。欢迎大家和我交流讨论。所有美术素材均来自网络，如有侵权，联系我删除。</strong></p>
+<h2 id="视频介绍">视频介绍</h2>
+<p><strong><a target="_blank" rel="noopener" href="https://www.bilibili.com/medialist/detail/ml759679645?type=1" title="相关视频介绍">相关视频介绍</a></strong></p>
+<h2 id="游戏作品">游戏作品</h2>
+<ul>
+<li><strong>Space Shooter Tutorial For Android（紧张刺激的太空飞机大战）</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/UnityWorks"><img src="https://gitee.com/NKG_admin/UnityWorks/widgets/widget_6.svg?color=90d18e" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>LinkUp（经典连连看游戏，集成死局判定功能）</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/UnityWorks"><img src="https://gitee.com/NKG_admin/UnityWorks/widgets/widget_6.svg?color=90d18e" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>Battle City Based On GF (经典的坦克大战,微创新)</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/Battle-City-Based-on-GF"><img src="https://gitee.com/NKG_admin/Battle-City-Based-on-GF/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>NKG Moba Based On ET（基于ET的Moba游戏，开发中。。。）</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NKGMobaBasedOnET"><img src="https://gitee.com/NKG_admin/NKGMobaBasedOnET/widgets/widget_6.svg?color=3d87b8" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+</ul>
+<h2 id="框架相关">框架相关</h2>
+<ul>
+<li><strong>NKGFramework(基于C#的客户端，服务端，热更新完整框架)</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NKGFramework"><img src="https://gitee.com/NKG_admin/NKGFramework/widgets/widget_6.svg?color=a700cc" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+</ul>
+<h2 id="工具相关">工具相关</h2>
+<ul>
+<li><strong>可视化结点技能编辑器（数据向）</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/visual_skills_editor"><img src="https://gitee.com/NKG_admin/visual_skills_editor/widgets/widget_6.svg?color=b89271" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>目标导向的AI系统——GOAP（多线程，JobSystem）</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NKGGOAP"><img src="https://gitee.com/NKG_admin/NKGGOAP/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+</ul>
+<h2 id="GitHub优秀开源项目镜像">GitHub优秀开源项目镜像</h2>
+<ul>
+<li><strong>Duke的ET版本，整合FGUI和可热更双端行为树</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/Duke_FGUI_BD_GitSync"><img src="https://gitee.com/NKG_admin/Duke_FGUI_BD_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>Node_Editor_Framework，可视化结点编辑器，非常强大的可视化结点编辑器，可以根据项目深度定制</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NodeEditor_GitSync"><img src="https://gitee.com/NKG_admin/NodeEditor_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>xAsset，轻便的Unity资源管理框架</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/xasset_Gitsync"><img src="https://gitee.com/NKG_admin/xasset_Gitsync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>ET框架，纯C#的双端可热更游戏框架</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/GithubSync"><img src="https://gitee.com/NKG_admin/GithubSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>ILRuntime，C#的热更新方案</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/ILRuntime_GitSync"><img src="https://gitee.com/NKG_admin/ILRuntime_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>GameFramework，一个非常牛逼的客户端框架</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/GitHubSync.GF"><img src="https://gitee.com/NKG_admin/GitHubSync.GF/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>UnityGameFramework，一个非常牛逼的Unity客户端框架</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/UGF_GitSync"><img src="https://gitee.com/NKG_admin/UGF_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>corefx，C#源码</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/corefx_GitSync"><img src="https://gitee.com/NKG_admin/corefx_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>NPBehave，一个事件（数据）驱动的行为树</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NPBehave_GitSync"><img src="https://gitee.com/NKG_admin/NPBehave_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>Box2DSharp，一个强大的2D物理引擎</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/Box2D_GitSync"><img src="https://gitee.com/NKG_admin/Box2D_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+<li><strong>recastnavigation，基于C++的寻路库</strong></li>
+<li><strong>源码链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/recastnavigation_GitSync"><img src="https://gitee.com/NKG_admin/recastnavigation_GitSync/widgets/widget_6.svg" alt="Fork me on Gitee" loading='lazy'></a></strong></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unityworks/">https://www.lfzxb.top/unityworks/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E4%B8%AA%E4%BA%BA%E4%BD%9C%E5%93%81/">个人作品</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/Login.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/use-graphiz-to-generate-uml-diagrams-programmatically/" title="使用Graphiz程序化生成UML的完整工作流"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/QQ截图20200516230456.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">使用Graphiz程序化生成UML的完整工作流</div></div><div class="info-2"><div class="info-item-1">前言 想必大家在整理学习一个项目架构时会用到类似UML这样的类图来表述各个模块之间的关系，但是当一个系统很庞大时，我们的UML也会很大，如果项目架构变动或者自己哪里搞错了，基本上就是一场连连看灾难，今天就给大家安利一下Graphiz，用它来程序化生成我们想要的UML图。 我第一次接触这个插件是在一个AI开源库里，使用了Graphiz输出AI决策图，就像这样  甚至这样  很难想象如果人为的去画这些图是怎样的一副光景。  当然了，上面那两个例子可能并不是很中肯，因为我们平时剖析的架构往往没有这么井井有条，他可能会是这样  不过这都没有关系，在Graphiz中，我们只需要写好代码，这些图都会自动生成啦。 正文 Graphiz简介 图形化是一种将结构信息表示为抽象图形和网络图的方式。自动图形绘制在软件工程，数据库和Web设计，网络以及许多其他领域的可视界面中具有许多重要的应用。 Graphviz是开源的图形可视化软件，用户只需要编写dot语言然后让Graphviz读取，即可生成自己想要的UML图。官网：http://www.graphviz.org/about/ Graphiz下载与环...</div></div></div></a><a class="pagination-related" href="/unity-uses-navmeshpath-to-enable-navmeshagent-to-move-at-a-constant-speed/" title="Unity使用NavMeshPath实现NavMeshAgent匀速移动"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/04/10.gif!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity使用NavMeshPath实现NavMeshAgent匀速移动</div></div><div class="info-2"><div class="info-item-1">前言 为了准备老师的课设作业，我决定做一个RPG小游戏，在处理寻路的时候遇到了点小麻烦。 首先是解决方案的选取，Unity自带的Navgation Mesh挺强大的（至少在客户端是这样，hh），我之前一直用的A*，但是不知道为什么老版本的A*在Unity 2019.3的InspectorGUI是坏掉的。。。又没钱买正版。。。 emmm，勉为其难的选择Navgation Mesh吧。 但是Navgation Mesh好像只有带有加速度的移动方式，这就有点蛋疼，说实话我个人挺不喜欢那种手感的，所以查了查官方文档，发现了NavMeshPath这么个东西，用它就可以得到我们一次寻路过程中所有的转折点，从而自己处理寻路，那么，我们开始吧。 思路 通过调用NavMeshAgent的CalculatePath来得到NavMeshPath，并使用NavMeshPath的corners数组（记录了每一处拐点的位置）和Transform.Translate做匀速运动，人物方向的改变需要自己处理。 代码 重要部分已注释，核心就是RunToTarget函数 12345678910111213141516...</div></div></div></a></nav><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A7%86%E9%A2%91%E4%BB%8B%E7%BB%8D"><span class="toc-number">1.</span> <span class="toc-text">视频介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B8%B8%E6%88%8F%E4%BD%9C%E5%93%81"><span class="toc-number">2.</span> <span class="toc-text">游戏作品</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A1%86%E6%9E%B6%E7%9B%B8%E5%85%B3"><span class="toc-number">3.</span> <span class="toc-text">框架相关</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B7%A5%E5%85%B7%E7%9B%B8%E5%85%B3"><span class="toc-number">4.</span> <span class="toc-text">工具相关</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GitHub%E4%BC%98%E7%A7%80%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E9%95%9C%E5%83%8F"><span class="toc-number">5.</span> <span class="toc-text">GitHub优秀开源项目镜像</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '50b8d383d1a584f60a85b8cba66d4ab7'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

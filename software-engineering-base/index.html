@@ -1,0 +1,546 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>软件工程重点知识整理 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 。。。没啥好说的，真是太痛苦了 基础知识汇总 单句 一  从结构化的瀑布模型看，在它的生命周期中的各阶段中，需求分析阶段出错，对软件的影响最大。 螺旋模型将瀑布模型和演化模型相结合，并增加了风险分析。 结构化分析方法是一种预先严格定义需求的方法，它在实施时强调的是分析对象的数据流。 进行需求分析可以使用数据流图（DFD），判定表，数据字典。 在面向数据流的软件设计方法中，一般将信息流分为变换">
+<meta property="og:type" content="article">
+<meta property="og:title" content="软件工程重点知识整理">
+<meta property="og:url" content="https://www.lfzxb.top/software-engineering-base/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 。。。没啥好说的，真是太痛苦了 基础知识汇总 单句 一  从结构化的瀑布模型看，在它的生命周期中的各阶段中，需求分析阶段出错，对软件的影响最大。 螺旋模型将瀑布模型和演化模型相结合，并增加了风险分析。 结构化分析方法是一种预先严格定义需求的方法，它在实施时强调的是分析对象的数据流。 进行需求分析可以使用数据流图（DFD），判定表，数据字典。 在面向数据流的软件设计方法中，一般将信息流分为变换">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="计算机科学与技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "软件工程重点知识整理",
+  "url": "https://www.lfzxb.top/software-engineering-base/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/software-engineering-base/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '软件工程重点知识整理',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">软件工程重点知识整理</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">软件工程重点知识整理</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CS%E5%9F%BA%E7%A1%80/">CS基础</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/CS%E5%9F%BA%E7%A1%80/%E8%BD%AF%E4%BB%B6%E5%B7%A5%E7%A8%8B/">软件工程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">8.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>25分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/software-engineering-base/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>前言</h1>
+<p>。。。没啥好说的，真是太痛苦了</p>
+<h1>基础知识汇总</h1>
+<h2 id="单句">单句</h2>
+<h3 id="一">一</h3>
+<ol>
+<li>从结构化的瀑布模型看，在它的生命周期中的各阶段中，<code>需求分析阶段</code>出错，对软件的影响最大。</li>
+<li>螺旋模型将瀑布模型和演化模型相结合，并增加了<code>风险分析</code>。</li>
+<li>结构化分析方法是一种预先严格定义需求的方法，它在实施时强调的是分析对象的<code>数据流</code>。</li>
+<li>进行需求分析可以使用<code>数据流图（DFD）</code>，<code>判定表</code>，<code>数据字典</code>。</li>
+<li>在面向数据流的软件设计方法中，一般将信息流分为<code>变换流</code>和<code>事务流</code>。</li>
+<li>PAD图的控制执行流程为<code>自上而下</code>，<code>从左到右</code>。</li>
+<li>概要设计阶段产生的文档包括概要<code>设计说明书</code>，<code>数据库设计说明书</code>，<code>用户手册</code>。</li>
+<li>与选择编程语言有关的因素是<code>软件开发的方法</code>，<code>软件执行的环境</code>，<code>软件开发人员知识</code>。</li>
+<li>软件工程针对维护工作的主要目标是提高软件的可维护性，<code>降低维护的代价</code>。</li>
+</ol>
+<ul>
+<li>开发软件工具的主要目的是为了<code>提高软件生产率</code>和<code>改善软件质量</code>。</li>
+<li>在软件需求分析中，必须采用合理的步骤，才能准确地获取软件的需求，可归纳为4个步骤：<code>需求获取</code>，<code>分析建模</code>，<code>文档编写</code>，<code>需求验证</code>。</li>
+<li>耦合衡量不同模块彼此间互相依赖（连接）的紧密程度，模块间的耦合性越高，其模块的独立性就<code>越弱</code>。</li>
+<li>在面向对象的设计方法中，<code>对象</code>和<code>传递消息</code>分别是<code>表现事物</code>及<code>事物间相互联系</code>的概念。</li>
+<li>用等价类划分的方法设计测试用例的步骤为，<code>划分等价类</code>和<code>确定测试用例</code>。</li>
+</ul>
+<h3 id="二">二</h3>
+<ol>
+<li>软件开发环境支持一定的<code>软件开发方法</code>，或按照一定的<code>软件开发模型</code>组织而成。</li>
+<li>技术可行性要解决<code>技术风险问题</code>。</li>
+<li>在软件需求规范中，<code>执行要求</code>可以归类为过程要求。</li>
+<li>在分层数据流图映射成软件结构的设计中，<code>变换型通常用于高层数据流图的转换，而事务型通常用于较低层数据流图的转换</code>这种说法是<code>错误的</code>。</li>
+<li>JACKSON方法根据<code>数据间的控制结构</code>来导出程序结构。</li>
+<li>对象是面向对象开发方法的基本成分，每个对象可用它本身的一组<code>属性</code>和它可执行的一组操作来定义。</li>
+<li>UML语言<code>支持</code>的建模方式有<code>动态建模</code>，<code>功能建模</code>，<code>静态建模</code>。</li>
+<li>面向对象程序设计的基本机制包括<code>继承</code>，<code>消息</code>，<code>方法</code>。</li>
+<li>软件的可维护性变量可分解为对多种因素的度量，<code>可测试性</code>，<code>可理解性</code>，<code>可修改性</code>是可维护度量内容。</li>
+</ol>
+<ul>
+<li>软件工具的发展特点是软件工具由单个工具向多个工具集成化方向发展，重视<code>用户界面</code>的设计，不断的采用新理论和新技术。</li>
+<li>描述软件开发过程中各种活动如何执行的模型称为<code>周期</code>模型。</li>
+<li>可行性研究具体步骤的最后一步是<code>编写可行性报告</code>。</li>
+<li>模块间还经常用带注释的端箭头来表示模块调用过程中来回传递的信息，有时箭头尾部带空心圆表示传递的是数据，带实心圆的标识传递的是<code>控制信息</code>。</li>
+<li>如果一个特殊类直接地继承两个以上的一般类，则称为<code>多继承</code>。</li>
+</ul>
+<h3 id="三">三</h3>
+<ol>
+<li>软件工程学的目的是最终解决软件生产的<code>使软件生产工程化</code>问题。</li>
+<li>软件工程方法中普遍应用的方法之一是结构化生命周期方法（SLC方法），即<code>严格定义需求</code>，<code>规范文档格式</code>，<code>划分开发阶段</code>。</li>
+<li>研究开发资源的有效性是进行<code>技术</code>可行性研究的一方面。</li>
+<li>软件需求分析阶段的工作，可以分成以下4个方面，<code>对问题的识别</code>，<code>分析与综合</code>，<code>指定规格说明</code>以及<code>需求分析评审</code>。</li>
+<li>模块内的某成分的输出是另一成分的输入，该模块的内聚度是<code>顺序性</code>的。</li>
+<li>JACKSON方法主要适用于规模适中的<code>数据处理</code>系统的开发。</li>
+<li>面向对象的主要特征除<code>对象唯一性</code>，<code>封装</code>，<code>继承</code>外，还有<code>多态性</code>。</li>
+<li>为了提高易读性，源程序内部应加功能性注释，用于说明<code>程序段或语句的功能</code>。</li>
+<li>从已经发现故障的存在到找到准确的故障位置并确定故障的性质，这一过程称为<code>调试</code>。</li>
+<li>人们将在软件运行/维护阶段对软件产品所进行的修改称为“维护”，<code>校正性维护</code>是由于开发时测试的不彻底，不完全造成的。</li>
+</ol>
+<ul>
+<li>结构化方法总的思想是<code>自顶向下逐步求精</code>，它的基本原则是功能的<code>分解</code>和<code>抽象</code>，</li>
+<li>成本-效益分析首先是估算将要开发的系统的<code>开发成本</code>，然后与可能取得的效益进行比较和权衡。</li>
+<li>需求分析阶段所要编写的文档有，<code>需求规格说明书</code>，<code>初步用户使用手册</code>，<code>确认测试计划</code>。</li>
+<li>模块间耦合高低取决于模块间<code>接口的复杂性</code>，<code>调用的方式</code>及<code>传递的信息</code>。</li>
+<li>必须在软件交付之前对整个<code>软件配置</code>进行评审，以减少文档的副作用。</li>
+</ul>
+<h3 id="四">四</h3>
+<ol>
+<li>软件开发时，一个错误发现的越晚，为改正它们付出的代价<code>越大</code>。</li>
+<li>软件工程学涉及到软件开发技术和工程管理两方面内容，包括<code>软件开发方法</code>，<code>软件开发工具</code>，<code>软件工程环境</code>。</li>
+<li>数据流图（DFD）是软件开发<code>需求分析阶段</code>经常使用的工具。</li>
+<li>模块内部联系最大的是<code>功能内聚</code>。</li>
+<li>软件需求分析的内容是<code>确定开发的软件应有哪些功能，应达到什么性能</code>。</li>
+<li>软件设计中的概要设计过程其主要描述的是<code>模块间关系</code>。</li>
+<li>软件测试的目的是<code>发现软件的错误</code>。</li>
+<li>与测试数据有关的文档是<code>该软件的设计人员</code>，<code>程序的复杂度</code>，<code>源程序</code>。</li>
+<li><code>数据耦合，控制耦合，公共耦合耦合性递增</code>。</li>
+<li>在软件开发过程中，编程语言的选择很重要，如果一个项目侧重于数据结构设计，则应选择<code>C语言</code>，</li>
+</ol>
+<ul>
+<li>用JACKSON图即可表示<code>数据</code>结构，又可以表示程序结构。</li>
+<li>面向对象的程序设计语言具有<code>数据抽象</code>，<code>信息隐蔽</code>，<code>信息继承</code>。</li>
+<li>软件维护工作中大部分工作是由于<code>用户需求的改变</code>而引起的。</li>
+<li>软件的面向数据流的设计方法，利用其定义的映射方式可以把<code>数据流图</code>变换成<code>软件结构</code>，在映射中，一般将数据流分为<code>变换流</code>和<code>事务流</code>两种。</li>
+<li>程序的三种基本控制结构是顺序结构，分支结构，循环结构，他们的共同点是<code>单入口单出口</code>。</li>
+</ul>
+<h3 id="五">五</h3>
+<ol>
+<li>软件生命周期中所花费用最多的阶段是<code>软件维护</code>。</li>
+<li>用于表示模块间调用关系的图叫<code>SC</code>。</li>
+<li>软件是一种<code>逻辑</code>产品。</li>
+<li>SD方法的最终目标是<code>块间联系小，块内联系大</code>。</li>
+<li>保证软件质量的手段有复审，复查，管理复审和测试等，其中复审发生在软件生命周期的<code>每个阶段结束之前</code>。</li>
+<li>面向对象程序设计语言不同于其他语言的最主要特点是<code>继承性</code>。</li>
+<li>提高软件质量和可靠性的技术大致分为两大类，一类是避开错误技术，另一类是<code>容错技术</code>。</li>
+<li>一个只有顺序结构的程序，其环形复杂度是<code>0</code>。</li>
+<li>按照软件过程的系统方法进行软件的工程活动和管理活动，进而不断完善软件各个软件过程，从而不断提高<code>软件过程能力</code>。</li>
+</ol>
+<ul>
+<li>模块越小，优点越明显，一般来说，模块大小都在10行以下。<code>错误，10行以下太过极端</code>。</li>
+<li>只要模块之间的接口关系不变，各模块的内部实现细节的修改不会影响别的模块。<code>正确</code></li>
+<li>在编写程序时尽可能对程序代码进行优化。<code>错误，提前优化是不可取的</code></li>
+<li>在进行需求分析时，需同时考虑维护问题。<code>正确</code></li>
+<li>编码时应尽可能使用全局变量。<code>错误，这将使代码难以拓展和维护</code></li>
+<li>不要修补不好的程序，要重新写。<code>正确</code></li>
+<li>程序中的注释越少越好。<code>错误，一周之后看自己的代码自己都觉得这是什么jb东西</code></li>
+<li>程序的书写格式应有助于读者阅读与理解。<code>正确</code></li>
+<li>软件的功能便于扩充。<code>正确</code></li>
+<li>程序易理解，也便于排错、<code>正确</code></li>
+</ul>
+<h3 id="六">六</h3>
+<ol>
+<li>软件工程与计算机科学性质不同，软件工程着重于<code>建造软件系统</code>。</li>
+<li>软件工程是一种<code>自顶向下</code>分阶段实现的软件开发方法。</li>
+<li>结构化方法和原型化方法在实际的应用中，它们之间的关系表现为<code>相互补充</code>。</li>
+<li>在软件生存周期的模型中，<code>螺旋模型</code>吸收了软件工程“演化”的概念。</li>
+<li>技术可行性要解决<code>技术风险问题</code>。</li>
+<li>软件需求分析阶段的工作，可以分成一下四个方面，<code>对问题的识别</code>，<code>分析和综合</code>，<code>指定规格说明</code>以及<code>需求分析评审</code>。</li>
+<li>好的软件结构应该是<code>低耦合，高内聚</code>。</li>
+<li>流程图中的顺序结构中各个方框是对程序的<code>逻辑意义</code>进行分块，使之表达的更清晰。</li>
+<li>软件可靠性表明一个程序按照用户的要求和设计目标，执行其功能的正确程度即“软件可靠性”是在给定的时间间隔及给定的设计要求下，成功地运行程序的<code>概率</code>。</li>
+<li>集成测试时，能较早法线高层模块接口错误的测试方法为<code>自定向下渐增式测试</code>。</li>
+</ol>
+<ul>
+<li>软件概要设计包括软件系统结构设计以及数据结构和数据库设计。<code>正确</code></li>
+<li>设计质量的评审对象是在详细设计阶段产生的软件需求规格说明、数据要求规格说明，在软件概要设计阶段产生的软件概要设计说明等。<code>错误，应该是需求分析阶段</code></li>
+<li>在软件生存期每个阶段的工作中都可能引入人为的错误。当出现错误，即使不及时纠正，也不会传播到开发的后续阶段中去，并在后续阶段中引出更多的错误。<code>错误，有错误就应该及时处理</code></li>
+<li>软件测试的目的是尽可能多的找出软件的缺陷。<code>正确</code></li>
+<li>模块化，信息隐藏，抽象和逐步求精的软件设计原则有助于得到高内聚，低耦合度的软件产品。<code>正确</code></li>
+<li>单元测试又称为白盒测试，单元测试是对软件设计的最小单位——程序模块进行正确性检验的测试。<code>错误，他不是白盒测试</code></li>
+<li>软件需求的逻辑视图给出软件要达到的功能和要处理数据之间的关系，也是实现的细节。<code>错误，并不是实现的细节</code></li>
+<li>确认测试计划应该在可行性研究阶段制定。<code>错误，是验收阶段</code></li>
+<li>软件产品的质量是软件工程的开发工作的关键问题，也是软件工程生产中的核心问题。<code>正确</code></li>
+<li>重视程序结构的设计，使程序具有较好的层次结构。<code>正确</code></li>
+</ul>
+<h2 id="长句">长句</h2>
+<h3 id="一-2">一</h3>
+<p>调用算法是解决问题的关键步骤之一，算法的计算工作量大小和实现算法所需的存储单元多少，分别称为计算的<code>时间复杂度</code>和<code>空间复杂度</code>，编写程序时，<code>程序的结构化</code>和<code>使用有实际意义的名字</code>是应采纳的原则之一。<code>排错</code>是调试程序的主要工作之一。</p>
+<h3 id="二-2">二</h3>
+<p>软件测试通常分为，单元测试，集成测试，确认测试和系统测试，其中确认测试主要用于发现<code>需求分析</code>阶段的错误。在集成测试时，通常可采用自顶向下渐增式集成，在自底向上渐增式集成时，对每个被集成的模块<code>要设计驱动模块，但不必设计桩模块</code>。通常还要进行<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mspace linebreak="newline"></mspace><mi>a</mi><mi>l</mi><mi>p</mi><mi>h</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">\\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">a</span><span class="mord mathnormal">lp</span><span class="mord mathnormal">ha</span></span></span></span>测试和<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mspace linebreak="newline"></mspace><mi>b</mi><mi>e</mi><mi>t</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">\\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span><span class="mord mathnormal">e</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span></span></span></span>测试，以发现可能只有最终用户才能发现的错误，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mspace linebreak="newline"></mspace><mi>a</mi><mi>l</mi><mi>p</mi><mi>h</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">\\alpha</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal">a</span><span class="mord mathnormal">lp</span><span class="mord mathnormal">ha</span></span></span></span>测试是指<code>最终用户在开发环境下，开发人员在场</code>所进行的测试，<span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mspace linebreak="newline"></mspace><mi>b</mi><mi>e</mi><mi>t</mi><mi>a</mi></mrow><annotation encoding="application/x-tex">\\beta</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="mspace newline"></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal">b</span><span class="mord mathnormal">e</span><span class="mord mathnormal">t</span><span class="mord mathnormal">a</span></span></span></span>测试是指<code>最终用户在实际使用环境下，开发人员不在场</code>所进行的测试。在软件维护阶段，当修改软件后，除了进行常规的测试外，还应进行<code>回归测试</code>，</p>
+<h3 id="三-2">三</h3>
+<p>黑盒测试法是通过分析程序的<code>功能</code>来设计测试用例的方法，除了测试程序外，它还适用于对<code>需求分析</code>阶段的软件文档进行测试。 白盒测试法是根据程序的<code>内部逻辑</code>来设计测试用例的方法，除了测试程序外，他也适用于对<code>软件详细设计</code>阶段的软件文档进行测试。 白盒测试法测试时按照给定的覆盖条件选取测试用例，<code>组合条件</code>覆盖比其他条件都要严格，但它不能保证覆盖程序中的每一条路径。</p>
+<h3 id="四-2">四</h3>
+<p>软件过程不断改进是<code>软件工程七原理</code>基本原理之一，是<code>软件生存期</code>的基本过程之一，软件过程需要不断完善，首先从<code>非工程化</code>的软件开发方式改变为<code>工程化</code>的软件开发方式。按照软件过程的系统方法进行软件的工程活动和管理活动，进而不断完善软件各个软件过程，从而不断提高<code>软件过程能力</code>，软件过程能力的提高首先需要对当前的软件过程状况进行科学的评估。</p>
+<h3 id="五-2">五</h3>
+<p>调用算法是解决问题的关键步骤之一，算法的计算工作量大小和实现算法所需的存储单元多少，分别称为计算的<code>时间复杂度</code>和<code>空间复杂度</code>。编写程序时，<code>程序的结构化</code>和<code>使用有实际意义的名字</code>是应采纳的原则。<code>排错</code>是调试程序主要工作之一。</p>
+<h3 id="六-2">六</h3>
+<p>程序的三种基本控制结构是<code>顺序，条件，循环</code>，他们共同点是只有<code>一个入口和一个出口</code>，结构化程序设计的一种基本方法是<code>逐步求精法</code>。软件测试的目的是<code>发现程序中的错误</code>。软件调试得目的是<code>找出错误所在并改正之</code>。</p>
+<h2 id="概念陈述">概念陈述</h2>
+<h3 id="一-3">一</h3>
+<p><code>父图与子图平衡</code>：数据流图中要求父图的输入数据流、输出数据流与子图的输入数据流、输出数据流完全相同。 <code>模块化</code>：是指解决一个复杂问题时自顶向下逐层把软件系统划分成若干模块的过程。 <code>脚本</code>：是系统在一个特定执行期间所发生的事件序列。 <code>动态模型</code>：动态模型描述与操作时间和顺序有关的系统特征、影响更改的事件、事件的序列、事件的环境以及事件的组织。 <code>可测试性</code>：是指软件发现故障并隔离、定位其故障的能力特性，以及在一定的时间和成本前提下，进行测试设计、测试执行的能力。</p>
+<h3 id="二-3">二</h3>
+<p><code>软件</code>：是计算机系统中与硬件相互依存的另一部分，它是包括程序、数据、相关文档的完整集合以及后续的维护服务。 <code>白盒测试</code>：是对软件的过程性描述做细致的检查，软件测试员利用程序内部的逻辑结构及有关信息，设计或选择测试用例，对程序所有逻辑路径进行测试。 <code>边界值分析</code>：就是首先确定边界情况，然后选取正好等于、刚刚大于，或刚刚小于边界的值作为测试数据。 <code>模块的扇入/扇出数</code>：在软件结构中，下级模块被上级模块调用的个数称为模块的扇入，上级调用下级模块的个数称为扇出数。 <code>静态模型</code>：是通过系统对象类及其之间的关系描述系统的静态结构。</p>
+<h3 id="三-3">三</h3>
+<p><code>确认</code>：我们是否在建成一个正确的产品。(强调结果正确) <code>验证</code>：我们是否在正确地建造一个产品。(强调过程正确) <code>增量模型</code>：该模型是一种非整体开发的模型。软件在该模型中是“逐渐”开发出来的，开发出一部分，向用户展示一部分，可让用户及早看到部分软件，及早发现问题。 <code>模块化</code>：是指解决一个复杂问题时自顶向下逐层把软件系统划分成若干模块的过程。 <code>继承</code>：就是子类自动共享父类数据结构和方法的机制。 <code>多态</code>：在收到消息时对象要予以响应，不同的对象收到同一消息可以产生完全不同的结果。 <code>等价类</code>：指某个输入域的子集合。在该子集合中，各个输入数据对于揭露程序中的错误都是等效的。</p>
+<h3 id="四-3">四</h3>
+<p><code>功能内聚</code>：是指模块内部各个成分之间的关系，又称为块内联系，是模块功能相对强度的度量。 <code>α测试</code>：是由一个用户在开发环境下进行的测试，也可以是开发机构内部的用户在模拟实际操作环境下进行的测试。 <code>β测试</code>：是由软件的多个用户在一个或多个用户的实际使用环境下进行的测试。 <code>测试</code>：是为了发现错误。 <code>调试</code>：是要找出错误的位置并改正错误。</p>
+<h3 id="五-3">五</h3>
+<p><code>程序的可维护性</code>：为满足用户新的需求，或当环境发生了变化，或运行中发现了新的错误时，对一个已投入运行的软件进行相应诊断和修改所需工作量的大小。 <code>模块的控制范围</code>：指该模块及所包含的子树。 <code>容错技术</code>：对那些无法避开的差错，使其影响减少至最小的技术。也就是说，当错误发生时，尽可能地不影响其它的系统元素，或是把用户的影响限制在某些容许的范围内。 <code>驱动模块与桩模块</code>：在测试过程中，用以代替被测试模块的上级模块称为驱动模块，用以替代被测试模块的下级模块称为桩模块。 <code>渐增式测试</code>：在对系统的测试过程中，将模块是按照测试方案，一个一个逐步添加到被测试的系统中。</p>
+<h3 id="六-3">六</h3>
+<p><code>信息隐藏</code>：是指在设计和确定模块时，使得一个模块内包含的信息（过程或数据）对于不需要这些信息的模块来说是不能访问的。 <code>模块的控制范围</code>：指该模块及所包含的子树。 <code>软件工程过程</code>：为获得软件产品，在软件工具的支持下由软件工程师完成的一系列软件工程活动。</p>
+<h2 id="简答">简答</h2>
+<h3 id="一-4">一</h3>
+<p><code>快速原型技术的基本思想是什么？</code> 在软件开发的早期，快速开发一个目标软件系统的原型，让用户对其进行评价并提出修改意见，然后开发人员根据用户的意见对原型进行改进。 <code>为什么要进行需求分析？通常对软件系统有哪些需求？</code> 需求问题是软件工程项目失败的主要原因。一个高质量的软件，很大程度上取决于对要解决的问题的认识，以及如何准确的表达用户的需求。需求分析就是要解决这个问题。 通常，对一个软件系统的需求可以有功能需求、性能需求、可靠性和可用性需求、出错处理需求、接口需求等多个方面。 <code>简单描述数据字典的内容。</code></p>
+<ol>
+<li>数据流条目</li>
+<li>数据项条目</li>
+<li>数据存储条目</li>
+<li>数据加工条目</li>
+<li>数据源和数据终点条目</li>
+</ol>
+<p><code>为什么说文档是影响软件可维护性的决定因素？</code> 由于长期使用的软件系统在使用过程中会有多次修改的经历，而文档应该记载了这些重要的修改，所以文档比之代码更为重要。 <code>什么是序言性注释？它包涵哪些内容？</code> 序言性注释通常放在每个程序模块的开头部分，它应当给出程序的整体说明，对于理解程序具有引导作用。 序言性注释一般包含下列内容：</p>
+<ol>
+<li>程序标题；有关该模块的功能和目的说明；主要算法；</li>
+<li>接口说明：包括调用形式，参数描述、子程序清单；</li>
+<li>有关数据描述（重要的变量及其用途，约束或限制条件，以及其他有关信息）；</li>
+<li>模块位置（在哪一个源文件中，或隶属于哪一个软件包）；</li>
+<li>开发简历 模块设计者，复审者，复审日期，修改日期及有关说明等。</li>
+</ol>
+<h3 id="二-4">二</h3>
+<p><code>功能模型的特征有哪些？</code> 功能模型描述了系统的所有计算。功能模型指出发生了什么，对动态模型确定什么时候发生，而对象模型确定发生的客体。功能模型表明一个计算如何从输入值得到输出值，它不考虑所计算的次序。功能模型由多张数据流图组成。数据流图说明数据流是如何从外部输入、经过操作和内部存储输出到外部的。功能模型也包括对象模型中值的约束条件。 <code>什么是测试用例？动态测试有哪些方法？</code> 所谓“测试用例”是指为寻找程序中的错误而精心设计的一组测试数据，每个测试用例一般是一个二元组（输入数据、预期结果）。动态测试主要有两种方法：白盒测试法和黑盒测试法。白盒测试法是从被测试程序的内部逻辑入手来设计测试用例：黑盒测试法着重测试被测试程序的功能，而不关心内部如何实现其功能的结构，是从用户观点出发的测试。但无论白盒测试法还是黑盒测试法都只能选择一些有代表性的测试用例进行有限的测试。</p>
+<ol>
+<li>白盒测试法：有6种用于有判定存在的逻辑覆盖标准，即程序内部路径的覆盖程度。对于有循环存在的覆盖用限制循环次数的办法来测试。但是对于一个实际问题的程序测试中，其路径是一个庞大的数字，基本路径测试告诉了最少路径的计算办法，在分析程序控制流程图环路复杂性的基础上，导出基本路径集合，从而设计测试用例，保证这些基本路径至少执行一次，以最少的用例发现尽量多的错误。</li>
+<li>黑盒测试法：具体方法有4种，采用黑盒测试法的综合策略是先用等价类划分法（包括边界值分析法，即取边值上的数）设计出测试用例，然后用错误推测法补充。如果被测试程序含有多个条件的逻辑组合，则开始就用因果图法。</li>
+</ol>
+<p><code>怎样克服软件危机？</code></p>
+<ul>
+<li>充分吸收和借鉴人类长期以来从事各种工程项目中积累的行之有效的有效原理、概念、技术与方法，特别是吸取几十年来人类从事计算机硬件研究和开发的经验教训。在开发软件的过程中努力作到良好的组织，严格的管理，相互友好的协作。</li>
+<li>推广在实践中总结出来的开发软件的成功的技术和方法，并研究更好、更有效的技术和方法，尽快克服在计算机系统早期发展阶段形成的一些错误概念和作法。</li>
+<li>根据不同的应用领域，开发更好的软件工具并使用这些工具。将软件开发各个阶段使用的软件工具集合成一个整体，形成一个很好的软件开发支撑环境。</li>
+</ul>
+<p>总之为了解决软件危机，既要有技术措施(方法和工具)，又要有必要的组织管理措施。 <code>说明软件工程管理的重要性。</code> 由软件危机引出软件工程，是计算机发展史上的一个重大进展。为了对付大型复杂的软件系统，须采用传统的“分解”方法。软件工程的分解是从横向和纵向即空间和时间两个方面进行的。横向分解就是把一个大系统分解为若干个小系统，小系统分解为子系统，子系统分解为模块，模块分解为过程。纵向分解就是生存期，把软件开发分为几个阶段，每个阶段有不同的任务、特点和方法。为此，软件工程管理需要有相应的管理策略。根据软件产品的特征，且随着软件规模的不断增大，开发人员也随之增多，开发时间也相应地持续增长，这些都增加了软件工程管理的难度，同时也突出了软件工程管理的必要性与重要性。事实证明，由管理失误造成的后果比程序错误造成的后果更为严重。很少有软件项目的实施进程能准确地符合预定目标、进度和预算的，这也就是以说明软件工程管理的重要性。 <code>请说明多态重用与继承重用的关系。</code> 多态重用实际上是一种特殊的继承重用，是充分利用多态性机制支持的继承重用。一般来说，使用多态重用方式重用已有的类构件时，在子类中需要重新定义的操作比较少，因此，多态重用方式比继承重用方式成本低。</p>
+<h3 id="三-4">三</h3>
+<p><code>什么是软件工程方法学？软件工程是一种什么样的技术？包括哪三大要素？</code> 软件工程方法学就是指在软件生命周期全过程中使用的一整套管理和开发技术方法的集合。目前，使用最广泛的软件工程方法学分别是传统方法学和面向对象方法学。 软件工程作为一种层次化的技术，有方法、工具和过程三大要素。 <code>怎样与用户有效地沟通，以获得用户的真实需求？</code> 访谈、情景分析，以及面向数据流的自顶向下求精等方法，编制简易的系统规格说明文档，创建原型等，是获取真实需求的有效方法。 <code>结构化程序设计中有哪几种基本控制结构？请用PDA图画出这些基本控制的图例。</code> 结构化程序设计中有以下5种基本控制结构： (1) 顺序结构 (2) 选择结构 (3) 先判定型循环结构 (4) 后判定型循环结构 (5) 多情况选择 <a target="_blank" rel="noopener" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ%E6%88%AA%E5%9B%BE20191130140253.png!webp"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ%E6%88%AA%E5%9B%BE20191130140253.png!webp" alt="" loading='lazy'></a> <code>用户界面设计的最一般原则，即所谓“黄金规则”是什么？</code> - 置用户于控制之下 - 减少用户的记忆负担 - 保持界面一致</p>
+<h3 id="四-4">四</h3>
+<p><code>画出软件生存周期的瀑布模型并简述各部分的主要任务。</code> <a target="_blank" rel="noopener" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ%E6%88%AA%E5%9B%BE20191130141802.png!webp"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ%E6%88%AA%E5%9B%BE20191130141802.png!webp" alt="" loading='lazy'></a></p>
+<ul>
+<li>制定计划：由系统分析员根据对问题的理解，提出关于《系统目标与范围的说明》，请用户审查和认可。</li>
+<li>需求分析：弄清用户对软件系统的全部需求，并用《需求规格说明书》的形式准确地表达出来。</li>
+<li>软件设计：建立软件的总体结构，画出由模块组成的《软件结构图》或《层次图》。根据总体结构进行单个模块的设计，确定模块内部的过程结构。</li>
+<li>编写程序：按照选定的语言，把模块的过程性描述翻译为源程序。</li>
+<li>软件测试：是保证软件质量的重要手段，可尽量地减少软件中的隐藏错误。</li>
+<li>运行维护：是使软件在整个生存周期内保证满足用户的需求和延长软件的使用寿命。</li>
+</ul>
+<p><code>白盒测试法有哪些覆盖标准?试对它们的检错能力进行比较。</code> 白盒测试法的覆盖标准有：语句覆盖、判定覆盖、条件覆盖、条件组合覆盖和路径覆盖。前五种覆盖标准把注意力集中在单个判定或判定的各个条件上，可能会使程序某些路径没有执行到。路径覆盖根据各判定表达式取值的组合，使程序沿着不同的路径执行，查错能力强。但由于它是从各判定的整体组合出发设计测试用例的，可能使测试用例达不到条件组合覆盖的要求。 <code>试比较程序流程图与PAD图的特点。</code> 这两种图均为详细设计阶段使用的描述工具。 程序流程图：直观清晰，易于使用，但控制流程线不易限制，不易反映逐步求精的过程，不易表示数据结构。 PAD图：是一种由左往右展开的二维树型结构，其能清晰地反映程序的层次结构，支持逐步求精的设计方法，易读易写，使用方便；可自动生成程序，支持结构化程序设计原理。 <code>判定表的是怎样组成的？</code> 判定表由四个部分组成：左上半部列出所有条件；左下半部列出所有处理；右上半部给出各种条件的组合，右下半部给出条件的取值，组合成相应的动作。判定表的上半部的每一列实质上是一条规则。</p>
+<h3 id="五-4">五</h3>
+<p><code>简述产生软件危机的原因和解决的思路。</code> 软件危机产生的原因一方面与软件本身的特点有关，另一方面，是与已有软件开发、维护的方法不正确有密切关系。 解决软件危机，既要有技术措施(方法和工具)，又要有必要的组织管理措施。即采用工程化的原则和方法组织软件开发是摆脱软件危机的一个主要出路。 <code>什么是软件范围？定义软件范围需要哪些信息？</code> 软件范围就是在技术和管理层面上都是无二义性和可理解的项目范围，是软件开发各阶段的工作依据。 定义软件范围需要以下信息：a. 与用户、总体目标及利益相关的问题。 b. 有利于系统分析员理解的问题。 c. 集中于交流效果的问题。 <code>进行需求分析的步骤有哪些？</code></p>
+<ol>
+<li>确定系统的综合要求</li>
+<li>分析系统的数据要求</li>
+<li>导出逻辑模型</li>
+<li>修正系统开发计划</li>
+</ol>
+<h3 id="六-4">六</h3>
+<p><code>可行性研究报告主要包括哪些内容？可行性研究报告的结论一般有哪几种？</code> 可行性分析的内容一般包含：项目的背景、系统概要、候选方案、技术上的可行性分析、经济上可行性分析、法律上可行性分析、操作上的可行性分析。 可行性分析的结论一般有：可行或不可行两种。 <code>描述加工逻辑的工具有哪些？</code> 有决策树(又称判定树)、决策表(又称判断表)和结构化语言等。 <code>什么是功能内聚？什么是内容耦合？</code> 功能内聚：是指模块内包括并仅包括为完成某个功能所必须的所有成分。或者说模块内的所有成分共同完成一个功能，缺一不可。 内容耦合：是指一个模块直接访问另一模块的内部信息（程序代码或内部数据） <code>软件开发小组人数越多越好吗？请说明理由。</code> 开发小组人员并非越多越好，这是因为：小组规模小，不仅可以减少通信问题，而且还有其他好处。例如，容易确定小组的质量标准，而且用民主方式确定的标准更容易被大家遵守；组员间关系密切，能够互相学习等等。 <code>调试的目的是什么？调试有哪些技术手段？</code> 调试是在进行了成功的测试之后才开始的工作。调试的目的是确定错误的原因和位置，并改正错误，因此调试也称为“纠错”。 常用的调试技术如下： ⑴ 简单的调试方法。 ① 在程序中插入打印语句。 ② 运行部分程序。 ⑵ 归纳法调试。归纳法调试从调试结果发现的线索（错误迹象、征兆）入手，分析创门之间的联系，导出错误原因的假设，然后再证明或否定这个假设。 ⑶ 演绎法调试。演绎法调试是列出所有可能的错误原因的假设，然后利用测试数据排除不适当的假设，最后再测试数据验证余下的假设确实是出错的原因。 ⑷ 回溯法调试。该方法从程序产生错误的地方出发，人上沿程序的逻辑路径反向搜索，直到找到错误的原因为止。例如，从打印语句出错开始，通过看到的变量值，从相反的执行路径查询改变量值从何而来。该方法是对小型程序寻找错误位置的有效方法。</p>
+<h1>应用与实践</h1>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/software-engineering-base/">https://www.lfzxb.top/software-engineering-base/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%A7%91%E5%AD%A6%E4%B8%8E%E6%8A%80%E6%9C%AF/">计算机科学与技术</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/summary-of-common-sorting-algorithms/" title="常用排序算法汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200215194617.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">常用排序算法汇总</div></div><div class="info-2"><div class="info-item-1">前言 记录并分析常用排序算法，方便自己日后查阅。 环境 语言：C# IDE：Rider 2019.3.3 冒泡排序 1234567891011121314151617181920212223/// &lt;summary&gt;/// 冒泡排序/// &lt;/summary&gt;/// &lt;param name="array"&gt;数组&lt;/param&gt;/// &lt;param name="count"&gt;数组元素个数&lt;/param&gt;public static void BubbleSort(int[] array, int count){    //设置标识符，如果为false意为当前数组为有序，不需要再排序了    bool shouldSorted = true;    for (int i = 0; i &lt; count &amp;&amp; shouldSorted; i++)    {        shouldSorted = false;        for (...</div></div></div></a><a class="pagination-related" href="/socketbase/" title="Socket学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Socket学习笔记</div></div><div class="info-2"><div class="info-item-1">源代码： https://gitee.com/NKG_admin/SocketTestDemo Socket 基础知识  https://blog.csdn.net/fighting_xa/article/details/50623571 http://liuliliujian.iteye.com/blog/898342 https://baike.baidu.com/item/socket/281150?fr=aladdin 看不懂没关系，因为我也看不懂。（旁白：滚！）  既然谈到Socket，就得牵扯到服务器端，什么是服务器端呢？ 个人理解：服务器端就是自己的代码，让它跑在云主机（云服务器上，比如阿里云，亚马逊云这些）。而这些，其实就是在云端买了一个主机，它和你正在使用的电脑一样，有桌面，有系统，有蜘蛛纸牌。。。 不同的是，它有固定的公网IP，而我们电脑公网IP是变化的（所以如果要把自己电脑变成服务器的话需要用花生壳做内网穿透）。 所以我们要把代码里绑定IP和连接IP的地方改成服务器的公网IP就行了。然后只需要把你服务器代码生成的exe文件在上面打开。让它365天没日没夜开着...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/compute-net-base/" title="计算机网络重点知识整理"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/12/QQ截图20191224221817.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">计算机网络重点知识整理</div></div><div class="info-2"><div class="info-item-1">计算机网络概述 计算机网络的概念 定义 一些互连的、独立自治的计算机集合。最重要的功能是连通性和资源共享 分类 从网络的作用范围进行分类 广域网 WAN (Wide Area Network) 局域网 LAN (Local Area Network) 城域网 MAN (Metropolitan Area Network) 个人区域网 PAN (Personal Area Network) 从网络的使用者进行分类 公用网 (public network) 专用网 (private network) 接入网 AN (Access Network) 计算机网络的性能指标 基础前置知识 比特(bit)意思是一个二进制数字（0或1）。 B为字节(Byte)，b为比特(bit)，一字节为8比特，即1B = 8b。 网络技术中的数率指的是数据的传送速率，当数据率较高时，常常在bit/s前面加上字母，比如k = 10310^3103,M = 10610^6106,G = 10910^9109,T = 101210^{12}1012等。 注意区分网络传输和文件系统中的数据后缀字母。比如一个100M...</div></div></div></a><a class="pagination-related" href="/computer-operating-system-base/" title="计算机操作系统复习纲要"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/12/QQ截图20191205210058.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">计算机操作系统复习纲要</div></div><div class="info-2"><div class="info-item-1">操作系统引论 操作系统基础知识 定义：操作系统（Operating System，OS）是配置在计算机硬件上的第一层软件，是对硬件系统的首次扩充。 设计目标：在计算机系统上配置操作系统，，其主要目标是方便性，有效性，可扩充性和开放性。 作用：可以从用户，资源管理以及资源抽象等多个不同角度来分析讨论。  OS作为用户与计算机硬件系统之间的接口 OS作为计算机系统资源的管理者 OS实现了对计算机资源的抽象  操作系统的发展过程 未配置操作系统的计算机系统——单道批处理系统——多道批处理系统——分时系统——实时系统——微机操作系统的发展 单道批处理和多道批处理系统的原理，优缺点 单道批处理系统 原理 计算机系统自动的一个作业紧接一个作业地进行处理，直至磁带上所有作业全部完成。虽然系统对作业的处理是成批的，但在内存中始终只保持一道作业。 优缺点 主要缺点是系统中的资源得不到充分利用。优点是一定程度上提高了系统资源利用率。 多道批处理系统 原理 用户所提交的作业先存放在外存上，并排成一个队列，然后作业调度程序按照一定的算法，从队列选择若干个作业调入内存，使他们共享CPU和系统中的各种资源。...</div></div></div></a><a class="pagination-related" href="/data-image-handle-restudy/" title="数字图像处理复习纲要"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">数字图像处理复习纲要</div></div><div class="info-2"><div class="info-item-1">第一章 1.数字图像的概念： 数字图像：数字图像是对连续图像数字化或离 散化的结果，也称离散图像 2.广义的图像处理（图像工程）包含的三个层次 3.像素的概念 一幅图像可分解为许多个单元。每个基本单元叫做图像元素，简称像素 4.灰度图像存储容量的计算 空间分辨率：图像的尺寸（M∗NM*NM∗N），在成像时采了MN个样，图像包含了MN个像素。 幅度分辨率：在成像时量化成了G（G=2kG = 2^kG=2k）个灰度级，存储一幅图像所需的位数b（b=M∗N∗kb = M * N * kb=M∗N∗k）（单位是bit） 第二章 1.像素的邻域 2.像素间距离，三种距离公式 像素间距离 ： 欧氏距离（也是范数为2的距离）：DE(p,q)  =  [(x  −  s)2  +  (y  −  t)2]12D_E(p,q)\;=\;\lbrack{(x\;-\;s)}^2\;+\;{(y\;-\;t)}^2\rbrack^{\frac12}DE​(p,q)=[(x−s)2+(y−t)2]21​ 城区距离（也是范数为1的距离）: D4(p,q)  =  ∣x  −  s∣  +  ∣y  −  ...</div></div></div></a><a class="pagination-related" href="/principles-of-computer-organization-base/" title="计算机组成原理复习纲要"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">计算机组成原理复习纲要</div></div><div class="info-2"><div class="info-item-1">计算机系统概述 冯 诺依曼计算机 五大功能部件  基本要点 计算机由五大部件组成，采用二进制形式表示数据和指令。 采用存储程序方式。  输入设备 将程序和数据以机器所能识别和接受的信息形式输入到计算机内。 比如键盘、鼠标、扫描仪、语音输入设备、手写笔、触摸屏、数码摄像设备等。 输出设备 将计算机处理的结果以人们所能接受的信息形式或其它系统所要求的信息形式输出。 如显示器、打印机、绘图仪 、音箱等。 存储器 用于存放程序和数据。存储器是计算机存储信息的核心。 主存储器(主存，内存) CPU能直接访问，主存分为若干个存储单元，每个单元都有唯一的地址编码，通常是按字节或字节的整数倍编码。存储器总是按地址访问的， 辅助存储器(外存，辅存) CPU不能直接访问，辅存中的信息必须调入主存后，才能为CPU所使用。 辅存速度较慢，但容量大，用于存放CPU暂时不用的程序和数据。 比如软盘、硬盘、光盘、磁带机等。 运算器 用于对数据的加工处理，完成算术逻辑运算。 组成 核心是算术逻辑部件(Arithmetic and Logical Unit)，简称为ALU。 还有若干寄存器，用于存放操作数、中间结...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">基础知识汇总</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E5%8F%A5"><span class="toc-number">2.1.</span> <span class="toc-text">单句</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80"><span class="toc-number">2.1.1.</span> <span class="toc-text">一</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C"><span class="toc-number">2.1.2.</span> <span class="toc-text">二</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89"><span class="toc-number">2.1.3.</span> <span class="toc-text">三</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B"><span class="toc-number">2.1.4.</span> <span class="toc-text">四</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94"><span class="toc-number">2.1.5.</span> <span class="toc-text">五</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD"><span class="toc-number">2.1.6.</span> <span class="toc-text">六</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%95%BF%E5%8F%A5"><span class="toc-number">2.2.</span> <span class="toc-text">长句</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80-2"><span class="toc-number">2.2.1.</span> <span class="toc-text">一</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C-2"><span class="toc-number">2.2.2.</span> <span class="toc-text">二</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89-2"><span class="toc-number">2.2.3.</span> <span class="toc-text">三</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B-2"><span class="toc-number">2.2.4.</span> <span class="toc-text">四</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94-2"><span class="toc-number">2.2.5.</span> <span class="toc-text">五</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD-2"><span class="toc-number">2.2.6.</span> <span class="toc-text">六</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%A6%82%E5%BF%B5%E9%99%88%E8%BF%B0"><span class="toc-number">2.3.</span> <span class="toc-text">概念陈述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80-3"><span class="toc-number">2.3.1.</span> <span class="toc-text">一</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C-3"><span class="toc-number">2.3.2.</span> <span class="toc-text">二</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89-3"><span class="toc-number">2.3.3.</span> <span class="toc-text">三</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B-3"><span class="toc-number">2.3.4.</span> <span class="toc-text">四</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94-3"><span class="toc-number">2.3.5.</span> <span class="toc-text">五</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD-3"><span class="toc-number">2.3.6.</span> <span class="toc-text">六</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AE%80%E7%AD%94"><span class="toc-number">2.4.</span> <span class="toc-text">简答</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80-4"><span class="toc-number">2.4.1.</span> <span class="toc-text">一</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C-4"><span class="toc-number">2.4.2.</span> <span class="toc-text">二</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89-4"><span class="toc-number">2.4.3.</span> <span class="toc-text">三</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B-4"><span class="toc-number">2.4.4.</span> <span class="toc-text">四</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94-4"><span class="toc-number">2.4.5.</span> <span class="toc-text">五</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD-4"><span class="toc-number">2.4.6.</span> <span class="toc-text">六</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">应用与实践</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'bc57268093104fa16dd89937079c82de'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

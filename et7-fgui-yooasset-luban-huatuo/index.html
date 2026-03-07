@@ -1,0 +1,407 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ET7+FariyGUI+huatuo+luban+yooasset接入教程 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 ProjectS已正式启动，准备先搭建项目框架以及整理工作流程，框架方面准备进行如下开发工作，为日后的业务开发铺好道路  接入 ET 7.0 接入 huatuo C#代码热更方案 接入 YooAssset 资源热更方案 接入 FGUI UI方案 ，并提供MVVM UI框架 接入 luban 配置表方案，并提供周边工具链 接入 UniTask，全量替换ETTask 全面移植 NKGMoba技能">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ET7+FariyGUI+huatuo+luban+yooasset接入教程">
+<meta property="og:url" content="https://www.lfzxb.top/et7-fgui-yooasset-luban-huatuo/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 ProjectS已正式启动，准备先搭建项目框架以及整理工作流程，框架方面准备进行如下开发工作，为日后的业务开发铺好道路  接入 ET 7.0 接入 huatuo C#代码热更方案 接入 YooAssset 资源热更方案 接入 FGUI UI方案 ，并提供MVVM UI框架 接入 luban 配置表方案，并提供周边工具链 接入 UniTask，全量替换ETTask 全面移植 NKGMoba技能">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp">
+<meta property="article:published_time" content="2022-07-03T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-07-16T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="ET">
+<meta property="article:tag" content="热更新">
+<meta property="article:tag" content="FGUI">
+<meta property="article:tag" content="huatuo">
+<meta property="article:tag" content="luban">
+<meta property="article:tag" content="yooasset">
+<meta property="article:tag" content="UniTask">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ET7+FariyGUI+huatuo+luban+yooasset接入教程",
+  "url": "https://www.lfzxb.top/et7-fgui-yooasset-luban-huatuo/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp",
+  "datePublished": "2022-07-03T00:00:00.000Z",
+  "dateModified": "2022-07-16T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/et7-fgui-yooasset-luban-huatuo/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ET7+FariyGUI+huatuo+luban+yooasset接入教程',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ET7+FariyGUI+huatuo+luban+yooasset接入教程</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ET7+FariyGUI+huatuo+luban+yooasset接入教程</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-03T00:00:00.000Z" title="发表于 2022-07-03 00:00:00">2022-07-03</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-07-16T00:00:00.000Z" title="更新于 2022-07-16 00:00:00">2022-07-16</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%83%AD%E6%9B%B4%E6%96%B0%E6%8A%80%E6%9C%AF/">热更新技术</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.9k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>6分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/et7-fgui-yooasset-luban-huatuo/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2022-07-16 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>前言</h1>
+<p>ProjectS已正式启动，准备先搭建项目框架以及整理工作流程，框架方面准备进行如下开发工作，为日后的业务开发铺好道路</p>
+<ul>
+<li>接入 <a target="_blank" rel="noopener" href="https://github.com/egametang/ET">ET 7.0</a></li>
+<li>接入 <a target="_blank" rel="noopener" href="https://github.com/focus-creative-games/huatuo">huatuo C#代码热更方案</a></li>
+<li>接入 <a target="_blank" rel="noopener" href="https://github.com/tuyoogame/YooAsset">YooAssset 资源热更方案</a></li>
+<li>接入 <a target="_blank" rel="noopener" href="https://www.fairygui.com/">FGUI UI方案</a> ，并提供MVVM UI框架</li>
+<li>接入 <a target="_blank" rel="noopener" href="https://github.com/focus-creative-games/luban">luban 配置表方案</a>，并提供周边工具链</li>
+<li>接入 <a target="_blank" rel="noopener" href="https://github.com/Cysharp/UniTask">UniTask</a>，全量替换ETTask</li>
+<li>全面移植 <a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/NKGMobaBasedOnET">NKGMoba技能系统</a>，及其周边工具链</li>
+</ul>
+<p>文章主要描述各仓库接入思路和过程，目前已完成接入工作，并已开源，<a target="_blank" rel="noopener" href="https://github.com/wqaetly/ET/tree/et7_fgui_yooasset_luban_huatuo">https://github.com/wqaetly/ET/tree/et7_fgui_yooasset_luban_huatuo</a>，已经在最大限度上保留ET特点了，并且存档了一个Release：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/ET/releases/tag/et7_fgui_luban_huatuo_yooasset">https://github.com/wqaetly/ET/releases/tag/et7_fgui_luban_huatuo_yooasset</a>，追求ET原生开发体验的朋友可以下载体验了。但对于我个人而言，使用起来还有诸多不便，所以还会再进行魔改，望周知。</p>
+<p>留个封面背景图：</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp" alt="image-20220703172434166" loading='lazy'></p>
+<h1>ET7</h1>
+<p>ET7于前阵子发布，虽然还没有正式Release，但相比于ET6，彻底剔除了ILRuntime，使得代码简洁了不少，并且比较稳定，是个接入的好时机</p>
+<h2 id="问题">问题</h2>
+<h3 id="程序集拆分导致的开发不便">程序集拆分导致的开发不便</h3>
+<p>ET从6开始，就倾向于将4个热更程序集全部移出到项目外。一般项目这样做做好csproj引用并没有什么问题，但是ET特殊的地方在于它是全热更的，这就导致需要用到热更代码的编辑器开发工作无法进行，比如技能编辑器，剧情编辑器，地图编辑器等</p>
+<p>所以无论如何我们还是要将这4个程序集移回Unity，保证开发体验，但还需要保证4个程序集相互之间引用是正确的，所以不能直接往Asset里移动，那么唯一的方案就是移到Packages目录（感谢 @闲蛋超人 提供的思路），即专门创建一个hotfix package存放4个程序集原代码文件，并将其asmdef编译选项设置为仅Editor可用</p>
+<p><code>尤其需要注意的是，如果编辑器工具需要对数据进行序列化反序列化，并且在运行时使用，一些序列化库例如Odin要求是强类型数据，这时候如果我们在Packages下的热更程序集名称和Assets外部的热更程序集名称对不上就会导致序列化失败，所以需要保持一致，具体操作可见项目源码</code></p>
+<p>当然，如果没有编辑器工具开发的需求，还可以设置asmdef的Define Constraint为自定义编译宏，这样只有这个编译宏开启的时候Unity才会去编译这个package，但请注意，也只有这个宏开启的时候编辑器工具才能正常引用热更package里的代码</p>
+<p>此外，编译程序集使用的是Unity的编译系统，这样其实我们hotfix package代码和Asset中那几个热更asmdef引用的热更代码是冲突的，所以还需要在编译时将package中热更代码剔除掉，这样一来即可达成 <strong>既满足编辑器工具开发需求，又能实时得到热更程序集的编译错误问题，还不会破坏热更程序集之间的引用关系</strong>，一举多得</p>
+<p><code>为了保证项目规范，我们需要在csproj里工作，而不是我们创建的用于保证编辑器开发引用的Package里</code></p>
+<h1>YooAsset</h1>
+<p>基础框架处理好就该处理资源管理了，毕竟资源管理是后续几个模块的基础，这里选用<a target="_blank" rel="noopener" href="https://github.com/tuyoogame/YooAsset">YooAsset</a>，在开源资源管理方案里，YooAsset是周边基建（运行时资源引用Debug工具尤为强大，可以及时发现资源泄漏的情况）和稳定性最佳的其中之一（可惜了<a target="_blank" rel="noopener" href="https://github.com/EllanJiang/GameFramework">GameFramework资源管理模块</a>和框架绑定）</p>
+<p>YooAsset功能很多，比如资源分组，原生资源加载支持等以及后续的SBP适配计划都值得期待</p>
+<p>将YooAsset接入ET过程中没有遇到什么问题，唯一需要做的就是做好ETTask封装以及Operation的管理维护，具体操作可以查看仓库相关代码</p>
+<h1>huatuo</h1>
+<p>huatuo介绍：<a href="https://www.lfzxb.top/huatuo-source-analyze/">划时代的代码热更新方案huatuo源码流程解析</a>， 作为新兴的基于IL2PP的<code>C#</code>热更方案，huatuo以碾压的姿态冲击了所有Unity代码热更新方案，饶是ET用了非常多<code>C#</code>高级语法，仍然只花了一天时间就接入完成</p>
+<p>对于ET来说，唯一需要做的就是准备好用于AOT元数据补充的dll即可，否则会有类似ExecutionEngineException: metadata type not match的错误，除此之外，没有任何的额外工作！<strong>不需要适配器，不需要重定向，不需要代码生成</strong>。</p>
+<p>此外，等待huatuo AOT Hybrid技术发布后，我们的热更就更加简单，性能也更高，可以直接无脑AOT发包，然后无脑补丁包热更逻辑</p>
+<p>顺带一提，GameFramework也有同好做了huatuo热更适配，感兴趣的可以去看看</p>
+<h1>luban</h1>
+<p>luban是当前业界游戏配置表方案开源当之无愧的第一人，它不仅支持各种容器，复杂结构，还支持OOP，以及json与Excel的互转工作</p>
+<p>支持OOP这个就很厉害了，这意味着我们完全可以把一些原本只能存在Unity编辑器里的一些配置（比如技能配置，Buff配置，行为树配置等）存到配置表中，这样有多个好处</p>
+<ul>
+<li>配置存在Excel中，将不会再出现由于配置类结构变动而导致序列化数据丢失问题</li>
+<li>编辑器下编辑的数据可以直接反导到Excel中，这对于大量数据的管理维护是很有帮助的</li>
+</ul>
+<p>此外项目中用到了 <a target="_blank" rel="noopener" href="https://github.com/LiuOcean/Luban_Unity_GUI">https://github.com/LiuOcean/Luban_Unity_GUI</a> 的Unity插件，它支持我们在Unity里配置好luban导出参数，然后直接一键导出配置表，当前还有一些功能需要支持完善，比如支持配置多套配置，比如client一份配置，server一份配置等。大家可根据自己喜好和需求进行魔改</p>
+<p>luban本身还是有一定的学习门槛的，当然这个学习门槛是对于我们程序员来说，因为我们需要为自己项目搭建维护一整套基于luban的工作流程，luban的文档很全面，基本上可以得到任何自己想要的信息：<a target="_blank" rel="noopener" href="https://focus-creative-games.github.io/luban/">https://focus-creative-games.github.io/luban/</a>，策划是只需要熟悉luban的配置规则即可，可以参考：<a target="_blank" rel="noopener" href="https://github.com/LiuOcean/Luban_Example/tree/main/Data/Excels">https://github.com/LiuOcean/Luban_Example/tree/main/Data/Excels</a></p>
+<h1>FariyGUI</h1>
+<p>这时候体现出FGUI跨平台独立编辑器的好处了，可以直接复用之前的所有相关工具链：<a href="https://www.lfzxb.top/et-fguilearn/">https://www.lfzxb.top/et-fguilearn/</a>，依旧是无脑接入，半天搞定</p>
+<p>对于MVVM UI框架的提供，需要改动FGUI代码生成插件，目前优先级不高，暂时搁置</p>
+<h1>UniTask</h1>
+<p>UniTask有查内存泄露和调用堆栈的工具，并且更加贴近C#原生await async，功能也比ETTask丰富的多，可以比ETTask用更低的心智负担写0GC</p>
+<h1>NKGMOBA</h1>
+<p>在后续的更新计划中，想要了解的可以先前往基于ET6.0的版本：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/NKGMobaBasedOnET">https://github.com/wqaetly/NKGMobaBasedOnET</a></p>
+<h2 id="Odin">Odin</h2>
+<p>项目使用Odin作为序列化方案，借助Huatuo的强大元数据，只需要把Odin的 <code>Sirenix.Serialization.dll</code> 加入AOT元数据补充列表即可进行任意序列化和反序列化（包括对热更层数据进行序列化反序列化）</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/et7-fgui-yooasset-luban-huatuo/">https://www.lfzxb.top/et7-fgui-yooasset-luban-huatuo/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/ET/">ET</a><a class="post-meta__tags" href="/tags/%E7%83%AD%E6%9B%B4%E6%96%B0/">热更新</a><a class="post-meta__tags" href="/tags/FGUI/">FGUI</a><a class="post-meta__tags" href="/tags/huatuo/">huatuo</a><a class="post-meta__tags" href="/tags/luban/">luban</a><a class="post-meta__tags" href="/tags/yooasset/">yooasset</a><a class="post-meta__tags" href="/tags/UniTask/">UniTask</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/unitask_reademe_cn/" title="UniTask中文文档"><img class="cover" src="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">UniTask中文文档</div></div><div class="info-2"><div class="info-item-1">UniTask 为Unity提供一个高性能，0GC的async/await异步方案。  基于值类型的UniTask&lt;T&gt;和自定义的 AsyncMethodBuilder 来实现0GC 使所有 Unity 的 AsyncOperations 和 Coroutines 可等待 基于 PlayerLoop 的任务( UniTask.Yield, UniTask.Delay, UniTask.DelayFrame, etc…) 可以替换所有协程操作 对MonoBehaviour 消息事件和 uGUI 事件进行 可等待/异步枚举 拓展 完全在 Unity 的 PlayerLoop 上运行，因此不使用Thread，并且同样能在 WebGL、wasm 等平台上运行。 带有 Channel 和 AsyncReactiveProperty的异步 LINQ， 提供一个 TaskTracker EditorWindow 以追踪所有UniTask分配来预防内存泄漏 与原生 Task/ValueTask/IValueTaskSource 高度兼容的行为  有关技术细节，请参阅博客文章：UniT...</div></div></div></a><a class="pagination-related" href="/projects-desgin/" title="代号ProjectS企划案"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211022091824.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">代号ProjectS企划案</div></div><div class="info-2"><div class="info-item-1">开端 我在初三时开始接触英魂之刃这款MOBA游戏，各种各样的英雄和有趣多变的英雄自然是给了第一次接触这种类型游戏的我留下了很深刻的印象，玩了一段时间后关注了贴吧，每天就在里面看各路大神和水友们发帖，直到有一天刷到了一篇自制英雄的帖子，大致内容就是楼主用文字的形式描述了自己心目中的英雄，当时只觉得很有意思，但也只是匆匆划过，没有下文 事实上直到今天有相当一部分的玩家对于自制英雄有相当大的热情：  2020年12月4日，《英魂之刃口袋版》举办新英雄设计大赛，邀请玩家发挥脑洞，一起参与MOBA英雄设计。活动开启后，许多玩家在英魂社区踊跃分享自己的创意和灵感，讨论互动。历时20余天，大赛累计收到投稿超过3000份，最终筛选出16个入围作品与50个优秀作品。  最近又在玩流放之路，其中主动技能宝石 + 被动技能宝石的设定极大丰富了各种技能之间的搭配种类，仔细思考可以搭配出很有意思的技能 回想起大学的时候玩过的恐怖黎明，虽然技能的可定制化程度不如流放之路，但通过星座信仰对职业架构进行补全的设定也是有自定义技能的味道在里面的 从上面的这几个例子，可以看到很多玩家对于自定义这个行为有相当大的热情...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/et-6-with-ilruntime/" title="ET6.0接入ILRuntime"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907132348.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-05-01</div><div class="info-item-2">ET6.0接入ILRuntime</div></div><div class="info-2"><div class="info-item-1">前言 当今市面上热更新方案百花齐放，有用lua的（xlua，tolua等），有用js/ts的（puerts），有用C#打补丁修复的（InjectFix），还有C#转Lua的（CS2Lua）而他们或多或少都有自己的痛点和不方便的地方。 ILRuntime 则是将痛点与不方便降到最低的，它是一个纯C#的热更新方案。借助Mono.Cecil库来读取DLL的PE信息，以及当中类型的所有信息，最终得到方法的IL汇编码，然后通过内置的IL解译执行虚拟机来执行DLL中的代码来实现热更新功能。 ET框架 也是前阵子更新到了6.0版本，简单概括一下是一个客户端 + 服务端的纯C#双端框架，总体架构是一部分ECS，一部分OOP，一部分组件式编程，各取所长，可以说平衡的非常好了，网络架构是高效的分布式架构+Actor模型内网通信机制。毋庸置疑的是，框架是非常优秀的，但是由于作者的游戏临近上线比较忙，热更新模块还没接入。而且作者似乎更偏向CS2Lua一些，感觉有点可惜，考虑到自己和其他一些想继续使用ILRuntime热更的朋友们，遂有此文。 （对于ILRuntime 和 ET框架 不了解的朋友可以直接点...</div></div></div></a><a class="pagination-related" href="/et-fguilearn/" title="ET篇：使用FairyGUI进行开发的流程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190501110327.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-31</div><div class="info-item-2">ET篇：使用FairyGUI进行开发的流程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.8.31更新，新增为ET6.0而生的FGUI插件（Lua版本）安装与配置相关教程 本文章已于2021.1.29更新，新增为ET5.0而生的FGUI插件（Lua版本）安装与配置相关教程  环境准备 FairyGUI 官网：http://www.fairygui.com 编辑器下载：http://www.fairygui.com/product/ 官方教程：http://www.fairygui.com/guide/ 开发工具 Unity 2017.4 Rider 2018.3 ET5.0 感谢有招小弟的大佬吗的大力支持 Duke大佬的FairyGUI分支 链接：https://github.com/DukeChiang/DCET Unity项目结构梳理 Hotfix部分 Asset/Bundles/FUI/Common_atlas0.png:会被打成AB包的FGUI图片资源（AB标签：Common.unity3d） Asset/Bundles/FUI/Common_fui.bytes：会被打成AB包的FGUI布局数据（AB标签：Common_fui.unity3...</div></div></div></a><a class="pagination-related" href="/et6-manual/" title="ET6.0使用手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004244.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-09-01</div><div class="info-item-2">ET6.0使用手册</div></div><div class="info-2"><div class="info-item-1">前言 本文章不包含代码分析，仅仅为使用手册。 ET本身就是一个很优秀的框架，对于ET的设计理念和核心思想，可以去阅读下原作者写的一系列文章：ETBook 这里也列举出一些学习资料，供大家参考  ET 6.0学习笔记——着重介绍ET6.0的新概念与设计思路 我的B站ET6.0视频教程——偏代码解读 字母哥Binary的B站ET6.0视频教程——偏实践  环境 服务器 .Net版本：.Net Core 5.0 云端服务器：CentOS 7.6 公共部分 基础架构 ET是一个单线程，多进程的框架，好处是单线程的开发效率更高，写出的代码更安全，Bug也更好查，多进程可以做分布式架构，均衡负载等。 ET框架采用了ECS架构（Entity-Component-System），而非传统的OOP架构，好处是开发效率非常高，并且借助于ECS的解耦功能，重构起来也很快。 但是ET的ECS也并非纯正的ECS，而是在架构学术派与实用派做了折衷，严格来说是E + S（Entity是纯数据，System是纯逻辑），那么把Component放哪了呢？在ET里Component就是Entity，Entity就是...</div></div></div></a><a class="pagination-related" href="/etfguiwithurp/" title="ET&amp;&amp;FGUI接入URP流程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">ET&amp;&amp;FGUI接入URP流程</div></div><div class="info-2"><div class="info-item-1">前言 前几天技能系统发布了新版本，休息了以下，接下来要开始开发Moba项目的特效部分了，准备使用Shader Graph（简称SG）技术栈，但是SG只在SRP中才可以正常工作，所以要做一些适配。 环境 DCET中的FGUI模块（Model层与Hotfix层） ET 5.0 Unity 2019.4.8 LTS URP 7.3.1 步骤 由于URP版本中Camera的特殊性(使用Render Type和CameraStack控制渲染)，需要先对相机模块进行更改 首先Unity.Model和ThirdParty的Assembly Definition需要索引Unity.RenderPipeline.Universal.Runtime 我们要确保整个项目只有一个Render Type为Base的Camera，否则渲染将不会如我们所愿的那样（指Build-in管线中相机渲染结果的自动叠加） 首先更改FGUI源码中的StageCamera.cs文件 123456789101112131415161718192021222324252627282930313233        /// &amp;l...</div></div></div></a><a class="pagination-related" href="/hybridclr-source-analyze/" title="划时代的代码热更新方案hybridclr（wolong）源码流程解析"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20220722095359.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-07-22</div><div class="info-item-2">划时代的代码热更新方案hybridclr（wolong）源码流程解析</div></div><div class="info-2"><div class="info-item-1">huatuo 现已改名 hybridclr，又名wolong，望周知 之前的huatuo仓库由途游公司继续维护，而原作者则全力维护 hybridclr 官网链接：https://focus-creative-games.github.io/hybridclr/index/   知人者有验于天，知天者必有验于人。  前言 前天听说了一个名为 huatuo （现已改名 hybridclr,这是原作者正式维护的仓库）的热更新方案横空出世，它基于IL2CPP对用户代码进行热更，本以为像一些热更方案一样自己实现了一整套虚拟机运行时，但看过源码之后我表示大为震撼，同时佩服作者的脑回路，简直巧夺天工。 热更新基础 我们需要先了解一下Mono和IL2Cpp这两个脚本后端 首先是Mono，结构相当简单，就是Mono VM解释执行IL代码  然后是IL2CPP，相对复杂一些，需要将IL转译成C++代码，然后经过本地的C++编译器编译后使用IL2CPP的虚拟机运行时去执行我们转译的C++代码，IL2CPP的运行时做了相当多的事情，包括但不限于支持C#的反射，GC，泛型，虚函数，Interface，线程...</div></div></div></a><a class="pagination-related" href="/xlua-practise-total/" title="基于XLua的热更新框架实践总结"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010344.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-04-15</div><div class="info-item-2">基于XLua的热更新框架实践总结</div></div><div class="info-2"><div class="info-item-1">前言 花了两周时间，学习了Lua，并且基于XLua搭建了一套热更新框架，包括开发环境，XLua实践，基础建设（基于lua-protobuf的配置表和网络协议），OOP框架，UI框架等。这篇博客的主要内容也就是叙述这些功能的实现过程，包括过程中遇到的一些坑和解决方案，主要以讲述思路为主，其实也是我的学习路线和思路分享，希望对想着手学习XLua的同好有所帮助。 开发环境搭建 XLua下载 由于我们后面还需要接入lua-protobuf，RapidJson，LPeg，FFI for lua53等第三方库，所以推荐直接从 build_xlua_with_libs 下载最新的Release包，根据自己的需求选择目标Lua版本的Release包进行下载即可。 其中较为重要的是Plugins目录下动态库的配置，因为此处配置不正确会导致不同平台可能会遇到运行时找不到动态库的报错，官方的动态库和配置信息（动态库的mate文件）是直接可用的。 如果有自己编译动态库的需求，需要注意不同编译选项得到的动态库在Unity这边所需要的配置也不一样，对于第三方动态库的编译和p/Invoke相关的内容，可以前往...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">ET7</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%97%AE%E9%A2%98"><span class="toc-number">2.1.</span> <span class="toc-text">问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A8%8B%E5%BA%8F%E9%9B%86%E6%8B%86%E5%88%86%E5%AF%BC%E8%87%B4%E7%9A%84%E5%BC%80%E5%8F%91%E4%B8%8D%E4%BE%BF"><span class="toc-number">2.1.1.</span> <span class="toc-text">程序集拆分导致的开发不便</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">YooAsset</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">4.</span> <span class="toc-text">huatuo</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">5.</span> <span class="toc-text">luban</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">6.</span> <span class="toc-text">FariyGUI</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">7.</span> <span class="toc-text">UniTask</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">8.</span> <span class="toc-text">NKGMOBA</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Odin"><span class="toc-number">8.1.</span> <span class="toc-text">Odin</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'd512de318239e829144bab1d36740053'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

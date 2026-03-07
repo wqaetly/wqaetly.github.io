@@ -1,0 +1,470 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>基于URP屏幕空间采样与JobSystem加速的战争迷雾 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于">
+<meta property="og:type" content="article">
+<meta property="og:title" content="基于URP屏幕空间采样与JobSystem加速的战争迷雾">
+<meta property="og:url" content="https://www.lfzxb.top/fog-of-war-based-on-ss-in-urp/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp">
+<meta property="article:published_time" content="2021-02-07T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-10-21T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="GamePlay">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="URP">
+<meta property="article:tag" content="渲染管线">
+<meta property="article:tag" content="战争迷雾">
+<meta property="article:tag" content="JobSystem">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "基于URP屏幕空间采样与JobSystem加速的战争迷雾",
+  "url": "https://www.lfzxb.top/fog-of-war-based-on-ss-in-urp/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp",
+  "datePublished": "2021-02-07T00:00:00.000Z",
+  "dateModified": "2021-10-21T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/fog-of-war-based-on-ss-in-urp/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '基于URP屏幕空间采样与JobSystem加速的战争迷雾',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">基于URP屏幕空间采样与JobSystem加速的战争迷雾</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">基于URP屏幕空间采样与JobSystem加速的战争迷雾</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-07T00:00:00.000Z" title="发表于 2021-02-07 00:00:00">2021-02-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-10-21T00:00:00.000Z" title="更新于 2021-10-21 00:00:00">2021-10-21</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98/">应用实战</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">3.1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>11分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/fog-of-war-based-on-ss-in-urp/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-10-21 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><iframe frameborder="no" border="0" marginwidth="0" marginheight="0" width="330" height="86" src="//music.163.com/outchain/player?type=2&amp;id=1413464902&amp;auto=0&amp;height=66"> </iframe>
+<div class="note info modern"><p>本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。</p>
+<p>本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。</p>
+</div>
+<h2 id="前言">前言</h2>
+<p>这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：</p>
+<ul>
+<li>一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。</li>
+<li>二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。</li>
+</ul>
+<p>但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理特效多起来后，对于移动平台来说，本就不富裕的带宽再次雪上加霜。</p>
+<p>而 URP 管线下我们可以自定义 Pass 并自定义渲染顺序来减少 Blit 操作（这方面的成熟应用可以参照 <a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/313298603">ILRuntime 作者林若峰分享：次世代手游渲染怎么做</a> ），正好我也一直想实战一下 URP，所以准备研究下 URP 管线下的战争迷雾。</p>
+<p>本文包括战争迷雾从 Built-In 到 URP 的管线切换和 JobSystem 加速优化以及开发过程中遇到的问题以及解决方案等内容。</p>
+<p>由于本人第一次着手渲染效果方面的开发，可能有些地方考虑欠佳甚至是错误的，恳请各位大佬不吝赐教。</p>
+<p>本文基于：<a target="_blank" rel="noopener" href="https://github.com/AsehesL/FogOfWar">FogOfWar 开源库</a></p>
+<p>本文项目链接：<a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/FogOfWar">接入 URP 管线的战争迷雾</a></p>
+<h2 id="正文">正文</h2>
+<h3 id="运行架构">运行架构</h3>
+<p>既然要进行大刀阔斧的管线切换，免不了先通读一下源码，了解一下它的运行流程。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154143.jpg" alt="v2-338159e13a640edaa2a0095f70d5a3ab_720w" loading='lazy'></p>
+<p>运行流程就如上图所示，我们可以看到，对于战争迷雾的可见性计算是完全独立的模块，所以可以考虑进行 JobsSystem 加速。</p>
+<h3 id="渲染流程">渲染流程</h3>
+<p>这部分其实是有些波折的，使用的并非是开源库作者的最终做法，原因下文会给出。</p>
+<p>战争迷雾的渲染流程是，先对 Mask Texture 进行模糊处理，然后使用 Shader 进行屏幕空间 uv 采样 Mask Texture 获取每个像素点对应纹素，最后与 RenderTexture 混合得到游戏画面。</p>
+<p>作者首先定义了一个 WorldToProjector 矩阵，用于将世界坐标投影到迷雾 uv 空间，其中 centerPos 是战争迷雾中心位置的世界坐标</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>W</mi><mi>o</mi><mi>r</mi><mi>l</mi><mi>d</mi><mi>T</mi><mi>o</mi><mi>P</mi><mi>r</mi><mi>o</mi><mi>j</mi><mi>e</mi><mi>c</mi><mi>t</mi><mi>o</mi><mi>r</mi><mo>=</mo><mrow><mo fence="true">[</mo><mtable rowspacing="0.16em" columnalign="center center center center" columnspacing="1em"><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mrow><mi>x</mi><mi>s</mi><mi>i</mi><mi>z</mi><mi>e</mi></mrow></mfrac></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mfrac><mrow><mn>1</mn><mo>∗</mo><mi>c</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi><mi>P</mi><mi>o</mi><mi>s</mi><mi mathvariant="normal">.</mi><mi>x</mi></mrow><mrow><mi>x</mi><mi>s</mi><mi>i</mi><mi>z</mi><mi>e</mi></mrow></mfrac><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mfrac><mn>1</mn><mrow><mi>z</mi><mi>s</mi><mi>i</mi><mi>z</mi><mi>e</mi></mrow></mfrac></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mrow><mo>−</mo><mfrac><mrow><mn>1</mn><mo>∗</mo><mi>c</mi><mi>e</mi><mi>n</mi><mi>t</mi><mi>e</mi><mi>r</mi><mi>P</mi><mi>o</mi><mi>s</mi><mi mathvariant="normal">.</mi><mi>z</mi></mrow><mrow><mi>z</mi><mi>s</mi><mi>i</mi><mi>z</mi><mi>e</mi></mrow></mfrac><mo>+</mo><mfrac><mn>1</mn><mn>2</mn></mfrac></mrow></mstyle></mtd></mtr><mtr><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>0</mn></mstyle></mtd><mtd><mstyle scriptlevel="0" displaystyle="false"><mn>1</mn></mstyle></mtd></mtr></mtable><mo fence="true">]</mo></mrow></mrow><annotation encoding="application/x-tex">WorldToProjector = \begin{bmatrix}
+ \frac{1}{xsize}&amp;  0&amp;  0&amp;-\frac{1 * centerPos.x}{xsize} + \frac{1}{2} \\ 
+ 0&amp;  1&amp;0  &amp;0 \\ 
+ 0&amp;  0&amp;\frac{1}{zsize}  &amp;-\frac{1 * centerPos.z}{zsize} + \frac{1}{2} \\ 
+ 0&amp;  0&amp;0  &amp;1 
+\end{bmatrix}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.02778em;">or</span><span class="mord mathnormal" style="margin-right:0.01968em;">l</span><span class="mord mathnormal">d</span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mord mathnormal">o</span><span class="mord mathnormal" style="margin-right:0.13889em;">P</span><span class="mord mathnormal">ro</span><span class="mord mathnormal" style="margin-right:0.05724em;">j</span><span class="mord mathnormal">ec</span><span class="mord mathnormal">t</span><span class="mord mathnormal" style="margin-right:0.02778em;">or</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:4.8647em;vertical-align:-2.1823em;"></span><span class="minner"><span class="mopen"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.65em;"><span style="top:-4.65em;"><span class="pstrut" style="height:6.8em;"></span><span style="width:0.667em;height:4.800em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.667em" height="4.800em" viewBox="0 0 667 4800"><path d="M403 1759 V84 H666 V0 H319 V1759 v1200 v1759 h347 v-84
+H403z M403 1759 V0 H319 V1759 v1200 v1759 h84z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mtable"><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.6823em;"><span style="top:-4.81em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">ze</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.3777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-1.1777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.1823em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.6823em;"><span style="top:-4.81em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span><span style="top:-2.3777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-1.1777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.1823em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.6823em;"><span style="top:-4.81em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.3777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">zs</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">ze</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span style="top:-1.1777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.1823em;"><span></span></span></span></span></span><span class="arraycolsep" style="width:0.5em;"></span><span class="arraycolsep" style="width:0.5em;"></span><span class="col-align-c"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.6823em;"><span style="top:-4.81em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">x</span><span class="mord mathnormal mtight">s</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">ze</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">∗</span><span class="mord mathnormal mtight">ce</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">er</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight">os</span><span class="mord mtight">.</span><span class="mord mathnormal mtight">x</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span style="top:-3.61em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">0</span></span></span><span style="top:-2.3777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">−</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8723em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">zs</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">ze</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span><span class="mbin mtight">∗</span><span class="mord mathnormal mtight">ce</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">t</span><span class="mord mathnormal mtight" style="margin-right:0.02778em;">er</span><span class="mord mathnormal mtight" style="margin-right:0.13889em;">P</span><span class="mord mathnormal mtight">os</span><span class="mord mtight">.</span><span class="mord mathnormal mtight" style="margin-right:0.04398em;">z</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8451em;"><span style="top:-2.655em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">2</span></span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.394em;"><span class="pstrut" style="height:3em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.345em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span><span style="top:-1.1777em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">1</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.1823em;"><span></span></span></span></span></span></span></span><span class="mclose"><span class="delimsizing mult"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:2.65em;"><span style="top:-4.65em;"><span class="pstrut" style="height:6.8em;"></span><span style="width:0.667em;height:4.800em;"><svg xmlns="http://www.w3.org/2000/svg" width="0.667em" height="4.800em" viewBox="0 0 667 4800"><path d="M347 1759 V0 H0 V84 H263 V1759 v1200 v1759 H0 v84 H347z
+M347 1759 V0 H263 V1759 v1200 v1759 h84z"></path></svg></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:2.15em;"><span></span></span></span></span></span></span></span></span></span></span></span></p>
+<p>然后进入 Shader 部分，前半部分是我们老生常谈的从深度图重建世界坐标，internal_WorldToProjector 是我们上面提到的 WorldToProjector 矩阵</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">// 先对深度纹理进行采样，再得到视角空间下的线性深度值</span><br><span class="line">float linearDepth = LinearEyeDepth(SAMPLE_DEPTH_TEXTURE(_CameraDepthTexture, i.uv_depth));</span><br><span class="line">// 得到世界空间下的位置</span><br><span class="line">float3 worldPos = _WorldSpaceCameraPos + linearDepth * i.interpolatedRay.xyz;</span><br><span class="line">// 通过internal_CameraToProjector矩阵最终得到战争迷雾uv空间坐标</span><br><span class="line">worldPos = mul(internal_WorldToProjector, worldPos);</span><br><span class="line">// 使用战争迷雾uv空间坐标对迷雾纹理进行采样</span><br><span class="line">fixed3 tex = tex2D(_FogTex, worldPos.xz).rgb;</span><br></pre></td></tr></tbody></table></figure>
+<p>大体流程就是这样，还有一个主要的问题是，屏幕空间的操作在 Bulit-In 管线下依赖于 OnRenderImage，这个 API 在 URP 管线已经无法使用了，所以需要将其 Blit 部分移动至一个 URP 下的 Render Feature。</p>
+<h3 id="URP-接入">URP 接入</h3>
+<p>首先介绍一下 URP 里的几个概念，更多内容可参见 <a target="_blank" rel="noopener" href="https://docs.unity3d.com/Packages/com.unity.render-pipelines.universal@10.3/manual/index.html">官方 URP 手册</a></p>
+<ul>
+<li>RenderFeature：继承自 ScriptableRendererFeature，可以使用 RenderFeature 来插入一个 Pass 到指定渲染阶段</li>
+<li>RenderPass：继承自 ScriptableRenderPass，被 RenderFeature 引用，是将要插入到渲染管线的一个 Pass，具体渲染逻辑可以使用 Command Buffer 进行高度定制</li>
+<li>RenderObjects：URP 自带的一个 RenderFeature，并已经实现好了 RenderPass，作用是指定渲染阶段对指定 Layer 的游戏物体统一执行一次渲染</li>
+<li>CommandBufferPool：URP 提供的一个实用函数集，用于快速，高效获取，释放 CommandBuffer</li>
+<li>RenderTextureDescriptor：一个 RenderTexture 的描述符结构体，其中包含创建一个 RenderTexture 所需要的所有信息</li>
+<li>RenderTargetHandle：是一个作用类似 Id 的东西，使用 CommandBuffer 进行 Blit 操作的时候需要用到这个 Id，内部提供了几个 RenderTarget 方面的字段</li>
+<li>RenderTargetIdentifier：和 RenderTargetHandle 配合使用，定义具体的 RenderTexture 引用</li>
+</ul>
+<p>为了接管 Bulit-In 管线中的后处理模块，我们需要新建一个 RenderFeature 和 RenderPass（全部代码可以去文章开头的链接查看），下面给出 RenderPass 的核心代码（注意点和坑都在注释里了）</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">override</span> <span class="keyword">void</span> <span class="title">Execute</span>(<span class="params">ScriptableRenderContext context, <span class="keyword">ref</span> RenderingData renderingData</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (FogOfWarEffect.Instance == <span class="literal">null</span> || FogOfWarEffect.Instance.m_Map == <span class="literal">null</span>) <span class="keyword">return</span>;</span><br><span class="line">    <span class="comment">//先获取FOW的纹理</span></span><br><span class="line">    Texture2D fowTexture2D = FogOfWarEffect.Instance.m_Map.GetFOWTexture();</span><br><span class="line">    <span class="keyword">if</span> (fowTexture2D == <span class="literal">null</span>) <span class="keyword">return</span>;</span><br><span class="line">    CommandBuffer cmd = CommandBufferPool.Get(m_ProfilerTag);</span><br><span class="line">    <span class="comment">//计算近裁剪平面四个角对应向量，并存储在一个矩阵类型的变量中，用于Shader中世界坐标重建</span></span><br><span class="line">    CaculateRay(renderingData.cameraData.camera, cmd);</span><br><span class="line">    cmd.SetGlobalMatrix(Internal_WorldToProjector,</span><br><span class="line">        FogOfWarEffect.Instance.m_Renderer.m_WorldToProjector);</span><br><span class="line">    cmd.GetTemporaryRT(m_FowTexture.id, fowTexture2D.width, fowTexture2D.height, <span class="number">0</span>, m_FilterMode);</span><br><span class="line">    <span class="comment">//将FOW纹理Blit到RenderTexture</span></span><br><span class="line">    cmd.Blit(fowTexture2D, m_FowTexture.id, m_BlurMaterial);</span><br><span class="line">    <span class="comment">//申请模糊纹理用的RT，默认滤波模式为点滤波，但请使用双线性滤波或三线性滤波，否则模糊效果将极不明显</span></span><br><span class="line">    cmd.GetTemporaryRT(m_TempColorTextureForBlurFOW.id, fowTexture2D.width / <span class="number">2</span>, fowTexture2D.height / <span class="number">2</span>, <span class="number">0</span>,</span><br><span class="line">        m_FilterMode);</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; m_BlurInteration; i++)</span><br><span class="line">    {</span><br><span class="line">        Blit(cmd, m_FowTexture.id, m_TempColorTextureForBlurFOW.id, m_BlurMaterial);</span><br><span class="line">		<span class="keyword">var</span> tempColorTextureForExchangeBlurFOW = m_FowTexture;</span><br><span class="line">		m_FowTexture = m_TempColorTextureForBlurFOW;</span><br><span class="line">		m_TempColorTextureForBlurFOW = tempColorTextureForExchangeBlurFOW;</span><br><span class="line">    }</span><br><span class="line">    cmd.SetGlobalTexture(m_FowTexture.id, m_FowTexture.id);</span><br><span class="line">    <span class="comment">//申请Blit cameraColorTexture用的RT</span></span><br><span class="line">    cmd.GetTemporaryRT(m_TempColorTextureForBlitCameraColor.id, renderingData.cameraData.camera.scaledPixelWidth,</span><br><span class="line">        renderingData.cameraData.camera.scaledPixelHeight);</span><br><span class="line">    Blit(cmd, <span class="keyword">this</span>.source, <span class="keyword">this</span>.m_TempColorTextureForBlitCameraColor.id, m_FogOfWarMaterial);</span><br><span class="line">    Blit(cmd, <span class="keyword">this</span>.m_TempColorTextureForBlitCameraColor.id, <span class="keyword">this</span>.source);</span><br><span class="line">    cmd.ReleaseTemporaryRT(m_TempColorTextureForBlitCameraColor.id);</span><br><span class="line">    cmd.ReleaseTemporaryRT(m_TempColorTextureForBlurFOW.id);</span><br><span class="line">    cmd.ReleaseTemporaryRT(m_FowTexture.id);</span><br><span class="line">    <span class="comment">//执行命令缓冲区命令</span></span><br><span class="line">    context.ExecuteCommandBuffer(cmd);</span><br><span class="line">    CommandBufferPool.Release(cmd);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>然后在我们创建的管线 Asset 里添加 RenderFeature 就好啦</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154221.jpg" alt="v2-5f1518daf3c08796d141c03cb13828c8_720w" loading='lazy'></p>
+<p>最后说一下为什么没有使用迷雾开源库里原本的做法，因为它在最后渲染的时候，有这样一段代码</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">CustomGraphicsBlit</span>(<span class="params">RenderTexture source, RenderTexture dest, Material fxMaterial</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">//Graphics.Blit(source, dest, fxMaterial);</span></span><br><span class="line">    <span class="comment">//return;</span></span><br><span class="line">    <span class="comment">//因为dest为空，所有的渲染结果都将绘制到GameWindow</span></span><br><span class="line">    RenderTexture.active = dest;</span><br><span class="line"></span><br><span class="line">    fxMaterial.SetTexture(<span class="string">"_MainTex"</span>, source);</span><br><span class="line"></span><br><span class="line">    GL.PushMatrix();</span><br><span class="line">    GL.LoadOrtho();</span><br><span class="line"></span><br><span class="line">    fxMaterial.SetPass(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    GL.Begin(GL.QUADS);</span><br><span class="line"></span><br><span class="line">    GL.MultiTexCoord2(<span class="number">0</span>, <span class="number">0.0f</span>, <span class="number">0.0f</span>);</span><br><span class="line">    <span class="comment">//xy平面正好糊住整个屏幕</span></span><br><span class="line">    <span class="comment">//z值代表视锥体矩阵的第几行，重建世界坐标的时候可以直接取值</span></span><br><span class="line">    GL.Vertex3(<span class="number">0.0f</span>, <span class="number">0.0f</span>, <span class="number">3.0f</span>); <span class="comment">// BL</span></span><br><span class="line"></span><br><span class="line">    GL.MultiTexCoord2(<span class="number">0</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>);</span><br><span class="line">    GL.Vertex3(<span class="number">1.0f</span>, <span class="number">0.0f</span>, <span class="number">2.0f</span>); <span class="comment">// BR</span></span><br><span class="line"></span><br><span class="line">    GL.MultiTexCoord2(<span class="number">0</span>, <span class="number">1.0f</span>, <span class="number">1.0f</span>);</span><br><span class="line">    GL.Vertex3(<span class="number">1.0f</span>, <span class="number">1.0f</span>, <span class="number">1.0f</span>); <span class="comment">// TR</span></span><br><span class="line"></span><br><span class="line">    GL.MultiTexCoord2(<span class="number">0</span>, <span class="number">0.0f</span>, <span class="number">1.0f</span>);</span><br><span class="line">    GL.Vertex3(<span class="number">0.0f</span>, <span class="number">1.0f</span>, <span class="number">0.0f</span>); <span class="comment">// TL</span></span><br><span class="line"></span><br><span class="line">    GL.End();</span><br><span class="line">    GL.PopMatrix();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>百度了一下大概也能知道是什么意思，就是直接 Draw 了一个面片到相机的近裁剪平面，然后使用相应的 shader 做处理，官方文档也有相应的解释</p>
+<blockquote>
+<p>Note that if you want to use a depth or stencil buffer that is part of thesource(Render)texture, you have to manually write an equivalent of the <a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Graphics.Blit.html">Graphics.Blit</a> function - i.e.<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Graphics.SetRenderTarget.html">Graphics.SetRenderTarget</a> with destination color buffer and source depth buffer, setup orthographic projection (<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/GL.LoadOrtho.html">GL.LoadOrtho</a>), setup material pass (<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/Material.SetPass.html">Material.SetPass</a>) and draw a quad (<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/GL.Begin.html">GL.Begin</a>).</p>
+</blockquote>
+<p>但是我在 URP 中尝试使用 CommandBuffer.DrawMesh 来替代的时候，却不行</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154243.jpg" alt="v2-f4b8f553521c50767be934dc5ff7d7a3_720w" loading='lazy'></p>
+<p>所以只好舍弃掉这种计算方式，改为使用 CommandBuffer.Blit。</p>
+<h3 id="JobSystem-加速">JobSystem 加速</h3>
+<p>JobSystem 介绍参见 <a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/JobSystem.html">官方文档链接</a></p>
+<p>简单介绍一下 JobSystem 中两个主要接口</p>
+<ul>
+<li>IJob：将一个操作放在一个线程执行</li>
+<li>IJobParallelFor：可以将一个操作划分为多个块，然后放在多个线程执行，我们要使用的就是这个完全并行化的接口，具体流程参见下图</li>
+</ul>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154311.jpg" alt="v2-4e635706e6489d211c6b8ce7a3c0b6d6_720w" loading='lazy'></p>
+<p>由刚开始的程序运行流程图我们可以知道，我们要使用 Job 加速的模块是计算地图 Mask 可见性区域，而每个可见性区域的计算都由一个 Unit 决定，所以我选择将每个 Unit 的视野数据作为一个 Job 单元数据，既然我们都选择了 Job 批量处理，就干脆每隔固定间隔统一更新一次所有 Unit 的数据</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这里为了方便Profile，直接每帧计算了</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Update</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (Instance.m_FieldDatas.Count &gt; <span class="number">0</span>)</span><br><span class="line">    {</span><br><span class="line">        Instance.m_Map.SetVisible(Instance.m_FieldDatas);</span><br><span class="line">        Instance.m_IsFieldDatasUpdated = <span class="literal">true</span>;</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>随后将算法替换为 Job 实现即可，需要注意数据的初始化和释放</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> 在子线程计算视野</span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;param name="state"&gt;</span>参数（视野数据）<span class="doctag">&lt;/param&gt;</span></span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">CalculateFOV</span>(<span class="params"><span class="built_in">object</span> state</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (state == <span class="literal">null</span>)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">var</span> dt = (List&lt;FOWFieldData&gt;) state;</span><br><span class="line">    ResetNativeArray(m_Calculater.ChangeVisiblePos, <span class="keyword">this</span>.texHeight * <span class="keyword">this</span>.texWidth);</span><br><span class="line">    ResetNativeArray(m_Calculater.Arrives, <span class="keyword">this</span>.texHeight * <span class="keyword">this</span>.texWidth);</span><br><span class="line">    m_Calculater.MapData.Clear();</span><br><span class="line">    m_Calculater.UnitRadiusSquare.Clear();</span><br><span class="line">    m_Calculater.UnitPos.Clear();</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; dt.Count; i++)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (dt[i] == <span class="literal">null</span>)</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        m_Calculater.RealtimeCalculate(dt[i], <span class="keyword">this</span>);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">if</span> (m_Calculater.UnitPos.Length == <span class="number">0</span>)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.texWidth; i++)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">for</span> (<span class="built_in">int</span> j = <span class="number">0</span>; j &lt; <span class="keyword">this</span>.texHeight; j++)</span><br><span class="line">        {</span><br><span class="line">            m_Calculater.MapData[j * <span class="keyword">this</span>.texWidth + i] = (<span class="keyword">this</span>.mapData[i, j]);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    FOVCalculatorJob fovCalculatorJob = <span class="keyword">new</span> FOVCalculatorJob();</span><br><span class="line">    fovCalculatorJob.MapDeltaX = <span class="keyword">this</span>.m_DeltaX;</span><br><span class="line">    fovCalculatorJob.MapDeltaZ = <span class="keyword">this</span>.m_DeltaZ;</span><br><span class="line">    fovCalculatorJob.MapDataHeight = <span class="keyword">this</span>.texHeight;</span><br><span class="line">    fovCalculatorJob.MapDataWidth = <span class="keyword">this</span>.texWidth;</span><br><span class="line">    fovCalculatorJob.UnitPos = m_Calculater.UnitPos;</span><br><span class="line">    fovCalculatorJob.ChangeVisiblePos = m_Calculater.ChangeVisiblePos;</span><br><span class="line">    fovCalculatorJob.Arrives = m_Calculater.Arrives;</span><br><span class="line">    fovCalculatorJob.MapData = m_Calculater.MapData;</span><br><span class="line">    fovCalculatorJob.UnitRadiusSquare = m_Calculater.UnitRadiusSquare;</span><br><span class="line">    JobHandle handle = fovCalculatorJob.Schedule(dt.Count, <span class="number">1</span>);</span><br><span class="line">    handle.Complete();</span><br><span class="line">    <span class="keyword">for</span> (<span class="built_in">int</span> i = <span class="number">0</span>; i &lt; fovCalculatorJob.ChangeVisiblePos.Length; i++)</span><br><span class="line">    {</span><br><span class="line">        <span class="built_in">int</span> iIndex = i % texWidth;</span><br><span class="line">        <span class="built_in">int</span> jIndex = i / texWidth;</span><br><span class="line">        <span class="keyword">if</span> (fovCalculatorJob.ChangeVisiblePos[i])</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">this</span>.m_Calculater.SetVisibleAtPosition(<span class="keyword">this</span>, iIndex, jIndex);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">    m_MaskTexture.MarkAsUpdated();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>对于 FOVCalculatorJob 的详细内容，因为比较多，就不贴出来了，可以前往 <a target="_blank" rel="noopener" href="https://gitee.com/NKG_admin/FogOfWar/blob/JobSystem/Assets/Scripts/FogOfWar/Core/MaskCalcluater/FOVCalculatorJob.cs">FOVCalculatorJob.cs</a> 查看</p>
+<p>最后效果如下</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210924222607.png!webp" alt="img" loading='lazy'></p>
+<p>在实践 JobSystem 期间遇到了一些问题</p>
+<ul>
+<li>
+<p>读写竞争的：<a target="_blank" rel="noopener" href="https://forum.unity.com/threads/how-to-write-to-another-index-with-the-jobsystem.519981/">https://forum.unity.com/threads/how-to-write-to-another-index-with-the-jobsystem.519981/</a></p>
+</li>
+<li>
+<p>Burst 不支持引用类型的：<a target="_blank" rel="noopener" href="https://forum.unity.com/threads/nativequeue-and-burst.799116/">https://forum.unity.com/threads/nativequeue-and-burst.799116/</a></p>
+</li>
+<li>
+<p>不支持迭代的 HashMap 都来了 <a target="_blank" rel="noopener" href="https://forum.unity.com/threads/nativehashmap.529803/">https://forum.unity.com/threads/nativehashmap.529803/</a></p>
+</li>
+</ul>
+<p>也总结了 JobSystem 的一些重要知识点</p>
+<ul>
+<li>NativeArray 是唯一支持又读又写的，但是 <strong>限制为不能多个 JobBatch 写入同一个下标</strong>，否则会报错，如果实在要这样，可以尝试 <code>NativeDisableParallelForRestriction</code> 特性，这个战争迷雾的 Jobsystem 分支就有使用，但是需要注意的是不能有数组越界行为，否则 Unity 将有可能会崩溃</li>
+<li>NativeXXX 系列容器实现包含了引用类型，所以不能有 struct 包 Native 容器的操作，会报错</li>
+</ul>
+<h3 id="网游中的战争迷雾">网游中的战争迷雾</h3>
+<p>这方面其实比较好移植，我也推荐大家把战争迷雾的可见性计算放在服务器上（因为 LOL 就是这么做的，参见引用中的《LOL - 欢迎来到轮回绝境》），然后将结果下发到客户端</p>
+<p>比较明显的问题有两个</p>
+<ul>
+<li>服务器上的多线程计算，因为服务器没有 JobSystem 可用，所以需要我们自己去管理多线程，原作者的 Demo 自带了多线程，但是上了很多锁，并不优雅</li>
+<li>数据传输，其实这一块是和战争迷雾分块优化相关联的，我们不应该每次都传输整个 BitMask 到客户端，这样 100*100 的地图就会有 1kb 左右的消耗，地图越大，消耗也是指数上升，具体方案可考虑四叉树分块</li>
+</ul>
+<h3 id="项目实装">项目实装</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg" alt="v2-7f06d4dd5d47e868d6c960314af80eb3_180x120" loading='lazy'></p>
+<h3 id="参考">参考</h3>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/39850106">十：Unity 后处理性能优化</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/313298603">ILRuntime 作者林若峰分享：次世代手游渲染怎么做</a></p>
+<p><a target="_blank" rel="noopener" href="https://forum.unity.com/threads/post-process-mobile-performance-alternatives-to-graphics-blit-onrenderimage.414399/">Post Process Mobile Performance : Alternatives To Graphics.Blit , OnRenderImage ?</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/AsehesL/FogOfWar">FogOfWar 开源库</a></p>
+<p><a target="_blank" rel="noopener" href="https://technology.riotgames.com/news/welcome-death-dimension">LOL - 欢迎来到轮回绝境</a></p>
+<p><a target="_blank" rel="noopener" href="https://technology.riotgames.com/news/story-fog-and-war">LOL - 战争迷雾的故事</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/xoyojank/article/details/12259161">逍遥剑客 - 游戏中的战争迷雾</a></p>
+<p><a target="_blank" rel="noopener" href="https://assetstore.unity.com/packages/tools/utilities/ultimate-fog-of-war-76011">Ultimate Fog of War 插件</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.gemserk.com/2018/11/20/implementing-fog-of-war-for-rts-games-in-unity-2-2/">在 Unity 实现 RTS 游戏的战争迷雾</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/75517907">窝的舔 - 用于 2D 游戏光照的 ShadowMap 生成</a></p>
+<p><a target="_blank" rel="noopener" href="http://www.arinchina.com/article-4443-1.html">在 Unity 中实现战争迷雾（屏幕空间采样过程）</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/232450616">流朔 -【Unity URP】以 Render Feature 实现卡通渲染中的刘海投影</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/113367281">[实战] Unity 基于 JobSystem 一步一步优化骨骼 DynamicBone 组件 （源码）</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/NotMz/article/details/77371306?spm=1001.2014.3001.5502">UnityShader——玩弄 GlobalFog</a></p>
+<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/mobilebbki399/article/details/78444375">Fog Of War 原作者博客</a></p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/fog-of-war-based-on-ss-in-urp/">https://www.lfzxb.top/fog-of-war-based-on-ss-in-urp/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/GamePlay/">GamePlay</a><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/URP/">URP</a><a class="post-meta__tags" href="/tags/%E6%B8%B2%E6%9F%93%E7%AE%A1%E7%BA%BF/">渲染管线</a><a class="post-meta__tags" href="/tags/%E6%88%98%E4%BA%89%E8%BF%B7%E9%9B%BE/">战争迷雾</a><a class="post-meta__tags" href="/tags/JobSystem/">JobSystem</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/unity-profiler-profilingapp/" title="Unity Profiler学习笔记：监测你的应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/09/profiler-build-settings.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity Profiler学习笔记：监测你的应用</div></div><div class="info-2"><div class="info-item-1">前言 要在目标发布平台上配置您的应用程序，请将目标设备连接到您的网络或通过电缆（emmm，应该指的是usb，typec，雷电这种吧）直接连接到您的计算机。您还可以在Unity编辑器中直接对应用程序进行分析，以便在应用程序开发期间大致分析结果。 Remote profiling（远程性能分析） 你只能在Development Build勾选的情况下才能对应用程序进行性能分析。要设置此设置，请转到Build Settings(File &gt; Build Settings)并选择应用程序的目标平台。 您还可以选中Autoconnect Profiler，使Unity编辑器在构建过程中将其IP地址烘焙到内置播放器中。当你启动播放器时，它会尝试连接到分析器 指向位于烤好的IP地址的编辑器。  当您构建并运行应用程序时，播放器将出现在Profiler窗口的Attach to player下拉框中。“Attach to Player”下拉菜单显示所有运行在你本地网络上的Unity应用。您可以根据应用类型和运行应用的主机名(例如，iPhonePlayer (Toms iPhone))来识别这...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/screen-space-decal-in-urp-study/" title="URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-01-03</div><div class="info-item-2">URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。 大体思路 根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到屏幕面片四个顶点的射线，利用VS到PS的线性插值得到片元数目的射线原理，即可得知屏幕面片每一个片元对应的世界空间坐标），即可得知物体每一个片元对应的模型空间坐标，又因为我们使用了单位长度为1的Cube作为投射器，所以就可以直接用这个坐标当成UV去采样贴图（由于我们只是需要类似一个面片一样的贴花，所以需要裁剪掉除0~1范围外的所有UV），达成贴花的效果。 正文 基础设置 RenderQueue 1"Queue" = "Transparent-499" 为了避免渲染顺序问题，把其渲染队列放到Transparent，并且在任何半透明物体之前渲染 ZWri...</div></div></div></a><a class="pagination-related" href="/screen-space-plana-reflection-in-urp-study/" title="URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907132640.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-24</div><div class="info-item-2">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 继续学习Colin大神的渲染示例库，这次学习的是屏幕空间平面反射（ScreenSpacePlanarReflection），一个可以用在移动端的平面反射库，但是对图形API有要求，PC/console/vulkan android/Metal iOS，OSX，因为其中用到了Compute Shader加速计算。项目还对不同平台做了差异化处理，干货很多。 学习过程中我也有很多疑问，有一些是百度谷歌看PPT解决的，有一些就实在不知道怎么办了，在文中有说明，望知道的大佬能不吝赐教。 正文 Compute Shader 简单来说Compute Shader是运行在GPU中的计算管线中的程序，其与渲染管线相互独立，旨在将任务切分成一个个运行单元，然后充分利用GPU的并行计算能力来提高目标的运行效率，也是现代GPGPU（General Purpose Computing on GPU）的基石。 其应用起来的相关概念用一张图即可概括（有一说一这张图感觉比NVIDIA的好看和明了多了，AMD YES！）：  有关Compute Shader的更多内容参见：知乎文章：Compute Shad...</div></div></div></a><a class="pagination-related" href="/massive-grass-rendering-based-on-gpu-instance/" title="基于GPU Instance的草地渲染学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-08</div><div class="info-item-2">基于GPU Instance的草地渲染学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理 GPU Instance API 基于GPU Instance的草地渲染实现 草地渲染内容拓展  GPU Instance的底层原理 简单概括一句话就是：传递一个对象的Mesh，指定其绘制次数和材质，Unity就会为我们在GPU的统一/常量缓冲区开辟好必要的缓冲区，然后以我们指定的材质对Mesh进行我们指定次数的渲染，这样就可以达成一次Drawcall绘制海量对象的目的。 好处在于：  传统渲染方式（无合批情形）：绘制多少个对象就要整理和传递多少次数据，其中整理和传递数据的过程消耗极大，多数为性能瓶颈 GPU Instance：只用从CPU往GPU传递一次数据，大大提高了渲染效率。  ...</div></div></div></a><a class="pagination-related" href="/nkgmoba-hpbarwithshader/" title="使用Shader实现LOL血条分隔线效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010705.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-04</div><div class="info-item-2">使用Shader实现LOL血条分隔线效果</div></div><div class="info-2"><div class="info-item-1">前言 马上要去上班了，这阵子雀食是啥都不想干，技能编辑器接Slate又费脑子，索性整点小活吧，想起来当前Moba项目的血条间隔还是用虚拟列表做的，性能捉急，准备用Shader重新实现一下。 正文 所谓血条间隔就是在血条中使用分割线来帮助玩家快速计算自身生命值的，个人认为是一个非常优秀的设计，比如下面的大塔姆，玩家可以在一秒钟之内就可以知道其还有360左右的生命值  因为血条间隔宽度和数量与战斗中英雄最大生命值有关，所以根据战斗中的英雄最大血量计算得出每个血条间隔的宽度值，传入Shader进行计算绘制，所以需要进行一些换算，现有以下条件  血条宽度为107px 英雄最大生命值为3700 血条每格代表100生命值  首先是血条间隔的数量，为 3700/100 = 37 个，而这37个间隔要均匀分布在107px中，所以每个间隔的宽度为100 / 37 = 2.70，注意，是100，不是107，因为我们绘制血条间隔与血条UI自身的宽度完全无关，根本原因是我们在Shader中会使用uv.x * 100的方式来构建一个虚拟的血条，所以不论英雄最大生命值是多少，都要除100。 123456Pe...</div></div></div></a><a class="pagination-related" href="/projects-vxgi/" title="ProjectS中的全局光照系统（开发中）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-08-13</div><div class="info-item-2">ProjectS中的全局光照系统（开发中）</div></div><div class="info-2"><div class="info-item-1">文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radiance Transfer Global Illumination（PRTGI），半动态GI方案，多为离线烘焙一部分场景光照数据，运行时实时采样进行光照计算 动态漫反射全局光照（Dynamic Diffuse Global Illumination）（DDGI），PRTGI的全实时版本，把烘焙放在运行时，类似的还有SurfelGI Voxel Global Illumination（VXGI），体素+RayCast流派  其中VXGI是将场景体素化，并在体素存储几何和材质信息，从而实现实时ReLight 我们都知道，对于大世界来说，游戏的寻路和碰撞也是很令人头痛的一件事，尤其是在Unity上 ...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%AD%A3%E6%96%87"><span class="toc-number">2.</span> <span class="toc-text">正文</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E6%9E%B6%E6%9E%84"><span class="toc-number">2.1.</span> <span class="toc-text">运行架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B8%B2%E6%9F%93%E6%B5%81%E7%A8%8B"><span class="toc-number">2.2.</span> <span class="toc-text">渲染流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#URP-%E6%8E%A5%E5%85%A5"><span class="toc-number">2.3.</span> <span class="toc-text">URP 接入</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#JobSystem-%E5%8A%A0%E9%80%9F"><span class="toc-number">2.4.</span> <span class="toc-text">JobSystem 加速</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E6%B8%B8%E4%B8%AD%E7%9A%84%E6%88%98%E4%BA%89%E8%BF%B7%E9%9B%BE"><span class="toc-number">2.5.</span> <span class="toc-text">网游中的战争迷雾</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B9%E7%9B%AE%E5%AE%9E%E8%A3%85"><span class="toc-number">2.6.</span> <span class="toc-text">项目实装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">2.7.</span> <span class="toc-text">参考</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '1461ce6e920d6cc379c8a1ef7071dee0'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>

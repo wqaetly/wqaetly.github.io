@@ -1,0 +1,736 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>UniTask中文文档 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="UniTask 为Unity提供一个高性能，0GC的async/await异步方案。  基于值类型的UniTask<T>和自定义的 AsyncMethodBuilder 来实现0GC 使所有 Unity 的 AsyncOperations 和 Coroutines 可等待 基于 PlayerLoop 的任务( UniTask.Yield, UniTask.Delay, UniTask.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="UniTask中文文档">
+<meta property="og:url" content="https://www.lfzxb.top/unitask_reademe_cn/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="UniTask 为Unity提供一个高性能，0GC的async/await异步方案。  基于值类型的UniTask<T>和自定义的 AsyncMethodBuilder 来实现0GC 使所有 Unity 的 AsyncOperations 和 Coroutines 可等待 基于 PlayerLoop 的任务( UniTask.Yield, UniTask.Delay, UniTask.">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png">
+<meta property="article:published_time" content="2022-07-16T00:00:00.000Z">
+<meta property="article:modified_time" content="2022-07-16T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="C#">
+<meta property="article:tag" content="UniTask">
+<meta property="article:tag" content="async/await">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "UniTask中文文档",
+  "url": "https://www.lfzxb.top/unitask_reademe_cn/",
+  "image": "https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png",
+  "datePublished": "2022-07-16T00:00:00.000Z",
+  "dateModified": "2022-07-16T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unitask_reademe_cn/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'UniTask中文文档',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">246</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">UniTask中文文档</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">UniTask中文文档</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-07-16T00:00:00.000Z" title="发表于 2022-07-16 00:00:00">2022-07-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2022-07-16T00:00:00.000Z" title="更新于 2022-07-16 00:00:00">2022-07-16</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/">编程语言</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/CSharp/">CSharp</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">7.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>31分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unitask_reademe_cn/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2022-07-16 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>UniTask</h1>
+<p>为Unity提供一个高性能，0GC的async/await异步方案。</p>
+<ul>
+<li>基于值类型的<code>UniTask&lt;T&gt;</code>和自定义的 AsyncMethodBuilder 来实现0GC</li>
+<li>使所有 Unity 的 AsyncOperations 和 Coroutines 可等待</li>
+<li>基于 PlayerLoop 的任务( <code>UniTask.Yield</code>, <code>UniTask.Delay</code>, <code>UniTask.DelayFrame</code>, etc…) 可以替换所有协程操作</li>
+<li>对MonoBehaviour 消息事件和 uGUI 事件进行 可等待/异步枚举 拓展</li>
+<li>完全在 Unity 的 PlayerLoop 上运行，因此不使用Thread，并且同样能在 WebGL、wasm 等平台上运行。</li>
+<li>带有 Channel 和 AsyncReactiveProperty的异步 LINQ，</li>
+<li>提供一个 TaskTracker EditorWindow 以追踪所有UniTask分配来预防内存泄漏</li>
+<li>与原生 Task/ValueTask/IValueTaskSource 高度兼容的行为</li>
+</ul>
+<p>有关技术细节，请参阅博客文章：<a target="_blank" rel="noopener" href="https://medium.com/@neuecc/unitask-v2-zero-allocation-async-await-for-unity-with-asynchronous-linq-1aa9c96aa7dd">UniTask v2 — Unity 的0GC async/await 以及 异步LINQ 的使用</a><br>
+有关高级技巧，请参阅博客文章：<a target="_blank" rel="noopener" href="https://medium.com/@neuecc/extends-unitywebrequest-via-async-decorator-pattern-advanced-techniques-of-unitask-ceff9c5ee846">通过异步装饰器模式扩展 UnityWebRequest — UniTask 的高级技术</a></p>
+<h2 id="入门">入门</h2>
+<p>通过<a target="_blank" rel="noopener" href="https://github.com/Cysharp/UniTask/releases">UniTask/releases</a>页面中提供的<a target="_blank" rel="noopener" href="https://github.com/wqaetly/UniTask#upm-package">UPM 包</a>或资产包 ( <code>UniTask.*.*.*.unitypackage</code>)安装。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用UniTask所需的命名空间</span></span><br><span class="line"><span class="keyword">using</span> Cysharp.Threading.Tasks;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 你可以返回一个形如 UniTask&lt;T&gt;(或 UniTask) 的类型，这种类型事为Unity定制的，作为替代原生Task&lt;T&gt;的轻量级方案</span></span><br><span class="line"><span class="comment">// 为Unity集成的 0GC，快速调用，0消耗的 async/await 方案</span></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask&lt;<span class="built_in">string</span>&gt; <span class="title">DemoAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 你可以等待一个Unity异步对象</span></span><br><span class="line">    <span class="keyword">var</span> asset = <span class="keyword">await</span> Resources.LoadAsync&lt;TextAsset&gt;(<span class="string">"foo"</span>);</span><br><span class="line">    <span class="keyword">var</span> txt = (<span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"https://..."</span>).SendWebRequest()).downloadHandler.text;</span><br><span class="line">    <span class="keyword">await</span> SceneManager.LoadSceneAsync(<span class="string">"scene2"</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// .WithCancellation 会启用取消功能，GetCancellationTokenOnDestroy 表示获取一个依赖对象生命周期的Cancel句柄，当对象被销毁时，将会调用这个Cancel句柄，从而实现取消的功能</span></span><br><span class="line">    <span class="keyword">var</span> asset2 = <span class="keyword">await</span> Resources.LoadAsync&lt;TextAsset&gt;(<span class="string">"bar"</span>).WithCancellation(<span class="keyword">this</span>.GetCancellationTokenOnDestroy());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// .ToUniTask 可接收一个 progress 回调以及一些配置参数，Progress.Create是IProgress&lt;T&gt;的轻量级替代方案</span></span><br><span class="line">    <span class="keyword">var</span> asset3 = <span class="keyword">await</span> Resources.LoadAsync&lt;TextAsset&gt;(<span class="string">"baz"</span>).ToUniTask(Progress.Create&lt;<span class="built_in">float</span>&gt;(x =&gt; Debug.Log(x)));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 等待一个基于帧的延时操作（就像一个协程一样）</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.DelayFrame(<span class="number">100</span>); </span><br><span class="line"></span><br><span class="line">    <span class="comment">// yield return new WaitForSeconds/WaitForSecondsRealtime 的替代方案</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">10</span>), ignoreTimeScale: <span class="literal">false</span>);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 可以等待任何 playerloop 的生命周期(PreUpdate, Update, LateUpdate, 等...)</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield(PlayerLoopTiming.PreLateUpdate);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// yield return null 替代方案</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">    <span class="keyword">await</span> UniTask.NextFrame();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// WaitForEndOfFrame 替代方案 (需要 MonoBehaviour(CoroutineRunner))</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.WaitForEndOfFrame(<span class="keyword">this</span>); <span class="comment">// this 是一个 MonoBehaviour</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// yield return new WaitForFixedUpdate 替代方案，(和 UniTask.Yield(PlayerLoopTiming.FixedUpdate) 效果一样)</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.WaitForFixedUpdate();</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// yield return WaitUntil 替代方案</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.WaitUntil(() =&gt; isActive == <span class="literal">false</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// WaitUntil拓展，指定某个值改变时触发</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.WaitUntilValueChanged(<span class="keyword">this</span>, x =&gt; x.isActive);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 你可以直接 await 一个 IEnumerator 协程</span></span><br><span class="line">    <span class="keyword">await</span> FooCoroutineEnumerator();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 你可以直接 await 一个原生 task</span></span><br><span class="line">    <span class="keyword">await</span> Task.Run(() =&gt; <span class="number">100</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 多线程示例，在此行代码后的内容都运行在一个线程池上</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.SwitchToThreadPool();</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* 工作在线程池上的代码 */</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 转回主线程</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.SwitchToMainThread();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取异步的 webrequest</span></span><br><span class="line">    <span class="function"><span class="keyword">async</span> UniTask&lt;<span class="built_in">string</span>&gt; <span class="title">GetTextAsync</span>(<span class="params">UnityWebRequest req</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">var</span> op = <span class="keyword">await</span> req.SendWebRequest();</span><br><span class="line">        <span class="keyword">return</span> op.downloadHandler.text;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> task1 = GetTextAsync(UnityWebRequest.Get(<span class="string">"http://google.com"</span>));</span><br><span class="line">    <span class="keyword">var</span> task2 = GetTextAsync(UnityWebRequest.Get(<span class="string">"http://bing.com"</span>));</span><br><span class="line">    <span class="keyword">var</span> task3 = GetTextAsync(UnityWebRequest.Get(<span class="string">"http://yahoo.com"</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构造一个async-wait，并通过元组语义轻松获取所有结果</span></span><br><span class="line">    <span class="keyword">var</span> (google, bing, yahoo) = <span class="keyword">await</span> UniTask.WhenAll(task1, task2, task3);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// WhenAll简写形式</span></span><br><span class="line">    <span class="keyword">var</span> (google2, bing2, yahoo2) = <span class="keyword">await</span> (task1, task2, task3);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回一个异步值，或者你也可以使用`UniTask`(无结果), `UniTaskVoid`(协程，不可等待)</span></span><br><span class="line">    <span class="keyword">return</span> (asset <span class="keyword">as</span> TextAsset)?.text ?? <span class="keyword">throw</span> <span class="keyword">new</span> InvalidOperationException(<span class="string">"Asset not found"</span>);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="UniTask-和-AsyncOperation-基础知识">UniTask 和 AsyncOperation 基础知识</h2>
+<p>UniTask 功能依赖于 C# 7.0( <a target="_blank" rel="noopener" href="https://github.com/dotnet/roslyn/blob/master/docs/features/task-types.md">task-like custom async method builder feature</a> ) 所以需要的 Unity 最低版本是<code>Unity 2018.3</code> ，官方支持的最低版本是<code>Unity 2018.4.13f1</code>.</p>
+<p>为什么需要 UniTask（自定义task对象）？因为原生 Task 太重，与 Unity 线程（单线程）相性不好。UniTask 不使用线程和 SynchronizationContext/ExecutionContext，因为 Unity 的异步对象由 Unity 的引擎层自动调度。它实现了更快和更低的分配，并且与Unity完全兼容。</p>
+<p>你可以在使用 <code>using Cysharp.Threading.Tasks;</code>时对 <code>AsyncOperation</code>， <code>ResourceRequest</code>，<code>AssetBundleRequest</code>， <code>AssetBundleCreateRequest</code>， <code>UnityWebRequestAsyncOperation</code>， <code>AsyncGPUReadbackRequest</code>， <code>IEnumerator</code>以及其他的异步操作进行 await</p>
+<p>UniTask 提供了三种模式的扩展方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">* <span class="keyword">await</span> asyncOperation;</span><br><span class="line">* .WithCancellation(CancellationToken);</span><br><span class="line">* .ToUniTask(IProgress, PlayerLoopTiming, CancellationToken);</span><br></pre></td></tr></tbody></table></figure>
+<p><code>WithCancellation</code>是<code>ToUniTask</code>的简化版本，两者都返回<code>UniTask</code>。有关cancellation的详细信息，请参阅：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/UniTask#cancellation-and-exception-handling">取消和异常处理</a>部分。</p>
+<blockquote>
+<p>注意：await 会在 PlayerLoop 执行await对象的相应native生命周期方法时返回（如果条件满足的话），而 WithCancellation 和 ToUniTask 是从指定的 PlayerLoop 生命周期执行时返回。有关 PlayLoop生命周期 的详细信息，请参阅：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/UniTask#playerloop">PlayerLoop</a>部分。</p>
+</blockquote>
+<blockquote>
+<p>注意： AssetBundleRequest 有<code>asset</code>和<code>allAssets</code>，默认 await 返回<code>asset</code>。如果你想得到<code>allAssets</code>，你可以使用<code>AwaitForAllAssets()</code>方法。</p>
+</blockquote>
+<p><code>UniTask</code>可以使用<code>UniTask.WhenAll</code>和<code>UniTask.WhenAny</code>等实用函数。它们就像<code>Task.WhenAll</code>/<code>Task.WhenAny</code>。但它们会返回内容，这很有用。它们会返回值元组，因此您可以传递多种类型并解构每个结果。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTaskVoid <span class="title">LoadManyAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 并行加载.</span></span><br><span class="line">    <span class="keyword">var</span> (a, b, c) = <span class="keyword">await</span> UniTask.WhenAll(</span><br><span class="line">        LoadAsSprite(<span class="string">"foo"</span>),</span><br><span class="line">        LoadAsSprite(<span class="string">"bar"</span>),</span><br><span class="line">        LoadAsSprite(<span class="string">"baz"</span>));</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask&lt;Sprite&gt; <span class="title">LoadAsSprite</span>(<span class="params"><span class="built_in">string</span> path</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> resource = <span class="keyword">await</span> Resources.LoadAsync&lt;Sprite&gt;(path);</span><br><span class="line">    <span class="keyword">return</span> (resource <span class="keyword">as</span> Sprite);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果你想转换一个回调逻辑块，让它变成UniTask的话，可以使用 <code>UniTaskCompletionSource&lt;T&gt;</code> （<code>TaskCompletionSource&lt;T&gt;</code>的轻量级魔改版）</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> UniTask&lt;<span class="built_in">int</span>&gt; <span class="title">WrapByUniTaskCompletionSource</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> utcs = <span class="keyword">new</span> UniTaskCompletionSource&lt;<span class="built_in">int</span>&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当操作完成时，调用 utcs.TrySetResult();</span></span><br><span class="line">    <span class="comment">// 当操作失败时, 调用 utcs.TrySetException();</span></span><br><span class="line">    <span class="comment">// 当操作取消时, 调用 utcs.TrySetCanceled();</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> utcs.Task; <span class="comment">//本质上就是返回了一个UniTask&lt;int&gt;</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>您可以进行如下转换</p>
+<ul>
+<li><code>Task</code> -&gt; <code>UniTask </code>: 使用<code>AsUniTask</code></li>
+<li><code>UniTask</code> -&gt; <code>UniTask&lt;AsyncUnit&gt;</code>: 使用 <code>AsAsyncUnitUniTask</code></li>
+<li><code>UniTask&lt;T&gt;</code> -&gt; <code>UniTask</code>: 使用 <code>AsUniTask</code>，这两者的转换是无消耗的</li>
+</ul>
+<p>如果你想将异步转换为协程，你可以使用<code>.ToCoroutine()</code>，如果你只想允许使用协程系统，这很有用。</p>
+<p>UniTask 不能await两次。<a target="_blank" rel="noopener" href="http://xn--jhq010dhp3a.NET">这是与.NET</a> Standard 2.1 中引入的<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.valuetask-1?view=netcore-3.1">ValueTask/IValueTaskSource</a>相同的约束。</p>
+<blockquote>
+<p>永远不应在 ValueTask 实例上执行以下操作：</p>
+<ul>
+<li>多次await实例。</li>
+<li>多次调用 AsTask。</li>
+<li>在操作尚未完成时调用 .Result 或 .GetAwaiter().GetResult()，多次调用也是不允许的。</li>
+<li>混用上述行为更是不被允许的。</li>
+</ul>
+<p>如果您执行上述任何操作，则结果是未定义。</p>
+</blockquote>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> task = UniTask.DelayFrame(<span class="number">10</span>);</span><br><span class="line"><span class="keyword">await</span> task;</span><br><span class="line"><span class="keyword">await</span> task; <span class="comment">// 寄了, 抛出异常</span></span><br></pre></td></tr></tbody></table></figure>
+<p>如果实在需要多次await一个异步操作，可以使用<code>UniTask.Lazy</code>来支持多次调用。<code>.Preserve()</code>同样允许多次调用（由UniTask内部缓存的结果）。这种方法在函数范围内有多个调用时很有用。</p>
+<p>同样的<code>UniTaskCompletionSource</code>可以在同一个地方被await多次，或者在很多不同的地方被await。</p>
+<h2 id="Cancellation-and-Exception-handling">Cancellation and Exception handling</h2>
+<p>一些 UniTask 工厂方法有一个<code>CancellationToken cancellationToken = default</code>参数。Unity 的一些异步操作也有<code>WithCancellation(CancellationToken)</code>和<code>ToUniTask(..., CancellationToken cancellation = default)</code>拓展方法。</p>
+<p>可以传递原生<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.threading.cancellationtokensource"><code>CancellationTokenSource</code></a>给参数CancellationToken</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> cts = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line"></span><br><span class="line">cancelButton.onClick.AddListener(() =&gt;</span><br><span class="line">{</span><br><span class="line">    cts.Cancel();</span><br><span class="line">});</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://google.co.jp"</span>).SendWebRequest().WithCancellation(cts.Token);</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> UniTask.DelayFrame(<span class="number">1000</span>, cancellationToken: cts.Token);</span><br></pre></td></tr></tbody></table></figure>
+<p>CancellationToken 可以由<code>CancellationTokenSource</code>或 MonoBehaviour 的<code>GetCancellationTokenOnDestroy</code>扩展方法创建。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 这个CancellationTokenSource和this GameObject生命周期相同，当this GameObject Destroy的时候，就会执行Cancel</span></span><br><span class="line"><span class="keyword">await</span> UniTask.DelayFrame(<span class="number">1000</span>, cancellationToken: <span class="keyword">this</span>.GetCancellationTokenOnDestroy());</span><br></pre></td></tr></tbody></table></figure>
+<p>对于链式取消，所有异步方法都建议最后一个参数接受<code>CancellationToken cancellationToken</code>，并将<code>CancellationToken</code>从头传递到尾。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">await</span> FooAsync(<span class="keyword">this</span>.GetCancellationTokenOnDestroy());</span><br><span class="line"></span><br><span class="line"><span class="comment">// ---</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">FooAsync</span>(<span class="params">CancellationToken cancellationToken</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> BarAsync(cancellationToken);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">BarAsync</span>(<span class="params">CancellationToken cancellationToken</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">3</span>), cancellationToken);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p><code>CancellationToken</code>表示异步的生命周期。您可以使用自定义的生命周期，而不是默认的 CancellationTokenOnDestroy。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">MyBehaviour</span> : <span class="title">MonoBehaviour</span></span><br><span class="line">{</span><br><span class="line">    CancellationTokenSource disableCancellation = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">    CancellationTokenSource destroyCancellation = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">OnEnable</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (disableCancellation != <span class="literal">null</span>)</span><br><span class="line">        {</span><br><span class="line">            disableCancellation.Dispose();</span><br><span class="line">        }</span><br><span class="line">        disableCancellation = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">OnDisable</span>()</span></span><br><span class="line">    {</span><br><span class="line">        disableCancellation.Cancel();</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">OnDestroy</span>()</span></span><br><span class="line">    {</span><br><span class="line">        destroyCancellation.Cancel();</span><br><span class="line">        destroyCancellation.Dispose();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>当检测到取消时，所有方法都会向上游抛出并传播<code>OperationCanceledException</code>。当异常（不限于<code>OperationCanceledException</code>）没有在异步方法中处理时，它将最终传播到<code>UniTaskScheduler.UnobservedTaskException</code>。接收到的未处理异常的默认行为是将日志写入异常。可以使用<code>UniTaskScheduler.UnobservedExceptionWriteLogType</code>更改日志级别。如果要使用自定义行为，请为<code>UniTaskScheduler.UnobservedTaskException.</code>设置一个委托</p>
+<p>而<code>OperationCanceledException</code>是一个特殊的异常，会被<code>UnobservedTaskException</code>.无视</p>
+<p>如果要取消异步 UniTask 方法中的行为，请手动抛出<code>OperationCanceledException</code>。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTask&lt;<span class="built_in">int</span>&gt; <span class="title">FooAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">    <span class="keyword">throw</span> <span class="keyword">new</span> OperationCanceledException();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果您处理异常但想忽略（传播到全局cancellation处理的地方），请使用异常过滤器。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTask&lt;<span class="built_in">int</span>&gt; <span class="title">BarAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">var</span> x = <span class="keyword">await</span> FooAsync();</span><br><span class="line">        <span class="keyword">return</span> x * <span class="number">2</span>;</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">catch</span> (Exception ex) <span class="keyword">when</span> (!(ex <span class="keyword">is</span> OperationCanceledException)) <span class="comment">// when (ex is not OperationCanceledException) at C# 9.0</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>throws/catch<code>OperationCanceledException</code>有点重，所以如果性能是一个问题，请使用<code>UniTask.SuppressCancellationThrow</code>以避免 OperationCanceledException 抛出。它将返回<code>(bool IsCanceled, T Result)</code>而不是抛出。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> (isCanceled, _) = <span class="keyword">await</span> UniTask.DelayFrame(<span class="number">10</span>, cancellationToken: cts.Token).SuppressCancellationThrow();</span><br><span class="line"><span class="keyword">if</span> (isCanceled)</span><br><span class="line">{</span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>注意：仅当您在原方法直接调用SuppressCancellationThrow时才会抑制异常抛出。否则，返回值将被转换，且整个管道不会抑制 throws。</p>
+<h2 id="超时处理">超时处理</h2>
+<p>超时是取消的一种变体。您可以通过<code>CancellationTokenSouce.CancelAfterSlim(TimeSpan)</code>设置超时并将 CancellationToken 传递给异步方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> cts = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">cts.CancelAfterSlim(TimeSpan.FromSeconds(<span class="number">5</span>)); <span class="comment">// 5sec timeout.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://foo"</span>).SendWebRequest().WithCancellation(cts.Token);</span><br><span class="line">}</span><br><span class="line"><span class="keyword">catch</span> (OperationCanceledException ex)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (ex.CancellationToken == cts.Token)</span><br><span class="line">    {</span><br><span class="line">        UnityEngine.Debug.Log(<span class="string">"Timeout"</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<blockquote>
+<blockquote>
+<p><code>CancellationTokenSouce.CancelAfter</code>是一个原生的api。但是在 Unity 中你不应该使用它，因为它依赖于线程计时器。<code>CancelAfterSlim</code>是 UniTask 的扩展方法，它使用 PlayerLoop 代替。</p>
+</blockquote>
+<p>如果您想将超时与其他cancellation一起使用，请使用<code>CancellationTokenSource.CreateLinkedTokenSource</code>.</p>
+</blockquote>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> cancelToken = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">cancelButton.onClick.AddListener(()=&gt;</span><br><span class="line">{</span><br><span class="line">    cancelToken.Cancel(); <span class="comment">// 点击按钮后取消</span></span><br><span class="line">});</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> timeoutToken = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">timeoutToken.CancelAfterSlim(TimeSpan.FromSeconds(<span class="number">5</span>)); <span class="comment">// 设置5s超时</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">try</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 链接token</span></span><br><span class="line">    <span class="keyword">var</span> linkedTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancelToken.Token, timeoutToken.Token);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://foo"</span>).SendWebRequest().WithCancellation(linkedTokenSource.Token);</span><br><span class="line">}</span><br><span class="line"><span class="keyword">catch</span> (OperationCanceledException ex)</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">if</span> (timeoutToken.IsCancellationRequested)</span><br><span class="line">    {</span><br><span class="line">        UnityEngine.Debug.Log(<span class="string">"Timeout."</span>);</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (cancelToken.IsCancellationRequested)</span><br><span class="line">    {</span><br><span class="line">        UnityEngine.Debug.Log(<span class="string">"Cancel clicked."</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>为优化减少每个调用异步方法超时的 CancellationTokenSource 分配，您可以使用 UniTask 的<code>TimeoutController</code>.</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">TimeoutController timeoutController = <span class="keyword">new</span> TimeoutController(); <span class="comment">// 复用timeoutController</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">FooAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// 你可以通过 timeoutController.Timeout(TimeSpan) 传递到 cancellationToken.</span></span><br><span class="line">        <span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://foo"</span>).SendWebRequest()</span><br><span class="line">            .WithCancellation(timeoutController.Timeout(TimeSpan.FromSeconds(<span class="number">5</span>)));</span><br><span class="line">        timeoutController.Reset(); <span class="comment">// 当await完成后调用Reset（停止超时计时器，并准备下一次复用）</span></span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">catch</span> (OperationCanceledException ex)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">if</span> (timeoutController.IsTimeout())</span><br><span class="line">        {</span><br><span class="line">            UnityEngine.Debug.Log(<span class="string">"timeout"</span>);</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果您想将超时与其他取消源一起使用，请使用<code>new TimeoutController(CancellationToken)</code>.</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">TimeoutController timeoutController;</span><br><span class="line">CancellationTokenSource clickCancelSource;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Start</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">this</span>.clickCancelSource = <span class="keyword">new</span> CancellationTokenSource();</span><br><span class="line">    <span class="keyword">this</span>.timeoutController = <span class="keyword">new</span> TimeoutController(clickCancelSource);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>注意：UniTask 有<code>.Timeout</code>,<code>.TimeoutWithoutException</code>方法，但是，如果可能，不要使用这些，请通过<code>CancellationToken</code>. 由于<code>.Timeout</code>作用在task外部，无法停止超时任务。<code>.Timeout</code>表示超时时忽略结果。如果您将一个<code>CancellationToken</code>传递给该方法，它将从任务内部执行，因此可以停止正在运行的任务。</p>
+<h2 id="进度">进度</h2>
+<p>一些Unity的异步操作具有<code>ToUniTask(IProgress&lt;float&gt; progress = null, ...)</code>扩展方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> progress = Progress.Create&lt;<span class="built_in">float</span>&gt;(x =&gt; Debug.Log(x));</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> request = <span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://google.co.jp"</span>)</span><br><span class="line">    .SendWebRequest()</span><br><span class="line">    .ToUniTask(progress: progress);</span><br></pre></td></tr></tbody></table></figure>
+<p>您不应该使用原生的<code>new System.Progress&lt;T&gt;</code>，因为它每次都会导致GC分配。改为使用<code>Cysharp.Threading.Tasks.Progress</code>。这个 progress factory 有两个方法，<code>Create</code>和<code>CreateOnlyValueChanged</code>. <code>CreateOnlyValueChanged</code>仅在进度值更新时调用。</p>
+<p>为调用者实现 IProgress 接口会更好，因为这样可以没有 lambda 分配。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">Foo</span> : <span class="title">MonoBehaviour</span>, <span class="title">IProgress</span>&lt;<span class="title">float</span>&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Report</span>(<span class="params"><span class="built_in">float</span> <span class="keyword">value</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        UnityEngine.Debug.Log(<span class="keyword">value</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTaskVoid <span class="title">WebRequest</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">var</span> request = <span class="keyword">await</span> UnityWebRequest.Get(<span class="string">"http://google.co.jp"</span>)</span><br><span class="line">            .SendWebRequest()</span><br><span class="line">            .ToUniTask(progress: <span class="keyword">this</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="PlayerLoop">PlayerLoop</h2>
+<p>UniTask 在自定义<a target="_blank" rel="noopener" href="https://docs.unity3d.com/ScriptReference/LowLevel.PlayerLoop.html">PlayerLoop</a>上运行。UniTask 的基于 playerloop 的方法（例如<code>Delay</code>、<code>DelayFrame</code>、<code>asyncOperation.ToUniTask</code>等）接受这个<code>PlayerLoopTiming</code>。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="built_in">enum</span> PlayerLoopTiming</span><br><span class="line">{</span><br><span class="line">    Initialization = <span class="number">0</span>,</span><br><span class="line">    LastInitialization = <span class="number">1</span>,</span><br><span class="line"></span><br><span class="line">    EarlyUpdate = <span class="number">2</span>,</span><br><span class="line">    LastEarlyUpdate = <span class="number">3</span>,</span><br><span class="line"></span><br><span class="line">    FixedUpdate = <span class="number">4</span>,</span><br><span class="line">    LastFixedUpdate = <span class="number">5</span>,</span><br><span class="line"></span><br><span class="line">    PreUpdate = <span class="number">6</span>,</span><br><span class="line">    LastPreUpdate = <span class="number">7</span>,</span><br><span class="line"></span><br><span class="line">    Update = <span class="number">8</span>,</span><br><span class="line">    LastUpdate = <span class="number">9</span>,</span><br><span class="line"></span><br><span class="line">    PreLateUpdate = <span class="number">10</span>,</span><br><span class="line">    LastPreLateUpdate = <span class="number">11</span>,</span><br><span class="line"></span><br><span class="line">    PostLateUpdate = <span class="number">12</span>,</span><br><span class="line">    LastPostLateUpdate = <span class="number">13</span></span><br><span class="line">    </span><br><span class="line"><span class="meta">#<span class="keyword">if</span> UNITY_2020_2_OR_NEWER</span></span><br><span class="line">    TimeUpdate = <span class="number">14</span>,</span><br><span class="line">    LastTimeUpdate = <span class="number">15</span>,</span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>它表示何时运行，您可以检查<a target="_blank" rel="noopener" href="https://gist.github.com/neuecc/bc3a1cfd4d74501ad057e49efcd7bdae">PlayerLoopList.md</a>到 Unity 的默认 playerloop 并注入 UniTask 的自定义循环。</p>
+<p><code>PlayerLoopTiming.Update</code>与协程中的<code>yield return null</code>类似，但在 Update(Update 和 uGUI 事件(button.onClick, etc…) 前被调用（在<code>ScriptRunBehaviourUpdate</code>时被调用），yield return null 在<code>ScriptRunDelayedDynamicFrameRate</code>时被调用。<code>PlayerLoopTiming.FixedUpdate</code>类似于<code>WaitForFixedUpdate</code>。</p>
+<blockquote>
+<p><code>PlayerLoopTiming.LastPostLateUpdate</code>不等同于协程的<code>yield return new WaitForEndOfFrame()</code>. 协程的 WaitForEndOfFrame 似乎在 PlayerLoop 完成后运行。一些需要协程结束帧(<code>Texture2D.ReadPixels</code>, <code>ScreenCapture.CaptureScreenshotAsTexture</code>, <code>CommandBuffer</code>, 等) 的方法在 async/await 时无法正常工作。在这些情况下，请将 MonoBehaviour(coroutine runner) 传递给<code>UniTask.WaitForEndOfFrame</code>. 例如，<code>await UniTask.WaitForEndOfFrame(this);</code>是<code>yield return new WaitForEndOfFrame()</code>轻量级0GC的替代方案。</p>
+</blockquote>
+<p><code>yield return null</code>和<code>UniTask.Yield</code>相似但不同。<code>yield return null</code>总是返回下一帧但<code>UniTask.Yield</code>返回下一个调用。也就是说，<code>UniTask.Yield(PlayerLoopTiming.Update)</code>在 <code>PreUpdate</code>上调用，它返回相同的帧。<code>UniTask.NextFrame()</code>保证返回下一帧，您可以认为它的行为与<code>yield return null</code>一致.</p>
+<blockquote>
+<p>UniTask.Yield(without CancellationToken) 是一种特殊类型，返回<code>YieldAwaitable</code>并在 YieldRunner 上运行。它是最轻量和最快的。</p>
+</blockquote>
+<p><code>AsyncOperation</code>在原生生命周期返回。例如，await <code>SceneManager.LoadSceneAsync</code>在<code>EarlyUpdate.UpdatePreloading</code>时返回，在此之后，加载的场景的<code>Start</code>方法调用自<code>EarlyUpdate.ScriptRunDelayedStartupFrame</code>。同样的，<code>await UnityWebRequest</code>在<code>EarlyUpdate.ExecuteMainThreadJobs</code>时返回.</p>
+<p>在 UniTask 中，await 直接使用原生生命周期，<code>WithCancellation</code>和<code>ToUniTask</code>可以指定使用的原生生命周期。这通常不会有问题，但是<code>LoadSceneAsync</code>在等待之后，它会导致开始和继续的不同顺序。所以建议不要使用<code>LoadSceneAsync.ToUniTask</code>。</p>
+<p>在堆栈跟踪中，您可以检查它在 playerloop 中的运行位置。</p>
+<p><img src="https://user-images.githubusercontent.com/46207/83735571-83caea80-a68b-11ea-8d22-5e22864f0d24.png" alt="image" loading='lazy'></p>
+<p>默认情况下，UniTask 的 PlayerLoop 初始化在<code>[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]</code>.</p>
+<p>在 BeforeSceneLoad 中调用方法的顺序是不确定的，所以如果你想在其他 BeforeSceneLoad 方法中使用 UniTask，你应该尝试在此之前初始化它。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AfterAssembliesLoaded 表示将会在 BeforeSceneLoad之前调用</span></span><br><span class="line">[<span class="meta">RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">InitUniTaskLoop</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> loop = PlayerLoop.GetCurrentPlayerLoop();</span><br><span class="line">    Cysharp.Threading.Tasks.PlayerLoopHelper.Initialize(<span class="keyword">ref</span> loop);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>如果您导入 Unity 的<code>Entities</code>包，则会将自定义playerloop重置为默认值<code>BeforeSceneLoad</code>并注入 ECS 的循环。当 Unity 在 UniTask 的 initialize 方法之后调用 ECS 的 inject 方法时，UniTask 将不再工作。</p>
+<p>为了解决这个问题，您可以在 ECS 初始化后重新初始化 UniTask PlayerLoop。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 获取ECS Loop.</span></span><br><span class="line"><span class="keyword">var</span> playerLoop = ScriptBehaviourUpdateOrder.CurrentPlayerLoop;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 设置UniTask PlayerLoop</span></span><br><span class="line">PlayerLoopHelper.Initialize(<span class="keyword">ref</span> playerLoop);</span><br></pre></td></tr></tbody></table></figure>
+<p>您可以通过调用<code>PlayerLoopHelper.IsInjectedUniTaskPlayerLoop()</code>来诊断 UniTask 的PlayerLoop是否准备就绪。并且<code>PlayerLoopHelper.DumpCurrentPlayerLoop</code>还会将所有当前PlayerLoop记录到控制台。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">Start</span>()</span></span><br><span class="line">{</span><br><span class="line">    UnityEngine.Debug.Log(<span class="string">"UniTaskPlayerLoop ready? "</span> + PlayerLoopHelper.IsInjectedUniTaskPlayerLoop());</span><br><span class="line">    PlayerLoopHelper.DumpCurrentPlayerLoop();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>您可以通过删除未使用的 PlayerLoopTiming 注入来稍微优化循环成本。您可以在初始化时调用<code>PlayerLoopHelper.Initialize(InjectPlayerLoopTimings)</code>。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> loop = PlayerLoop.GetCurrentPlayerLoop();</span><br><span class="line">PlayerLoopHelper.Initialize(<span class="keyword">ref</span> loop, InjectPlayerLoopTimings.Minimum); <span class="comment">// 最小化 is Update | FixedUpdate | LastPostLateUpdate</span></span><br></pre></td></tr></tbody></table></figure>
+<p><code>InjectPlayerLoopTimings</code>有三个预设，<code>All</code>，<code>Standard</code>（除 LastPostLateUpdate 外），<code>Minimum</code>（<code>Update | FixedUpdate | LastPostLateUpdate</code>）。默认为全部，您可以组合自定义注入时间，例如<code>InjectPlayerLoopTimings.Update | InjectPlayerLoopTimings.FixedUpdate | InjectPlayerLoopTimings.PreLateUpdate</code>.</p>
+<p>使用未注入<code>PlayerLoopTiming</code>的<a target="_blank" rel="noopener" href="https://github.com/dotnet/roslyn-analyzers/blob/master/src/Microsoft.CodeAnalysis.BannedApiAnalyzers/BannedApiAnalyzers.Help.md">Microsoft.CodeAnalysis.BannedApiAnalyzers</a>可能会出错。例如，您可以为<code>InjectPlayerLoopTimings.Minimum</code>设置<code>BannedSymbols.txt</code></p>
+<figure class="highlight txt"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.Initialization; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastInitialization; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.EarlyUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastEarlyUpdate; Isn't injected this PlayerLoop in this project.d</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastFixedUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.PreUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastPreUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.PreLateUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastPreLateUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.PostLateUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.TimeUpdate; Isn't injected this PlayerLoop in this project.</span><br><span class="line">F:Cysharp.Threading.Tasks.PlayerLoopTiming.LastTimeUpdate; Isn't injected this PlayerLoop in this project.</span><br></pre></td></tr></tbody></table></figure>
+<p>您可以将<code>RS0030</code>严重性配置为错误。</p>
+<p><img src="https://user-images.githubusercontent.com/46207/109150837-bb933880-77ac-11eb-85ba-4fd15819dbd0.png" alt="image" loading='lazy'></p>
+<h2 id="async-void-与-async-UniTaskVoid-对比">async void 与 async UniTaskVoid 对比</h2>
+<p><code>async void</code>是一个原生的 C# 任务系统，因此它不能在 UniTask 系统上运行。也最好不要使用它。<code>async UniTaskVoid</code>是<code>async UniTask</code>的轻量级版本，因为它没有等待完成并立即向<code>UniTaskScheduler.UnobservedTaskException</code>报告错误. 如果您不需要等待（即发即弃），那么使用<code>UniTaskVoid</code>会更好。不幸的是，要解除警告，您需要在尾部添加<code>Forget()</code>.</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTaskVoid <span class="title">FireAndForgetMethod</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// do anything...</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Caller</span>()</span></span><br><span class="line">{</span><br><span class="line">    FireAndForgetMethod().Forget();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>UniTask 也有<code>Forget</code>方法，类似<code>UniTaskVoid</code>且效果相同。但是如果你完全不需要使用<code>await</code>，<code>UniTaskVoid</code>会更高效。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> UniTask <span class="title">DoAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// do anything...</span></span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Caller</span>()</span></span><br><span class="line">{</span><br><span class="line">    DoAsync().Forget();</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>要使用注册到事件的异步 lambda，请不要使用<code>async void</code>. 相反，您可以使用<code>UniTask.Action</code> 或 <code>UniTask.UnityAction</code>，两者都通过<code>async UniTaskVoid</code> lambda 创建委托。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">Action actEvent;</span><br><span class="line">UnityAction unityEvent; <span class="comment">// UGUI特供</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 这样是不好的: async void</span></span><br><span class="line">actEvent += <span class="keyword">async</span> () =&gt; { };</span><br><span class="line">unityEvent += <span class="keyword">async</span> () =&gt; { };</span><br><span class="line"></span><br><span class="line"><span class="comment">// 这样是可以的: 通过lamada创建Action</span></span><br><span class="line">actEvent += UniTask.Action(<span class="keyword">async</span> () =&gt; { <span class="keyword">await</span> UniTask.Yield(); });</span><br><span class="line">unityEvent += UniTask.UnityAction(<span class="keyword">async</span> () =&gt; { <span class="keyword">await</span> UniTask.Yield(); });</span><br></pre></td></tr></tbody></table></figure>
+<p><code>UniTaskVoid</code>也可以用在 MonoBehaviour 的<code>Start</code>方法中。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title">Sample</span> : <span class="title">MonoBehaviour</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">async</span> UniTaskVoid <span class="title">Start</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="comment">// async init code.</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="UniTaskTracker">UniTaskTracker</h2>
+<p>对于检查（泄露的）UniTasks 很有用。您可以在<code>Window -&gt; UniTask Tracker</code>中打开跟踪器窗口。</p>
+<p><img src="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png" alt="image" loading='lazy'></p>
+<ul>
+<li>Enable AutoReload(Toggle) - 自动重新加载。</li>
+<li>Reload - 重新加载视图（重新扫描内存中UniTask实例，并刷新界面）。</li>
+<li>GC.Collect - 调用 GC.Collect。</li>
+<li>Enable Tracking(Toggle) - 开始跟踪异步/等待 UniTask。性能影响：低。</li>
+<li>Enable StackTrace(Toggle) - 在任务启动时捕获 StackTrace。性能影响：高。</li>
+</ul>
+<p>UniTaskTracker 仅用于调试用途，因为启用跟踪和捕获堆栈跟踪很有用，但会对性能产生重大影响。推荐的用法是启用跟踪和堆栈跟踪以查找任务泄漏并在完成时禁用它们。</p>
+<h2 id="外部拓展">外部拓展</h2>
+<p>默认情况下，UniTask 支持 TextMeshPro（<code>BindTo(TMP_Text)</code>和<code>TMP_InputField</code>，并且TMP_InputField有同原生uGUI <code>InputField</code>类似的事件扩展）、DOTween（<code>Tween</code>作为等待）和Addressables（<code>AsyncOperationHandle``AsyncOperationHandle&lt;T&gt;</code>作为等待）。</p>
+<p>在单独的 asmdef 中定义，如<code>UniTask.TextMeshPro</code>, <code>UniTask.DOTween</code>, <code>UniTask.Addressables</code>.</p>
+<p>从包管理器导入包时，会自动启用 TextMeshPro 和 Addressables 支持。但是对于 DOTween 支持，需要<code>com.demigiant.dotween</code>从<a target="_blank" rel="noopener" href="https://openupm.com/packages/com.demigiant.dotween/">OpenUPM</a>导入或定义<code>UNITASK_DOTWEEN_SUPPORT</code>以启用它。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 动画序列</span></span><br><span class="line"><span class="keyword">await</span> transform.DOMoveX(<span class="number">2</span>, <span class="number">10</span>);</span><br><span class="line"><span class="keyword">await</span> transform.DOMoveZ(<span class="number">5</span>, <span class="number">20</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// 并行，并传递cancellation用于取消</span></span><br><span class="line"><span class="keyword">var</span> ct = <span class="keyword">this</span>.GetCancellationTokenOnDestroy();</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> UniTask.WhenAll(</span><br><span class="line">    transform.DOMoveX(<span class="number">10</span>, <span class="number">3</span>).WithCancellation(ct),</span><br><span class="line">    transform.DOScale(<span class="number">10</span>, <span class="number">3</span>).WithCancellation(ct));</span><br></pre></td></tr></tbody></table></figure>
+<p>DOTween 支持的默认行为( <code>await</code>, <code>WithCancellation</code>, <code>ToUniTask</code>) await tween 被终止。它适用于 Complete(true/false) 和 Kill(true/false)。但是如果你想重用tweens ( <code>SetAutoKill(false)</code>)，它就不能按预期工作。如果您想等待另一个时间点，Tween 中存在以下扩展方法，<code>AwaitForComplete</code>, <code>AwaitForPause</code>, <code>AwaitForPlay</code>, <code>AwaitForRewind</code>, <code>AwaitForStepComplete</code>。</p>
+<h2 id="AsyncEnumerable-和-Async-LINQ">AsyncEnumerable 和 Async LINQ</h2>
+<p>Unity 2020.2 支持 C# 8.0，因此您可以使用<code>await foreach</code>. 这是异步时代的新更新符号。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Unity 2020.2, C# 8.0</span></span><br><span class="line"><span class="keyword">await</span> <span class="keyword">foreach</span> (<span class="keyword">var</span> _ <span class="keyword">in</span> UniTaskAsyncEnumerable.EveryUpdate(token))</span><br><span class="line">{</span><br><span class="line">    Debug.Log(<span class="string">"Update() "</span> + Time.frameCount);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>在 C# 7.3 环境中，您可以使用该<code>ForEachAsync</code>方法以几乎相同的方式工作。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// C# 7.3(Unity 2018.3~)</span></span><br><span class="line"><span class="keyword">await</span> UniTaskAsyncEnumerable.EveryUpdate(token).ForEachAsync(_ =&gt;</span><br><span class="line">{</span><br><span class="line">    Debug.Log(<span class="string">"Update() "</span> + Time.frameCount);</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>UniTaskAsyncEnumerable 实现异步 LINQ，类似于 LINQ 的<code>IEnumerable&lt;T&gt;</code>或 Rx 的 <code>IObservable&lt;T&gt;</code>。所有标准 LINQ 查询运算符都可以应用于异步流。例如，以下代码表示如何将 Where 过滤器应用于每两次单击运行一次的按钮单击异步流。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">await</span> okButton.OnClickAsAsyncEnumerable().Where((x, i) =&gt; i % <span class="number">2</span> == <span class="number">0</span>).ForEachAsync(_ =&gt;</span><br><span class="line">{</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>Fire and Forget 风格（例如，事件处理），你也可以使用<code>Subscribe</code>.</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">okButton.OnClickAsAsyncEnumerable().Where((x, i) =&gt; i % <span class="number">2</span> == <span class="number">0</span>).Subscribe(_ =&gt;</span><br><span class="line">{</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>Async LINQ 在 时启用<code>using Cysharp.Threading.Tasks.Linq;</code>，并且<code>UniTaskAsyncEnumerable</code>在<code>UniTask.Linq</code>asmdef 中定义。</p>
+<p>它更接近 UniRx（Reactive Extensions），但 UniTaskAsyncEnumerable 是pull-base的异步流，而 Rx 是基于push-base异步流。请注意，尽管相似，但特征不同，并且细节的行为也随之不同。</p>
+<p><code>UniTaskAsyncEnumerable</code>是类似的入口点<code>Enumerable</code>。除了标准查询运算符之外，还有其他 Unity 生成器，例如<code>EveryUpdate</code>、<code>Timer</code>、<code>TimerFrame</code>、<code>Interval</code>、<code>IntervalFrame</code>和<code>EveryValueChanged</code>。并且还添加了额外的 UniTask 原始查询运算符，如<code>Append</code>, <code>Prepend</code>, <code>DistinctUntilChanged</code>, <code>ToHashSet</code>, <code>Buffer</code>, <code>CombineLatest</code>, <code>Do</code>, <code>Never</code>, <code>ForEachAsync</code>, <code>Pairwise</code>, <code>Publish</code>, <code>Queue</code>, <code>Return</code>, <code>SkipUntil</code>, <code>TakeUntil</code>, <code>SkipUntilCanceled</code>, <code>TakeUntilCanceled</code>, <code>TakeLast</code>, <code>Subscribe</code>。</p>
+<p>以 Func 作为参数的方法具有三个额外的重载，<code>***Await</code>, <code>***AwaitWithCancellation</code>。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Select(Func&lt;T, TR&gt; selector)</span><br><span class="line">SelectAwait(Func&lt;T, UniTask&lt;TR&gt;&gt; selector)</span><br><span class="line">SelectAwaitWithCancellation(Func&lt;T, CancellationToken, UniTask&lt;TR&gt;&gt; selector)</span><br></pre></td></tr></tbody></table></figure>
+<p>如果在 func 方法内部使用<code>async</code>，请使用***Awaitor <code>***AwaitWithCancellation</code>。</p>
+<p>如何创建异步迭代器：C# 8.0 支持异步迭代器（<code>async yield return</code>），但它只允许<code>IAsyncEnumerable&lt;T&gt;</code>并且当然需要 C# 8.0。UniTask 支持<code>UniTaskAsyncEnumerable.Create</code>创建自定义异步迭代器的方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// IAsyncEnumerable, C# 8.0 异步迭代器. ( 不要这样用，因为IAsyncEnumerable不被UniTask控制).</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">async</span> IAsyncEnumerable&lt;<span class="built_in">int</span>&gt; <span class="title">MyEveryUpdate</span>(<span class="params">[EnumeratorCancellation]CancellationToken cancelationToken = <span class="literal">default</span></span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> frameCount = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">    <span class="keyword">while</span> (!token.IsCancellationRequested)</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">yield</span> <span class="keyword">return</span> frameCount++;</span><br><span class="line">        <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// UniTaskAsyncEnumerable.Create 并用 `await writer.YieldAsync` 代替 `yield return`.</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">IUniTaskAsyncEnumerable</span>&lt;<span class="title">int</span>&gt; <span class="title">MyEveryUpdate</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// writer(IAsyncWriter&lt;T&gt;) has `YieldAsync(value)` method.</span></span><br><span class="line">    <span class="keyword">return</span> UniTaskAsyncEnumerable.Create&lt;<span class="built_in">int</span>&gt;(<span class="keyword">async</span> (writer, token) =&gt;</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">var</span> frameCount = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">        <span class="keyword">while</span> (!token.IsCancellationRequested)</span><br><span class="line">        {</span><br><span class="line">            <span class="keyword">await</span> writer.YieldAsync(frameCount++); <span class="comment">// instead of `yield return`</span></span><br><span class="line">            <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line">        }</span><br><span class="line">    });</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="可等待事件">可等待事件</h2>
+<p>所有 uGUI 组件都实现<code>***AsAsyncEnumerable</code>了异步事件流的转换。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">TripleClick</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="comment">// 默认情况下，使用了button.GetCancellationTokenOnDestroy 来管理异步生命周期</span></span><br><span class="line">    <span class="keyword">await</span> button.OnClickAsync();</span><br><span class="line">    <span class="keyword">await</span> button.OnClickAsync();</span><br><span class="line">    <span class="keyword">await</span> button.OnClickAsync();</span><br><span class="line">    Debug.Log(<span class="string">"Three times clicked"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 更高效的方法</span></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">TripleClick</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">using</span> (<span class="keyword">var</span> handler = button.GetAsyncClickEventHandler())</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> handler.OnClickAsync();</span><br><span class="line">        <span class="keyword">await</span> handler.OnClickAsync();</span><br><span class="line">        <span class="keyword">await</span> handler.OnClickAsync();</span><br><span class="line">        Debug.Log(<span class="string">"Three times clicked"</span>);</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用异步LINQ</span></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">TripleClick</span>(<span class="params">CancellationToken token</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> button.OnClickAsAsyncEnumerable().Take(<span class="number">3</span>).Last();</span><br><span class="line">    Debug.Log(<span class="string">"Three times clicked"</span>);</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用异步LINQ</span></span><br><span class="line"><span class="function"><span class="keyword">async</span> UniTask <span class="title">TripleClick</span>(<span class="params">CancellationToken token</span>)</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> button.OnClickAsAsyncEnumerable().Take(<span class="number">3</span>).ForEachAsync(_ =&gt;</span><br><span class="line">    {</span><br><span class="line">        Debug.Log(<span class="string">"Every clicked"</span>);</span><br><span class="line">    });</span><br><span class="line">    Debug.Log(<span class="string">"Three times clicked, complete."</span>);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>所有 MonoBehaviour 消息事件都可以转换异步流<code>AsyncTriggers</code>，可以通过<code>using Cysharp.Threading.Tasks.Triggers;</code>进行启用，.AsyncTrigger 可以使用 UniTaskAsyncEnumerable 来创建，通过<code>GetAsync***Trigger</code>触发。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> trigger = <span class="keyword">this</span>.GetOnCollisionEnterAsyncHandler();</span><br><span class="line"><span class="keyword">await</span> trigger.OnCollisionEnterAsync();</span><br><span class="line"><span class="keyword">await</span> trigger.OnCollisionEnterAsync();</span><br><span class="line"><span class="keyword">await</span> trigger.OnCollisionEnterAsync();</span><br><span class="line"></span><br><span class="line"><span class="comment">// every moves.</span></span><br><span class="line"><span class="keyword">await</span> <span class="keyword">this</span>.GetAsyncMoveTrigger().ForEachAsync(axisEventData =&gt;</span><br><span class="line">{</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p><code>AsyncReactiveProperty</code>,<code>AsyncReadOnlyReactiveProperty</code>是 UniTask 的 ReactiveProperty 版本。将异步流值绑定到 Unity 组件（Text/Selectable/TMP/Text）<code>BindTo</code>的<code>IUniTaskAsyncEnumerable&lt;T&gt;</code>扩展方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> rp = <span class="keyword">new</span> AsyncReactiveProperty&lt;<span class="built_in">int</span>&gt;(<span class="number">99</span>);</span><br><span class="line"></span><br><span class="line"><span class="comment">// AsyncReactiveProperty 本身是 IUniTaskAsyncEnumerable, 可以通过LINQ进行查询</span></span><br><span class="line">rp.ForEachAsync(x =&gt;</span><br><span class="line">{</span><br><span class="line">    Debug.Log(x);</span><br><span class="line">}, <span class="keyword">this</span>.GetCancellationTokenOnDestroy()).Forget();</span><br><span class="line"></span><br><span class="line">rp.Value = <span class="number">10</span>; <span class="comment">// 推送10给所有订阅者</span></span><br><span class="line">rp.Value = <span class="number">11</span>; <span class="comment">// 推送11给所有订阅者</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// WithoutCurrent 忽略初始值</span></span><br><span class="line"><span class="comment">// BindTo 绑定 stream value 到 unity 组件.</span></span><br><span class="line">rp.WithoutCurrent().BindTo(<span class="keyword">this</span>.textComponent);</span><br><span class="line"></span><br><span class="line"><span class="keyword">await</span> rp.WaitAsync(); <span class="comment">// 一直等待，直到下一个值被设置</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 同样支持ToReadOnlyAsyncReactiveProperty</span></span><br><span class="line"><span class="keyword">var</span> rp2 = <span class="keyword">new</span> AsyncReactiveProperty&lt;<span class="built_in">int</span>&gt;(<span class="number">99</span>);</span><br><span class="line"><span class="keyword">var</span> rorp = rp.CombineLatest(rp2, (x, y) =&gt; (x, y)).ToReadOnlyAsyncReactiveProperty(CancellationToken.None);</span><br></pre></td></tr></tbody></table></figure>
+<p>在序列中的异步处理完成之前，pull-based异步流不会获取下一个值。这可能会从按钮等推送类型的事件中溢出数据。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在3s完成前，无法获取event</span></span><br><span class="line"><span class="keyword">await</span> button.OnClickAsAsyncEnumerable().ForEachAwaitAsync(<span class="keyword">async</span> x =&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">3</span>));</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>它很有用（防止双击），但有时没用。</p>
+<p>使用该<code>Queue()</code>方法还将在异步处理期间对事件进行排队。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 异步处理中对message进行排队</span></span><br><span class="line"><span class="keyword">await</span> button.OnClickAsAsyncEnumerable().Queue().ForEachAwaitAsync(<span class="keyword">async</span> x =&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">3</span>));</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>或使用<code>Subscribe</code>, fire and forget 风格。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">button.OnClickAsAsyncEnumerable().Subscribe(<span class="keyword">async</span> x =&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">3</span>));</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="Channel">Channel</h2>
+<p><code>Channel</code>与<a target="_blank" rel="noopener" href="https://docs.microsoft.com/en-us/dotnet/api/system.threading.channels?view=netcore-3.1">System.Threading.Tasks.Channels</a>相同，类似于 GoLang Channel。</p>
+<p>目前只支持多生产者、单消费者无界渠道。它可以由<code>Channel.CreateSingleConsumerUnbounded&lt;T&gt;()</code>.</p>
+<p>对于 producer(<code>.Writer</code>)，用<code>TryWrite</code>推送值和<code>TryComplete</code>完成通道。对于 consumer(<code>.Reader</code>)，使用<code>TryRead</code>、<code>WaitToReadAsync</code>、<code>ReadAsync</code>和<code>Completion</code>，<code>ReadAllAsync</code>来读取队列的消息。</p>
+<p><code>ReadAllAsync</code>返回<code>IUniTaskAsyncEnumerable&lt;T&gt;</code> 查询 LINQ 运算符。Reader 只允许单消费者，但使用<code>.Publish()</code>查询运算符来启用多播消息。例如，制作 pub/sub 实用程序。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">AsyncMessageBroker</span>&lt;<span class="title">T</span>&gt; : <span class="title">IDisposable</span></span><br><span class="line">{</span><br><span class="line">    Channel&lt;T&gt; channel;</span><br><span class="line"></span><br><span class="line">    IConnectableUniTaskAsyncEnumerable&lt;T&gt; multicastSource;</span><br><span class="line">    IDisposable connection;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="title">AsyncMessageBroker</span>()</span></span><br><span class="line">    {</span><br><span class="line">        channel = Channel.CreateSingleConsumerUnbounded&lt;T&gt;();</span><br><span class="line">        multicastSource = channel.Reader.ReadAllAsync().Publish();</span><br><span class="line">        connection = multicastSource.Connect(); <span class="comment">// Publish returns IConnectableUniTaskAsyncEnumerable.</span></span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Publish</span>(<span class="params">T <span class="keyword">value</span></span>)</span></span><br><span class="line">    {</span><br><span class="line">        channel.Writer.TryWrite(<span class="keyword">value</span>);</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> IUniTaskAsyncEnumerable&lt;T&gt; <span class="title">Subscribe</span>()</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> multicastSource;</span><br><span class="line">    }</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">Dispose</span>()</span></span><br><span class="line">    {</span><br><span class="line">        channel.Writer.TryComplete();</span><br><span class="line">        connection.Dispose();</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="单元测试">单元测试</h2>
+<p>Unity 的<code>[UnityTest]</code>属性可以测试协程（IEnumerator）但不能测试异步。<code>UniTask.ToCoroutine</code>将 async/await 桥接到协程，以便您可以测试异步方法。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">UnityTest</span>]</span><br><span class="line"><span class="function"><span class="keyword">public</span> IEnumerator <span class="title">DelayIgnore</span>()</span> =&gt; UniTask.ToCoroutine(<span class="keyword">async</span> () =&gt;</span><br><span class="line">{</span><br><span class="line">    <span class="keyword">var</span> time = Time.realtimeSinceStartup;</span><br><span class="line"></span><br><span class="line">    Time.timeScale = <span class="number">0.5f</span>;</span><br><span class="line">    <span class="keyword">try</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> UniTask.Delay(TimeSpan.FromSeconds(<span class="number">3</span>), ignoreTimeScale: <span class="literal">true</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">var</span> elapsed = Time.realtimeSinceStartup - time;</span><br><span class="line">        Assert.AreEqual(<span class="number">3</span>, (<span class="built_in">int</span>)Math.Round(TimeSpan.FromSeconds(elapsed).TotalSeconds, MidpointRounding.ToEven));</span><br><span class="line">    }</span><br><span class="line">    <span class="keyword">finally</span></span><br><span class="line">    {</span><br><span class="line">        Time.timeScale = <span class="number">1.0f</span>;</span><br><span class="line">    }</span><br><span class="line">});</span><br></pre></td></tr></tbody></table></figure>
+<p>UniTask 自己的单元测试是使用 Unity Test Runner 和<a target="_blank" rel="noopener" href="https://github.com/Cysharp/RuntimeUnitTestToolkit">Cysharp/RuntimeUnitTestToolkit</a>编写的，以与 CI 集成并检查 IL2CPP 是否正常工作。</p>
+<h2 id="线程池限制">线程池限制</h2>
+<p>大多数 UniTask 方法在单个线程 (PlayerLoop) 上运行，只有<code>UniTask.Run</code>（<code>Task.Run</code>等效）和<code>UniTask.SwitchToThreadPool</code>在线程池上运行。如果您使用线程池，它将无法与 WebGL 等平台兼容。</p>
+<p><code>UniTask.Run</code>现在已弃用。你可以改用<code>UniTask.RunOnThreadPool</code>。并且还要考虑是否可以使用<code>UniTask.Create</code>或<code>UniTask.Void</code>。</p>
+<h2 id="IEnumerator-ToUniTask-限制">IEnumerator.ToUniTask 限制</h2>
+<p>您可以将协程（IEnumerator）转换为 UniTask（或直接等待），但它有一些限制。</p>
+<ul>
+<li>不支持<code>WaitForEndOfFrame</code>，<code>WaitForFixedUpdate</code>，<code>Coroutine</code></li>
+<li>Loop生命周期与<code>StartCoroutine</code>不一样，它使用指定<code>PlayerLoopTiming</code>的并且默认情况下，<code>PlayerLoopTiming.Update</code>在 MonoBehaviour<code>Update</code>和<code>StartCoroutine</code>的循环之前运行。</li>
+</ul>
+<p>如果您想要从协程到异步的完全兼容转换，请使用<code>IEnumerator.ToUniTask(MonoBehaviour coroutineRunner)</code>重载。它在参数 MonoBehaviour 的实例上执行 StartCoroutine 并等待它在 UniTask 中完成。</p>
+<h2 id="关于UnityEditor">关于UnityEditor</h2>
+<p>UniTask 可以像编辑器协程一样在 Unity 编辑器上运行。但是，有一些限制。</p>
+<ul>
+<li>UniTask.Delay 的 DelayType.DeltaTime、UnscaledDeltaTime 无法正常工作，因为它们无法在编辑器中获取 deltaTime。因此在 EditMode 上运行，会自动将 DelayType 更改为<code>DelayType.Realtime</code>等待正确的时间。</li>
+<li>所有 PlayerLoopTiming 都在<code>EditorApplication.update</code>生命周期上运行。</li>
+<li>带<code>-quit</code>的<code>-batchmode</code>带不起作用，因为 Unity<code>EditorApplication.update</code>在单帧后不会运行并退出。相反，不要使用<code>-quit</code>并手动退出<code>EditorApplication.Exit(0)</code>.</li>
+</ul>
+<h2 id="与原生Task-API对比">与原生Task API对比</h2>
+<p>UniTask 有许多原生的 Task-like API。此表显示了一一对应的 API 是什么。</p>
+<p>使用原生类型。</p>
+<table>
+<thead>
+<tr>
+<th>.NET Type</th>
+<th>UniTask Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IProgress&lt;T&gt;</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>CancellationToken</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>CancellationTokenSource</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p>使用 UniTask 类型.</p>
+<table>
+<thead>
+<tr>
+<th>.NET Type</th>
+<th>UniTask Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Task</code>/<code>ValueTask</code></td>
+<td><code>UniTask</code></td>
+</tr>
+<tr>
+<td><code>Task&lt;T&gt;</code>/<code>ValueTask&lt;T&gt;</code></td>
+<td><code>UniTask&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>async void</code></td>
+<td><code>async UniTaskVoid</code></td>
+</tr>
+<tr>
+<td><code>+= async () =&gt; { }</code></td>
+<td><code>UniTask.Void</code>, <code>UniTask.Action</code>, <code>UniTask.UnityAction</code></td>
+</tr>
+<tr>
+<td>—</td>
+<td><code>UniTaskCompletionSource</code></td>
+</tr>
+<tr>
+<td><code>TaskCompletionSource&lt;T&gt;</code></td>
+<td><code>UniTaskCompletionSource&lt;T&gt;</code>/<code>AutoResetUniTaskCompletionSource&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>ManualResetValueTaskSourceCore&lt;T&gt;</code></td>
+<td><code>UniTaskCompletionSourceCore&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>IValueTaskSource</code></td>
+<td><code>IUniTaskSource</code></td>
+</tr>
+<tr>
+<td><code>IValueTaskSource&lt;T&gt;</code></td>
+<td><code>IUniTaskSource&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>ValueTask.IsCompleted</code></td>
+<td><code>UniTask.Status.IsCompleted()</code></td>
+</tr>
+<tr>
+<td><code>ValueTask&lt;T&gt;.IsCompleted</code></td>
+<td><code>UniTask&lt;T&gt;.Status.IsCompleted()</code></td>
+</tr>
+<tr>
+<td><code>new Progress&lt;T&gt;</code></td>
+<td><code>Progress.Create&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>CancellationToken.Register(UnsafeRegister)</code></td>
+<td><code>CancellationToken.RegisterWithoutCaptureExecutionContext</code></td>
+</tr>
+<tr>
+<td><code>CancellationTokenSource.CancelAfter</code></td>
+<td><code>CancellationTokenSource.CancelAfterSlim</code></td>
+</tr>
+<tr>
+<td><code>Channel.CreateUnbounded&lt;T&gt;(false){ SingleReader = true }</code></td>
+<td><code>Channel.CreateSingleConsumerUnbounded&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>IAsyncEnumerable&lt;T&gt;</code></td>
+<td><code>IUniTaskAsyncEnumerable&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>IAsyncEnumerator&lt;T&gt;</code></td>
+<td><code>IUniTaskAsyncEnumerator&lt;T&gt;</code></td>
+</tr>
+<tr>
+<td><code>IAsyncDisposable</code></td>
+<td><code>IUniTaskAsyncDisposable</code></td>
+</tr>
+<tr>
+<td><code>Task.Delay</code></td>
+<td><code>UniTask.Delay</code></td>
+</tr>
+<tr>
+<td><code>Task.Yield</code></td>
+<td><code>UniTask.Yield</code></td>
+</tr>
+<tr>
+<td><code>Task.Run</code></td>
+<td><code>UniTask.RunOnThreadPool</code></td>
+</tr>
+<tr>
+<td><code>Task.WhenAll</code></td>
+<td><code>UniTask.WhenAll</code></td>
+</tr>
+<tr>
+<td><code>Task.WhenAny</code></td>
+<td><code>UniTask.WhenAny</code></td>
+</tr>
+<tr>
+<td><code>Task.CompletedTask</code></td>
+<td><code>UniTask.CompletedTask</code></td>
+</tr>
+<tr>
+<td><code>Task.FromException</code></td>
+<td><code>UniTask.FromException</code></td>
+</tr>
+<tr>
+<td><code>Task.FromResult</code></td>
+<td><code>UniTask.FromResult</code></td>
+</tr>
+<tr>
+<td><code>Task.FromCanceled</code></td>
+<td><code>UniTask.FromCanceled</code></td>
+</tr>
+<tr>
+<td><code>Task.ContinueWith</code></td>
+<td><code>UniTask.ContinueWith</code></td>
+</tr>
+<tr>
+<td><code>TaskScheduler.UnobservedTaskException</code></td>
+<td><code>UniTaskScheduler.UnobservedTaskException</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="池化配置">池化配置</h2>
+<p>UniTask 积极缓存异步promise对象以实现零分配（有关技术细节，请参阅博客文章<a target="_blank" rel="noopener" href="https://medium.com/@neuecc/unitask-v2-zero-allocation-async-await-for-unity-with-asynchronous-linq-1aa9c96aa7dd">UniTask v2 — Unity 的零分配异步/等待，使用异步 LINQ</a>）。默认情况下，它缓存所有promise ，但您可以配置<code>TaskPool.SetMaxPoolSize</code>为您的值，该值表示每种类型的缓存大小。<code>TaskPool.GetCacheSizeInfo</code>返回池中当前缓存的对象。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">foreach</span> (<span class="keyword">var</span> (type, size) <span class="keyword">in</span> TaskPool.GetCacheSizeInfo())</span><br><span class="line">{</span><br><span class="line">    Debug.Log(type + <span class="string">":"</span> + size);</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="Profiler下的分配">Profiler下的分配</h2>
+<p>在 UnityEditor 中，分析器显示编译器生成的 AsyncStateMachine 的分配，但它只发生在调试（开发）构建中。C# 编译器将 AsyncStateMachine 生成为 Debug 构建的类和 Release 构建的结构。</p>
+<p>Unity 从 2020.1 开始支持代码优化选项（右，页脚）。</p>
+<p><img src="https://user-images.githubusercontent.com/46207/89967342-2f944600-dc8c-11ea-99fc-0b74527a16f6.png" alt="" loading='lazy'></p>
+<p>您可以将 C# 编译器优化更改为 release 以删除开发版本中的 AsyncStateMachine 分配。此优化选项也可以通过设置<code>Compilation.CompilationPipeline-codeOptimization</code>和<code>Compilation.CodeOptimization</code>。</p>
+<h2 id="UniTaskSynchronizationContext">UniTaskSynchronizationContext</h2>
+<p>Unity 的默认 SynchronizationContext( <code>UnitySynchronizationContext</code>) 在性能方面表现不佳。UniTask 绕过<code>SynchronizationContext</code>(和<code>ExecutionContext</code>) 因此它不使用它，但如果存在<code>async Task</code>，则仍然使用它。<code>UniTaskSynchronizationContext</code>是<code>UnitySynchronizationContext</code>性能更好的替代品。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">SyncContextInjecter</span></span><br><span class="line">{</span><br><span class="line">    [<span class="meta">RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)</span>]</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">Inject</span>()</span></span><br><span class="line">    {</span><br><span class="line">        SynchronizationContext.SetSynchronizationContext(<span class="keyword">new</span> UniTaskSynchronizationContext());</span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>这是一个可选的选择，并不总是推荐；<code>UniTaskSynchronizationContext</code>性能不如<code>async UniTask</code>，并且不是完整的 UniTask 替代品。它也不保证与<code>UnitySynchronizationContext</code>完全兼容</p>
+<h2 id="API-References">API References</h2>
+<p>UniTask 的 API 参考由<a target="_blank" rel="noopener" href="https://dotnet.github.io/docfx/">DocFX</a>和<a target="_blank" rel="noopener" href="https://github.com/Cysharp/DocfxTemplate">Cysharp/DocfXTemplate托管在</a><a target="_blank" rel="noopener" href="https://cysharp.github.io/UniTask/api/Cysharp.Threading.Tasks.html">cysharp.github.io/UniTask</a>上。</p>
+<p>例如，UniTask 的工厂方法可以在<a target="_blank" rel="noopener" href="https://cysharp.github.io/UniTask/api/Cysharp.Threading.Tasks.UniTask.html#methods-1">UniTask#methods</a>中看到。UniTaskAsyncEnumerable 的工厂/扩展方法可以在<a target="_blank" rel="noopener" href="https://cysharp.github.io/UniTask/api/Cysharp.Threading.Tasks.Linq.UniTaskAsyncEnumerable.html#methods-1">UniTaskAsyncEnumerable#methods</a>中看到。</p>
+<h2 id="UPM-Package">UPM Package</h2>
+<h3 id="通过-git-URL-安装">通过 git URL 安装</h3>
+<p>需要支持 git 包路径查询参数的 unity 版本（Unity &gt;= 2019.3.4f1，Unity &gt;= 2020.1a21）。您可以添加<code>https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask</code>到包管理器</p>
+<p><img src="https://user-images.githubusercontent.com/46207/79450714-3aadd100-8020-11ea-8aae-b8d87fc4d7be.png" alt="image" loading='lazy'></p>
+<p><img src="https://user-images.githubusercontent.com/46207/83702872-e0f17c80-a648-11ea-8183-7469dcd4f810.png" alt="image" loading='lazy'></p>
+<p>或添加<code>"com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"</code>到<code>Packages/manifest.json</code>.</p>
+<p>如果要设置目标版本，UniTask 使用<code>*.*.*</code>发布标签，因此您可以指定一个版本，如<code>#2.1.0</code>. 例如<code>https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.1.0</code>.</p>
+<h3 id="通过-OpenUPM-安装">通过 OpenUPM 安装</h3>
+<p>该软件包在<a target="_blank" rel="noopener" href="https://openupm.com/">openupm 注册表</a>中可用。建议通过<a target="_blank" rel="noopener" href="https://github.com/openupm/openupm-cli">openupm-cli</a>安装。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">openupm add com.cysharp.unitask</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="NET-Core">.NET Core</h2>
+<p>对于 .NET Core，请使用 NuGet。</p>
+<blockquote>
+<p>PM&gt; Install-Package <a target="_blank" rel="noopener" href="https://www.nuget.org/packages/UniTask">UniTask</a></p>
+</blockquote>
+<p>.NET Core 版本的 UniTask 是 Unity UniTask 的子集，移除了 PlayerLoop 依赖的方法。</p>
+<p>它以比标准 Task/ValueTask 更高的性能运行，但在使用时应注意忽略 ExecutionContext/SynchronizationContext。<code>AysncLocal</code>也不起作用，因为它忽略了 ExecutionContext。</p>
+<p>如果您在内部使用 UniTask，但将 ValueTask 作为外部 API 提供，您可以编写如下（受<a target="_blank" rel="noopener" href="https://github.com/mgravell/PooledAwait">PooledAwait</a>启发）代码。</p>
+<figure class="highlight csharp"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title">ZeroAllocAsyncAwaitInDotNetCore</span></span><br><span class="line">{</span><br><span class="line">    <span class="function"><span class="keyword">public</span> ValueTask&lt;<span class="built_in">int</span>&gt; <span class="title">DoAsync</span>(<span class="params"><span class="built_in">int</span> x, <span class="built_in">int</span> y</span>)</span></span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">return</span> Core(<span class="keyword">this</span>, x, y);</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">static</span> <span class="keyword">async</span> UniTask&lt;<span class="built_in">int</span>&gt; <span class="title">Core</span>(<span class="params">ZeroAllocAsyncAwaitInDotNetCore self, <span class="built_in">int</span> x, <span class="built_in">int</span> y</span>)</span></span><br><span class="line">        {</span><br><span class="line">            <span class="comment">// do anything...</span></span><br><span class="line">            <span class="keyword">await</span> Task.Delay(TimeSpan.FromSeconds(x + y));</span><br><span class="line">            <span class="keyword">await</span> UniTask.Yield();</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> <span class="number">10</span>;</span><br><span class="line">        }</span><br><span class="line">    }</span><br><span class="line">}</span><br><span class="line"></span><br><span class="line"><span class="comment">// UniTask 不会返回到原生 SynchronizationContext，但可以使用 `ReturnToCurrentSynchronizationContext`来让他返回</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> ValueTask <span class="title">TestAsync</span>()</span></span><br><span class="line">{</span><br><span class="line">    <span class="keyword">await</span> <span class="keyword">using</span> (UniTask.ReturnToCurrentSynchronizationContext())</span><br><span class="line">    {</span><br><span class="line">        <span class="keyword">await</span> UniTask.SwitchToThreadPool();</span><br><span class="line">        <span class="comment">// do anything..</span></span><br><span class="line">    }</span><br><span class="line">}</span><br></pre></td></tr></tbody></table></figure>
+<p>.NET Core 版本允许用户在与Unity共享代码时（例如<a target="_blank" rel="noopener" href="https://github.com/Cysharp/MagicOnion/">CysharpOnion</a>），像使用接口一样使用UniTask。.NET Core 版本的 UniTask 可以提供丝滑的代码共享体验。</p>
+<p>WhenAll 等实用方法作为 UniTask 的补充，由<a target="_blank" rel="noopener" href="https://github.com/Cysharp/ValueTaskSupplement">Cysharp/ValueTaskSupplement</a>提供。</p>
+<h2 id="License">License</h2>
+<p>此仓库基于MIT协议</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unitask_reademe_cn/">https://www.lfzxb.top/unitask_reademe_cn/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/C/">C#</a><a class="post-meta__tags" href="/tags/UniTask/">UniTask</a><a class="post-meta__tags" href="/tags/async-await/">async/await</a></div><div class="post-share"><div class="social-share" data-image="https://user-images.githubusercontent.com/46207/83527073-4434bf00-a522-11ea-86e9-3b3975b26266.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/ci-with-teamcity/" title="从零开始基于TeamCity搭建项目的CI工作流"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207302209662.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">从零开始基于TeamCity搭建项目的CI工作流</div></div><div class="info-2"><div class="info-item-1">CI的介绍和意义 CI简单来说就是把一些流程化，重复性的人力操作放在机器上去执行的过程，从而节省大量用户的时间，并且保证构建得出的产物一定是主干最新的。 所以CI对于工程项目来说意义重大，当然对于Unity，UE这种游戏研发项目更是如此，因为稍微大点的项目出一次版本可能要10-20分钟，此外还有一些工程特化的功能例如AB构建，Shader变体搜集，各种本地缓存构建，甚至是性能监测报告，GI烘焙，PCG生成，场景切割等重度流程，很难想象这些不放在流水线上让机器自动执行，会浪费大家多少时间  为什么是TeamCity 对比Jenkins和TeamCity的使用感受，TeamCity有几个非常明显的优势  环境搭建简单，不论是Server还是Client 界面友好，美观大方 流水线拓展支持更加丰富的语言类型 环境变量提示友好，更不容易出错 Docker支持完善，方便做云服务器迁移 一些其他的基础设施比Jenkins更加完善（例如自动化单元测试），使用起来更加友好  综上，TeamCity相对于Jenkins是一个更加现代化的方案，所以我们也选择TeamCity作为CI方案 搭建教程 总...</div></div></div></a><a class="pagination-related" href="/et7-fgui-yooasset-luban-huatuo/" title="ET7+FariyGUI+huatuo+luban+yooasset接入教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">ET7+FariyGUI+huatuo+luban+yooasset接入教程</div></div><div class="info-2"><div class="info-item-1">前言 ProjectS已正式启动，准备先搭建项目框架以及整理工作流程，框架方面准备进行如下开发工作，为日后的业务开发铺好道路  接入 ET 7.0 接入 huatuo C#代码热更方案 接入 YooAssset 资源热更方案 接入 FGUI UI方案 ，并提供MVVM UI框架 接入 luban 配置表方案，并提供周边工具链 接入 UniTask，全量替换ETTask 全面移植 NKGMoba技能系统，及其周边工具链  文章主要描述各仓库接入思路和过程，目前已完成接入工作，并已开源，https://github.com/wqaetly/ET/tree/et7_fgui_yooasset_luban_huatuo，已经在最大限度上保留ET特点了，并且存档了一个Release：https://github.com/wqaetly/ET/releases/tag/et7_fgui_luban_huatuo_yooasset，追求ET原生开发体验的朋友可以下载体验了。但对于我个人而言，使用起来还有诸多不便，所以还会再进行魔改，望周知。 留个封面背景图：  ET7 ET7于前阵子发布，虽然...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/analyze-c-csharp-i-add-add-or-add-add-i/" title="对于C++/C#中的i++，++i性能问题探究（汇编分析）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-03</div><div class="info-item-2">对于C++/C#中的i++，++i性能问题探究（汇编分析）</div></div><div class="info-2"><div class="info-item-1">前言 这阵子在看面经，里面有一道题，C++中的i++和++i哪个效率更高。说实话，看到这道题当场就蒙了，平时用C#写项目都是怎么高兴怎么来，到C++这里还有这一说了？ 不懂就看答案，答案给出的是++i性能更高，理由是i++会有一次临时变量的分配消耗，存储初始i值用来返回，而++i则直接返回i+1后的值。 嗯，看上去很有道理，但是咱也不知道到底实现是不是这样的啊，看汇编去。 C++汇编分析 环境  C++环境：MinGW64 w64 3.4 CMake：Bundled 3.15.3 Debugger：MinGW-w64 GDB 7.8.1 IDE：CLion 2019.3.3 汇编语法：标准的GAS AT&amp;T语法 优化等级 O0（无优化）  前提分析 C++只在早期的时候借助C编译器把自己翻译成汇编语言，很久之前就有了自己的编译器，所以直接反编译得到的就是C++的汇编代码。 测试用例 源代码 1234567int main(){    int i = 0;    i++;    ++i;    return 0;} 汇编代码 12345678910111...</div></div></div></a><a class="pagination-related" href="/c-dic/" title="C#篇：对字典引用内容的探究"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/07/QQ截图20190723105243.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2019-07-23</div><div class="info-item-2">C#篇：对字典引用内容的探究</div></div><div class="info-2"><div class="info-item-1">前言 我现在在做的项目有这样一个需求，从二进制文件反序列化出一个类（HeroDataRes），这个类里包含一个英雄的所有基本信息，然后服务端缓存这个类，等到玩家第一次请求的时候就新建一个运行时HeroDataRT类，并将数据传输过去，由于项目采用的状态同步策略，所以服务端需要持有每个玩家操控的英雄基本信息。基本关系就是这样  那么现在就要面临一个问题，HeroDataRT是从HeroDataRes取得的数据，而HeroDataRes里面难免会有class，我们都知道，字典本身是引用类型的，那么修改HeroDataRT类中的数据会不会对HeroDataRes里面的数据产生影响呢？ 例子 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950using System;using System.Collections.Generic;namespace ConsoleApp1{    class Program    {        st...</div></div></div></a><a class="pagination-related" href="/explore-how-much-memory-size-of-valuetype-and-referencetype-in-csharp/" title="探索C#中值类型/引用类型为空时所占用的内存大小"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/02/QQ截图20200208225348.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-22</div><div class="info-item-2">探索C#中值类型/引用类型为空时所占用的内存大小</div></div><div class="info-2"><div class="info-item-1">前言 又看到一个比较让人害怕的面试题，实例化一个C#的空class会占用多少内存空间。 。。。为什么会有这种问题，当时第一反应肯定不是零，至少要像C++那样有一个区别地址的偏移吧，不然找都找不到，所以就猜了1。 结果果然不出我所料，我蒙错了，不会就学。 找了一大圈，终于找到一个讲的全面的帖子：https://docs.microsoft.com/en-us/archive/msdn-magazine/2005/may/net-framework-internals-how-the-clr-creates-runtime-objects 下面的内容基本就是围绕这篇文章来说的，也可以直接去看原文。 正文 环境：.Net Framework 4.7.2 IDE：Rider 2019.3.3 编译环境：Debug prefer x86（32bit） 值类型 值类型相较于引用类型好理解多了，他直接分配到栈上，不需要GC，不需要引用机制。所以它空间的计算也是最简单的。直接计算其中包含的字段空间即可（有一些特性会影响内存的编排，不过不在本篇文章讨论范围内了）。 计算机中的内存通常以字节的形式组...</div></div></div></a><a class="pagination-related" href="/et7-fgui-yooasset-luban-huatuo/" title="ET7+FariyGUI+huatuo+luban+yooasset接入教程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202207031724415.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-07-16</div><div class="info-item-2">ET7+FariyGUI+huatuo+luban+yooasset接入教程</div></div><div class="info-2"><div class="info-item-1">前言 ProjectS已正式启动，准备先搭建项目框架以及整理工作流程，框架方面准备进行如下开发工作，为日后的业务开发铺好道路  接入 ET 7.0 接入 huatuo C#代码热更方案 接入 YooAssset 资源热更方案 接入 FGUI UI方案 ，并提供MVVM UI框架 接入 luban 配置表方案，并提供周边工具链 接入 UniTask，全量替换ETTask 全面移植 NKGMoba技能系统，及其周边工具链  文章主要描述各仓库接入思路和过程，目前已完成接入工作，并已开源，https://github.com/wqaetly/ET/tree/et7_fgui_yooasset_luban_huatuo，已经在最大限度上保留ET特点了，并且存档了一个Release：https://github.com/wqaetly/ET/releases/tag/et7_fgui_luban_huatuo_yooasset，追求ET原生开发体验的朋友可以下载体验了。但对于我个人而言，使用起来还有诸多不便，所以还会再进行魔改，望周知。 留个封面背景图：  ET7 ET7于前阵子发布，虽然...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">UniTask</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%A5%E9%97%A8"><span class="toc-number">1.1.</span> <span class="toc-text">入门</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UniTask-%E5%92%8C-AsyncOperation-%E5%9F%BA%E7%A1%80%E7%9F%A5%E8%AF%86"><span class="toc-number">1.2.</span> <span class="toc-text">UniTask 和 AsyncOperation 基础知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cancellation-and-Exception-handling"><span class="toc-number">1.3.</span> <span class="toc-text">Cancellation and Exception handling</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%B6%85%E6%97%B6%E5%A4%84%E7%90%86"><span class="toc-number">1.4.</span> <span class="toc-text">超时处理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BF%9B%E5%BA%A6"><span class="toc-number">1.5.</span> <span class="toc-text">进度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PlayerLoop"><span class="toc-number">1.6.</span> <span class="toc-text">PlayerLoop</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#async-void-%E4%B8%8E-async-UniTaskVoid-%E5%AF%B9%E6%AF%94"><span class="toc-number">1.7.</span> <span class="toc-text">async void 与 async UniTaskVoid 对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UniTaskTracker"><span class="toc-number">1.8.</span> <span class="toc-text">UniTaskTracker</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%96%E9%83%A8%E6%8B%93%E5%B1%95"><span class="toc-number">1.9.</span> <span class="toc-text">外部拓展</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AsyncEnumerable-%E5%92%8C-Async-LINQ"><span class="toc-number">1.10.</span> <span class="toc-text">AsyncEnumerable 和 Async LINQ</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8F%AF%E7%AD%89%E5%BE%85%E4%BA%8B%E4%BB%B6"><span class="toc-number">1.11.</span> <span class="toc-text">可等待事件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Channel"><span class="toc-number">1.12.</span> <span class="toc-text">Channel</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95"><span class="toc-number">1.13.</span> <span class="toc-text">单元测试</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E9%99%90%E5%88%B6"><span class="toc-number">1.14.</span> <span class="toc-text">线程池限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#IEnumerator-ToUniTask-%E9%99%90%E5%88%B6"><span class="toc-number">1.15.</span> <span class="toc-text">IEnumerator.ToUniTask 限制</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%B3%E4%BA%8EUnityEditor"><span class="toc-number">1.16.</span> <span class="toc-text">关于UnityEditor</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8E%E5%8E%9F%E7%94%9FTask-API%E5%AF%B9%E6%AF%94"><span class="toc-number">1.17.</span> <span class="toc-text">与原生Task API对比</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B1%A0%E5%8C%96%E9%85%8D%E7%BD%AE"><span class="toc-number">1.18.</span> <span class="toc-text">池化配置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Profiler%E4%B8%8B%E7%9A%84%E5%88%86%E9%85%8D"><span class="toc-number">1.19.</span> <span class="toc-text">Profiler下的分配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UniTaskSynchronizationContext"><span class="toc-number">1.20.</span> <span class="toc-text">UniTaskSynchronizationContext</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#API-References"><span class="toc-number">1.21.</span> <span class="toc-text">API References</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UPM-Package"><span class="toc-number">1.22.</span> <span class="toc-text">UPM Package</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87-git-URL-%E5%AE%89%E8%A3%85"><span class="toc-number">1.22.1.</span> <span class="toc-text">通过 git URL 安装</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%80%9A%E8%BF%87-OpenUPM-%E5%AE%89%E8%A3%85"><span class="toc-number">1.22.2.</span> <span class="toc-text">通过 OpenUPM 安装</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#NET-Core"><span class="toc-number">1.23.</span> <span class="toc-text">.NET Core</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#License"><span class="toc-number">1.24.</span> <span class="toc-text">License</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '9258ece4c5ba124153a3f05d376bb6bd'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>
