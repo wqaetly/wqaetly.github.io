@@ -1,0 +1,738 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发">
+<meta property="og:type" content="article">
+<meta property="og:title" content="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-gameplay-demo-dev/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2026-03-16T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-03-28T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="LLM">
+<meta property="article:tag" content="深度学习">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案",
+  "url": "https://www.lfzxb.top/aigc-gameplay-demo-dev/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2026-03-16T00:00:00.000Z",
+  "dateModified": "2026-03-28T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-gameplay-demo-dev/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">248</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">188</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-03-16T00:00:00.000Z" title="发表于 2026-03-16 00:00:00">2026-03-16</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-03-28T00:00:00.000Z" title="更新于 2026-03-28 00:00:00">2026-03-28</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/%E5%AE%9E%E6%88%98%E5%BA%94%E7%94%A8/">实战应用</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">6.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>23分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-gameplay-demo-dev/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-03-28 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</h1>
+<p>在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发者而言，选择一个能够与无头AI代理完美契合的底层游戏框架至关重要。传统的商业游戏引擎往往内置了封闭、专有且性能受限的AI辅助工具（如基于轻量级模型的代码补全），这导致开发者难以利用最先进的基础通用模型进行全局上下文推理和跨文件重构。因此，将集成开发环境（VS Code）、顶级通用推理模型（通过命令行运行的Claude Code）与高度文本化、支持命令行自动化的轻量级游戏引擎相结合，成为了解决“通过AI对话完成逻辑搭建而尽量避免手动改写代码”这一痛点的最优解。</p>
+<p>本研究报告将全面、深度地评估Godot引擎在这一特定自动化工作流中的绝对优势，深入剖析其文本化存储机制的语义透明度、模型上下文协议（MCP）的深层物理架构集成，以及通过命令行驱动的无头导出能力。同时，本报告提供了一份详尽的<strong>分析对比过程</strong>，横向对比了Bevy、Defold、Cocos Creator以及纯代码框架，并引入了基于MemOS的持久化记忆架构，旨在为构建“零手动编码、全AI对话驱动”的极速游戏原型验证闭环提供最具深度、最详尽且最具可操作性的架构级建议。</p>
+<h2 id="第一部分：横向分析对比过程（为何最终选定Godot）">第一部分：横向分析对比过程（为何最终选定Godot）</h2>
+<p>在确立基于VS Code + Claude Code的工作流后，我们对市面上主流的轻量级或纯代码游戏引擎进行了严密的对比分析。以下是详细的分析对比过程，揭示了为何Godot在综合考量下脱颖而出。</p>
+<h3 id="1-Bevy：极致性能与高学习曲线的Rust-ECS架构">1. Bevy：极致性能与高学习曲线的Rust ECS架构</h3>
+<p>Bevy 是一款基于 Rust 语言的纯代码驱动、数据导向（ECS 架构）的轻量级游戏引擎。</p>
+<ul>
+<li>
+<p><strong>优势</strong>：Bevy 完全没有传统的图形编辑器，一切都是纯代码（或人类可读的 <code>.ron</code> 场景文件）。由于其高度模块化和内存安全性，它在多线程 CPU 性能上具有压倒性优势。此外，社区开发了如 <code>bevy_brp_mcp</code> 这样的服务器，允许 Claude Code 通过 Bevy 远程协议（BRP）直接连接并修改运行中的游戏实体。</p>
+</li>
+<li>
+<p><strong>劣势（淘汰原因）</strong>：在 AI 代码生成的准确度上，Claude 对 Bevy 的掌握远不如 Godot。由于 Bevy 更新极快且很多核心系统（如物理引擎）依赖社区第三方插件，Claude 经常在 Bevy 的坐标系约定和 API 上产生“幻觉”。相比之下，Godot 庞大的训练数据储备使其在 AI 生成代码时更加稳定。此外，Bevy 的 Android 移动端构建工具链（如 <code>cargo-apk</code>）需要更多手动配置，且缺乏 Godot 那样完善的开箱即用 2D/UI 工具支持。</p>
+</li>
+</ul>
+<h3 id="2-Defold：极致的包体控制与纯粹的Lua生态架构">2. Defold：极致的包体控制与纯粹的Lua生态架构</h3>
+<p>Defold是由全球知名移动游戏巨头King捐赠开源的超轻量级跨平台引擎，是现代2D移动游戏开发的性能标杆。</p>
+<ul>
+<li>
+<p><strong>优势</strong>：采用 Lua 语言，拥有极小的内存占用，其所有系统配置（DDF格式）均构建在Protobuf之上，最终序列化为清晰的纯文本结构。其移动端导出包体微小，非常适合低端安卓设备。</p>
+</li>
+<li>
+<p><strong>劣势（淘汰原因）</strong>：摒弃了传统的面向对象机制，采用基于异步消息传递的实体组件系统（ECS）理念。虽然对有经验的开发者来说性能极高，但这种消息传递机制对于 AI 来说，在处理复杂逻辑链路时容易丢失上下文，不如 Godot 直观的节点树结构容易被 AI 理解和修改。</p>
+</li>
+</ul>
+<h3 id="3-Cocos-Creator：面向前端开发者的H5跨端方案">3. Cocos Creator：面向前端开发者的H5跨端方案</h3>
+<ul>
+<li>
+<p><strong>优势</strong>：在移动 2D 和小游戏领域占有率极高，基于 TypeScript/JavaScript，对前端开发者非常友好。</p>
+</li>
+<li>
+<p><strong>劣势（淘汰原因）</strong>：其场景和预制体文件内部采用了大量的 GUID 关联引用和深度嵌套的 JSON 数据结构。相较于 Godot 清晰直白的 TOML 变体规范，LLM 在直接阅读并试图无损修改 Cocos 的场景文件时，面临着成倍增加的上下文推理负担与语法树破坏风险。且其 MCP 生态成熟度不如 Godot。</p>
+</li>
+</ul>
+<h3 id="4-纯代码驱动框架（Love2D-Raylib）">4. 纯代码驱动框架（Love2D / Raylib）</h3>
+<ul>
+<li>
+<p><strong>优势</strong>：彻底剥离了 UI 编辑器概念，源代码文本就是关于游戏世界运行状态的唯一“绝对真相”。打包测试流程极易被 AI 脚本化接管。</p>
+</li>
+<li>
+<p><strong>劣势（淘汰原因）</strong>：由于缺乏基础的编辑器工具，一切（包括 UI 布局、碰撞盒调试）都必须通过调整代码并在脑海中预演来实现。对于需要“快速验证 Gameplay”的需求而言，这不仅增加了大模型生成代码的工作量，也拉长了视觉反馈的周期。</p>
+</li>
+</ul>
+<p><strong>综合对比结论</strong>：Godot 在“可读的纯文本场景文件 (<code>.tscn</code>)”、“成熟的自动化构建管线”和“极度繁荣的 MCP AI 工具链”三者之间取得了最完美的平衡，是当前基于大模型纯对话开发的最佳基石。</p>
+<h2 id="第二部分：Godot引擎在Claude-Code工作流中的物理架构深度集成">第二部分：Godot引擎在Claude Code工作流中的物理架构深度集成</h2>
+<h3 id="文本化文件格式：LLM语义解析的基石">文本化文件格式：LLM语义解析的基石</h3>
+<p>Godot的核心场景文件（<code>.tscn</code>，即Text Scene）和核心资源文件（<code>.tres</code>，即Text Resource）本质上是基于TOML语法的变体实现。这种数据结构具有极强的声明式特征和高水平的人类/机器可读性。当Claude Code在VS Code的终端中扫描项目目录时，它可以像阅读普通的配置文件一样，准确理解一个<code>.tscn</code>文件中特定节点（Node）的父子继承层级关系、挂载的外部脚本资源绝对路径，以及物理碰撞体的精确向量坐标参数。</p>
+<p>这意味着，Claude Code不仅可以生成控制逻辑的GDScript代码，还可以通过直接修改硬盘上的<code>.tscn</code>文本文件来“组装”场景、注入UI元素节点或调整摄像机的参数。这种非侵入式的修改方式极大地减少了开发者在代码编辑器与Godot图形化编辑器之间切换的频率。</p>
+<h3 id="模型上下文协议（MCP）：突破编辑器物理边界">模型上下文协议（MCP）：突破编辑器物理边界</h3>
+<p>借助模型上下文协议（MCP），Claude Code 能够突破纯文本环境的物理限制，建立与Godot内部API的通信通道。目前主要有以下生态工具：</p>
+<ol>
+<li>
+<p><strong>基础版/高级版 (<code>godot-mcp</code> / <code>godot-mcp-pro</code>)</strong>：提供数百个细分工具，支持场景创建、节点增删、属性修改等。AI可以通过标准工具调用，在不破坏 <code>.tscn</code> 语法的情况下安全地搭建场景。</p>
+</li>
+<li>
+<p><strong>运行时闭环版 (<code>godot-mcp-runtime</code>)</strong>：最革命性的特性是<strong>运行时干预与视觉反馈闭环</strong>。Claude Code 在编写完代码后，可以启动游戏进程，模拟玩家按下键盘/鼠标动作，并调用截图工具捕获当前视口状态。AI 可以直接“看到”屏幕上的角色是否正确渲染，如果报错，AI 会读取错误堆栈并自主迭代修改代码并重启游戏。这种“编写 -&gt; 运行 -&gt; 视觉抓取 -&gt; 自纠”的闭环，完美实现了“避免手动改写代码”的诉求。</p>
+</li>
+</ol>
+<h2 id="第三部分：建立极致防腐层-——-引入-MemOS-解决-AI-记忆坍缩">第三部分：建立极致防腐层 —— 引入 MemOS 解决 AI 记忆坍缩</h2>
+<p>在传统的 AI 辅助开发中，当 Claude Code 全权负责生成大量代码时，最致命的缺陷是“上下文漂移”与“状态遗忘”。以往的最佳实践是强制维护一个 <code>CLAUDE.md</code> 文件来写入系统约束，但这会迅速消耗 Token 并在长周期开发中失效。针对这一痛点，<strong>MemOS (OpenMemory) 是目前最完美的架构级解决方案</strong>。</p>
+<h3 id="MemOS-在-Godot-项目中的集成与优势">MemOS 在 Godot 项目中的集成与优势</h3>
+<p>MemOS 是一个为 AI 代理设计的持久化记忆操作系统，它将文本、工具调用轨迹和开发者架构偏好存储在本地 SQLite 数据库中，并通过混合检索（FTS5全文搜索 + 向量检索）在需要时精准提取。</p>
+<ol>
+<li>
+<p><strong>无缝对接 Claude Code</strong>：通过安装开源的 MemOS MCP 插件（如 <code>mem0-mcp-selfhosted</code> 或官方的 OpenClaw 插件），Claude Code 会在终端环境直接获得 <code>add_memory</code>、<code>search_memories</code> 等工具。</p>
+</li>
+<li>
+<p><strong>打破单次会话壁垒</strong>：当你今天让 AI 完成了 Godot 的战斗系统后，MemOS 会在后台通过 LLM 自动提取并总结你的“架构偏好”（例如：“本项目所有实体通信必须使用 Godot 信号，严禁使用 <code>get_node()</code> 绝对路径”）。</p>
+</li>
+<li>
+<p><strong>零摩擦接力开发</strong>：几天后，当你开启一个新的 VS Code 会话并要求 AI 开发 UI 系统时，你不需要再重复粘贴冗长的架构规则。Claude Code 会自动调用 <code>search_memories</code> 查询项目历史规则和历史踩坑记录（例如：“记住这个项目使用兼容性渲染器，且 UI 必须由事件总线驱动”），从而在不爆显存、不超 Token 的情况下，保持代码架构的绝对一致性。</p>
+</li>
+</ol>
+<h2 id="第四部分：自动化APK无头构建与移动端真机部署流水线">第四部分：自动化APK无头构建与移动端真机部署流水线</h2>
+<p>为了最终实现“快速验证玩法并支持直接打包APK到手机”的极致体验，我们需要将 Godot 的底层构建能力完全封装到 VS Code 的终端中交由 AI 调度。</p>
+<h3 id="1-底层环境基线配置（仅需一次人工干预）">1. 底层环境基线配置（仅需一次人工干预）</h3>
+<p>根据 Godot Android 构建官方规范，系统必须安装 OpenJDK 17，以及通过 <code>sdkmanager</code> 安装 Android Build-Tools 35.0.1、Platform-Tools 35.0.0 和 NDK r28b 等底层编译工具链。在 Godot 项目中完成 Android 导出预设（Export Preset）的初次导入。</p>
+<h3 id="2-编写自动化部署脚本">2. 编写自动化部署脚本</h3>
+<p>在根目录指导 Claude Code 编写一个 Bash 自动化部署脚本（如 <code>deploy.sh</code>）。该脚本将整合以下无头（Headless）命令序列：</p>
+<p>Bash</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">#!/bin/bash</span><br><span class="line"># 1. 无头模式编译APK（Godot 4.x 使用 --headless）</span><br><span class="line">echo "开始无头构建 APK..."</span><br><span class="line">godot --headless --export-release "Android" /builds/game_demo.apk</span><br><span class="line"></span><br><span class="line"># 2. 清理旧版本并推送物理设备</span><br><span class="line">echo "正在推送到测试设备..."</span><br><span class="line">adb uninstall com.yourdomain.gamedemo</span><br><span class="line">adb install -r /builds/game_demo.apk</span><br><span class="line"></span><br><span class="line"># 3. 唤醒应用进程</span><br><span class="line">echo "启动游戏..."</span><br><span class="line">adb shell am start -n com.yourdomain.gamedemo/com.godot.game.GodotApp</span><br></pre></td></tr></tbody></table></figure>
+<p>(注：以上命令基于Godot 4.x标准无头导出参数 <code>godot --headless --export-release</code> 进行构建。)</p>
+<h3 id="3-全自动化验证工作流">3. 全自动化验证工作流</h3>
+<p>配置完成后，你的日常开发变成了纯自然语言的交互：</p>
+<p>你在 VS Code 终端中输入：<em>“请使用 MemOS 检索我们之前的跳跃物理参数，微调角色的重力常数，然后执行 <a target="_blank" rel="noopener" href="http://deploy.sh">deploy.sh</a> 帮我打包推送到手机上。”</em></p>
+<p>Claude Code 将自动：</p>
+<ol>
+<li>
+<p>从 MemOS 提取历史代码上下文。</p>
+</li>
+<li>
+<p>修改 <code>player.gd</code> 或 <code>.tscn</code>。</p>
+</li>
+<li>
+<p>在终端执行 <code>./deploy.sh</code>。</p>
+</li>
+<li>
+<p>几秒到几十秒内，你的手机屏幕自动亮起，最新的 Gameplay Demo 直接呈现在你手中进行触控验证。</p>
+</li>
+</ol>
+<h2 id="结论">结论</h2>
+<p>结合 <strong>Godot（引擎底座） + VS Code（开发环境） + Claude Code（AI逻辑推演） + MemOS（上下文持久化记忆）</strong>，你将获得目前业界最成熟、最快速且防大脑腐化（Brain Rot）的零代码/极少代码游戏开发工作流。Godot 优秀的文本化架构赋予了 AI 理解场景的眼睛，MemOS 赋予了 AI 跨越周期的海马体记忆，而无头自动化打包脚本则化身为 AI 部署成果的双手，共同打造出了一个无缝衔接的原型极速验证平台。</p>
+<h1>获取优秀 Gameplay 点子</h1>
+<p>既然开发管线已经跑通，接下来的核心就是寻找那一点“Spark（火花）”。对于由 AI 辅助快速开发的流程，最适合的往往是<strong>规则极简、核心机制突出</strong>（Minimalist/Single-mechanic）的点子。</p>
+<p>以下为你推荐获取优秀 Gameplay 点子和游玩免费小游戏的顶级渠道：</p>
+<h3 id="1-免费在线独立游戏与小游戏平台（直接游玩与拆解）">1. 免费在线独立游戏与小游戏平台（直接游玩与拆解）</h3>
+<ul>
+<li>
+<p><strong><a target="_blank" rel="noopener" href="http://itch.io">itch.io</a></strong>：目前全球最大的独立游戏、实验性游戏和 Game Jam 作品托管平台<code>。强烈建议你多浏览带有 `experimental`（实验性）或 `innovative-game`（创新游戏）标签的免费网页游戏</code> ``。这里的游戏往往体量极小，但核心玩法极具启发性。</p>
+</li>
+<li>
+<p><strong>Game Jolt</strong>：拥有 15 年历史的独立游戏平台，有大量免费的粉丝游戏、原型演示和网页小游戏，非常适合寻找轻量级的灵感 。</p>
+</li>
+<li>
+<p><strong>PICO-8 BBS (Lexaloffle)</strong>：这是一个“幻想主机”的官方社区，所有游戏都必须在极其严苛的代码体积、内存和 16 色像素限制下完成。这种限制逼迫开发者只能在<strong>最核心的 Gameplay 机制</strong>上做创新，是获取纯粹玩法点子的绝佳宝库``。</p>
+</li>
+<li>
+<p><strong>Kongregate / Newgrounds</strong>：虽然是老牌的网页/Flash 游戏门户，但至今仍是寻找“单一机制（Single-mechanic）”休闲游戏和硬核小游戏的好去处``。</p>
+</li>
+</ul>
+<h3 id="2-深入-Game-Jam（游戏创作马拉松）的往期档案">2. 深入 Game Jam（游戏创作马拉松）的往期档案</h3>
+<p>Game Jam 是开发者在 48 或 72 小时内围绕特定主题极限开发赛，诞生的全是“玩法验证型”的 Demo，与你的开发诉求完美契合：</p>
+<ul>
+<li>
+<p><strong>Ludum Dare (LDJAM)</strong>：全球历史最悠久、最著名的 Game Jam 之一 。你可以去翻阅往期优胜者（Top 5 甚至 Top 100）的作品，例如在“只有 10 秒”、“越陷越深”等主题下的创意``。</p>
+</li>
+<li>
+<p><strong>GMTK Game Jam</strong>：由著名游戏设计分析频道 Game Maker’s Toolkit 举办的年度赛事，是 <a target="_blank" rel="noopener" href="http://itch.io">itch.io</a> 上规模最大的 Jam 之一``。其主题往往极其强调机制的颠覆（例如：“失去控制”、“只有一个按钮”）。</p>
+</li>
+</ul>
+<h3 id="3-专业的游戏设计模式库与工具">3. 专业的游戏设计模式库与工具</h3>
+<ul>
+<li>
+<p><strong>Gameplay Design Patterns</strong>：这是一个包含 600 多种游戏设计模式的在线百科库 。它像字典一样把市面上所有游戏的机制拆解成了诸如“负反馈循环”、“非对称合作”等底层模式，可以直接用来做机制的排列组合``。</p>
+</li>
+<li>
+<p><strong>随机点子生成器 (Game Idea Generators)</strong>：当毫无头绪时，可以使用像 OccaSoftware 或 BAFTA YGD 的游戏点子生成器。它们会随机组合“类型 + 背景 + 主题 + 意外反转”，生成上亿种独特的命题，帮你打破思维定势 ``。</p>
+</li>
+<li>
+<p><strong>GDC Vault (游戏开发者大会演讲)</strong>：GDC 的免费区有大量关于原型设计和创意的演讲，例如关于如何高频产出原型的《Hitchhiker’s Guide to Rapid Prototypes》或是探讨极简设计的经典分享``。</p>
+</li>
+<li>
+<p><strong>Interface In Game</strong>：如果你需要 UI 和交互层面的灵感，这个网站收集了大量主流游戏的 UI 界面、截图和视频演示``。</p>
+</li>
+</ul>
+<p><strong>工作流建议</strong>：你可以在 <a target="_blank" rel="noopener" href="http://itch.io">itch.io</a> 或 PICO-8 上每天玩 5 个十分钟就能通关的小 Demo，遇到有趣的机制，就用自然语言把这个机制的逻辑描述出来，然后丢进你的 Claude Code 终端里，让 AI 用 Godot 快速帮你复现出一个可交互的白模。</p>
+<h1>Godot实践记录</h1>
+<p>VSCode下载： <a target="_blank" rel="noopener" href="https://code.visualstudio.com/">https://code.visualstudio.com/</a><br>
+Godot下载： <a target="_blank" rel="noopener" href="https://godotengine.org/download/windows/">https://godotengine.org/download/windows/</a> 注意选择不带.NET后缀的版本，因为GDScript对AI更友好</p>
+<h2 id="环境设置">环境设置</h2>
+<p>下载解压后</p>
+<h3 id="AI帮忙配置">AI帮忙配置</h3>
+<p>（此部分工作可以直接让AI完成：帮我在这个目录创建一个godot.cmd，并将其添加到系统环境变量中，用于任意调用godot）</p>
+<h3 id="手动配置">手动配置</h3>
+<p>在exe同级目录（例如D:\Godot\GodotEngine\Godot_v4.6.1-stable_win64_console.exe）创建godot.cmd符号链接，便于全局调用，注意路径替换成自己的console的exe</p>
+<figure class="highlight bat"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"></span><br><span class="line">"D:\Godot\GodotEngine\Godot_v4.<span class="number">6</span>.<span class="number">1</span>-stable_win64_console.exe" %*</span><br></pre></td></tr></tbody></table></figure>
+<p>设置全局变量：</p>
+<figure class="highlight powershell"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">$currentPath</span> = [<span class="type">Environment</span>]::GetEnvironmentVariable(<span class="string">"Path"</span>, <span class="string">"User"</span>); <span class="variable">$cleanParts</span> = (<span class="variable">$currentPath</span> <span class="operator">-split</span> <span class="string">";"</span>) | <span class="built_in">Where-Object</span> { <span class="variable">$_</span>.Trim() <span class="operator">-ne</span> <span class="string">""</span> <span class="operator">-and</span> <span class="variable">$_</span> <span class="operator">-notlike</span> <span class="string">"*Godot*"</span> } | <span class="built_in">Select-Object</span> <span class="literal">-Unique</span>; <span class="variable">$newPath</span> = (<span class="variable">$cleanParts</span> <span class="operator">-join</span> <span class="string">";"</span>) + <span class="string">";D:\Godot\GodotEngine"</span>; [<span class="type">Environment</span>]::SetEnvironmentVariable(<span class="string">"Path"</span>, <span class="variable">$newPath</span>, <span class="string">"User"</span>); <span class="built_in">Write-Host</span> <span class="string">"Done. Godot entries in new PATH:"</span>; ([<span class="type">Environment</span>]::GetEnvironmentVariable(<span class="string">"Path"</span>, <span class="string">"User"</span>) <span class="operator">-split</span> <span class="string">";"</span>) | <span class="built_in">Where-Object</span> { <span class="variable">$_</span> <span class="operator">-like</span> <span class="string">"*Godot*"</span> }</span><br></pre></td></tr></tbody></table></figure>
+<h2 id="编辑器设置">编辑器设置</h2>
+<p>Godot配置VSCode：打开项目-编辑器-编辑器设置-文本编辑器-外部-可执行文件路径 配置为VSCode的exe路径<br>
+新建一个脚本，双击即可打开VSCode<br>
+VSCode-Terminal-New Terminal-输入AI Code命令，例如claude，codebuddy等<br>
+告诉AI安装这个MCP：</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"mcpServers"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"godot"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">      <span class="attr">"command"</span><span class="punctuation">:</span> <span class="string">"npx"</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">"args"</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">"@coding-solo/godot-mcp"</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">"env"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">	    <span class="attr">"GODOT_PATH"</span><span class="punctuation">:</span> <span class="string">"D:\Godot\GodotEngine\Godot_v4.6.1-stable_win64_console.exe"</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">"DEBUG"</span><span class="punctuation">:</span> <span class="string">"true"</span></span><br><span class="line">      <span class="punctuation">}</span></span><br><span class="line">    <span class="punctuation">}</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
+<p>然后重启VSCode<br>
+从此时开始，就可以通过VSCode+AI开发游戏了，基本上不需要开Godot编辑器，只需要告诉AI：我想要xxxxx，帮我执行游戏，帮我重启游戏，帮我关闭游戏</p>
+<h2 id="自动化测试集成">自动化测试集成</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/bitwes/Gut">https://github.com/bitwes/Gut</a> 封装了很多有用的模式和函数，非常适合godot游戏的自动化测试<br>
+每次写完功能，或者重构完一个模块，就可以让AI自己基于GUT写自动化测试用例，从而更精确快速的修BUG</p>
+<h2 id="GDScript循环依赖最佳实践指南">GDScript循环依赖最佳实践指南</h2>
+<p>GDScript本身是一个弱类型语言，个人很不推荐使用模拟强类型功能，因为现在有AI了，强类型弱类型并没有任何区别<br>
+写惯了C#的朋友对循环引用这种问题应该都不太敏感，毕竟A引用B，B引用A这种行为还是太常见了，但是对于GDScript来说，这种情况需要格外注意避免class_name和preload，因为会直接抛出异常，推荐做法为不声明class_name，抹除类型信息，避免编译器出错，通过load在初始化时进行加载赋值，函数内部随便引用都没问题，不要在文件层进行直接定义引用，例如在B文件直接定义var a = preload(a)， 在A文件直接定义var b = preload(b)，必定报错，class_name同理<br>
+所以指导思想：</p>
+<ul>
+<li>尽可能不用class_name</li>
+<li>尽可能不用preload</li>
+<li>多用load<br>
+总而言之，preload和class_name多为全局单例和入口级别的类才使用，不然很容易循环依赖，多推荐load<br>
+下面是我自己项目处理循环依赖的总结：</li>
+</ul>
+<h2 id="循环依赖防护架构文档">循环依赖防护架构文档</h2>
+<h3 id="一、概述">一、概述</h3>
+<p>本项目采用一套<strong>严格的分层依赖架构</strong>来系统性地避免 GDScript 中 <code>class_name</code> 全局解析和 <code>preload()</code> 编译期加载可能引发的循环依赖问题。<br>
+核心思想：<strong>编译期依赖严格单向向下，运行时依赖通过 <code>load()</code> 和无类型引用来解耦。</strong></p>
+<h3 id="二、6-层分层架构">二、6 层分层架构</h3>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">Layer 0: 内置类型 (RefCounted, Node, Node2D, etc.)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 1: 叶子脚本 + class_name (Constants, Tags, BuffDef, Ball, Brick, PowerUp, Paddle...)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 2: 基类 + class_name (AwakeningEffectsBase, AwakeningDrawBase)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 3: 子模块 — 无 class_name (effects/effects_group_*.gd, draw/draw_group_*.gd)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 4: 门面/聚合器 + class_name (AwakeningEffects, AwakeningDraw, AwakeningDefs)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 5: 管理器 (game_manager.gd, buff_manager.gd)</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp;↑</span><br><span class="line"></span><br><span class="line">Layer 6: Autoload 单例 (Preloads, BuffManager, SaveManager)</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p><strong>核心原则</strong>：依赖只能<strong>向下</strong>引用，绝不允许向上引用。</p>
+<h4 id="各层详细说明">各层详细说明</h4>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>内容</th>
+<th>class_name</th>
+<th>被引用方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Layer 0</td>
+<td>Godot 内置类型</td>
+<td>引擎内置</td>
+<td>直接使用</td>
+</tr>
+<tr>
+<td>Layer 1</td>
+<td>叶子脚本（无外部依赖或仅依赖 Layer 0）</td>
+<td>✅ 有</td>
+<td><code>preload()</code> 或 class_name</td>
+</tr>
+<tr>
+<td>Layer 2</td>
+<td>基类（依赖 Layer 0-1）</td>
+<td>✅ 有</td>
+<td>路径字符串 <code>extends</code></td>
+</tr>
+<tr>
+<td>Layer 3</td>
+<td>子模块（依赖 Layer 1-2）</td>
+<td>❌ 无</td>
+<td><code>load()</code> 运行时加载</td>
+</tr>
+<tr>
+<td>Layer 4</td>
+<td>门面类（聚合 Layer 3 子模块）</td>
+<td>✅ 有</td>
+<td>class_name 或 <code>preload()</code></td>
+</tr>
+<tr>
+<td>Layer 5</td>
+<td>管理器（协调所有子系统）</td>
+<td>❌ 无 (GameManager)</td>
+<td>运行时注入</td>
+</tr>
+<tr>
+<td>Layer 6</td>
+<td>Autoload 单例</td>
+<td>引擎注册</td>
+<td>全局名称访问</td>
+</tr>
+</tbody>
+</table>
+<h3 id="三、4-种引用机制的分工">三、4 种引用机制的分工</h3>
+<table>
+<thead>
+<tr>
+<th>机制</th>
+<th>解析时机</th>
+<th>适用场景</th>
+<th>示例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>class_name</code></td>
+<td>编译期（全局注册）</td>
+<td>Layer 0-2 的叶子脚本和 Layer 4 的门面类</td>
+<td><code>class_name Constants</code></td>
+</tr>
+<tr>
+<td><code>preload()</code></td>
+<td>编译期（路径解析）</td>
+<td>同层或向下引用，编译期路径已知</td>
+<td><code>const Tags = preload("res://buffs/tags.gd")</code></td>
+</tr>
+<tr>
+<td><code>extends "res://path.gd"</code></td>
+<td>编译期（路径解析）</td>
+<td>子模块继承基类，<strong>避免 class_name 依赖</strong></td>
+<td><code>extends "res://awakening_effects_base.gd"</code></td>
+</tr>
+<tr>
+<td><code>load()</code></td>
+<td><strong>运行时</strong></td>
+<td>门面→子模块引用，<strong>打破潜在循环</strong></td>
+<td><code>load("res://effects/effects_group_a.gd")</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="四、关键设计手法">四、关键设计手法</h3>
+<h4 id="4-1-GameManager-移除-class-name">4.1 GameManager 移除 class_name</h4>
+<p><code>game_manager.gd</code> 第 2 行注释明确说明：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## class_name removed to avoid circular dependency issues with global class_name resolution.</span><br><span class="line"></span><br><span class="line">extends Node2D</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>GameManager 不声明 <code>class_name</code>，因此其他脚本无法在编译期通过类名引用它，从根源上切断了"子系统→管理器"的编译期反向依赖。</p>
+<h4 id="4-2-去类型化的-gm-引用">4.2 去类型化的 <code>gm</code> 引用</h4>
+<p>在 <code>awakening_effects_base.gd</code>、<code>awakening_draw.gd</code>、<code>awakening_effects.gd</code> 等文件中：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">var gm &nbsp;# GameManager (type annotation removed to avoid circular dependency)</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>通过<strong>移除类型注解</strong>，避免编译器在解析脚本时需要加载 GameManager 的类定义。</p>
+<h4 id="4-3-门面模式-load-运行时加载">4.3 门面模式 + <code>load()</code> 运行时加载</h4>
+<p><code>awakening_effects.gd</code> 的 <code>_init()</code> 中：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">func _init(game_manager) -&gt; void:</span><br><span class="line">&nbsp; &nbsp; gm = game_manager</span><br><span class="line">&nbsp; &nbsp; _GameStateClass = load("res://game_state.gd")</span><br><span class="line">&nbsp; &nbsp; PoolNames = _GameStateClass.PoolNames</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp; # Load sub-module scripts at runtime</span><br><span class="line">&nbsp; &nbsp; _EffectsGroupAScript = load("res://effects/effects_group_a.gd")</span><br><span class="line">&nbsp; &nbsp; _EffectsGroupBScript = load("res://effects/effects_group_b.gd")</span><br><span class="line">&nbsp; &nbsp; # ... more groups ...</span><br><span class="line"></span><br><span class="line">&nbsp; &nbsp; # Initialize all sub-modules via load()-ed scripts</span><br><span class="line">&nbsp; &nbsp; _group_a = _EffectsGroupAScript.new(game_manager)</span><br><span class="line">&nbsp; &nbsp; _group_b = _EffectsGroupBScript.new(game_manager)</span><br><span class="line">&nbsp; &nbsp; # ... more instances ...</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>门面类使用 <code>load()</code>（而非 <code>preload()</code>）在运行时加载子模块脚本，将编译期依赖转为运行时依赖，彻底打破循环。</p>
+<h4 id="4-4-子模块通过路径字符串继承">4.4 子模块通过路径字符串继承</h4>
+<p>所有 <code>effects/</code>、<code>draw/</code> 下的子模块文件使用路径字符串继承基类：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"># effects/effects_group_a.gd</span><br><span class="line">extends "res://awakening_effects_base.gd"</span><br><span class="line">  </span><br><span class="line"></span><br><span class="line"># draw/draw_group_a.gd</span><br><span class="line">extends "res://draw/awakening_draw_base.gd"</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>而非 <code>extends AwakeningEffectsBase</code>，避免触发 Godot 的全局 class_name 解析链</p>
+<p><strong>实际文件清单</strong>：</p>
+<ul>
+<li><code>effects/effects_group_a.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_group_b.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_group_c.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_group_d.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_group_e.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_group_f.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>effects/effects_events.gd</code> → <code>extends "res://awakening_effects_base.gd"</code></li>
+<li><code>draw/draw_group_a.gd</code> → <code>extends "res://draw/awakening_draw_base.gd"</code></li>
+<li><code>draw/draw_group_b.gd</code> → <code>extends "res://draw/awakening_draw_base.gd"</code></li>
+<li><code>draw/draw_group_c.gd</code> → <code>extends "res://draw/awakening_draw_base.gd"</code></li>
+<li><code>draw/draw_group_d.gd</code> → <code>extends "res://draw/awakening_draw_base.gd"</code></li>
+</ul>
+<h4 id="4-5-子模块禁止声明-class-name">4.5 子模块禁止声明 class_name</h4>
+<p><code>effects/</code>、<code>draw/</code>、<code>buffs/defs/awakenings_b*.gd</code> 等子模块文件<strong>一律不声明 <code>class_name</code></strong>，确保它们不会被其他脚本在编译期引用。</p>
+<h4 id="4-6-Autoload-单例的单向依赖">4.6 Autoload 单例的单向依赖</h4>
+<p><code>preloads.gd</code> 作为第一个加载的 Autoload，只 preload Layer 1 的叶子脚本，并明确注释：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">## Centralized script preload registry.</span><br><span class="line">## Register this as an Autoload singleton named "Preloads" (first in load order).</span><br><span class="line">## IMPORTANT: Scripts preloaded here MUST NOT reference Preloads back (no cycles).</span><br><span class="line">## Other scripts should prefer direct preload() or class_name over Preloads.XXX.</span><br><span class="line">extends Node</span><br><span class="line"></span><br><span class="line">const Constants = preload("res://constants.gd")</span><br><span class="line">const GameState = preload("res://game_state.gd")</span><br><span class="line">const Ball = preload("res://ball.gd")</span><br><span class="line"># ... 其他叶子脚本 ...</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>关键注释：</p>
+<ul>
+<li><code>Scripts preloaded here MUST NOT reference Preloads back (no cycles).</code></li>
+<li>Buff 定义类（AwakeningDefs, UpgradeDefs, PowerupDefs）使用 class_name 自动注册，<strong>不在此处 preload</strong>，以避免循环依赖。</li>
+<li>门面类（AwakeningEffects, AwakeningDraw, AwakeningTicks）使用 class_name 并通过 <code>load()</code> 加载子模块，<strong>不在此处 preload</strong>。</li>
+</ul>
+<h4 id="4-7-BuffManager-的-ready-延迟加载">4.7 BuffManager 的 <code>_ready()</code> 延迟加载</h4>
+<p><code>buff_manager.gd</code> 在 <code>_ready()</code> 中使用 <code>load()</code> 而非 <code>preload()</code> 加载依赖：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">func _ready() -&gt; void:</span><br><span class="line">&nbsp; &nbsp; _BuffClass = load("res://buffs/buff.gd")</span><br><span class="line">&nbsp; &nbsp; _BuffDefClass = load("res://buffs/buff_def.gd")</span><br><span class="line">&nbsp; &nbsp; _BuffRegistryClass = load("res://buffs/buff_registry.gd")</span><br></pre></td></tr></tbody></table></figure>
+<p>这避免了 Autoload 解析顺序导致的初始化异常。</p>
+<h4 id="4-8-GameManager-延迟注入">4.8 GameManager 延迟注入</h4>
+<p>在 <code>game_manager.gd</code> 的 <code>_ready()</code> 中（第 64 行），通过运行时赋值将自身注入到 BuffManager：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">BuffManager.game_manager = self</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<p>而非让 BuffManager 在编译期引用 GameManager，实现了运行时的反向通信。</p>
+<h3 id="五、5-条禁止模式">五、5 条禁止模式</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>禁止模式</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>Autoload 反向引用</strong> — 被 Preloads preload 的脚本不得引用 Preloads</td>
+<td>会导致 Autoload 加载时的循环解析</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>门面↔子模块循环</strong> — 子模块不得引用其门面类</td>
+<td>门面 <code>load()</code> 子模块，子模块若反向引用门面则形成循环</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>跨层向上 class_name 引用</strong> — 低层不得使用高层的 class_name</td>
+<td>破坏单向依赖原则</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>子模块声明 class_name</strong> — <code>effects/</code>、<code>draw/</code> 等目录下的文件禁止 class_name</td>
+<td>防止被其他脚本在编译期引用</td>
+</tr>
+<tr>
+<td>5</td>
+<td><strong>门面 preload 子模块</strong> — 门面必须用 <code>load()</code>（非 <code>preload()</code>）引用子模块</td>
+<td><code>preload()</code> 是编译期解析，会触发循环</td>
+</tr>
+</tbody>
+</table>
+<h3 id="六、依赖关系图">六、依赖关系图</h3>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 6: Autoload 单例 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;┌──────────┐ &nbsp;┌─────────────┐ &nbsp;┌─────────────┐ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;│ Preloads │ &nbsp;│ BuffManager │ &nbsp;│ SaveManager │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;└────┬─────┘ &nbsp;└──────┬──────┘ &nbsp;└─────────────┘ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; │preload() &nbsp; &nbsp; &nbsp; │load() &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">└───────┼────────────────┼────────────────────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; ▼ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 5: 管理器 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;┌──────────────────────────────────────────┐ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;│ game_manager.gd (无 class_name) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;│ &nbsp;- BuffManager.game_manager = self &nbsp; &nbsp; &nbsp; │ ← 运行时注入 &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;│ &nbsp;- 持有 AwakeningEffects / Draw 实例 &nbsp; &nbsp; │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;└──────────────────┬───────────────────────┘ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ 构造函数传参 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">└─────────────────────┼───────────────────────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 4: 门面/聚合器 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;┌──────────────────┐ &nbsp;┌───────────────┐ &nbsp;┌────────────────┐ &nbsp; │</span><br><span class="line">│ &nbsp;│ AwakeningEffects │ &nbsp;│ AwakeningDraw │ &nbsp;│ AwakeningDefs &nbsp;│ &nbsp; │</span><br><span class="line">│ &nbsp;│ (class_name ✅) &nbsp;│ &nbsp;│ (class_name ✅)│ &nbsp;│ (class_name ✅)│ &nbsp; │</span><br><span class="line">│ &nbsp;└────────┬─────────┘ &nbsp;└───────┬───────┘ &nbsp;└────────────────┘ &nbsp; │</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │load() &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│load() &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">└───────────┼────────────────────┼────────────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 3: 子模块 (无 class_name) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;effects/effects_group_a~f.gd &nbsp; &nbsp;draw/draw_group_a~d.gd &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;effects/effects_events.gd &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │extends "path" &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│extends "path" &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">└───────────┼────────────────────────┼────────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 2: 基类 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;┌──────────────────────┐ &nbsp;┌──────────────────────┐ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;│ AwakeningEffectsBase │ &nbsp;│ AwakeningDrawBase &nbsp; &nbsp;│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;│ (class_name ✅) &nbsp; &nbsp; &nbsp;│ &nbsp;│ (class_name ✅) &nbsp; &nbsp; &nbsp;│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp;└──────────┬───────────┘ &nbsp;└──────────┬───────────┘ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │preload() &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│preload() &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">└─────────────┼─────────────────────────┼─────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 1: 叶子脚本 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;Constants, Tags, BuffDef, Ball, Brick, PowerUp, Paddle... &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;(全部有 class_name ✅) &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">└─────────────────────────────────────────────────────────────────┘</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ▼</span><br><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;Layer 0: Godot 内置类型 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; │</span><br><span class="line">│ &nbsp;RefCounted, Node, Node2D, Resource... &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;│</span><br><span class="line">└─────────────────────────────────────────────────────────────────┘</span><br><span class="line"></span><br></pre></td></tr></tbody></table></figure>
+<h3 id="七、总结">七、总结</h3>
+<p>整个架构通过以下四大手段的组合，系统性地消除了循环依赖：</p>
+<ol>
+<li><strong>分层架构</strong> — 依赖严格单向向下</li>
+<li><strong>门面模式</strong> — 聚合子模块，对外提供统一接口</li>
+<li><strong>运行时加载 (<code>load()</code>)</strong> — 将编译期依赖转为运行时依赖</li>
+<li><strong>去类型化引用</strong> — 移除类型注解，避免编译器解析类定义</li>
+</ol>
+<p>遵循这些规则，可以在 GDScript 中安全地构建大规模、多层次的系统，而不会遇到循环依赖导致的初始化异常。</p>
+<h3 id="八、新增代码检查清单">八、新增代码检查清单</h3>
+<p>在添加新脚本时，请对照以下清单：</p>
+<ul>
+<li>[ ] 确认脚本所属层级</li>
+<li>[ ] 子模块（Layer 3）是否<strong>未声明</strong> <code>class_name</code>？</li>
+<li>[ ] 子模块是否使用 <code>extends "res://path.gd"</code> 而非 <code>extends ClassName</code>？</li>
+<li>[ ] 门面类是否使用 <code>load()</code> 而非 <code>preload()</code> 加载子模块？</li>
+<li>[ ] 是否有任何向上层的编译期引用？（如有，改为运行时引用或去类型化）</li>
+<li>[ ] 被 Preloads preload 的脚本是否引用了 Preloads？（禁止！）</li>
+<li>[ ] GameManager 引用是否使用了无类型的 <code>var gm</code> 而非 <code>var gm: GameManager</code>？</li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-gameplay-demo-dev/">https://www.lfzxb.top/aigc-gameplay-demo-dev/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/LLM/">LLM</a><a class="post-meta__tags" href="/tags/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0/">深度学习</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/nkg-ai-share/" title="自建LLM API聚合站分享"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">自建LLM API聚合站分享</div></div><div class="info-2"><div class="info-item-1">前言 一直以来我都是在各个AI API中转站之间辗转腾挪，这个坏了用那个，那个坏了再找新的。。。无尽的循环地狱，最近终于忍无可忍，搭建了属于自己的API聚合站，整个过程在AI的协助下很简单，不再像那些年手搓站点遇到那么多问题了 因为本站的目标就是自用+亲友团共享，所以价格也懒得算，做做样子，Gemini，GPT的价格和Deepseek一样，全是输出3元/百万Token 本文就是分享，介绍下自建站点的使用方式和推荐用法 注册 https://api.lfzxb.top/ 充值 控制台-钱包管理 建议充值一元体验，应该可以用几天 创建API Key 控制台-令牌管理-添加令牌 输入任意名称，点击提交 复制密钥，格式为sk-xxxxxxxxx 聊天机器人 手机端-Chatbox 通用于Android，IOS 设置-模型提供方-底部添加 名称随意，点击添加 API密钥：填写我们创建的API Key：sk-xxxxxxxxx API主机：https://api.lfzxb.top/ 新建模型：  模型ID：gemini-3.1-pro-preview 显示名称：忽略 模型类型：聊天 能力：...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/aigc-base/" title="AI GC与游戏行业野望"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20260304205818827.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-04</div><div class="info-item-2">AI GC与游戏行业野望</div></div><div class="info-2"><div class="info-item-1">前言 本文将带领大家整理学习从2017年的Transformer划破黑夜，到现在2026年的AI GC，AI Agent，MCP，Skills的人类群星闪耀重要原理，知识点 首先，什么是AI GC，简单来说，AIGC 是指利用人工智能技术（尤其是生成式大模型），通过接收自然语言指令（Prompt）或其他模态的输入，自动或半自动地生成文本、图像、音频、视频、3D 模型甚至代码等数字化内容的一种新型生产方式。 1. 从内容生产的演进史定义：生产力的跨越 理解 AIGC，最好的参照物是 PGC 和 UGC：   PGC (Professionally Generated Content，专业生成内容)： 门槛高、产能低、质量高。比如专业工作室开发 3A 大作、好莱坞团队拍摄电影。   UGC (User Generated Content，用户生成内容)： 门槛低、产能高、质量参差不齐。比如玩家用地图编辑器做自定义关卡、普通用户在平台发布 Vlog。   AIGC： 是 PGC 和 UGC 的结合体与升维。它将生产门槛降到了最低（只需输入提示词或意图），同时又具备逼近甚至超越人类专业水...</div></div></div></a><a class="pagination-related" href="/aigc-computer/" title="开源免费的AI装机助手"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-10</div><div class="info-item-2">开源免费的AI装机助手</div></div><div class="info-2"><div class="info-item-1">前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：集成 DeepSeek AI 模型，提供流畅的对话体验   深度思考模式：启用推理模型（Reasoning Model），让 AI 进行深度分析和推理   多会话管理：支持创建、切换、重命名和删除多个独立对话会话   流式响应：实时显示 AI 生成的内容，提供即时反馈   会话自动保存：对话内容自动保存到本地，应用重启后可恢复   🔍 智能搜索  多引擎支持：  - 百度搜索：国内主流搜索引擎 - Bing 搜索：国际化搜索体验 - SearxNG：开源隐私保护元搜索引擎（支持实例测试和切换）   混合搜索策略：优先使用浏览器搜索，失败后自动降级到 SearxNG   搜索结果整合：A...</div></div></div></a><a class="pagination-related" href="/aigc-weixin-miniprogram/" title="基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202510111049941.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-10-10</div><div class="info-item-2">基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录</div></div><div class="info-2"><div class="info-item-1">前言 这几天心血来潮，在空闲时间做了款AI微信小程序，可以借助AI来评估用户的配置，给出完整的装机配置单等  整个开发过程在AI的帮助下还算流畅 做都做完了，可惜卡在了审核那一步，现在微信小程序如果涉及AI生成内容是要求企业主体的，需要非常多的证书。。。遂放弃，本文就记录下开发过程中踩过坑和心得 总结 AI开发进化 非常推荐安装context7 MCP，这样AI就可以自己联网搜索对应的API 也推荐将需要的官网文档下载成Markdown文件，然后让AI读取文件内容，可以保证代码更稳定和准确，网页转markdown插件：WebInk: 智能网页转Markdown工具 微信云函数 默认云函数是个简单的RPC调用，无法实现AI流式输出的功能，如果需要AI流式输出，就得在客户端使用wx.AIExtend，但是整体来说拓展性较差，比如联网搜索和MCP拓展都不支持 火山引擎 如果需要接入AI功能我推荐字节家的火山引擎，可以非常方便的创建无代码应用，然后在微信小程序通过http调用，而且拓展性极佳，例如联网搜索都是一键配置的 可惜的是自定义MCP的接入非常麻烦，而且目前后台还有bug，下载了高...</div></div></div></a><a class="pagination-related" href="/nkg-ai-share/" title="自建LLM API聚合站分享"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-14</div><div class="info-item-2">自建LLM API聚合站分享</div></div><div class="info-2"><div class="info-item-1">前言 一直以来我都是在各个AI API中转站之间辗转腾挪，这个坏了用那个，那个坏了再找新的。。。无尽的循环地狱，最近终于忍无可忍，搭建了属于自己的API聚合站，整个过程在AI的协助下很简单，不再像那些年手搓站点遇到那么多问题了 因为本站的目标就是自用+亲友团共享，所以价格也懒得算，做做样子，Gemini，GPT的价格和Deepseek一样，全是输出3元/百万Token 本文就是分享，介绍下自建站点的使用方式和推荐用法 注册 https://api.lfzxb.top/ 充值 控制台-钱包管理 建议充值一元体验，应该可以用几天 创建API Key 控制台-令牌管理-添加令牌 输入任意名称，点击提交 复制密钥，格式为sk-xxxxxxxxx 聊天机器人 手机端-Chatbox 通用于Android，IOS 设置-模型提供方-底部添加 名称随意，点击添加 API密钥：填写我们创建的API Key：sk-xxxxxxxxx API主机：https://api.lfzxb.top/ 新建模型：  模型ID：gemini-3.1-pro-preview 显示名称：忽略 模型类型：聊天 能力：...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-12-20</div><div class="info-item-2">AI GC在游戏中的应用</div></div><div class="info-2"><div class="info-item-1">前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大用 当时Stable Diffuse开源（泄漏）的时候我也本地部署了WebUI玩了下，确实有抽卡炼丹的感觉，不过没深入研究，玩了两下就放那了 今年春节DeepSeek横空出世，也是赚足了眼球，我也试用了下，发现幻觉比OpenAI少很多，起码。。。他不会一直骗我，但应用还是仅限于简单的问答，没感觉对生产力有什么帮助 AI代码方面也试用过 Github Copilot，讲道理感觉一般，和之前用过Chatbox问答模式生成的代码感觉差不多，没有很惊艳的感觉，顶多就是和IDE结合紧密更方便些 前阵子也是没抱什么希望试用了下Cursor，但两周时间之后，我完全变成Cursor的形状了，只能乖乖年费...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-11</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E6%A8%AA%E5%90%91%E5%88%86%E6%9E%90%E5%AF%B9%E6%AF%94%E8%BF%87%E7%A8%8B%EF%BC%88%E4%B8%BA%E4%BD%95%E6%9C%80%E7%BB%88%E9%80%89%E5%AE%9AGodot%EF%BC%89"><span class="toc-number">1.1.</span> <span class="toc-text">第一部分：横向分析对比过程（为何最终选定Godot）</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-Bevy%EF%BC%9A%E6%9E%81%E8%87%B4%E6%80%A7%E8%83%BD%E4%B8%8E%E9%AB%98%E5%AD%A6%E4%B9%A0%E6%9B%B2%E7%BA%BF%E7%9A%84Rust-ECS%E6%9E%B6%E6%9E%84"><span class="toc-number">1.1.1.</span> <span class="toc-text">1. Bevy：极致性能与高学习曲线的Rust ECS架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-Defold%EF%BC%9A%E6%9E%81%E8%87%B4%E7%9A%84%E5%8C%85%E4%BD%93%E6%8E%A7%E5%88%B6%E4%B8%8E%E7%BA%AF%E7%B2%B9%E7%9A%84Lua%E7%94%9F%E6%80%81%E6%9E%B6%E6%9E%84"><span class="toc-number">1.1.2.</span> <span class="toc-text">2. Defold：极致的包体控制与纯粹的Lua生态架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-Cocos-Creator%EF%BC%9A%E9%9D%A2%E5%90%91%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91%E8%80%85%E7%9A%84H5%E8%B7%A8%E7%AB%AF%E6%96%B9%E6%A1%88"><span class="toc-number">1.1.3.</span> <span class="toc-text">3. Cocos Creator：面向前端开发者的H5跨端方案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E7%BA%AF%E4%BB%A3%E7%A0%81%E9%A9%B1%E5%8A%A8%E6%A1%86%E6%9E%B6%EF%BC%88Love2D-Raylib%EF%BC%89"><span class="toc-number">1.1.4.</span> <span class="toc-text">4. 纯代码驱动框架（Love2D / Raylib）</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9AGodot%E5%BC%95%E6%93%8E%E5%9C%A8Claude-Code%E5%B7%A5%E4%BD%9C%E6%B5%81%E4%B8%AD%E7%9A%84%E7%89%A9%E7%90%86%E6%9E%B6%E6%9E%84%E6%B7%B1%E5%BA%A6%E9%9B%86%E6%88%90"><span class="toc-number">1.2.</span> <span class="toc-text">第二部分：Godot引擎在Claude Code工作流中的物理架构深度集成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%87%E6%9C%AC%E5%8C%96%E6%96%87%E4%BB%B6%E6%A0%BC%E5%BC%8F%EF%BC%9ALLM%E8%AF%AD%E4%B9%89%E8%A7%A3%E6%9E%90%E7%9A%84%E5%9F%BA%E7%9F%B3"><span class="toc-number">1.2.1.</span> <span class="toc-text">文本化文件格式：LLM语义解析的基石</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%A8%A1%E5%9E%8B%E4%B8%8A%E4%B8%8B%E6%96%87%E5%8D%8F%E8%AE%AE%EF%BC%88MCP%EF%BC%89%EF%BC%9A%E7%AA%81%E7%A0%B4%E7%BC%96%E8%BE%91%E5%99%A8%E7%89%A9%E7%90%86%E8%BE%B9%E7%95%8C"><span class="toc-number">1.2.2.</span> <span class="toc-text">模型上下文协议（MCP）：突破编辑器物理边界</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9A%E5%BB%BA%E7%AB%8B%E6%9E%81%E8%87%B4%E9%98%B2%E8%85%90%E5%B1%82-%E2%80%94%E2%80%94-%E5%BC%95%E5%85%A5-MemOS-%E8%A7%A3%E5%86%B3-AI-%E8%AE%B0%E5%BF%86%E5%9D%8D%E7%BC%A9"><span class="toc-number">1.3.</span> <span class="toc-text">第三部分：建立极致防腐层 —— 引入 MemOS 解决 AI 记忆坍缩</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#MemOS-%E5%9C%A8-Godot-%E9%A1%B9%E7%9B%AE%E4%B8%AD%E7%9A%84%E9%9B%86%E6%88%90%E4%B8%8E%E4%BC%98%E5%8A%BF"><span class="toc-number">1.3.1.</span> <span class="toc-text">MemOS 在 Godot 项目中的集成与优势</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E8%87%AA%E5%8A%A8%E5%8C%96APK%E6%97%A0%E5%A4%B4%E6%9E%84%E5%BB%BA%E4%B8%8E%E7%A7%BB%E5%8A%A8%E7%AB%AF%E7%9C%9F%E6%9C%BA%E9%83%A8%E7%BD%B2%E6%B5%81%E6%B0%B4%E7%BA%BF"><span class="toc-number">1.4.</span> <span class="toc-text">第四部分：自动化APK无头构建与移动端真机部署流水线</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%BA%95%E5%B1%82%E7%8E%AF%E5%A2%83%E5%9F%BA%E7%BA%BF%E9%85%8D%E7%BD%AE%EF%BC%88%E4%BB%85%E9%9C%80%E4%B8%80%E6%AC%A1%E4%BA%BA%E5%B7%A5%E5%B9%B2%E9%A2%84%EF%BC%89"><span class="toc-number">1.4.1.</span> <span class="toc-text">1. 底层环境基线配置（仅需一次人工干预）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E7%BC%96%E5%86%99%E8%87%AA%E5%8A%A8%E5%8C%96%E9%83%A8%E7%BD%B2%E8%84%9A%E6%9C%AC"><span class="toc-number">1.4.2.</span> <span class="toc-text">2. 编写自动化部署脚本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E5%85%A8%E8%87%AA%E5%8A%A8%E5%8C%96%E9%AA%8C%E8%AF%81%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-number">1.4.3.</span> <span class="toc-text">3. 全自动化验证工作流</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AE%BA"><span class="toc-number">1.5.</span> <span class="toc-text">结论</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">2.</span> <span class="toc-text">获取优秀 Gameplay 点子</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-%E5%85%8D%E8%B4%B9%E5%9C%A8%E7%BA%BF%E7%8B%AC%E7%AB%8B%E6%B8%B8%E6%88%8F%E4%B8%8E%E5%B0%8F%E6%B8%B8%E6%88%8F%E5%B9%B3%E5%8F%B0%EF%BC%88%E7%9B%B4%E6%8E%A5%E6%B8%B8%E7%8E%A9%E4%B8%8E%E6%8B%86%E8%A7%A3%EF%BC%89"><span class="toc-number">2.0.1.</span> <span class="toc-text">1. 免费在线独立游戏与小游戏平台（直接游玩与拆解）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-%E6%B7%B1%E5%85%A5-Game-Jam%EF%BC%88%E6%B8%B8%E6%88%8F%E5%88%9B%E4%BD%9C%E9%A9%AC%E6%8B%89%E6%9D%BE%EF%BC%89%E7%9A%84%E5%BE%80%E6%9C%9F%E6%A1%A3%E6%A1%88"><span class="toc-number">2.0.2.</span> <span class="toc-text">2. 深入 Game Jam（游戏创作马拉松）的往期档案</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E4%B8%93%E4%B8%9A%E7%9A%84%E6%B8%B8%E6%88%8F%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%BA%93%E4%B8%8E%E5%B7%A5%E5%85%B7"><span class="toc-number">2.0.3.</span> <span class="toc-text">3. 专业的游戏设计模式库与工具</span></a></li></ol></li></ol><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">3.</span> <span class="toc-text">Godot实践记录</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%8E%AF%E5%A2%83%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.1.</span> <span class="toc-text">环境设置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#AI%E5%B8%AE%E5%BF%99%E9%85%8D%E7%BD%AE"><span class="toc-number">3.1.1.</span> <span class="toc-text">AI帮忙配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%89%8B%E5%8A%A8%E9%85%8D%E7%BD%AE"><span class="toc-number">3.1.2.</span> <span class="toc-text">手动配置</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BC%96%E8%BE%91%E5%99%A8%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.2.</span> <span class="toc-text">编辑器设置</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%87%AA%E5%8A%A8%E5%8C%96%E6%B5%8B%E8%AF%95%E9%9B%86%E6%88%90"><span class="toc-number">3.3.</span> <span class="toc-text">自动化测试集成</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#GDScript%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5%E6%8C%87%E5%8D%97"><span class="toc-number">3.4.</span> <span class="toc-text">GDScript循环依赖最佳实践指南</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E9%98%B2%E6%8A%A4%E6%9E%B6%E6%9E%84%E6%96%87%E6%A1%A3"><span class="toc-number">3.5.</span> <span class="toc-text">循环依赖防护架构文档</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A6%82%E8%BF%B0"><span class="toc-number">3.5.1.</span> <span class="toc-text">一、概述</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%816-%E5%B1%82%E5%88%86%E5%B1%82%E6%9E%B6%E6%9E%84"><span class="toc-number">3.5.2.</span> <span class="toc-text">二、6 层分层架构</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%90%84%E5%B1%82%E8%AF%A6%E7%BB%86%E8%AF%B4%E6%98%8E"><span class="toc-number">3.5.2.1.</span> <span class="toc-text">各层详细说明</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%814-%E7%A7%8D%E5%BC%95%E7%94%A8%E6%9C%BA%E5%88%B6%E7%9A%84%E5%88%86%E5%B7%A5"><span class="toc-number">3.5.3.</span> <span class="toc-text">三、4 种引用机制的分工</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E5%85%B3%E9%94%AE%E8%AE%BE%E8%AE%A1%E6%89%8B%E6%B3%95"><span class="toc-number">3.5.4.</span> <span class="toc-text">四、关键设计手法</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#4-1-GameManager-%E7%A7%BB%E9%99%A4-class-name"><span class="toc-number">3.5.4.1.</span> <span class="toc-text">4.1 GameManager 移除 class_name</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-2-%E5%8E%BB%E7%B1%BB%E5%9E%8B%E5%8C%96%E7%9A%84-gm-%E5%BC%95%E7%94%A8"><span class="toc-number">3.5.4.2.</span> <span class="toc-text">4.2 去类型化的 gm 引用</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-3-%E9%97%A8%E9%9D%A2%E6%A8%A1%E5%BC%8F-load-%E8%BF%90%E8%A1%8C%E6%97%B6%E5%8A%A0%E8%BD%BD"><span class="toc-number">3.5.4.3.</span> <span class="toc-text">4.3 门面模式 + load() 运行时加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-4-%E5%AD%90%E6%A8%A1%E5%9D%97%E9%80%9A%E8%BF%87%E8%B7%AF%E5%BE%84%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%BB%A7%E6%89%BF"><span class="toc-number">3.5.4.4.</span> <span class="toc-text">4.4 子模块通过路径字符串继承</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-5-%E5%AD%90%E6%A8%A1%E5%9D%97%E7%A6%81%E6%AD%A2%E5%A3%B0%E6%98%8E-class-name"><span class="toc-number">3.5.4.5.</span> <span class="toc-text">4.5 子模块禁止声明 class_name</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-6-Autoload-%E5%8D%95%E4%BE%8B%E7%9A%84%E5%8D%95%E5%90%91%E4%BE%9D%E8%B5%96"><span class="toc-number">3.5.4.6.</span> <span class="toc-text">4.6 Autoload 单例的单向依赖</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-7-BuffManager-%E7%9A%84-ready-%E5%BB%B6%E8%BF%9F%E5%8A%A0%E8%BD%BD"><span class="toc-number">3.5.4.7.</span> <span class="toc-text">4.7 BuffManager 的 _ready() 延迟加载</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-8-GameManager-%E5%BB%B6%E8%BF%9F%E6%B3%A8%E5%85%A5"><span class="toc-number">3.5.4.8.</span> <span class="toc-text">4.8 GameManager 延迟注入</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%94%E3%80%815-%E6%9D%A1%E7%A6%81%E6%AD%A2%E6%A8%A1%E5%BC%8F"><span class="toc-number">3.5.5.</span> <span class="toc-text">五、5 条禁止模式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%BE%9D%E8%B5%96%E5%85%B3%E7%B3%BB%E5%9B%BE"><span class="toc-number">3.5.6.</span> <span class="toc-text">六、依赖关系图</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%80%BB%E7%BB%93"><span class="toc-number">3.5.7.</span> <span class="toc-text">七、总结</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%96%B0%E5%A2%9E%E4%BB%A3%E7%A0%81%E6%A3%80%E6%9F%A5%E6%B8%85%E5%8D%95"><span class="toc-number">3.5.8.</span> <span class="toc-text">八、新增代码检查清单</span></a></li></ol></li></ol></li></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '2867820c1b3069f8ec097c555df5bda6'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>
