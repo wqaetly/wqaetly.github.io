@@ -1,0 +1,853 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>给 AI Agent 装上长期记忆：MemOS 本地部署 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="给 AI Agent 装上长期记忆：MemOS 本地部署踩坑记 写在前面 最近在研究MemOS，起因很简单——受够了每次打开 AI 对话都要从头自我介绍一遍。“我是写 Unity 的”、“项目在 E 盘”、“不要给我加一堆 emoji”——这些话我这半年说过的次数，大概比跟我妈打电话还多。 但把 MemOS 装完、跑通、接进日常工作流之后，我发现这个事远不止&quot;让 AI 记住偏好&amp;quot">
+<meta property="og:type" content="article">
+<meta property="og:title" content="给 AI Agent 装上长期记忆：MemOS 本地部署">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-memos/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="给 AI Agent 装上长期记忆：MemOS 本地部署踩坑记 写在前面 最近在研究MemOS，起因很简单——受够了每次打开 AI 对话都要从头自我介绍一遍。“我是写 Unity 的”、“项目在 E 盘”、“不要给我加一堆 emoji”——这些话我这半年说过的次数，大概比跟我妈打电话还多。 但把 MemOS 装完、跑通、接进日常工作流之后，我发现这个事远不止&quot;让 AI 记住偏好&amp;quot">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp">
+<meta property="article:published_time" content="2026-04-30T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-04-30T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="Memos">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "给 AI Agent 装上长期记忆：MemOS 本地部署",
+  "url": "https://www.lfzxb.top/aigc-memos/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp",
+  "datePublished": "2026-04-30T00:00:00.000Z",
+  "dateModified": "2026-04-30T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-memos/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""><link rel="preconnect" href="//busuanzi.ibruce.info"><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const isNight = hour <= 6 || hour >= 8
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '给 AI Agent 装上长期记忆：MemOS 本地部署',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">249</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">189</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">56</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">给 AI Agent 装上长期记忆：MemOS 本地部署</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">给 AI Agent 装上长期记忆：MemOS 本地部署</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-04-30T00:00:00.000Z" title="发表于 2026-04-30 00:00:00">2026-04-30</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-04-30T00:00:00.000Z" title="更新于 2026-04-30 00:00:00">2026-04-30</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">14.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>51分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-memos/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-04-30 00:00:00&quot;}" hidden=""></div><div id="postchat_postcontent"><h1>给 AI Agent 装上长期记忆：MemOS 本地部署踩坑记</h1>
+<h2 id="写在前面">写在前面</h2>
+<p>最近在研究MemOS，起因很简单——受够了每次打开 AI 对话都要从头自我介绍一遍。“我是写 Unity 的”、“项目在 E 盘”、“不要给我加一堆 emoji”——这些话我这半年说过的次数，大概比跟我妈打电话还多。</p>
+<p>但把 MemOS 装完、跑通、接进日常工作流之后，我发现这个事远不止"让 AI 记住偏好"这么简单。</p>
+<p>举个让我印象最深的实际用法：<strong>通过 git hook 让 AI 在每次 commit 后自动读取变更的代码、整理成结构化记忆，再写进 MemOS</strong>。一开始我只是随手试了下，想看看能不能让 AI 帮我记住"这次改了哪个模块、为什么改、引入了什么副作用"。结果用了几周下来我发现，<strong>项目的记忆库在以一种很自然的速度长大</strong>——每次提交都会沉淀一点，几百次提交之后，整个仓库的关键决策、模块现状、历史上踩过的坑，几乎都被 MemOS 记下来了。</p>
+<p>更妙的是这种记忆是<strong>全团队共享</strong>的。前端同学想了解"后端那个结算模块最近改了什么、有没有已知问题"，不用再去翻 commit 历史、也不用找人开会，<strong>直接对着 AI 问一句就行</strong>。因为 AI 身后挂着一份由全团队提交行为自动喂养的长期记忆库，它能告诉你：这个模块最近两周被 A 重构过一次、重构动机是性能问题、重构后 B 上报过一个边界 bug 已经修复、当前已知未修的问题还有两个……<strong>不论是哪个模块的人来提问，都能立刻拿到这个模块的现状和经典问题</strong>。</p>
+<p>这种体验跟过去"每次接手一个陌生模块都要重新考古"是完全两个世界的事。它让 AI 从一个"聊天工具"真的变成了<strong>团队的记忆中枢</strong>。</p>
+<p>而这一切的背后，其实牵扯到一个今年被反复讨论的概念——<strong>Harness Engineering</strong>。OpenAI 年初发的那篇博客里有句话我印象很深:Agent = Model + Harness，模型决定上限，Harness 决定底线。而记忆，正是 Harness 里最难也最关键的一层。</p>
+<p>而这个认知并不是凭空冒出来的。我最近也在用 LangGraph 做一些 Agent 开发，被"上下文纯净"这个问题折磨过不少次——后面会专门展开聊，这里先埋个伏笔。很多时候我们以为自己在调 prompt、调模型参数，其实真正在解决的，都是记忆和上下文的问题。</p>
+<p>所以当看到 MemTensor 开源的 MemOS 项目时，我的第一反应是：“行，这回得让它把我们记住。”</p>
+<p>这篇文章想尽量讲人话，把<strong>它是什么、为什么这么设计、它在 Harness 里处于什么位置、怎么装、哪里容易踩坑</strong>都讲清楚。如果大家也打算本地跑一套长期记忆系统，希望能帮忙少走两个小时的弯路。</p>
+<p>项目地址在这：<a target="_blank" rel="noopener" href="https://github.com/MemTensor/MemOS">https://github.com/MemTensor/MemOS</a></p>
+<hr>
+<h2 id="一、先聊聊-记忆-这件事到底难在哪">一、先聊聊"记忆"这件事到底难在哪</h2>
+<p>向量数据库加 RAG 这套方案大家应该都不陌生，网上教程一抓一大把。但真用起来就会发现，它解决的其实是"检索"问题，而不是"记忆"问题。</p>
+<p>这两件事差别挺大的。</p>
+<p>检索是这样的：我们有一堆文档，用户问一个问题，我们从里面捞最相关的几段拼进 prompt。它是无状态的、单次的、只关心相似度。</p>
+<p>那记忆是什么？记忆是我们得回答一串更麻烦的问题：</p>
+<p>这条信息<strong>值不值得记</strong>？去年用户说"我喜欢草莓"，今年说"我对草莓过敏了"，到底信哪条？张三的偏好能不能让李四的 Agent 看见？上周那个已经解决的 bug，要不要一直留在召回结果里污染后面的对话？用户吐槽说"你怎么还记得那个，我早换项目了"，我们怎么把这条记忆优雅地淡忘掉？</p>
+<p>如果直接往向量库里塞 chunk，上面这些问题一个都答不了。跑个一两周倒没事，跑三个月就会发现：记忆库越来越脏，召回越来越飘，用户画像里到处都是互相矛盾的片段。</p>
+<p>MemOS 想做的事，用一句话概括就是：<strong>把"记忆"从一个存储问题，变成一个治理问题</strong>。</p>
+<p>它的设计哲学很有意思，名字就叫"Memory OS"——把记忆当成操作系统里的资源来管。操作系统管 CPU、内存、磁盘、进程；那 AI 时代也得有个东西来管用户记忆、项目记忆、Agent 经验、可复用技能。这个类比我一开始觉得有点大，用了之后才发现还挺贴切。</p>
+<hr>
+<h2 id="二、绕不开的话题：Harness-Engineering">二、绕不开的话题：Harness Engineering</h2>
+<p>聊 MemOS 之前，得先聊一下今年（2026 年初）被反复刷屏的一个概念——<strong>Harness Engineering</strong>。因为我后来才意识到，它是理解 MemOS 价值的最佳切入点。</p>
+<p>起因是 OpenAI 那篇《Harness Engineering: leveraging Codex in an agent-first world》。这篇博客抛出了一个很扎心的观察：<strong>Agent = Model + Harness</strong>。模型本身只是一个"文本输入输出的函数"，真正让它变成一个可用的智能体，是围绕模型搭建的整套外围系统。</p>
+<p>有个数据挺震撼：<a target="_blank" rel="noopener" href="http://Can.ac">Can.ac</a> 的实验里，<strong>同一个模型</strong>，只是换了文件编辑工具的调用方式，编码基准分数从 6.7% 直接跳到 68.3%。模型没变，变的是外围的那套系统。这让大家一下子想明白了过去两年的一个困惑——<strong>为什么我们都接同一个 GPT-4 / Claude，做出来的 Agent 体验差这么多？</strong> 瓶颈从来不在模型智能本身，而在它外面那一层骨架。</p>
+<h3 id="从-Prompt-Engineering-到-Harness-Engineering">从 Prompt Engineering 到 Harness Engineering</h3>
+<p>Harness Engineering 不是凭空冒出来的，它是一条演化线的终点。业内现在把这三层关系梳理得很清楚：</p>
+<pre><code class="highlight mermaid">graph LR
+    A["&lt;b&gt;Prompt Engineering&lt;/b&gt;&lt;br/&gt;怎么写好指令&lt;br/&gt;&lt;i&gt;解决：表达&lt;/i&gt;"] --&gt; B["&lt;b&gt;Context Engineering&lt;/b&gt;&lt;br/&gt;给模型看什么&lt;br/&gt;&lt;i&gt;解决：信息&lt;/i&gt;"]
+    B --&gt; C["&lt;b&gt;Harness Engineering&lt;/b&gt;&lt;br/&gt;整个系统怎么跑&lt;br/&gt;&lt;i&gt;解决：执行&lt;/i&gt;"]
+
+    style A fill:#e3f2fd,stroke:#1976d2
+    style B fill:#fff3e0,stroke:#f57c00
+    style C fill:#fce4ec,stroke:#c2185b</code></pre>
+<p>三者是<strong>逐层包裹</strong>的关系，不是互相替代：</p>
+<ul>
+<li><strong>Prompt Engineering</strong>：塑造局部概率空间，让模型听懂意图。最早流行的"咒语工程"、思维链、Few-shot 都是这一层。它解决的是<strong>表达</strong>问题。</li>
+<li><strong>Context Engineering</strong>：确保模型在合适的时机拿到正确且必要的事实。RAG、记忆注入、Token 预算管理属于这一层。它解决的是<strong>信息</strong>问题。</li>
+<li><strong>Harness Engineering</strong>：长链路任务里系统怎么防崩、怎么量化、怎么持续运转。它解决的是<strong>执行</strong>问题。</li>
+</ul>
+<p>在生产环境里<strong>真正决定成败的，是最外面那层 Harness</strong>。简单任务靠 prompt 就够，知识密集型任务靠 context，但一旦 Agent 要连续跑几十轮、甚至几小时几天，没有 Harness 顶着就是一碰就碎。</p>
+<h3 id="Harness-的六层架构">Harness 的六层架构</h3>
+<p>业内目前普遍把 Harness 切成六层。每一层解决一个独立问题，合在一起形成从"定义边界"到"兜底恢复"的完整闭环：</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>名称</th>
+<th>解决什么</th>
+<th>典型组件</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>L1</strong></td>
+<td>信息边界层</td>
+<td>Agent 该知道什么、不该知道什么</td>
+<td>系统提示词、角色定义、任务范围界定</td>
+</tr>
+<tr>
+<td><strong>L2</strong></td>
+<td>工具系统层</td>
+<td>怎么跟外部世界交互</td>
+<td>MCP 工具、API、文件系统、沙箱</td>
+</tr>
+<tr>
+<td><strong>L3</strong></td>
+<td>执行编排层</td>
+<td>多步骤任务怎么串起来</td>
+<td>状态机、工作流、任务分解</td>
+</tr>
+<tr>
+<td><strong>L4</strong></td>
+<td><strong>记忆与状态层</strong></td>
+<td>长任务中间结果怎么管、跨会话怎么记住</td>
+<td>对话历史、进度文件、长期记忆库、上下文压缩</td>
+</tr>
+<tr>
+<td><strong>L5</strong></td>
+<td>评估与观测层</td>
+<td>Agent 怎么知道自己做对了没</td>
+<td>浏览器自动化验证、测试沙箱、独立 Evaluator</td>
+</tr>
+<tr>
+<td><strong>L6</strong></td>
+<td>约束、校验与恢复层</td>
+<td>出错了怎么办</td>
+<td>Linter、结构测试、重试、回滚</td>
+</tr>
+</tbody>
+</table>
+<p>如果把这六层画成一张图，L4 的位置看起来就很有意思——它<strong>夹在编排和评估之间</strong>，上下四层都要从它这里读写状态：</p>
+<pre><code class="highlight mermaid">graph TB
+    subgraph Harness["Agent Harness"]
+        L1["&lt;b&gt;L1 · 信息边界层&lt;/b&gt;&lt;br/&gt;角色 / 范围 / 提示词"]
+        L2["&lt;b&gt;L2 · 工具系统层&lt;/b&gt;&lt;br/&gt;MCP / API / 沙箱"]
+        L3["&lt;b&gt;L3 · 执行编排层&lt;/b&gt;&lt;br/&gt;状态机 / 工作流"]
+        L4["&lt;b&gt;L4 · 记忆与状态层&lt;/b&gt; ⭐&lt;br/&gt;对话历史 / 长期记忆 / 进度"]
+        L5["&lt;b&gt;L5 · 评估与观测层&lt;/b&gt;&lt;br/&gt;验证 / Evaluator"]
+        L6["&lt;b&gt;L6 · 约束与恢复层&lt;/b&gt;&lt;br/&gt;Linter / 重试 / 回滚"]
+    end
+
+    Model["&lt;b&gt;LLM Model&lt;/b&gt;&lt;br/&gt;(GPT / Claude / Qwen...)"]
+
+    L1 -.依赖状态.-&gt; L4
+    L2 -.写入痕迹.-&gt; L4
+    L3 -.读写进度.-&gt; L4
+    L5 -.读取基准.-&gt; L4
+    L6 -.读写检查点.-&gt; L4
+
+    L1 --&gt; Model
+    L2 --&gt; Model
+    L3 --&gt; Model
+
+    style L4 fill:#fce4ec,stroke:#c2185b,stroke-width:3px
+    style Model fill:#e8f5e9,stroke:#388e3c</code></pre>
+<p>这六层里，<strong>L1、L2、L3 是相对容易补的</strong>——系统提示词可以写、工具可以接 MCP、编排有现成的 LangGraph / CrewAI / AutoGen。<strong>L5、L6 也有成熟思路</strong>——测试和重试本质上是软件工程里就存在的东西，搬过来改改就能用。</p>
+<p><strong>但 L4 记忆与状态层，是这六层里最没有"现成轮子"的一层。</strong></p>
+<p>它难在哪？难在它不是一次性工程，而是<strong>需要随系统生命周期持续演化</strong>的能力。每多一次对话就产生新的记忆，每多一个用户就多一份画像，每多一条错误就可能污染后续的召回。这种"活的"状态没法用一个静态数据库解决，也没法靠几个 prompt 补上。</p>
+<p>更麻烦的是，L4 的好坏<strong>会直接反噬其他五层</strong>（看上图的虚线）。记忆错了 → L1 的边界就飘了；长期状态丢了 → L3 的编排就断了；中间产物没管好 → L5 的评估就失去基准。<strong>L4 像 Harness 的中枢神经，其他层再整齐，中枢一出问题全身抽搐。</strong></p>
+<h3 id="为什么-L4-是-记忆-状态-？一个关键的-40-观察">为什么 L4 是"记忆 + 状态"？一个关键的 40% 观察</h3>
+<p>L4 之所以叫"记忆与状态层"而不是单纯"记忆层"，是因为它要管的其实是三类东西：</p>
+<ol>
+<li><strong>当前任务的中间状态</strong>（短期）：这一轮里已经完成了什么、待办清单、变量值</li>
+<li><strong>会话内的对话历史</strong>（中期）：前 N 轮说过什么、做过什么决策</li>
+<li><strong>跨会话的长期记忆</strong>（长期）：用户偏好、项目约定、可复用的经验</li>
+</ol>
+<p>这三类混在一起塞进 prompt，就是大家常说的"上下文爆炸"。Anthropic 的工程实践里有个非常关键的观察：</p>
+<blockquote>
+<p><strong>当上下文利用率超过约 40%，Agent 的输出质量就开始明显下降</strong>——幻觉增多、开始兜圈子、格式混乱、生成低质代码。</p>
+</blockquote>
+<p>这条线叫"Smart Zone / Dumb Zone 分界"。听起来反直觉——现代模型号称支持 200K、1M 上下文——但实测下来，<strong>“能装下” ≠ “用得好”</strong>。模型把所有 token 读进来了，不代表它能在里面精准找到该关注的部分。</p>
+<p>画成图大概是这样：</p>
+<pre><code class="highlight mermaid">graph LR
+    A["0%"] --&gt;|"&lt;b&gt;Smart Zone&lt;/b&gt;&lt;br/&gt;推理聚焦&lt;br/&gt;工具调用准确&lt;br/&gt;代码质量高"| B["~40%"]
+    B --&gt;|"&lt;b&gt;Dumb Zone&lt;/b&gt; ⚠️&lt;br/&gt;幻觉增多&lt;br/&gt;开始兜圈子&lt;br/&gt;格式混乱"| C["100%&lt;br/&gt;(爆炸)"]
+
+    style A fill:#c8e6c9,stroke:#2e7d32
+    style B fill:#fff9c4,stroke:#f57f17,stroke-width:3px
+    style C fill:#ffcdd2,stroke:#c62828</code></pre>
+<p><strong>40% 这条线是 L4 设计的北极星</strong>。所有的记忆选型、召回策略、<code>top_k</code> 默认值、甚至去重算法，本质上都是在为这条线服务。</p>
+<p>Anthropic 对此给出了一个非常工程化的解法：<strong>Context Resets</strong>。当上下文接近饱和时，不做压缩，直接启动一个全新的干净 Agent，用结构化交接文档把必要状态传过去。这个做法的灵感来自程序遇到内存泄漏时的处理——不去手动释放每一个内存块，直接重启进程、从检查点恢复。</p>
+<p>但 Context Resets 只是<strong>事后兜底</strong>。更根本的解法是<strong>事前不让垃圾进主上下文</strong>——这就是记忆系统要做的事。</p>
+<h3 id="回到-MemOS">回到 MemOS</h3>
+<p>说白了，<strong>L4 干不好，Agent 的下限就被按死了</strong>。模型再强，架不住每轮对话都从零开始自我介绍；工具再多，架不住用户偏好永远记不住；编排再精巧，架不住跑到第 30 轮开始胡言乱语。</p>
+<p>而 MemOS，就是一个<strong>专门攻 L4 的系统</strong>。它不是在重复造 L2 的工具框架（那些都有了），也不是在抢 L3 的编排生态（LangGraph 之流已经站住了），<strong>它瞄准的就是 Harness 里最难、最没人啃的那块骨头</strong>。</p>
+<p>这也是为什么我说，记忆不是"锦上添花"的 feature。在 Harness 的视角下，它是<strong>整套 Agent 系统能不能从 demo 走向生产的关键开关</strong>。模型决定你能做多精彩的事，Harness 决定你能做多久而不崩——而记忆，正是 Harness 里最靠近"多久"那个字的一层。</p>
+<hr>
+<h2 id="三、MemOS-到底给了我们什么">三、MemOS 到底给了我们什么</h2>
+<p>回到 MemOS。如果把它放到 Harness 的六层架构里看，它干的就是 L4 这件事——而且是目前开源生态里，<strong>把 L4 做得最完整的一个项目</strong>。</p>
+<p>简单讲一下用下来感受最深的几个点，不照搬官方列表。</p>
+<p><strong>它提供了一个统一的 API，但重点不在 API，在"统一"两个字</strong>。我们不用再自己写"如何判断这条记忆该更新还是新增"这种逻辑了，MemOS 里有一整套生命周期机制。只管往里丢消息，它自己会决定抽取出什么、合并到哪里、要不要去重。</p>
+<p><strong>Memory Cube 是个值得琢磨的概念</strong>。一开始我以为它就是"知识库"的另一个叫法，后来发现不是。Cube 更像一个带权限的记忆盒子。我们可以按用户开一个、按项目开一个、按 Agent 开一个，然后用 <code>user_id</code> 和 <code>mem_cube_id</code> 两个维度去组合。这在多 Agent 协作的时候特别实用——比如有一个写代码的 Agent 和一个跑测试的 Agent，我们希望它们共享"这个项目的结构约定"，但各自保留自己的执行轨迹，Cube 这个抽象就能直接满足。</p>
+<p><strong>图 + 向量的混合存储</strong>。它后面挂着 Neo4j 和 Qdrant：向量负责语义召回，图负责关系结构。我一开始看到要装两个数据库有点劝退，但实际用下来，图数据库的价值是语义检索给不了的——"用户喜欢冰美式"和"用户讨厌苦味"之间的联系，是图能表达而 embedding 表达不了的。</p>
+<p><strong>MemReader 是个独立的模型角色</strong>。这个设计挺聪明。普通聊天用 qwen2.5，但"从对话里抽取长期记忆"这件事，官方专门训了一个 MemReader-4B 的小模型来做。这就像我们写代码的时候不会让同一个人既写业务又审代码，分工明确反而效率高、质量稳。</p>
+<p><strong>支持反馈修正</strong>。这个能力说起来简单，做得好不容易。跟 Agent 说一句"这条记错了"，它能真的把对应的记忆找出来改掉，而不是把这句话当成新对话再塞一遍。</p>
+<hr>
+<h2 id="四、部署选型思路">四、部署选型思路</h2>
+<p>先把目标摆出来：<strong>数据留在本地、不花一分钱 API 费用、Windows 环境下能跑</strong>。</p>
+<p>基于这个目标，我的选型是这样：</p>
+<p>推理层用 Ollama。Ollama 在本地跑模型这块儿已经很成熟了，而且自带 OpenAI 兼容接口，MemOS 不用改代码就能接上。</p>
+<p>主对话模型选 <code>qwen2.5:7b</code>。7B 在本地跑速度可以接受，中文也不拉胯。显存足够的话，换 14B 当然更好。</p>
+<p>记忆抽取模型用 <code>hf.co/mradermacher/MemReader-4B-GGUF</code>。这是官方指定的 MemReader 模型的 GGUF 量化版本，4B 够用，速度还挺快。</p>
+<p>Embedding 用 <code>bge-m3</code>。这个模型做中文 embedding 基本是闭眼选，1024 维，和 MemOS 默认配置对得上。</p>
+<p>图数据库 Neo4j Community 版，向量数据库 Qdrant。两个都免费，都好装。</p>
+<p>整体架构长这样：</p>
+<pre><code class="highlight mermaid">graph TB
+    Client["&lt;b&gt;用户 / Agent / MCP 客户端&lt;/b&gt;"]
+    Server["&lt;b&gt;MemOS API Server&lt;/b&gt;&lt;br/&gt;localhost:8000"]
+
+    subgraph LLM["Ollama · :11434"]
+        M1["qwen2.5:7b&lt;br/&gt;&lt;i&gt;主对话&lt;/i&gt;"]
+        M2["MemReader-4B&lt;br/&gt;&lt;i&gt;记忆抽取&lt;/i&gt;"]
+        M3["bge-m3&lt;br/&gt;&lt;i&gt;embedding&lt;/i&gt;"]
+    end
+
+    Neo["&lt;b&gt;Neo4j&lt;/b&gt; · :7687&lt;br/&gt;图关系存储"]
+    Qdrant["&lt;b&gt;Qdrant&lt;/b&gt; · :6333&lt;br/&gt;向量检索"]
+
+    Client --&gt;|HTTP| Server
+    Server --&gt;|对话/抽取/向量| LLM
+    Server --&gt;|图关系读写| Neo
+    Server --&gt;|向量读写| Qdrant
+
+    style Client fill:#e3f2fd,stroke:#1976d2
+    style Server fill:#fce4ec,stroke:#c2185b,stroke-width:2px
+    style LLM fill:#fff3e0,stroke:#f57c00
+    style Neo fill:#e8f5e9,stroke:#388e3c
+    style Qdrant fill:#e8f5e9,stroke:#388e3c</code></pre>
+<p>听起来组件挺多，但装起来一个下午能搞定。</p>
+<hr>
+<h2 id="五、组件一个个装起来">五、组件一个个装起来</h2>
+<h3 id="5-1-Python-环境">5.1 Python 环境</h3>
+<p>MemOS 后端是 Python，要 3.10 以上。我用的是 3.11，没翻车。</p>
+<p>如果机器上装了一堆版本的 Python，建议用 <code>py -3.11</code> 或者 venv 明确一下，不然后面 uvicorn 能不能找到是个玄学问题。</p>
+<h3 id="5-2-Ollama-和三个模型">5.2 Ollama 和三个模型</h3>
+<p>Ollama 直接去 <a target="_blank" rel="noopener" href="https://ollama.com/">https://ollama.com/</a> 下一个安装包，装完默认就跑在 <code>11434</code> 端口。</p>
+<p>然后依次拉模型：</p>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ollama pull qwen2.5:7b</span><br><span class="line">ollama pull bge-m3</span><br><span class="line">ollama pull hf.co/mradermacher/MemReader-4B-GGUF</span><br></pre></td></tr></tbody></table></figure>
+<p>这三个加起来差不多 10 个 G，看网速慢慢等。拉完用 <code>ollama list</code> 确认一下都在。</p>
+<p><strong>小提示</strong>：Ollama 默认不会开机自启。每次重启电脑要记得手动启动它，不然后面 MemOS 一堆接口会直接连不上。我后来把它设成开机启动了。</p>
+<h3 id="5-3-Neo4j">5.3 Neo4j</h3>
+<p>去 <a target="_blank" rel="noopener" href="https://neo4j.com/download/">https://neo4j.com/download/</a> 下 Community 版。装完启动 Neo4j Desktop，手动创一个本地数据库，设一个密码——这个密码后面要填进 <code>.env</code> 里，所以定啥都行，但要和 <code>.env</code> 对得上。</p>
+<p>默认用户名是 <code>neo4j</code>，连接地址 <code>bolt://localhost:7687</code>。</p>
+<p>我第一次启动 MemOS 连不上 Neo4j，盯着日志看了十分钟才发现问题：<strong>Neo4j 装完默认是不启动数据库的</strong>，要在 Desktop 里手动点 “Start”。这个锅不在 MemOS，是 Neo4j 这些年一贯的毛病。</p>
+<h3 id="5-4-Qdrant">5.4 Qdrant</h3>
+<p>Qdrant 最舒服的地方是 Windows 下直接一个 exe 就能跑，不用装。</p>
+<p>去 <a target="_blank" rel="noopener" href="https://github.com/qdrant/qdrant/releases">https://github.com/qdrant/qdrant/releases</a> 下 <code>qdrant-x86_64-pc-windows-msvc.zip</code>，解压出来的 <code>qdrant.exe</code> 放到 MemOS 项目根目录下的 <code>qdrant/</code> 子目录里：</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MemOS/</span><br><span class="line">├── qdrant/</span><br><span class="line">│   └── qdrant.exe      ← 放这里</span><br><span class="line">├── src/</span><br><span class="line">├── docker/</span><br><span class="line">└── .env</span><br></pre></td></tr></tbody></table></figure>
+<p>路径约定是为了配合后面那个启动脚本，想放别的地方也行，脚本里改下就好。</p>
+<p>启动后打开 <a target="_blank" rel="noopener" href="http://localhost:6333/readyz">http://localhost:6333/readyz</a> 能看到响应就说明没问题。</p>
+<h3 id="5-5-克隆-MemOS-并装依赖">5.5 克隆 MemOS 并装依赖</h3>
+<figure class="highlight bash"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/MemTensor/MemOS.git</span><br><span class="line"><span class="built_in">cd</span> MemOS</span><br><span class="line">pip install -r ./docker/requirements.txt</span><br></pre></td></tr></tbody></table></figure>
+<p><code>requirements.txt</code> 放在 <code>docker/</code> 目录下这个设计有点反直觉，我第一次找了半天以为没有 requirements。</p>
+<hr>
+<h2 id="六、-env-文件，重点来了">六、<code>.env</code> 文件，重点来了</h2>
+<p>配置这块儿是最容易出问题的地方。我把实际用的 <code>.env</code> 贴出来，一条条解释。敏感信息都替换成占位符了，大家按自己情况改。</p>
+<figure class="highlight plaintext"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"># MemOS Environment Variables</span><br><span class="line"></span><br><span class="line">## Base</span><br><span class="line">TZ=Asia/Shanghai</span><br><span class="line">MOS_CUBE_PATH=D:/Memos/MemOS/data</span><br><span class="line">MEMOS_BASE_PATH=.</span><br><span class="line">MOS_ENABLE_DEFAULT_CUBE_CONFIG=true</span><br><span class="line">MOS_ENABLE_REORGANIZE=false</span><br><span class="line">MOS_TEXT_MEM_TYPE=general_text</span><br><span class="line">ASYNC_MODE=sync</span><br><span class="line"></span><br><span class="line">## User/session defaults</span><br><span class="line">MOS_TOP_K=50</span><br><span class="line"></span><br><span class="line">## Chat LLM - using Ollama local model</span><br><span class="line">MOS_CHAT_MODEL=qwen2.5:7b</span><br><span class="line">MOS_CHAT_TEMPERATURE=0.8</span><br><span class="line">MOS_MAX_TOKENS=2048</span><br><span class="line">MOS_TOP_P=0.9</span><br><span class="line">MOS_CHAT_MODEL_PROVIDER=openai</span><br><span class="line">OPENAI_API_KEY=ollama</span><br><span class="line">OPENAI_API_BASE=http://localhost:11434/v1</span><br><span class="line"></span><br><span class="line">## MemReader - 记忆抽取</span><br><span class="line">MEMRADER_MODEL=hf.co/mradermacher/MemReader-4B-GGUF</span><br><span class="line">MEMRADER_API_KEY=ollama</span><br><span class="line">MEMRADER_API_BASE=http://localhost:11434/v1</span><br><span class="line">MEMRADER_MAX_TOKENS=5000</span><br><span class="line"></span><br><span class="line">## General LLM - 合并/改写/过滤</span><br><span class="line">MEMREADER_GENERAL_MODEL=qwen2.5:7b</span><br><span class="line">MEMREADER_GENERAL_API_KEY=ollama</span><br><span class="line">MEMREADER_GENERAL_API_BASE=http://localhost:11434/v1</span><br><span class="line"></span><br><span class="line">## Embedding</span><br><span class="line">EMBEDDING_DIMENSION=1024</span><br><span class="line">MOS_EMBEDDER_BACKEND=ollama</span><br><span class="line">MOS_EMBEDDER_MODEL=bge-m3</span><br><span class="line">OLLAMA_API_BASE=http://localhost:11434</span><br><span class="line"></span><br><span class="line">## Reranker</span><br><span class="line">MOS_RERANKER_BACKEND=cosine_local</span><br><span class="line">MOS_RERANKER_STRATEGY=single_turn</span><br><span class="line"></span><br><span class="line">## Internet search &amp; preference memory</span><br><span class="line">ENABLE_INTERNET=false</span><br><span class="line">SEARCH_MODE=fast</span><br><span class="line">ENABLE_PREFERENCE_MEMORY=false</span><br><span class="line"></span><br><span class="line">## Reader chunking</span><br><span class="line">MEM_READER_BACKEND=simple_struct</span><br><span class="line">MEM_READER_CHAT_CHUNK_TYPE=default</span><br><span class="line">MEM_READER_CHAT_CHUNK_TOKEN_SIZE=1600</span><br><span class="line">MEM_READER_CHAT_CHUNK_SESS_SIZE=10</span><br><span class="line">MEM_READER_CHAT_CHUNK_OVERLAP=2</span><br><span class="line"></span><br><span class="line">## Scheduler</span><br><span class="line">MOS_ENABLE_SCHEDULER=false</span><br><span class="line">API_SCHEDULER_ON=true</span><br><span class="line">MEMSCHEDULER_USE_REDIS_QUEUE=false</span><br><span class="line"></span><br><span class="line">## Graph / vector stores</span><br><span class="line">NEO4J_BACKEND=neo4j-community</span><br><span class="line">NEO4J_URI=bolt://localhost:7687</span><br><span class="line">NEO4J_USER=neo4j</span><br><span class="line">NEO4J_PASSWORD=your_password</span><br><span class="line">NEO4J_DB_NAME=neo4j</span><br><span class="line">MOS_NEO4J_SHARED_DB=false</span><br><span class="line"></span><br><span class="line">QDRANT_HOST=localhost</span><br><span class="line">QDRANT_PORT=6333</span><br></pre></td></tr></tbody></table></figure>
+<p>几个关键点得解释一下，不然容易懵。</p>
+<p><strong>关于 <code>OPENAI_API_BASE=http://localhost:11434/v1</code></strong>：别被变量名骗了。Ollama 提供了一套兼容 OpenAI 格式的接口，所以 MemOS 哪怕变量叫 OPENAI，实际上打的是 Ollama。<code>OPENAI_API_KEY=ollama</code> 这一行的 <code>ollama</code> 是个占位字符串，Ollama 不校验 key，写 <code>sk-whatever</code> 也行，但约定俗成写 <code>ollama</code> 比较好认。</p>
+<p><strong>关于 <code>MEMRADER_MODEL</code> 这个拼写</strong>：对，是 <code>MEMRADER</code> 不是 <code>MEMREADER</code>，官方环境变量拼错了一个字母，我看 issue 区有人吐槽过。按项目里实际的写法来就对了，别自作主张改成 <code>MEMREADER</code>，不然读不到。</p>
+<p><strong>关于 <code>EMBEDDING_DIMENSION=1024</code></strong>：这个必须和用的 embedding 模型维度一致。bge-m3 是 1024 维。如果换了 embedding 模型记得改。Qdrant 的 collection 一旦建了维度就定了，改维度要么删 collection 要么建新的。</p>
+<p><strong>关于 <code>ASYNC_MODE=sync</code></strong>：本地玩就用同步，调试方便。异步模式要配合 Redis，对新手来说是个大坑，先别碰。</p>
+<p><strong>关于 <code>MOS_ENABLE_REORGANIZE=false</code></strong>：这个我特地关掉了。开启后 MemOS 会周期性地重组记忆图，对本地玩耍来说太重，CPU 会一直不闲着。</p>
+<p><strong>关于 <code>MOS_RERANKER_BACKEND=cosine_local</code></strong>：原生支持本地 cosine 排序，不需要额外部署 rerank 服务。bge-reranker 效果更好，但要多一个服务，不划算。</p>
+<p><strong>关于 <code>MOS_CUBE_PATH</code></strong>：这是本地数据落盘的路径，别放 C 盘临时目录。我就因为 Windows 清理的时候把它当缓存删了一次，心态当场崩溃。</p>
+<hr>
+<h2 id="七、启动脚本">七、启动脚本</h2>
+<p>因为要同时拉起 Qdrant 和 uvicorn，我写了个 bat 脚本，双击就能跑。代码有点长但逻辑很直白：找 Python → 检查 uvicorn → 检查 Qdrant → 启 Qdrant → 等它 ready → 启 API。</p>
+<figure class="highlight bat"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line">@<span class="built_in">echo</span> off</span><br><span class="line"><span class="built_in">title</span> MemOS Server</span><br><span class="line"><span class="built_in">cd</span> /d "%~dp0"</span><br><span class="line"></span><br><span class="line">:: === Config ===</span><br><span class="line"><span class="built_in">set</span> QDRANT_DIR=%~dp0qdrant</span><br><span class="line"><span class="built_in">set</span> QDRANT_EXE=<span class="variable">%QDRANT_DIR%</span>\qdrant.exe</span><br><span class="line"></span><br><span class="line">:: === <span class="built_in">Find</span> Python ===</span><br><span class="line"><span class="built_in">set</span> PYTHON_EXE=</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python311\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python311\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python312\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python312\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python313\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python313\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python310\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=<span class="variable">%LOCALAPPDATA%</span>\Programs\Python\Python310\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "C:\Python311\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=C:\Python311\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">exist</span> "C:\Python312\python.exe" (</span><br><span class="line">    <span class="built_in">set</span> "PYTHON_EXE=C:\Python312\python.exe"</span><br><span class="line">    <span class="keyword">goto</span> :found_python</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span> [ERROR] Python <span class="keyword">not</span> found.</span><br><span class="line"><span class="built_in">echo</span> Please install Python <span class="number">3</span>.<span class="number">10</span>+ : https://www.python.org/downloads/</span><br><span class="line"><span class="built_in">pause</span></span><br><span class="line"><span class="keyword">exit</span> /b <span class="number">1</span></span><br><span class="line"></span><br><span class="line">:found_python</span><br><span class="line"><span class="built_in">echo</span> Python: <span class="variable">%PYTHON_EXE%</span></span><br><span class="line">"<span class="variable">%PYTHON_EXE%</span>" --version</span><br><span class="line"><span class="built_in">echo</span>.</span><br><span class="line"></span><br><span class="line">:: === Check uvicorn ===</span><br><span class="line">"<span class="variable">%PYTHON_EXE%</span>" -m uvicorn --version &gt;<span class="built_in">nul</span> <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line"><span class="keyword">if</span> <span class="variable">%errorlevel%</span> <span class="keyword">neq</span> <span class="number">0</span> (</span><br><span class="line">    <span class="built_in">echo</span> [ERROR] uvicorn <span class="keyword">not</span> installed.</span><br><span class="line">    <span class="built_in">echo</span> Run: "<span class="variable">%PYTHON_EXE%</span>" -m pip install uvicorn</span><br><span class="line">    <span class="built_in">pause</span></span><br><span class="line">    <span class="keyword">exit</span> /b <span class="number">1</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">:: === Check Qdrant ===</span><br><span class="line"><span class="keyword">if</span> <span class="keyword">not</span> <span class="keyword">exist</span> "<span class="variable">%QDRANT_EXE%</span>" (</span><br><span class="line">    <span class="built_in">echo</span> [ERROR] Qdrant <span class="keyword">not</span> found: <span class="variable">%QDRANT_EXE%</span></span><br><span class="line">    <span class="built_in">echo</span> Download: https://github.com/qdrant/qdrant/releases/latest</span><br><span class="line">    <span class="built_in">echo</span> Extract qdrant.exe to: <span class="variable">%QDRANT_DIR%</span>\</span><br><span class="line">    <span class="built_in">pause</span></span><br><span class="line">    <span class="keyword">exit</span> /b <span class="number">1</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line">:: === <span class="built_in">Start</span> Qdrant ===</span><br><span class="line"><span class="built_in">echo</span> [<span class="number">1</span>/<span class="number">2</span>] Starting Qdrant ...</span><br><span class="line"><span class="built_in">start</span> "Qdrant" /min "<span class="variable">%QDRANT_EXE%</span>"</span><br><span class="line"></span><br><span class="line"><span class="built_in">echo</span>       Waiting <span class="keyword">for</span> Qdrant ...</span><br><span class="line">:wait_qdrant</span><br><span class="line">timeout /t <span class="number">2</span> /nobreak &gt;<span class="built_in">nul</span></span><br><span class="line">curl -s -o <span class="built_in">nul</span> -w "" http://localhost:<span class="number">6333</span>/readyz <span class="number">2</span>&gt;<span class="built_in">nul</span></span><br><span class="line"><span class="keyword">if</span> <span class="variable">%errorlevel%</span> <span class="keyword">neq</span> <span class="number">0</span> <span class="keyword">goto</span> wait_qdrant</span><br><span class="line"><span class="built_in">echo</span>       Qdrant ready (localhost:<span class="number">6333</span>)</span><br><span class="line"><span class="built_in">echo</span>.</span><br><span class="line"></span><br><span class="line">:: === <span class="built_in">Start</span> API server ===</span><br><span class="line"><span class="built_in">echo</span> [<span class="number">2</span>/<span class="number">2</span>] Starting API server ...</span><br><span class="line">"<span class="variable">%PYTHON_EXE%</span>" -m uvicorn memos.api.server_api:app --host <span class="number">0</span>.<span class="number">0</span>.<span class="number">0</span>.<span class="number">0</span> --port <span class="number">8000</span></span><br><span class="line"></span><br><span class="line">:: === Cleanup ===</span><br><span class="line"><span class="built_in">echo</span> Stopping Qdrant ...</span><br><span class="line"><span class="built_in">taskkill</span> /f /im qdrant.exe &gt;<span class="built_in">nul</span> <span class="number">2</span>&gt;&amp;<span class="number">1</span></span><br><span class="line"><span class="built_in">pause</span></span><br></pre></td></tr></tbody></table></figure>
+<p><strong>跑之前必须手动先启动的</strong>：Ollama、Neo4j 这两个。脚本只管 Qdrant 和 API。</p>
+<p>一切顺利的话，控制台会看到 uvicorn 的 banner 跳出来，监听 8000 端口。这时候打开浏览器访问 <code>http://localhost:8000/docs</code>，Swagger 文档应该就出来了。看到这个界面我第一次长舒了一口气。</p>
+<p>如果看到 uvicorn 起得慢慢的、而且控制台在狂刷连接错误，十有八九是 Neo4j 没启动或者密码不对。</p>
+<hr>
+<h2 id="八、第一次调用：让它记住我们">八、第一次调用：让它记住我们</h2>
+<p>服务起来了，来试试最经典的 “add 再 search” 流程。</p>
+<p>写入一条记忆：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> requests, json</span><br><span class="line"></span><br><span class="line">requests.post(</span><br><span class="line">    <span class="string">"http://localhost:8000/product/add"</span>,</span><br><span class="line">    headers={<span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>},</span><br><span class="line">    data=json.dumps({</span><br><span class="line">        <span class="string">"user_id"</span>: <span class="string">"user-001"</span>,</span><br><span class="line">        <span class="string">"mem_cube_id"</span>: <span class="string">"cube-personal"</span>,</span><br><span class="line">        <span class="string">"messages"</span>: [</span><br><span class="line">            {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"我平时主要写 Unity 和 C#，不喜欢回答里有一堆 emoji。"</span>}</span><br><span class="line">        ],</span><br><span class="line">        <span class="string">"async_mode"</span>: <span class="string">"sync"</span></span><br><span class="line">    }, ensure_ascii=<span class="literal">False</span>)</span><br><span class="line">).json()</span><br></pre></td></tr></tbody></table></figure>
+<p>因为是 sync 模式，这个请求会等到 MemReader 抽完记忆、存进 Neo4j 和 Qdrant 才返回。我本地 7B 模型大概 5-10 秒。</p>
+<p>这 5-10 秒里 MemOS 实际做了这些事：</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    autonumber
+    participant C as 客户端
+    participant S as MemOS Server
+    participant R as MemReader-4B&lt;br/&gt;(Ollama)
+    participant E as bge-m3&lt;br/&gt;(Ollama)
+    participant N as Neo4j
+    participant Q as Qdrant
+
+    C-&gt;&gt;S: POST /product/add&lt;br/&gt;原始对话
+    S-&gt;&gt;R: 从对话里抽取结构化记忆
+    R--&gt;&gt;S: ["用户写 Unity/C#",&lt;br/&gt; "不喜欢 emoji"]
+    S-&gt;&gt;E: 给每条记忆算 embedding
+    E--&gt;&gt;S: vector[1024]
+    par 并行落盘
+        S-&gt;&gt;N: 写图节点 + 关系
+    and
+        S-&gt;&gt;Q: 写向量 + 元数据
+    end
+    S--&gt;&gt;C: 200 OK</code></pre>
+<p>这条链里最慢的是 MemReader 那一步（LLM 抽取），不是数据库写入——这就是为什么后面我们会把写入改成 <code>async_mode: "async"</code>。</p>
+<p>然后查一下：</p>
+<figure class="highlight python"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> requests, json</span><br><span class="line"></span><br><span class="line">res = requests.post(</span><br><span class="line">    <span class="string">"http://localhost:8000/product/search"</span>,</span><br><span class="line">    headers={<span class="string">"Content-Type"</span>: <span class="string">"application/json"</span>},</span><br><span class="line">    data=json.dumps({</span><br><span class="line">        <span class="string">"query"</span>: <span class="string">"用户的技术栈和输出偏好？"</span>,</span><br><span class="line">        <span class="string">"user_id"</span>: <span class="string">"user-001"</span>,</span><br><span class="line">        <span class="string">"mem_cube_id"</span>: <span class="string">"cube-personal"</span></span><br><span class="line">    }, ensure_ascii=<span class="literal">False</span>)</span><br><span class="line">).json()</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(res)</span><br></pre></td></tr></tbody></table></figure>
+<p>如果一切正常，返回里会有抽出来的两条记忆：用户主要使用 Unity 和 C#；用户不喜欢回答里有 emoji。</p>
+<p><strong>第一次看到它真的把我说过的话整理成结构化记忆，然后用中文问题也能召回回来的时候，感觉挺魔幻的</strong>。这不只是"文本搜索"，它是在对话基础上做了一层抽象。</p>
+<p>注意 <code>user_id</code> 和 <code>mem_cube_id</code> 这两个字段：上面用了 <code>user-001</code> 和 <code>cube-personal</code> 这种可读的字符串，但实际上随便填什么都行。官方示例里用 UUID 是好习惯，本地玩不用那么严谨。<strong>要紧的是：同一个人的数据要保持同一个 user_id，不然 MemOS 会以为是两个不同的人</strong>。</p>
+<hr>
+<h2 id="九、接-MCP：让记忆真正进入工作流">九、接 MCP：让记忆真正进入工作流</h2>
+<p><a target="_blank" rel="noopener" href="https://github.com/wqaetly/memos-api-mcp">https://github.com/wqaetly/memos-api-mcp</a></p>
+<p>服务跑起来、脚本也能 add/search 了，但这时候离"好用"还差一大步。</p>
+<p>因为如果每次想让 AI 记住点什么，都得手写 <code>requests.post</code> 那是反人类的。记忆系统真正发挥价值，是要让它<strong>以 Agent 原生的方式</strong>嵌进日常工作流里——换句话说，<strong>AI 自己决定什么时候查记忆、什么时候写记忆</strong>，我们不用管。</p>
+<p>这就是 MCP（Model Context Protocol）存在的意义。</p>
+<p>MemOS 官方在 <code>apps/memos-local-plugin</code> 里给 OpenClaw 和 Hermes Agent 提供了本地插件，底层就是通过 MCP 暴露记忆能力。但我用的 Agent 是 CodeBuddy，加上 MemOS 服务是本地部署、API 和云版有差异，我干脆<strong>基于官方的 MCP 魔改了一个只认本地 MemOS v1.0.1 的版本</strong>，项目叫 <code>memos-api-mcp</code>。下面这节讲讲它的设计。</p>
+<h3 id="9-1-设计原则：零封装、一比一对齐">9.1 设计原则：零封装、一比一对齐</h3>
+<p>MemOS 的 HTTP API 字段非常多（光 <code>search_memory</code> 一个接口就有 20 多个参数），很容易做成那种"我帮你包装一下，只暴露常用的几个"的 MCP。但我试过一段时间后放弃了这种思路。</p>
+<p>原因很简单：<strong>封装层是个包袱</strong>。MemOS 在快速迭代，上游加一个字段，封装层就得跟着改；而且每次封装都意味着一次抽象泄漏——你以为"我只需要这几个常用参数"，直到你真需要那个被藏起来的参数的时候。</p>
+<p>所以魔改版的设计原则是<strong>工具入参和 MemOS Server 的 OpenAPI schema 一比一对齐</strong>。MCP 这一层做且只做三件事：</p>
+<ul>
+<li>把 stdio 协议翻译成 HTTP 请求</li>
+<li>从环境变量注入 <code>user_id</code>（避免每次都要传）</li>
+<li>用 Zod schema 给 LLM 做参数校验和描述</li>
+</ul>
+<p>除此之外什么都不做。LLM 能看到的每一个字段，都是上游 API 真实存在的字段，行为和上游完全一致。</p>
+<h3 id="9-2-暴露的五个工具">9.2 暴露的五个工具</h3>
+<p>不是我原先提的三个，实际上是五个，每个对应 MemOS 的一个 REST 端点：</p>
+<table>
+<thead>
+<tr>
+<th>MCP 工具</th>
+<th>对应 API</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>add_message</code></td>
+<td><code>POST /product/add</code></td>
+<td>保存消息、抽取记忆</td>
+</tr>
+<tr>
+<td><code>search_memory</code></td>
+<td><code>POST /product/search</code></td>
+<td>检索候选记忆（回答前必调）</td>
+</tr>
+<tr>
+<td><code>delete_memory</code></td>
+<td><code>POST /product/delete_memory</code></td>
+<td>按 ID / filter 删除</td>
+</tr>
+<tr>
+<td><code>add_feedback</code></td>
+<td><code>POST /product/feedback</code></td>
+<td>对已有记忆提交反馈或修正</td>
+</tr>
+<tr>
+<td><code>get_user_profile</code></td>
+<td><code>POST /product/get_memory</code></td>
+<td>分页导出某个 cube 的全部记忆</td>
+</tr>
+</tbody>
+</table>
+<p>这里有个设计细节我想单独说一下：<strong><code>get_user_profile</code> 这个名字是故意起得不一样的</strong>。</p>
+<p>上游 API 叫 <code>/product/get_memory</code>，直译就是 <code>get_memory</code>。但我发现 LLM 看到 <code>get_memory</code> 这个工具名，会在很多<strong>不该用它</strong>的场景下调它——因为"获取记忆"听起来太像 <code>search_memory</code> 的同义词了。改成 <code>get_user_profile</code> 之后，LLM 会很清楚这是"把某个用户的完整画像拉出来"，只有真的需要全量记忆时才调，调用频次立刻合理了。</p>
+<p><strong>工具名是给 LLM 看的，不是给程序员看的</strong>——这个教训可以记一下。</p>
+<h3 id="9-3-强制工作流：search-→-answer-→-add">9.3 强制工作流：search → answer → add</h3>
+<p>光有工具不够，还得告诉 Agent <strong>什么时候用哪个</strong>。否则你会看到各种离谱行为：回答完了才想起来查记忆、同一个偏好被重复写入十几次、或者压根忘了写。</p>
+<p>我在 MCP 的系统提示里写死了一套强制工作流，每一轮对话都要按下图跑完：</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    autonumber
+    participant U as 用户
+    participant A as Agent (LLM)
+    participant M as memos-api-mcp
+    participant S as MemOS Server
+
+    U-&gt;&gt;A: 提问
+    rect rgb(232, 245, 233)
+        Note over A,S: ① 回答前：先查记忆
+        A-&gt;&gt;M: search_memory&lt;br/&gt;(query + filter)
+        M-&gt;&gt;S: POST /product/search
+        S--&gt;&gt;M: 相关记忆 top_k 条
+        M--&gt;&gt;A: 结构化记忆
+    end
+
+    rect rgb(255, 243, 224)
+        Note over A,U: ② 结合记忆作答（只用相关的，忽略噪声）
+        A-&gt;&gt;U: 给出回答
+    end
+
+    rect rgb(227, 242, 253)
+        Note over A,S: ③ 回答后：异步沉淀本轮对话
+        A-&gt;&gt;M: add_message&lt;br/&gt;(user+assistant, info)
+        M-&gt;&gt;S: POST /product/add
+        S--&gt;&gt;M: 202 Accepted
+        Note over S: MemReader 异步抽取&lt;br/&gt;写入 Neo4j/Qdrant
+    end</code></pre>
+<p>翻译成人话：</p>
+<ol>
+<li><strong>回答前</strong>必须先调 <code>search_memory</code>，用 <code>filter</code> 精确限定本项目范围；</li>
+<li>只使用<strong>相关</strong>的那几条记忆，无关的噪声直接忽略；</li>
+<li><strong>回答后</strong>必须调 <code>add_message</code>，把本轮的 user + assistant 消息和自定义属性写进去。</li>
+</ol>
+<p>三步里最容易被 LLM 偷懒省掉的是第 ③ 步——它已经把答案给用户了，<strong>从 LLM 的视角看任务已经结束了</strong>。所以提示词里要特别强调"无论用户说什么都要执行 add"，否则记忆库永远不会积累。</p>
+<p>这条工作流看起来死板，但实测下来是<strong>让 AI 真的"学会用记忆"的最关键一步</strong>。没有它，LLM 会把记忆工具当成可选 feature；有了它，记忆变成呼吸一样的本能动作。</p>
+<h3 id="9-4-filter：真正让记忆可用的东西">9.4 <code>filter</code>：真正让记忆可用的东西</h3>
+<p>魔改版里我花时间最多的一块，其实不是工具列表，而是 <code>filter</code> 参数。</p>
+<p>MemOS 本身就支持 filter，但上游文档写得比较抽象，而且<strong>有一个反直觉的规则</strong>很容易踩坑——写入时放在 <code>info</code> 里的字段，查询时要当成<strong>顶层扁平字段</strong>来过滤，不能带 <code>info.</code> 前缀。</p>
+<p>举个例子，所有项目记忆写入时都带上了 <code>info</code> 结构：</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"info"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"app_id"</span><span class="punctuation">:</span> <span class="string">"demo_project"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"module"</span><span class="punctuation">:</span> <span class="string">"Backend"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"scene"</span><span class="punctuation">:</span> <span class="string">"coding"</span><span class="punctuation">,</span></span><br><span class="line">    <span class="attr">"keywords"</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">"python"</span><span class="punctuation">,</span> <span class="string">"deploy"</span><span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
+<p>写入后，MemOS 会把 <code>info</code> 里的所有键<strong>平铺到 memory 顶层</strong>。所以 search 的时候就像访问顶层字段一样过滤：</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"filter"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"and"</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">{</span> <span class="attr">"app_id"</span><span class="punctuation">:</span> <span class="string">"demo_project"</span> <span class="punctuation">}</span><span class="punctuation">,</span></span><br><span class="line">      <span class="punctuation">{</span> <span class="attr">"or"</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">        <span class="punctuation">{</span> <span class="attr">"scene"</span><span class="punctuation">:</span> <span class="string">"coding"</span> <span class="punctuation">}</span><span class="punctuation">,</span></span><br><span class="line">        <span class="punctuation">{</span> <span class="attr">"scene"</span><span class="punctuation">:</span> <span class="string">"debug"</span> <span class="punctuation">}</span></span><br><span class="line">      <span class="punctuation">]</span><span class="punctuation">}</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
+<p>这里特别要注意两点：</p>
+<p><strong>第一，filter 必须用 <code>and</code> / <code>or</code> 结构包起来</strong>。不能传裸单字段——即使只有一个条件，也得写成 <code>{"and": [{"project_id": "x"}]}</code>，否则后端直接 400。</p>
+<p><strong>第二，不要写成 <code>info.app_id</code></strong>。我踩过这个坑：想当然地以为既然字段写进了 <code>info</code>，查询时就该加 <code>info.</code> 前缀——结果怎么过滤都是空结果。看了一天日志才发现 MemOS 做了平铺，查询时反而不需要前缀。</p>
+<p>filter 的威力在<strong>多项目场景下是刚需</strong>。我在 CodeBuddy 里同时开着三四个项目的对话，如果没有 filter，Unity 项目的记忆会污染 Python 项目的召回结果，Agent 会开始胡说八道。加上 <code>app_id</code> 过滤之后，每个项目的 Cube 虽然物理上共享，但<strong>逻辑上完全隔离</strong>。</p>
+<p>时间范围也可以过滤（同样要包 <code>and</code>）：</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"filter"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"and"</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">      <span class="punctuation">{</span> <span class="attr">"created_at"</span><span class="punctuation">:</span> <span class="punctuation">{</span> <span class="attr">"gte"</span><span class="punctuation">:</span> <span class="string">"2026-01-01T00:00:00Z"</span> <span class="punctuation">}</span> <span class="punctuation">}</span></span><br><span class="line">    <span class="punctuation">]</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
+<p>这个在"我最近一个月的偏好变了"这种场景里很有用——直接让 Agent 只看近期记忆。</p>
+<h3 id="9-5-MCP-客户端配置">9.5 MCP 客户端配置</h3>
+<p>讲完设计，说说怎么接。在 Claude Desktop、CodeBuddy 或任何支持 MCP 的客户端里，配置大概长这样：</p>
+<figure class="highlight json"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">{</span></span><br><span class="line">  <span class="attr">"mcpServers"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">    <span class="attr">"memos-api-mcp"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">      <span class="attr">"command"</span><span class="punctuation">:</span> <span class="string">"node"</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">"args"</span><span class="punctuation">:</span> <span class="punctuation">[</span><span class="string">"D:/memos-api-mcp/build/index.js"</span><span class="punctuation">]</span><span class="punctuation">,</span></span><br><span class="line">      <span class="attr">"env"</span><span class="punctuation">:</span> <span class="punctuation">{</span></span><br><span class="line">        <span class="attr">"MEMOS_USER_ID"</span><span class="punctuation">:</span> <span class="string">"demo_project"</span><span class="punctuation">,</span></span><br><span class="line">        <span class="attr">"MEMOS_BASE_URL"</span><span class="punctuation">:</span> <span class="string">"http://localhost:8000"</span></span><br><span class="line">      <span class="punctuation">}</span></span><br><span class="line">    <span class="punctuation">}</span></span><br><span class="line">  <span class="punctuation">}</span></span><br><span class="line"><span class="punctuation">}</span></span><br></pre></td></tr></tbody></table></figure>
+<p>三个环境变量的含义：</p>
+<ul>
+<li><strong><code>MEMOS_USER_ID</code></strong>：用户稳定标识，作为所有请求的默认 <code>user_id</code>。生产环境推荐用 <code>SHA-256(email)</code> 或 SSO subject；本地玩随便起个稳定字符串就行。</li>
+<li><strong><code>MEMOS_BASE_URL</code></strong>：MemOS Server 地址，默认 <code>http://localhost:8000</code>，对应我们前面启动的 uvicorn 服务。</li>
+<li><strong><code>MEMOS_MEM_CUBE_ID</code></strong>（可选）：<code>get_user_profile</code> 的默认 cube，不设置就回退到 <code>MEMOS_USER_ID</code>。</li>
+</ul>
+<p>配好之后客户端重启一下，就能在工具列表里看到这五个工具。</p>
+<h3 id="9-6-真正让它跑起来的，是那份系统提示词">9.6 真正让它跑起来的，是那份系统提示词</h3>
+<p>装完 MCP、客户端也连上了，这时候如果直接开对话你会发现——<strong>Agent 大概率不会主动用这些工具</strong>。</p>
+<p>为什么？因为 LLM 虽然能看到工具列表，但它并不知道"每一轮都必须调"、“filter 应该怎么写”、"<code>session_id</code> 要保持稳定"这些规矩。工具给了它能力，但没给它<strong>纪律</strong>。</p>
+<p>所以在我的项目里，我专门写了一份规则文件（放在 <code>.codebuddy/rules/</code> 下，不同 Agent 客户端有不同的规则目录机制），用系统提示词的形式强制约束 Agent 的调用行为。这份提示词我打磨了快两周，下面直接放出来，大家可以整份复制走改成自己的项目名即可。</p>
+<h4 id="完整提示词（可直接复制）">完整提示词（可直接复制）</h4>
+<p>下面这份是我实际在用的版本，按自己项目情况把 <code>demo_project</code> 全部替换掉就能用：</p>
+<figure class="highlight markdown"><table><tbody><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br></pre></td><td class="code"><pre><span class="line"><span class="section"># Memos MCP 使用规则</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 用户规则</span></span><br><span class="line"><span class="bullet">-</span> 基于用户过往的对话内容抽取记忆，并通过记忆检索提升用户与 AI 对话的一致性和个性化水平。</span><br><span class="line"></span><br><span class="line"><span class="section">## 项目标识（固定值，所有调用都必须带上）</span></span><br><span class="line"><span class="bullet">-</span> project<span class="emphasis">_id: "demo_</span>project"                // 顶层项目隔离字段</span><br><span class="line"><span class="bullet">-</span> info.app<span class="emphasis">_id: "demo_</span>project"               // 写入时放在 info 里；后端会把 info 的键平铺到 memory 顶层</span><br><span class="line"><span class="bullet">-</span> session<span class="emphasis">_id: "demo_</span>project<span class="emphasis">_<span class="language-xml"><span class="tag">&lt;<span class="name">stableConvId</span>&gt;</span></span>"</span></span><br><span class="line"><span class="emphasis">  （由 Agent 维护，单次会话保持稳定；建议用 md5(user_</span>id + 会话第一条用户消息) 生成）</span><br><span class="line"></span><br><span class="line"><span class="section">## 可选范围与标签字段</span></span><br><span class="line"><span class="bullet">-</span> info.scope<span class="emphasis">_key: "demo_</span>project:<span class="language-xml">&lt;project|team_id|personal_id&gt;</span>"  // 推荐用于共享范围过滤</span><br><span class="line"><span class="bullet">-</span> info.team<span class="emphasis">_id: "<span class="language-xml"><span class="tag">&lt;<span class="name">team_id</span>&gt;</span></span>"                 // 组范围</span></span><br><span class="line"><span class="emphasis">- info.module: "&lt;模块名&gt;"                   // 如 FrontEnd / Backend / DevOps</span></span><br><span class="line"><span class="emphasis">- info.keywords: ["&lt;关键词1&gt;", "&lt;关键词2&gt;"] // 稳定标签；用于过滤时放在 info</span></span><br><span class="line"><span class="emphasis"></span></span><br><span class="line"><span class="emphasis">## 每轮对话的强制工作流</span></span><br><span class="line"><span class="emphasis"></span></span><br><span class="line"><span class="emphasis">### 1. 回答前，调用 memos-api-mcp 的 search_</span>memory</span><br><span class="line">必填入参：</span><br><span class="line"><span class="bullet">-</span> query：当前用户问题（可做精简摘要）</span><br><span class="line"><span class="bullet">-</span> session<span class="emphasis">_id：本次会话的稳定 ID</span></span><br><span class="line"><span class="emphasis">- top_</span>k：3</span><br><span class="line"><span class="bullet">-</span> search<span class="emphasis">_memory_</span>type: "LongTermMemory"  // 本项目 MCP 自动记忆只检索长期记忆</span><br><span class="line"><span class="bullet">-</span> dedup: "no"                           // 关闭 MMR 去重，避免 search 慢到 40s+</span><br><span class="line"><span class="bullet">-</span> include<span class="emphasis">_preference: false             // 当前不使用 PreferenceMemory</span></span><br><span class="line"><span class="emphasis">- search_</span>tool<span class="emphasis">_memory: false             // 当前不使用 ToolSchemaMemory / ToolTrajectoryMemory</span></span><br><span class="line"><span class="emphasis">- include_</span>skill<span class="emphasis">_memory: false           // 当前不使用 SkillMemory</span></span><br><span class="line"><span class="emphasis">- filter：必须限定到本项目，使用 MemOS 支持的 `and` / `or` 结构；`info` 字段写入后会平铺到顶层，过滤时直接用字段名，不要写 `info.xxx`。</span></span><br><span class="line"><span class="emphasis"></span></span><br><span class="line"><span class="emphasis">推荐调用示例（项目级共享）：</span></span><br><span class="line"><span class="emphasis">```json</span></span><br><span class="line"><span class="emphasis">{</span></span><br><span class="line"><span class="emphasis">  "query": "&lt;当前用户问题摘要&gt;",</span></span><br><span class="line"><span class="emphasis">  "session_</span>id": "demo<span class="emphasis">_project_</span><span class="language-xml"><span class="tag">&lt;<span class="name">stableConvId</span>&gt;</span></span>",</span><br><span class="line">  "top<span class="emphasis">_k": 3,</span></span><br><span class="line"><span class="emphasis">  "search_</span>memory<span class="emphasis">_type": "LongTermMemory",</span></span><br><span class="line"><span class="emphasis">  "dedup": "no",</span></span><br><span class="line"><span class="emphasis">  "include_</span>preference": false,</span><br><span class="line">  "search<span class="emphasis">_tool_</span>memory": false,</span><br><span class="line">  "include<span class="emphasis">_skill_</span>memory": false,</span><br><span class="line">  "filter": {</span><br><span class="line"><span class="code">    "and": [</span></span><br><span class="line"><span class="code">      { "project_id": "demo_project" }</span></span><br><span class="line"><span class="code">    ]</span></span><br><span class="line"><span class="code">  }</span></span><br><span class="line"><span class="code">}</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"><span class="code"></span></span><br><span class="line">推荐调用示例（组内共享）：</span><br><span class="line"><span class="code">```json</span></span><br><span class="line"><span class="code">{</span></span><br><span class="line"><span class="code">  "query": "&lt;当前用户问题摘要&gt;",</span></span><br><span class="line"><span class="code">  "session_id": "demo_project_&lt;stableConvId&gt;",</span></span><br><span class="line"><span class="code">  "top_k": 3,</span></span><br><span class="line"><span class="code">  "search_memory_type": "LongTermMemory",</span></span><br><span class="line"><span class="code">  "dedup": "no",</span></span><br><span class="line"><span class="code">  "include_preference": false,</span></span><br><span class="line"><span class="code">  "search_tool_memory": false,</span></span><br><span class="line"><span class="code">  "include_skill_memory": false,</span></span><br><span class="line"><span class="code">  "filter": {</span></span><br><span class="line"><span class="code">    "and": [</span></span><br><span class="line"><span class="code">      { "project_id": "demo_project" },</span></span><br><span class="line"><span class="code">      { "scope_key": "demo_project:&lt;team_id&gt;" }</span></span><br><span class="line"><span class="code">    ]</span></span><br><span class="line"><span class="code">  }</span></span><br><span class="line"><span class="code">}</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"></span><br><span class="line">规则：仅使用与当前问题真正相关的记忆；无关或噪声忽略。</span><br><span class="line"></span><br><span class="line"><span class="section">### 2. 结合检索到的相关记忆回答用户</span></span><br><span class="line"></span><br><span class="line"><span class="section">### 3. 回答完成后，必须调用 memos-api-mcp 的 add<span class="emphasis">_message 记录本轮对话摘要</span></span></span><br><span class="line"><span class="emphasis"><span class="section">无论用户说什么或问什么都要调用，否则后续 search_</span>memory 拿不到更细的用户信息。</span></span><br><span class="line">必填/建议入参：</span><br><span class="line"><span class="bullet">-</span> session<span class="emphasis">_id：与第 1 步 search_</span>memory 使用的同一个 ID</span><br><span class="line"><span class="bullet">-</span> messages：本轮的 user + assistant 两条消息（OpenAI Chat 格式；assistant 为最终回答）</span><br><span class="line"><span class="bullet">-</span> project<span class="emphasis">_id: "demo_</span>project"                  // 项目隔离，必带</span><br><span class="line"><span class="bullet">-</span> async<span class="emphasis">_mode: "async"                         // 自动记忆异步写入，避免每轮对话阻塞</span></span><br><span class="line"><span class="emphasis">- mode: "fast"                                // 自动记忆使用 fast 模式；user+assistant 混合消息会保存为 LongTermMemory</span></span><br><span class="line"><span class="emphasis">- info:                                        // 自定义属性，<span class="strong">**所有键会被平铺到 memory 顶层属性**</span>，写入后直接以扁平字段名过滤</span></span><br><span class="line"><span class="emphasis">  ```json</span></span><br><span class="line"><span class="emphasis">  {</span></span><br><span class="line"><span class="emphasis">    "app_</span>id":        "demo<span class="emphasis">_project",</span></span><br><span class="line"><span class="emphasis">    "scope_</span>key":     "demo<span class="emphasis">_project:<span class="language-xml">&lt;project|team_id|personal_id&gt;</span>",</span></span><br><span class="line"><span class="emphasis">    "team_</span>id":       "<span class="language-xml">&lt;team_id，可选&gt;</span>",</span><br><span class="line"><span class="code">    "module":        "&lt;FrontEnd / Backend / DevOps&gt;",</span></span><br><span class="line"><span class="code">    "business_type": "&lt;unity_client / web_app / script / build_tool&gt;",</span></span><br><span class="line"><span class="code">    "biz_id":        "&lt;业务实体 ID，如类名/模块名&gt;",</span></span><br><span class="line"><span class="code">    "topic":         "&lt;一句话主题&gt;",</span></span><br><span class="line"><span class="code">    "keywords":      ["&lt;稳定关键词1&gt;", "&lt;稳定关键词2&gt;"],</span></span><br><span class="line"><span class="code">    "scene":         "&lt;coding / debug / daily_chat / qa&gt;",</span></span><br><span class="line"><span class="code">    "lang":          "&lt;zh / en&gt;"</span></span><br><span class="line"><span class="code">  }</span></span><br><span class="line"><span class="code">  ```</span></span><br><span class="line"><span class="code"></span></span><br><span class="line">推荐调用示例（项目级共享；组内共享时填写 team<span class="emphasis">_id 并将 scope_</span>key 改为 <span class="code">`demo_project:&lt;team_id&gt;`</span>）：</span><br><span class="line"><span class="code">```json</span></span><br><span class="line"><span class="code">{</span></span><br><span class="line"><span class="code">  "session_id": "demo_project_&lt;stableConvId&gt;",</span></span><br><span class="line"><span class="code">  "project_id": "demo_project",</span></span><br><span class="line"><span class="code">  "async_mode": "async",</span></span><br><span class="line"><span class="code">  "mode": "fast",</span></span><br><span class="line"><span class="code">  "messages": [</span></span><br><span class="line"><span class="code">    {</span></span><br><span class="line"><span class="code">      "role": "user",</span></span><br><span class="line"><span class="code">      "content": "&lt;用户本轮问题&gt;"</span></span><br><span class="line"><span class="code">    },</span></span><br><span class="line"><span class="code">    {</span></span><br><span class="line"><span class="code">      "role": "assistant",</span></span><br><span class="line"><span class="code">      "content": "&lt;助手最终回答&gt;"</span></span><br><span class="line"><span class="code">    }</span></span><br><span class="line"><span class="code">  ],</span></span><br><span class="line"><span class="code">  "info": {</span></span><br><span class="line"><span class="code">    "app_id": "demo_project",</span></span><br><span class="line"><span class="code">    "scope_key": "demo_project:project",</span></span><br><span class="line"><span class="code">    "team_id": "&lt;team_id，可选&gt;",</span></span><br><span class="line"><span class="code">    "module": "&lt;FrontEnd / Backend / DevOps&gt;",</span></span><br><span class="line"><span class="code">    "business_type": "unity_client",</span></span><br><span class="line"><span class="code">    "biz_id": "&lt;类名或模块名&gt;",</span></span><br><span class="line"><span class="code">    "topic": "&lt;一句话主题&gt;",</span></span><br><span class="line"><span class="code">    "keywords": ["&lt;稳定关键词1&gt;", "&lt;稳定关键词2&gt;"],</span></span><br><span class="line"><span class="code">    "scene": "coding",</span></span><br><span class="line"><span class="code">    "lang": "zh"</span></span><br><span class="line"><span class="code">  }</span></span><br><span class="line"><span class="code">}</span></span><br><span class="line"><span class="code">```</span></span><br><span class="line"></span><br><span class="line"><span class="section">## 关键规则</span></span><br><span class="line"><span class="bullet">-</span> 按上面的 search/add 示例调用；<span class="code">`session_id`</span> 单次会话保持稳定。</span><br><span class="line"><span class="bullet">-</span> 搜索默认只查 <span class="code">`LongTermMemory`</span>，并使用 <span class="code">`dedup: "no"`</span>、关闭 Preference/Tool/Skill 记忆分支。</span><br><span class="line"><span class="bullet">-</span> filter 必须使用 <span class="code">`and`</span> / <span class="code">`or`</span> 结构；不要传裸单字段 filter，也不要使用 <span class="code">`info.&lt;key&gt;`</span>。</span><br><span class="line"><span class="bullet">-</span> 共享范围用 <span class="code">`scope_key`</span>：项目级 <span class="code">`demo_project:project`</span>，团队级 <span class="code">`demo_project:&lt;team_id&gt;`</span>。</span><br><span class="line"><span class="bullet">-</span> 不传 <span class="code">`custom_tags`</span>；稳定标签写入 <span class="code">`info.keywords`</span>，模块归类写入 <span class="code">`info.module`</span> / <span class="code">`info.biz_id`</span>。</span><br></pre></td></tr></tbody></table></figure>
+<p>复制完之后直接丢到 <code>.codebuddy/rules/memos.md</code>（或你 Agent 客户端约定的规则目录）就能生效。</p>
+<p>整份规则看起来挺长，但它的内在结构其实就五块：<strong>项目标识 → search 规范 → 回答规范 → add 规范 → 关键规则</strong>。下面把每一块单独拎出来讲讲背后的设计决策——如果只是想拿来用，看到这里就可以了；想理解为什么这么写，继续往下读。</p>
+<h4 id="1-项目标识：三个细节值得说">(1) 项目标识：三个细节值得说</h4>
+<p><strong><code>project_id</code> 和 <code>info.app_id</code> 为什么要写两遍？</strong> 因为 MemOS 会把 <code>info</code> 里的键<strong>平铺到 memory 顶层属性</strong>。也就是说写入时放进 <code>info.app_id</code>，查询时就能直接用 <code>app_id</code> 去 filter，不用写 <code>info.app_id</code>。两个字段都带上是为了兼容两种过滤写法。</p>
+<p><strong><code>session_id</code> 为什么要稳定？</strong> MemOS 的召回相关性会受 <code>session_id</code> 影响。每次新对话生成一个随机 ID 会导致同一会话内的记忆互相召不到；但如果全局只用一个 ID，又会让跨会话的上下文互相污染。折中方案是<strong>按会话稳定</strong>——一次对话内保持不变，新对话换新的。</p>
+<p><strong>md5 生成 session_id 的小技巧</strong>：用 <code>md5(user_id + 第一条用户消息)</code>。同一个人说同一句话会得到同一个 ID，天然幂等。</p>
+<h4 id="2-搜索规范：每个参数都是踩坑换来的">(2) 搜索规范：每个参数都是踩坑换来的</h4>
+<p><strong><code>top_k: 3</code></strong>：默认是 10。实测 10 条记忆拼进 prompt，对 Agent 的决策反而有干扰——回到前面讲过的"上下文纯净"问题。3 条是我调出来的甜点值，宁少勿多。</p>
+<p><strong><code>search_memory_type: "LongTermMemory"</code></strong>：MemOS 里其实有 11 种记忆类型，全查一遍又慢又乱。本地部署场景下 90% 有用的都是长期记忆，其他的按需开。</p>
+<p><strong><code>dedup: "no"</code></strong>：这个参数坑过我一次。默认是 <code>"mmr"</code>（Maximal Marginal Relevance 去重），听起来很美好，但本地 7B 模型跑 MMR <strong>一次搜索能到 40 秒+</strong>，整个对话体验崩塌。关掉它，靠 <code>top_k=3</code> 自己保证多样性。</p>
+<p><strong><code>include_preference</code> / <code>search_tool_memory</code> / <code>include_skill_memory</code> 全关</strong>：这三类记忆在自动记忆场景下用不到，默认开着会拖慢搜索。只保留 LongTermMemory 一条主线最干净。</p>
+<p><strong>filter 必须用 <code>and</code>/<code>or</code> 结构</strong>：MemOS 的 filter 不接受裸单字段（比如直接 <code>{"project_id": "x"}</code>），必须包一层 <code>and</code>。这个是规范要求，不遵守直接报 400。</p>
+<h4 id="3-回答规范：只用相关记忆，无关的丢掉">(3) 回答规范：只用相关记忆，无关的丢掉</h4>
+<blockquote>
+<p>仅使用与当前问题真正相关的记忆；无关或噪声忽略。</p>
+</blockquote>
+<p>没有这条，LLM 会倾向于把所有召回的记忆<strong>都想办法"塞进答案里"</strong>——哪怕跟问题无关，也要生硬地提一嘴，美其名曰"体现连贯性"。这是 LLM 的一个通病，必须用提示词显式压制。</p>
+<h4 id="4-写入规范：看似官僚的字段全是未来的弹药">(4) 写入规范：看似官僚的字段全是未来的弹药</h4>
+<p><strong><code>async_mode: "async"</code> + <code>mode: "fast"</code> 的组合很关键</strong>。同步模式 + fine 模式虽然质量最高，但每次 add 要等 10 秒以上，严重影响对话体验。异步 + fast 把写入延迟压到几百毫秒，用户无感，质量也够用。</p>
+<p><strong><code>info</code> 里那些"看起来很官僚"的字段是故意的</strong>。<code>module</code>、<code>business_type</code>、<code>topic</code>、<code>keywords</code> 这些字段在写入时看起来很啰嗦，但它们是<strong>未来 filter 搜索的弹药库</strong>。当记忆库里攒到几千条之后，没有这些元数据就根本没法精准召回。Agent 在写入时稍微费点力气打好标签，查询时才有东西可过滤。</p>
+<p>特别是 <code>scope_key</code>，我用它做<strong>共享范围</strong>的控制：</p>
+<ul>
+<li><code>demo_project:project</code>：项目级共享（所有团队成员都能看到）</li>
+<li><code>demo_project:&lt;team_id&gt;</code>：团队级共享（只有本组能看到）</li>
+<li><code>demo_project:&lt;personal_id&gt;</code>：个人私有</li>
+</ul>
+<p>这样同一个 MemOS 实例可以服务多人，靠 <code>scope_key</code> filter 就能实现软性权限隔离。</p>
+<h4 id="5-关键规则：六条铁律的意义">(5) 关键规则：六条铁律的意义</h4>
+<p>提示词最后那个 check list 看起来像啰嗦的总结，但它的作用是<strong>容错</strong>。LLM 在长对话中会开始偷懒、简化、漏参数——check list 就是写给它的"每次调用前再自查一遍"的最后一道闸门。</p>
+<h4 id="这套提示词的本质是什么？">这套提示词的本质是什么？</h4>
+<p>回头看这份规则，我觉得它干的事情，其实就是<strong>把"MemOS 的 API 设计直觉"翻译成 LLM 能遵守的行为约束</strong>。</p>
+<p>MemOS 本身设计得很灵活——20 多个参数、11 种记忆类型、任意自定义 <code>info</code>。但灵活性的反面是<strong>需要有人做选择</strong>。如果让 LLM 自己选，它会每次都选不一样的；如果让用户每次手动填，谁也受不了。所以必须有一层规则来做<strong>默认收敛</strong>——把 80% 场景下的最佳参数固化下来，让 Agent 照着抄就行。</p>
+<p><strong>这份规则大概 150 行，但它的价值抵得上前面所有代码</strong>。</p>
+<p>工具给能力，提示词给纪律。缺了任何一个，记忆系统都运转不起来。</p>
+<h3 id="9-7-跑起来的效果">9.7 跑起来的效果</h3>
+<p>讲了这么多，实际用起来什么感觉？</p>
+<p>每次在 CodeBuddy 里开一个新对话，它第一件事会调 <code>search_memory</code>，把我的技术栈、项目偏好、当前项目的结构约定都捞出来。然后整个对话里它不会再问"你用什么框架"、"路径是哪"这种问题。</p>
+<p>对话过程中，每次轮次结束它会悄悄调 <code>add_message</code>，把刚才这一轮有长期价值的信息沉淀进去。第二天打开新对话，昨天那条"用户希望 MemOS 的 Qdrant 放在项目根下的 qdrant/ 里"就直接能召回。</p>
+<p>偶尔我会说一句"上次那个记错了，不是 8001 是 8000"，Agent 会调 <code>add_feedback</code> 修正。这些动作<strong>全程不用我介入</strong>，MCP 协议 + 强制工作流让这一切变成了 Agent 的肌肉记忆。</p>
+<p><strong>用了一个月最大的感受是</strong>：AI 不再是金鱼脑。它不会再问"你的项目路径是什么"、“你用的是什么框架”、“你喜欢简洁还是详细”——这些它都已经知道了。而且更重要的是，它还在<strong>持续变得更懂我</strong>。</p>
+<hr>
+<h2 id="十、踩过的坑汇总">十、踩过的坑汇总</h2>
+<p>按遇到的顺序排：</p>
+<p><strong>Neo4j 装了但没启动</strong>。Neo4j Desktop 装完默认只是启动了"管理器"，数据库本身要手动 Start。这个坑我吃了两次。</p>
+<p><strong><code>MEMRADER</code> 和 <code>MEMREADER</code> 拼写不统一</strong>。记忆抽取模型的环境变量前缀是 <code>MEMRADER_</code>，少了一个 E。千万别手贱改成正确拼写，那样反而读不到。</p>
+<p><strong>Ollama 模型拉了但 MemOS 连不上</strong>。确认一下 Ollama 服务是真的在跑（任务管理器里有 <code>ollama app</code> 进程），<code>curl http://localhost:11434/api/tags</code> 能返回模型列表。有一次我的 Ollama 进程悄悄挂了自己都没发现。</p>
+<p><strong>Qdrant collection 维度不匹配</strong>。之前试过换 embedding 模型，结果新模型是 768 维，旧 collection 是 1024 维，报错报得很隐晦。删掉 Qdrant 数据目录重建就好。</p>
+<p><strong>端口冲突</strong>。8000 是 MemOS API，11434 是 Ollama，7687 是 Neo4j Bolt，6333 是 Qdrant。我本地正好有个 docker 服务占了 8000，MemOS 起不来但日志里没明说，查了半天。</p>
+<p><strong>第一次 add 巨慢</strong>。本地 7B 模型抽记忆本来就慢，再加上第一次冷启动 Ollama 要加载模型权重到显存，头几次请求能到 30 秒。第一次跑别以为是卡死了，耐心等。</p>
+<p><strong><code>.env</code> 不小心被提交到 git</strong>。示例里虽然把密码都脱敏了，但真实的 <code>.env</code> 一定要加到 <code>.gitignore</code>。对外分享项目的时候，密码、内网地址、MCP 地址都得先清一遍。</p>
+<hr>
+<h2 id="十一、MemOS-vs-普通-RAG：什么时候用它">十一、MemOS vs 普通 RAG：什么时候用它</h2>
+<p>聊了这么多，我还想说句实话：<strong>不是所有项目都需要 MemOS</strong>。</p>
+<p>如果只是做一个 FAQ 问答、一个文档助手、一个代码搜索工具，普通 RAG 就够了。MemOS 相对来说是"重"的——要装图数据库、向量数据库、还要跑个记忆抽取模型。</p>
+<p>它的价值只有在以下场景才体现得出来：</p>
+<p>Agent 需要<strong>跨会话记住用户</strong>（个人助手、长期陪伴类应用）；我们要做<strong>多 Agent 协作</strong>且 Agent 之间需要共享经验（工程团队的开发 Agent、测试 Agent、审查 Agent）；系统需要<strong>对记忆做治理</strong>（企业合规、可审计、可删除）；系统<strong>会长期运行</strong>，需要自然淘汰过时信息、修正错误记忆。</p>
+<p>换句话说，RAG 解决的是"有知识要查"，MemOS 解决的是"有经验要沉淀"。</p>
+<hr>
+<h2 id="十二、回到-Harness：记忆到底有多关键">十二、回到 Harness：记忆到底有多关键</h2>
+<p>装完 MemOS、接上 MCP、写完规则文件，这时候再回头看开篇那句"Agent = Model + Harness"，我的体会完全不一样了。</p>
+<p>第二节讲 Harness 六层的时候我说过 L4 是最难啃的一层，那还只是理论判断。真正动手搭了一个月之后，我想把这句话说得更具体：<strong>在 Harness 的六层里，L4 是唯一需要"长期陪跑"的一层</strong>。</p>
+<p>L1（边界）、L2（工具）、L3（编排）、L5（评估）、L6（约束）这五层有一个共同特点——<strong>它们都是"写好就放那"的静态设施</strong>。提示词写完就是那个样子，工具接上就不用管，测试脚本写完能跑多少年。但 L4 不一样，<strong>它是一个"今天的 Agent 比昨天更懂你"的动态过程</strong>。每多一次对话、每一条反馈、每一次纠错，它都在悄悄变化。</p>
+<p>这种"活的"特性让 L4 成为 Harness 里最像<strong>真实产品</strong>的一层，也是它最容易被低估的原因——很多团队把记忆当成"附加功能"做，结果跑到几千条记忆之后系统就崩了：重复记忆互相打架、错误记忆无法清除、不同项目的记忆互相污染。补 L4 的代价不是写代码的工作量，而是<strong>设计出一套能自我演化的治理机制</strong>。</p>
+<h3 id="一段来自-LangGraph-的真实体会">一段来自 LangGraph 的真实体会</h3>
+<p>说到这个我特别想插一段自己的实战体会。最近我也在用 <strong>LangGraph</strong> 做一些 Agent 开发，折腾下来感触最深的一件事，可以总结成四个字——<strong>上下文纯净</strong>。</p>
+<p>LangGraph 的 State 机制让节点之间传状态非常方便，但也很容易养成一个坏习惯：<strong>什么都往 state 里塞</strong>。工具调用的完整返回、中间推理的草稿、历史轮次的原始对话、还有一堆"万一后面会用到"的字段。一开始跑得好好的，跑到后面你会发现——Agent 开始做一些莫名其妙的决策，因为它的上下文里混了太多早就过期的噪音，LLM 的注意力被稀释了。这正是第二节里讲的 Smart Zone → Dumb Zone 分界，一旦越过 40% 就开始退化。</p>
+<p>解决这个问题有很多做法：在图的边上做 state 裁剪、用 summarization 节点压缩历史、或者分层架构把细节隔离在子图里。<strong>但这些本质上都是"事后清理"——垃圾已经产生了，我们在想办法把它们扫出去</strong>。</p>
+<p>而记忆系统干的是更前置的一件事：<strong>从源头上就不让垃圾进主上下文</strong>。</p>
+<p>具体来说，当 Agent 有了一个像 MemOS 这样的外挂 L4 层之后，工作流大概是这样的：</p>
+<ul>
+<li>历史对话不再原样拼进 prompt，而是被 MemReader 抽取成结构化记忆存进 Cube；</li>
+<li>每次请求时，根据当前任务做语义召回，<strong>只把相关的那几条记忆</strong>拼进来（上面规则文件里 <code>top_k: 3</code> 就是这个意思）；</li>
+<li>工具调用的中间结果该记录的记录、该丢弃的丢弃，主 state 只保留决策所需的精简字段；</li>
+<li>跨会话的用户偏好、项目约定这些"稳定记忆"，不占当前轮的上下文预算。</li>
+</ul>
+<p>结果就是：<strong>主上下文里永远只有"和当前这一步最相关的信息"</strong>。Agent 的注意力不会被分散，第 50 轮和第 1 轮的决策质量基本一致。</p>
+<p>所以记忆看似是在解决"记住"这件事，<strong>但它带来的最大副作用其实是"忘掉"——忘掉那些不该出现在当前上下文里的东西</strong>。这种"忘掉"不是真的遗忘，是把它们从热数据转成冷数据，需要的时候还能精准召回，不需要的时候不来打扰。</p>
+<p>对我来说，这是用了 MemOS 之后最打动我的一点。它让我重新理解了一件事：<strong>好的记忆系统，和好的遗忘机制，其实是同一件事的两面</strong>。</p>
+<h3 id="Context-Resets-vs-MemOS：两条路径的取舍">Context Resets vs MemOS：两条路径的取舍</h3>
+<p>回到上下文崩坏这个问题，业内目前有两种主流解法：</p>
+<p>一种是 Anthropic 推的 “context resets”——干脆另起一个新 Agent，用结构化的交接文档把状态传过去。思路干脆，但交接文档本身就是一种记忆形式，你还是得有地方存它。</p>
+<p>另一种就是 MemOS 这条路——<strong>不等到崩了再重置，而是从一开始就把"该记什么、记成什么结构、什么时候调出来"做成系统能力</strong>。每次请求只召回真正相关的记忆，上下文利用率始终压在 40% 以下，Agent 就不会退化。</p>
+<p>所以说，<strong>记忆其实很重要。它不只是一个让 AI 记住你生日的小功能，而是决定 Agent 能不能跑到第 100 轮、第 1000 轮还不崩的基础设施</strong>。</p>
+<hr>
+<h2 id="十三、一些不成熟的想法">十三、一些不成熟的想法</h2>
+<p>用了 MemOS 一段时间，我开始觉得，<strong>长期记忆可能会成为 AI 应用的分水岭</strong>。</p>
+<p>现在大家做 AI 产品，能力上其实差不多——都是接个大模型加点 prompt engineering。真正拉开差距的点，往往不在模型本身，而在 Harness 那一套外围骨架上：有没有积累用户画像、有没有沉淀项目知识、有没有让 Agent 从历史任务里学到东西、会话跑到第 50 轮还能不能保持一致性。</p>
+<p>MemOS 提供的，正是让普通开发者也能构建这种"长期能力"的基础设施。我们不用自己去想怎么设计记忆 schema、怎么做去重、怎么处理冲突、怎么按用户隔离——这些它都替我们想好了。把 Harness 的 L4 层外包给 MemOS，我们就能把精力放回在真正差异化的业务上。</p>
+<p>当然它现在还年轻，文档和稳定性都有进步空间。装的过程里我也吐槽了不少地方。但方向我是认的。</p>
+<p>如果大家也想试试，我的建议是：<strong>别想着一口气搞完，先把 Ollama 和 MemOS API 跑通，能完成 add/search，就算赢了一半</strong>。剩下的 MCP 集成、多 Agent 协作、反馈修正，都可以等这个基础跑稳了再慢慢加。</p>
+<hr>
+<h2 id="十四、参考资源">十四、参考资源</h2>
+<ul>
+<li>MemOS 主仓库： <a target="_blank" rel="noopener" href="https://github.com/MemTensor/MemOS">https://github.com/MemTensor/MemOS</a></li>
+<li>MemOS 论文： <a target="_blank" rel="noopener" href="https://arxiv.org/abs/2507.03724">https://arxiv.org/abs/2507.03724</a></li>
+<li>Ollama： <a target="_blank" rel="noopener" href="https://ollama.com/">https://ollama.com/</a></li>
+<li>Neo4j： <a target="_blank" rel="noopener" href="https://neo4j.com/download/">https://neo4j.com/download/</a></li>
+<li>Qdrant Releases： <a target="_blank" rel="noopener" href="https://github.com/qdrant/qdrant/releases">https://github.com/qdrant/qdrant/releases</a></li>
+<li><a target="_blank" rel="noopener" href="https://openai.com/index/harness-engineering/">OpenAI - Harness Engineering: Leveraging Codex in an Agent-First World</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.anthropic.com/engineering/harness-design-long-running-apps">Anthropic - Harness Design for Long-Running Application Development</a></li>
+<li><a target="_blank" rel="noopener" href="https://mitchellh.com/writing/my-ai-adoption-journey">Mitchell Hashimoto - My AI Adoption Journey</a></li>
+<li><a target="_blank" rel="noopener" href="https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html">Birgitta Böckeler - Harness Engineering (Martin Fowler 网站)</a></li>
+<li><a target="_blank" rel="noopener" href="https://stripe.dev/blog/minions-stripes-one-shot-end-to-end-coding-agents">Stripe - Minions: Stripe’s One-Shot, End-to-End Coding Agents</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.langchain.com/the-anatomy-of-an-agent-harness/">LangChain - The Anatomy of an Agent Harness</a></li>
+<li><a target="_blank" rel="noopener" href="https://blog.can.ac/2026/02/12/the-harness-problem/">Can Bölük (Can.ac) - The Harness Problem</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/2014014859164026634">Harness Engineering 深度解析：AI Agent 时代的工程范式革命</a></li>
+<li><a target="_blank" rel="noopener" href="https://mp.weixin.qq.com/s/YYurQM9EUuyshuW20YAMJQ">一文看懂 Harness engineering：智能体时代的 AI 编程驾驭之道</a></li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-memos/">https://www.lfzxb.top/aigc-memos/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/Memos/">Memos</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信" loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝" loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/aigc-gameplay-demo-dev/" title="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</div></div><div class="info-2"><div class="info-item-1">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发者而言，选择一个能够与无头AI代理完美契合的底层游戏框架至关重要。传统的商业游戏引擎往往内置了封闭、专有且性能受限的AI辅助工具（如基于轻量级模型的代码补全），这导致开发者难以利用最先进的基础通用模型进行全局上下文推理和跨文件重构。因此，将集成开发环境（VS Code）、顶级通用推理模型（通过命令行运行的Claude Code）与高度文本化、支持命令行自动化的轻量级游戏引擎相结合，成为了解决“通过AI对话完成逻辑搭建而尽量避免手动改写代码”这一痛点的最优解。 本研究报告将全面、深度地评估Godot引擎在这一特定自动化工作流中的绝对优势，深入剖析其文本化存储机制的语义透明度、模型上下文协议...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/aigc-base/" title="AI GC与游戏行业野望"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20260304205818827.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-04</div><div class="info-item-2">AI GC与游戏行业野望</div></div><div class="info-2"><div class="info-item-1">前言 本文将带领大家整理学习从2017年的Transformer划破黑夜，到现在2026年的AI GC，AI Agent，MCP，Skills的人类群星闪耀重要原理，知识点 首先，什么是AI GC，简单来说，AIGC 是指利用人工智能技术（尤其是生成式大模型），通过接收自然语言指令（Prompt）或其他模态的输入，自动或半自动地生成文本、图像、音频、视频、3D 模型甚至代码等数字化内容的一种新型生产方式。 1. 从内容生产的演进史定义：生产力的跨越 理解 AIGC，最好的参照物是 PGC 和 UGC：   PGC (Professionally Generated Content，专业生成内容)： 门槛高、产能低、质量高。比如专业工作室开发 3A 大作、好莱坞团队拍摄电影。   UGC (User Generated Content，用户生成内容)： 门槛低、产能高、质量参差不齐。比如玩家用地图编辑器做自定义关卡、普通用户在平台发布 Vlog。   AIGC： 是 PGC 和 UGC 的结合体与升维。它将生产门槛降到了最低（只需输入提示词或意图），同时又具备逼近甚至超越人类专业水...</div></div></div></a><a class="pagination-related" href="/aigc-computer/" title="开源免费的AI装机助手"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-10</div><div class="info-item-2">开源免费的AI装机助手</div></div><div class="info-2"><div class="info-item-1">前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：集成 DeepSeek AI 模型，提供流畅的对话体验   深度思考模式：启用推理模型（Reasoning Model），让 AI 进行深度分析和推理   多会话管理：支持创建、切换、重命名和删除多个独立对话会话   流式响应：实时显示 AI 生成的内容，提供即时反馈   会话自动保存：对话内容自动保存到本地，应用重启后可恢复   🔍 智能搜索  多引擎支持：  - 百度搜索：国内主流搜索引擎 - Bing 搜索：国际化搜索体验 - SearxNG：开源隐私保护元搜索引擎（支持实例测试和切换）   混合搜索策略：优先使用浏览器搜索，失败后自动降级到 SearxNG   搜索结果整合：A...</div></div></div></a><a class="pagination-related" href="/aigc-gameplay-demo-dev/" title="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-28</div><div class="info-item-2">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</div></div><div class="info-2"><div class="info-item-1">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发者而言，选择一个能够与无头AI代理完美契合的底层游戏框架至关重要。传统的商业游戏引擎往往内置了封闭、专有且性能受限的AI辅助工具（如基于轻量级模型的代码补全），这导致开发者难以利用最先进的基础通用模型进行全局上下文推理和跨文件重构。因此，将集成开发环境（VS Code）、顶级通用推理模型（通过命令行运行的Claude Code）与高度文本化、支持命令行自动化的轻量级游戏引擎相结合，成为了解决“通过AI对话完成逻辑搭建而尽量避免手动改写代码”这一痛点的最优解。 本研究报告将全面、深度地评估Godot引擎在这一特定自动化工作流中的绝对优势，深入剖析其文本化存储机制的语义透明度、模型上下文协议...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-dev/" title="AI GC在游戏中的应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20250628201616269.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-12-20</div><div class="info-item-2">AI GC在游戏中的应用</div></div><div class="info-2"><div class="info-item-1">前言 AI GC，即AI生成内容（AI generated content）越来越火，本篇文章就是我在使用AI方面的一些心得体会分享，目前包括：  AI代码生成，Cursor AI文生图实践，Comfy官网  我其实两年前就在玩OpenAI了，在供应商买了API接入 Chatbox 当成一个高级点的谷歌问问题，但也仅此而已，当时的AIGC给我感觉就像是一个高级点的搜索引擎，问问题还行其他的没什么大用 当时Stable Diffuse开源（泄漏）的时候我也本地部署了WebUI玩了下，确实有抽卡炼丹的感觉，不过没深入研究，玩了两下就放那了 今年春节DeepSeek横空出世，也是赚足了眼球，我也试用了下，发现幻觉比OpenAI少很多，起码。。。他不会一直骗我，但应用还是仅限于简单的问答，没感觉对生产力有什么帮助 AI代码方面也试用过 Github Copilot，讲道理感觉一般，和之前用过Chatbox问答模式生成的代码感觉差不多，没有很惊艳的感觉，顶多就是和IDE结合紧密更方便些 前阵子也是没抱什么希望试用了下Cursor，但两周时间之后，我完全变成Cursor的形状了，只能乖乖年费...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-11</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a><a class="pagination-related" href="/aigc-weixin-miniprogram/" title="基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202510111049941.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-10-10</div><div class="info-item-2">基于AI开发《玄机鉴-电脑硬件助手》微信小程序记录</div></div><div class="info-2"><div class="info-item-1">前言 这几天心血来潮，在空闲时间做了款AI微信小程序，可以借助AI来评估用户的配置，给出完整的装机配置单等  整个开发过程在AI的帮助下还算流畅 做都做完了，可惜卡在了审核那一步，现在微信小程序如果涉及AI生成内容是要求企业主体的，需要非常多的证书。。。遂放弃，本文就记录下开发过程中踩过坑和心得 总结 AI开发进化 非常推荐安装context7 MCP，这样AI就可以自己联网搜索对应的API 也推荐将需要的官网文档下载成Markdown文件，然后让AI读取文件内容，可以保证代码更稳定和准确，网页转markdown插件：WebInk: 智能网页转Markdown工具 微信云函数 默认云函数是个简单的RPC调用，无法实现AI流式输出的功能，如果需要AI流式输出，就得在客户端使用wx.AIExtend，但是整体来说拓展性较差，比如联网搜索和MCP拓展都不支持 火山引擎 如果需要接入AI功能我推荐字节家的火山引擎，可以非常方便的创建无代码应用，然后在微信小程序通过http调用，而且拓展性极佳，例如联网搜索都是一键配置的 可惜的是自定义MCP的接入非常麻烦，而且目前后台还有bug，下载了高...</div></div></div></a></div></div><hr class="custom-hr"><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#postchat_postcontent"><span class="toc-number">1.</span> <span class="toc-text">给 AI Agent 装上长期记忆：MemOS 本地部署踩坑记</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%99%E5%9C%A8%E5%89%8D%E9%9D%A2"><span class="toc-number">1.1.</span> <span class="toc-text">写在前面</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%85%88%E8%81%8A%E8%81%8A-%E8%AE%B0%E5%BF%86-%E8%BF%99%E4%BB%B6%E4%BA%8B%E5%88%B0%E5%BA%95%E9%9A%BE%E5%9C%A8%E5%93%AA"><span class="toc-number">1.2.</span> <span class="toc-text">一、先聊聊"记忆"这件事到底难在哪</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E7%BB%95%E4%B8%8D%E5%BC%80%E7%9A%84%E8%AF%9D%E9%A2%98%EF%BC%9AHarness-Engineering"><span class="toc-number">1.3.</span> <span class="toc-text">二、绕不开的话题：Harness Engineering</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BB%8E-Prompt-Engineering-%E5%88%B0-Harness-Engineering"><span class="toc-number">1.3.1.</span> <span class="toc-text">从 Prompt Engineering 到 Harness Engineering</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Harness-%E7%9A%84%E5%85%AD%E5%B1%82%E6%9E%B6%E6%9E%84"><span class="toc-number">1.3.2.</span> <span class="toc-text">Harness 的六层架构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88-L4-%E6%98%AF-%E8%AE%B0%E5%BF%86-%E7%8A%B6%E6%80%81-%EF%BC%9F%E4%B8%80%E4%B8%AA%E5%85%B3%E9%94%AE%E7%9A%84-40-%E8%A7%82%E5%AF%9F"><span class="toc-number">1.3.3.</span> <span class="toc-text">为什么 L4 是"记忆 + 状态"？一个关键的 40% 观察</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%9E%E5%88%B0-MemOS"><span class="toc-number">1.3.4.</span> <span class="toc-text">回到 MemOS</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81MemOS-%E5%88%B0%E5%BA%95%E7%BB%99%E4%BA%86%E6%88%91%E4%BB%AC%E4%BB%80%E4%B9%88"><span class="toc-number">1.4.</span> <span class="toc-text">三、MemOS 到底给了我们什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%83%A8%E7%BD%B2%E9%80%89%E5%9E%8B%E6%80%9D%E8%B7%AF"><span class="toc-number">1.5.</span> <span class="toc-text">四、部署选型思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E7%BB%84%E4%BB%B6%E4%B8%80%E4%B8%AA%E4%B8%AA%E8%A3%85%E8%B5%B7%E6%9D%A5"><span class="toc-number">1.6.</span> <span class="toc-text">五、组件一个个装起来</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-Python-%E7%8E%AF%E5%A2%83"><span class="toc-number">1.6.1.</span> <span class="toc-text">5.1 Python 环境</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-Ollama-%E5%92%8C%E4%B8%89%E4%B8%AA%E6%A8%A1%E5%9E%8B"><span class="toc-number">1.6.2.</span> <span class="toc-text">5.2 Ollama 和三个模型</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-Neo4j"><span class="toc-number">1.6.3.</span> <span class="toc-text">5.3 Neo4j</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-Qdrant"><span class="toc-number">1.6.4.</span> <span class="toc-text">5.4 Qdrant</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E5%85%8B%E9%9A%86-MemOS-%E5%B9%B6%E8%A3%85%E4%BE%9D%E8%B5%96"><span class="toc-number">1.6.5.</span> <span class="toc-text">5.5 克隆 MemOS 并装依赖</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81-env-%E6%96%87%E4%BB%B6%EF%BC%8C%E9%87%8D%E7%82%B9%E6%9D%A5%E4%BA%86"><span class="toc-number">1.7.</span> <span class="toc-text">六、.env 文件，重点来了</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%90%AF%E5%8A%A8%E8%84%9A%E6%9C%AC"><span class="toc-number">1.8.</span> <span class="toc-text">七、启动脚本</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E7%AC%AC%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%EF%BC%9A%E8%AE%A9%E5%AE%83%E8%AE%B0%E4%BD%8F%E6%88%91%E4%BB%AC"><span class="toc-number">1.9.</span> <span class="toc-text">八、第一次调用：让它记住我们</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%8E%A5-MCP%EF%BC%9A%E8%AE%A9%E8%AE%B0%E5%BF%86%E7%9C%9F%E6%AD%A3%E8%BF%9B%E5%85%A5%E5%B7%A5%E4%BD%9C%E6%B5%81"><span class="toc-number">1.10.</span> <span class="toc-text">九、接 MCP：让记忆真正进入工作流</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E8%AE%BE%E8%AE%A1%E5%8E%9F%E5%88%99%EF%BC%9A%E9%9B%B6%E5%B0%81%E8%A3%85%E3%80%81%E4%B8%80%E6%AF%94%E4%B8%80%E5%AF%B9%E9%BD%90"><span class="toc-number">1.10.1.</span> <span class="toc-text">9.1 设计原则：零封装、一比一对齐</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E6%9A%B4%E9%9C%B2%E7%9A%84%E4%BA%94%E4%B8%AA%E5%B7%A5%E5%85%B7"><span class="toc-number">1.10.2.</span> <span class="toc-text">9.2 暴露的五个工具</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-3-%E5%BC%BA%E5%88%B6%E5%B7%A5%E4%BD%9C%E6%B5%81%EF%BC%9Asearch-%E2%86%92-answer-%E2%86%92-add"><span class="toc-number">1.10.3.</span> <span class="toc-text">9.3 强制工作流：search → answer → add</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-4-filter%EF%BC%9A%E7%9C%9F%E6%AD%A3%E8%AE%A9%E8%AE%B0%E5%BF%86%E5%8F%AF%E7%94%A8%E7%9A%84%E4%B8%9C%E8%A5%BF"><span class="toc-number">1.10.4.</span> <span class="toc-text">9.4 filter：真正让记忆可用的东西</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-5-MCP-%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%8D%E7%BD%AE"><span class="toc-number">1.10.5.</span> <span class="toc-text">9.5 MCP 客户端配置</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-6-%E7%9C%9F%E6%AD%A3%E8%AE%A9%E5%AE%83%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84%EF%BC%8C%E6%98%AF%E9%82%A3%E4%BB%BD%E7%B3%BB%E7%BB%9F%E6%8F%90%E7%A4%BA%E8%AF%8D"><span class="toc-number">1.10.6.</span> <span class="toc-text">9.6 真正让它跑起来的，是那份系统提示词</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%AE%8C%E6%95%B4%E6%8F%90%E7%A4%BA%E8%AF%8D%EF%BC%88%E5%8F%AF%E7%9B%B4%E6%8E%A5%E5%A4%8D%E5%88%B6%EF%BC%89"><span class="toc-number">1.10.6.1.</span> <span class="toc-text">完整提示词（可直接复制）</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#1-%E9%A1%B9%E7%9B%AE%E6%A0%87%E8%AF%86%EF%BC%9A%E4%B8%89%E4%B8%AA%E7%BB%86%E8%8A%82%E5%80%BC%E5%BE%97%E8%AF%B4"><span class="toc-number">1.10.6.2.</span> <span class="toc-text">(1) 项目标识：三个细节值得说</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2-%E6%90%9C%E7%B4%A2%E8%A7%84%E8%8C%83%EF%BC%9A%E6%AF%8F%E4%B8%AA%E5%8F%82%E6%95%B0%E9%83%BD%E6%98%AF%E8%B8%A9%E5%9D%91%E6%8D%A2%E6%9D%A5%E7%9A%84"><span class="toc-number">1.10.6.3.</span> <span class="toc-text">(2) 搜索规范：每个参数都是踩坑换来的</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#3-%E5%9B%9E%E7%AD%94%E8%A7%84%E8%8C%83%EF%BC%9A%E5%8F%AA%E7%94%A8%E7%9B%B8%E5%85%B3%E8%AE%B0%E5%BF%86%EF%BC%8C%E6%97%A0%E5%85%B3%E7%9A%84%E4%B8%A2%E6%8E%89"><span class="toc-number">1.10.6.4.</span> <span class="toc-text">(3) 回答规范：只用相关记忆，无关的丢掉</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#4-%E5%86%99%E5%85%A5%E8%A7%84%E8%8C%83%EF%BC%9A%E7%9C%8B%E4%BC%BC%E5%AE%98%E5%83%9A%E7%9A%84%E5%AD%97%E6%AE%B5%E5%85%A8%E6%98%AF%E6%9C%AA%E6%9D%A5%E7%9A%84%E5%BC%B9%E8%8D%AF"><span class="toc-number">1.10.6.5.</span> <span class="toc-text">(4) 写入规范：看似官僚的字段全是未来的弹药</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#5-%E5%85%B3%E9%94%AE%E8%A7%84%E5%88%99%EF%BC%9A%E5%85%AD%E6%9D%A1%E9%93%81%E5%BE%8B%E7%9A%84%E6%84%8F%E4%B9%89"><span class="toc-number">1.10.6.6.</span> <span class="toc-text">(5) 关键规则：六条铁律的意义</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%99%E5%A5%97%E6%8F%90%E7%A4%BA%E8%AF%8D%E7%9A%84%E6%9C%AC%E8%B4%A8%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="toc-number">1.10.6.7.</span> <span class="toc-text">这套提示词的本质是什么？</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-7-%E8%B7%91%E8%B5%B7%E6%9D%A5%E7%9A%84%E6%95%88%E6%9E%9C"><span class="toc-number">1.10.7.</span> <span class="toc-text">9.7 跑起来的效果</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E8%B8%A9%E8%BF%87%E7%9A%84%E5%9D%91%E6%B1%87%E6%80%BB"><span class="toc-number">1.11.</span> <span class="toc-text">十、踩过的坑汇总</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%80%E3%80%81MemOS-vs-%E6%99%AE%E9%80%9A-RAG%EF%BC%9A%E4%BB%80%E4%B9%88%E6%97%B6%E5%80%99%E7%94%A8%E5%AE%83"><span class="toc-number">1.12.</span> <span class="toc-text">十一、MemOS vs 普通 RAG：什么时候用它</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%BA%8C%E3%80%81%E5%9B%9E%E5%88%B0-Harness%EF%BC%9A%E8%AE%B0%E5%BF%86%E5%88%B0%E5%BA%95%E6%9C%89%E5%A4%9A%E5%85%B3%E9%94%AE"><span class="toc-number">1.13.</span> <span class="toc-text">十二、回到 Harness：记忆到底有多关键</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E6%AE%B5%E6%9D%A5%E8%87%AA-LangGraph-%E7%9A%84%E7%9C%9F%E5%AE%9E%E4%BD%93%E4%BC%9A"><span class="toc-number">1.13.1.</span> <span class="toc-text">一段来自 LangGraph 的真实体会</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Context-Resets-vs-MemOS%EF%BC%9A%E4%B8%A4%E6%9D%A1%E8%B7%AF%E5%BE%84%E7%9A%84%E5%8F%96%E8%88%8D"><span class="toc-number">1.13.2.</span> <span class="toc-text">Context Resets vs MemOS：两条路径的取舍</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E4%B8%89%E3%80%81%E4%B8%80%E4%BA%9B%E4%B8%8D%E6%88%90%E7%86%9F%E7%9A%84%E6%83%B3%E6%B3%95"><span class="toc-number">1.14.</span> <span class="toc-text">十三、一些不成熟的想法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%81%E5%9B%9B%E3%80%81%E5%8F%82%E8%80%83%E8%B5%84%E6%BA%90"><span class="toc-number">1.15.</span> <span class="toc-text">十四、参考资源</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2025 lfzxb.top版权所有<br><span id="realtime_duration"></span><br><a href="https://beian.miit.gov.cn" target="_blank">苏ICP备19003389号-1</a><br><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135040.png!webp" alt="公网安备字" loading='lazy'><a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32032102000159" target="_blank">苏公网安备 32032102000159号</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="fluid-control-btn" type="button" title="流体模拟控制台"><i class="fas fa-water"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '2e27502c7440bb518170734f6179c475'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script>window.FLUID_CONFIG={enable:true,mobile:false,z_index:-1,SIM_RESOLUTION:128,DYE_RESOLUTION:1024,DENSITY_DISSIPATION:1,VELOCITY_DISSIPATION:0.2,PRESSURE:0.8,PRESSURE_ITERATIONS:20,CURL:30,SPLAT_RADIUS:0.25,SPLAT_FORCE:6000,SHADING:true,COLORFUL:true,COLOR_UPDATE_SPEED:10,PAUSED:false,BACK_COLOR:{r:0,g:0,b:0},TRANSPARENT:false,BLOOM:true,BLOOM_ITERATIONS:8,BLOOM_RESOLUTION:256,BLOOM_INTENSITY:0.8,BLOOM_THRESHOLD:0.6,BLOOM_SOFT_KNEE:0.7,SUNRAYS:true,SUNRAYS_RESOLUTION:196,SUNRAYS_WEIGHT:1.0,interaction:{enable:true}};</script><script src="/js/fluid-simulation/dat.gui.min.js"></script><script src="/js/fluid-simulation/fluid-core.js"></script><script async="" data-pjax="" src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div>
+    <link rel="stylesheet" href="https://ai.tianli0.top/static/public/postChatUser_summary.min.css">
+    <script>
+        let tianliGPT_key = 'S-TY6LYYCZMYV6UADE';
+        let tianliGPT_postSelector = '#article-container';
+        let tianliGPT_Title = '烟雨迷离半世殇（人机版）为您总结文章';
+        let tianliGPT_postURL = 'https://www.lfzxb.top/*/';
+        let tianliGPT_blacklist = '';
+        let tianliGPT_wordLimit = '50000';
+        let tianliGPT_typingAnimate = false;
+        let tianliGPT_theme = 'menghuan';
+        var postChatConfig = {
+          backgroundColor: "#3e86f6",
+          bottom: "16px",
+          left: "16px",
+          fill: "#FFFFFF",
+          width: "44px",
+          frameWidth: "375px",
+          frameHeight: "600px",
+          defaultInput: false,
+          upLoadWeb: true,
+          showInviteLink: true,
+          userTitle: "烟雨迷离半世殇（人机版）为您服务",
+          userDesc: "在下定知无不言",
+          addButton: true,
+          beginningText: "这篇文章介绍了",
+          userIcon: "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp",
+          userMode: "magic",
+          defaultChatQuestions: ["你好","你是谁"],
+          defaultSearchQuestions: ["视频压缩","设计"]
+        };
+    </script>
+    <script data-postchat_key="S-TY6LYYCZMYV6UADE" src="https://ai.tianli0.top/static/public/postChatUser_summary.min.js"></script>
+  </body></html>
