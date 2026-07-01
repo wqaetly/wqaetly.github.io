@@ -1,0 +1,443 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>NKG AI Flow：次时代Agent开发引擎 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="开源地址： https:&#x2F;&#x2F;github.com&#x2F;wqaetly&#x2F;nkg-ai-flow 前言 最近 Agent、Workflow、Harness、AI Native 这些词越来越热，我自己实践下来最大的感受是：LLM 固然很强，但不够稳定。 它很像一个极其聪明的推理核心。给它清楚的上下文，它能总结、规划、写代码、调用工具；边界没说清楚，它也能非常自信地把车开沟里。问题不是模型笨，而是我们不能把工">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NKG AI Flow：次时代Agent开发引擎">
+<meta property="og:url" content="https://www.lfzxb.top/aigc-ai-native-flow/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="开源地址： https:&#x2F;&#x2F;github.com&#x2F;wqaetly&#x2F;nkg-ai-flow 前言 最近 Agent、Workflow、Harness、AI Native 这些词越来越热，我自己实践下来最大的感受是：LLM 固然很强，但不够稳定。 它很像一个极其聪明的推理核心。给它清楚的上下文，它能总结、规划、写代码、调用工具；边界没说清楚，它也能非常自信地把车开沟里。问题不是模型笨，而是我们不能把工">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/lumio-result-20260610-211402-01.png!webp">
+<meta property="article:published_time" content="2026-06-10T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-06-10T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="AIGC">
+<meta property="article:tag" content="AI Native Flow">
+<meta property="article:tag" content="Agent">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/lumio-result-20260610-211402-01.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "NKG AI Flow：次时代Agent开发引擎",
+  "url": "https://www.lfzxb.top/aigc-ai-native-flow/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/lumio-result-20260610-211402-01.png!webp",
+  "datePublished": "2026-06-10T00:00:00.000Z",
+  "dateModified": "2026-06-10T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/aigc-ai-native-flow/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'NKG AI Flow：次时代Agent开发引擎',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">253</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">203</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/lumio-result-20260610-211402-01.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">NKG AI Flow：次时代Agent开发引擎</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">NKG AI Flow：次时代Agent开发引擎</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-06-10T00:00:00.000Z" title="发表于 2026-06-10 00:00:00">2026-06-10</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-06-10T00:00:00.000Z" title="更新于 2026-06-10 00:00:00">2026-06-10</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/AIGC/">AIGC</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">4.6k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>15分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/aigc-ai-native-flow/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-06-10 00:00:00&quot;}" hidden></div><p>开源地址： <a target="_blank" rel="noopener" href="https://github.com/wqaetly/nkg-ai-flow">https://github.com/wqaetly/nkg-ai-flow</a></p>
+<h1 id="前言">前言</h1>
+<p>最近 Agent、Workflow、Harness、AI Native 这些词越来越热，我自己实践下来最大的感受是：<code>LLM 固然很强，但不够稳定</code>。</p>
+<p>它很像一个极其聪明的推理核心。给它清楚的上下文，它能总结、规划、写代码、调用工具；边界没说清楚，它也能非常自信地把车开沟里。问题不是模型笨，而是我们不能把工程系统的稳定性押在模型每一次临场发挥上。</p>
+<p>最开始做 Agent，写 Skill 是最快的。把步骤、约束、工具说明、验收标准写进文档里，让 LLM 照着干，验证一个想法非常舒服。</p>
+<p>但 Skill 本质上还是指令，不是执行计划。流程短的时候还好，一旦步骤多起来，模型就可能漏掉关键动作，或者把“必须执行”理解成“可以参考”。比如该先检查文件状态再修改，它可能直接开改；该跑验证再总结，它可能写一句“验证通过”就收工。</p>
+<p>这事不一定每次翻车，但只要关键步骤存在偶尔被略过的可能，工程链路就很难放心交给它。</p>
+<p>所以我开始重新思考 Agent Harness。一个真正好用的 Agent 系统，不能只会“接模型”。它还要能表达流程、调试节点、回放错误，让 AI 在明确边界里参与修改流程，而不是直接冲进 Runtime 核心里开挖。</p>
+<p>这就是 <strong>NKG AI Flow</strong> 的起点。</p>
+<h1 id="为什么自己做">为什么自己做</h1>
+<p>LangFlow、LangGraph、Dify、Coze、n8n 这些工具我都试过，其中 LangFlow 和 LangGraph 用得更深一些。它们证明了可视化 Agent 工作流确实有需求，但深入到自定义节点、自定义 Flow、版本迭代和调试之后，总会有一种割裂感。</p>
+<p>表面上是 AI 工作流，底层很多地方还是传统框架的扩展思路。想接一个新节点，要先理解内部目录、注册方式、配置约定、前端 Schema、后端执行，再祈祷改完以后别牵出一串连锁问题。</p>
+<p>这对 AI Coding 很不友好。</p>
+<p>很多系统还会把“画布状态”和“运行时契约”绑在一起。一个 Flow 如果只是前端状态的巨大 JSON dump，那它更像存档文件，不太像工程资产。调试也类似：Agent 出错通常不是一句报错能解释清楚的，没有节点级事件、Trace 和 replay，最后只能靠人肉翻日志。</p>
+<p>说实话，翻多了真的会怀疑人生。</p>
+<p>所以我想做的是一个从底层就适合 AI 参与开发的 Runtime：轻一点，边界清楚一点，调试证据多一点，热更新不要靠玄学。</p>
+<h1 id="AI-Native-Flow-是什么">AI Native Flow 是什么</h1>
+<p>AI Native Flow 是一个基于 TypeScript 的 <strong>Flow Runtime / Agent Harness</strong>。它的目标不是先做一个很炫酷的画布，而是先把运行时契约做好。</p>
+<p>画布当然需要，但画布只是入口之一。同一个 Flow 应该能被 HTTP、CLI、MCP、SDK 和 Studio 调用，而且这些入口应该进入同一个 Runtime，消费同一条 Event Bus。这样 Studio 里看到的调试信息，和线上 HTTP 调用产生的事件，才是同一个世界里的东西。</p>
+<pre><code class="highlight mermaid">flowchart LR
+  A[&quot;AI / Developer&quot;] --&gt; B[&quot;Flow Builder / Graph Operations&quot;]
+  B --&gt; C[&quot;Runtime&quot;]
+  C --&gt; D[&quot;Event Bus&quot;]
+  D --&gt; E[&quot;HTTP&quot;]
+  D --&gt; F[&quot;CLI&quot;]
+  D --&gt; G[&quot;MCP&quot;]
+  D --&gt; H[&quot;SDK&quot;]
+  D --&gt; I[&quot;Studio&quot;]</code></pre>
+<p>目前内置节点已经有 <code>start</code>、<code>end</code>、<code>transform</code>、<code>condition</code>、<code>http</code>、<code>tool</code>、<code>text_input</code>、<code>llm</code>、<code>agent</code>。这意味着它不是一个普通 DAG 运行器，而是已经能承载 LLM 节点、工具节点和一个小型 Agent 工具循环。</p>
+<h1 id="核心设计">核心设计</h1>
+<h2 id="Flow-as-Data">Flow as Data</h2>
+<p>Flow 不能是一坨手写 JSON，它应该是稳定、可版本化、可校验的数据结构。</p>
+<p>节点要有稳定 id，边要连到具体端口，端口要能表达控制流、数据流、事件流、错误流这些语义。这样 AI 修改 Flow 时，不是在一片没头绪的数据里乱改，而是在稳定的节点契约和具体代码里动手。</p>
+<p>所以我更倾向让 AI 写 TypeScript <code>FlowBuilder</code> 代码，或者生成小粒度 Graph Operation，最后由 <code>dump()</code> 导出 JSON，再交给 Validator 检查。</p>
+<p>模型上下文应该留给业务逻辑，不该拿去数括号。结构问题交给 Builder 和 Validator，比相信模型“感觉差不多”靠谱得多。</p>
+<h2 id="版本化和黑板变量">版本化和黑板变量</h2>
+<p>开发阶段热重载很好用，但生产阶段的热更新不能靠删缓存、换模块。</p>
+<p>在 AI Native Flow 里，Flow Artifact 和 Node Logic Artifact 都要版本化。Registry 做原子 promote，Run 创建时 pin 住版本。旧 Run 继续用旧版本，新 Run 才切到新版本。这样热更新才是工程能力，而不是玄学仪式。</p>
+<p>节点参数也一样，不能到处手填。LLM Base URL、默认模型、超时时间、HTTP 端口、业务开关，一旦散落在不同节点里，改一次配置就像在仓库里找散落的螺丝。</p>
+<p>所以我把这些配置放进项目内置的环境变量模块，也就是黑板。节点配置里保存引用关系，运行时通过 <code>ctx.variables</code> 取值。AI 生成节点时，不需要猜用户机器上的 <code>.env</code> 长什么样，只要按约定引用 <code>LLM_BASE_URL</code>、<code>LLM_DEFAULT_MODEL</code> 这类变量名。</p>
+<p>为了保密，每个 Flow 再配一份同目录的伴生 env JSON，本机真实配置 gitignore，不提交。这样本地可用，云端也不会把敏感配置带上去。</p>
+<h2 id="事件流、日志和-AI-自查">事件流、日志和 AI 自查</h2>
+<p>这次实践里，我发现一个很重要的点：节点形式的流程，配合完善的日志系统和追踪系统，会让 AI 非常容易看懂一次 Run 到底发生了什么。</p>
+<p>每个节点什么时候开始、什么时候结束、拿到了什么输入、调用了什么工具、输出了什么结果、哪里报错，都可以进入统一的 Event Bus。<code>stdout</code> 和 <code>stderr</code> 可以做诊断日志，但 LLM token、工具调用、节点状态、错误、取消、回放这些语义事件，应该统一成标准 <code>NodeEvent</code>。</p>
+<p>这对人调试当然有用，但更重要的是，对 AI 也有用。</p>
+<p>以前让 AI 修一个复杂 Agent，它很多时候只能靠猜：猜流程怎么跑，猜哪个节点错了，猜日志里哪一行有用。现在不一样了。节点 + trace + log 把一次运行变成了可读的流程证据，AI 可以先跑 Flow，再看追踪信息，根据调用顺序、节点输入输出和详细日志定位问题，然后修改 Prompt、节点逻辑、工具调用或规则校验，再重新运行。</p>
+<p>这就形成了一个很自然的自我检查闭环。</p>
+<p>尤其是 vibe coding 这种场景，AI 可以不断运行 Flow，根据 trace 里的证据自己查问题，再不断更正和优化 Flow。它不是在黑盒里瞎改，而是能看到自己刚才到底干了什么、哪里开始歪、改完有没有变好。</p>
+<p>讲道理，这一点非常关键。因为它意味着 Harness 不只是方便人类调试，也是在给 AI 自我迭代提供眼睛。</p>
+<h2 id="实践出来的-Harness-规则">实践出来的 Harness 规则</h2>
+<p>这些东西最后沉淀下来，其实就变成了一套适用于 AI 的 Harness 规则。它不是拍脑袋想出来的，而是我在开发卡厄斯梦境、HKS，以及把 Skill 转成 Flow 的过程中一点点踩出来的。</p>
+<p>我现在大致把它归成五类：</p>
+<ul>
+<li><strong>Instructions</strong>：Flow 自己要说清楚目的、调用者、输入输出、必用工具、禁止行为和验收标准。</li>
+<li><strong>State</strong>：状态流动要显式，<code>context</code> 不是垃圾桶，数据依赖走 data edge，不能靠“前一个节点大概干了什么”这种玄学。</li>
+<li><strong>Verification</strong>：关键路径必须能验。LLM、联网搜索、HTTP、RAG、向量库要走真实调用，失败就硬失败，不准 mock、不准 stub、不准假成功。</li>
+<li><strong>Boundaries</strong>：节点边界要清楚。确定性候选生成、过滤、打分、Prompt 拼装和 LLM 调用最好分开。LLM 是判官和写手，不是推荐引擎。</li>
+<li><strong>Handoff</strong>：交付要能续接。最终输出消费结构化 context，trace、event、log 要足够让另一个 Coding Agent 在新会话里接着干。</li>
+</ul>
+<p>这些规则听起来有点严，但不是为了折磨人。恰恰相反，这是给 AI 用的护栏。只有把 Instructions、State、Verification、Boundaries、Handoff 这些东西钉住，Coding Agent 才能真正参与 Flow 开发，而不是写完一坨看起来能跑、实际上没人敢维护的东西。</p>
+<p>所以项目里也内置了一份 <code>nkg-ai-flow-skill</code>。它不是这个 AI 系统对外提供的能力，也不是给业务对话 Agent 用的，而是给 vibe coding 过程里的 Coding Agent 看的一份开发指引。</p>
+<p>这份 skill 会告诉 AI：新的 Flow 应该怎么构造，节点应该怎么拆，<code>FlowBuilder</code>、<code>defineNode</code>、context 传递、变量引用、验证命令这些东西应该怎么用。没有这类规范时，AI 很容易在开发过程中碰壁：一会儿手写一坨不稳定 JSON，一会儿把状态塞进错误位置，一会儿跳过验证。有了这套约定之后，它就能少走很多弯路，沿着项目本身认可的方式去开发新的 Flow 和相关节点。</p>
+<h1 id="Skills-转-Flow">Skills 转 Flow</h1>
+<p>早期我还是推荐用 Skill 来验证 Agent 流程。原因很朴素：快。</p>
+<p>Skill 写起来快，改起来也快。需求还没稳定的时候，先用 Skill 探路很划算。等流程稳定之后，再把固定步骤代码化，把需要发散的地方继续留给 LLM。</p>
+<p>固定流程进代码，发散部分留给模型，稳定性也就慢慢回到工程系统里。</p>
+<p><code>@ai-native-flow/skill-to-flow</code> 就是这个思路的实现。</p>
+<p>当前的 <code>skill_to_flow</code> 是一个 10 节点、16 条边的 Flow，大致流程如下：</p>
+<pre><code class="highlight mermaid">flowchart LR
+  A[&quot;SKILL.md&quot;] --&gt; B[&quot;skill_parser&quot;]
+  B --&gt; C[&quot;skill_planner&quot;]
+  C --&gt; D[&quot;node_designer&quot;]
+  D --&gt; E[&quot;code_synthesizer&quot;]
+  E --&gt; F[&quot;flow_validator&quot;]
+  F --&gt; G[&quot;package_materializer&quot;]
+  G --&gt; H[&quot;end&quot;]
+
+  B -.规则解析.-&gt; B1[&quot;rules&quot;]
+  C -.LLM 规划.-&gt; C1[&quot;LLM&quot;]
+  D -.LLM 并发设计.-&gt; D1[&quot;LLM&quot;]
+  E -.LLM 合成 + 规则组装.-&gt; E1[&quot;LLM + rules&quot;]
+  F -.真校验.-&gt; F1[&quot;validator&quot;]
+  G -.写文件 + 跑验证.-&gt; G1[&quot;agent&quot;]</code></pre>
+<p>Skill 解析适合用规则做，这一步不需要模型发挥。规划和节点设计交给 LLM，因为这里确实需要理解和抽象。Flow JSON 不让模型硬写，而是通过 <code>flow-builder</code> 组装。校验也不看字符串里有没有 <code>defineNode</code>，而是真调用 <code>flow-validator</code>。</p>
+<p>最后生成的包由内置 <code>agent</code> 节点落盘，它可以写文件、跑验证、做局部修复。</p>
+<p>这一套下来，LLM 不是被赶出系统，而是被放到了更合适的位置。</p>
+<h1 id="Agent-节点">Agent 节点</h1>
+<p><code>agent</code> 节点很容易被误解成“又一个把所有事情丢给大模型的黑盒”。我的定位刚好相反：它应该是一个受限的工具循环。</p>
+<p>输入任务和上下文，模型每轮只做一次决策，要么调用一个允许的工具，要么给出最终结果。文件读写、搜索、批量写入、命令执行这些动作，不在模型手里，而是在 Runtime 注入的 <code>toolHost</code> 手里。</p>
+<pre><code class="highlight mermaid">flowchart LR
+  A[&quot;task + context&quot;] --&gt; B[&quot;agent node&quot;]
+  B --&gt; C[&quot;LLM decision&quot;]
+  C --&gt; D&#123;&quot;tool call or final?&quot;&#125;
+  D --&gt;|tool call| E[&quot;toolHost&quot;]
+  E --&gt; F[&quot;list/read/grep/edit/write/run_bash&quot;]
+  F --&gt; B
+  D --&gt;|final| G[&quot;summary + context&quot;]
+  E --&gt; H[&quot;tool_log&quot;]
+  H --&gt; I[&quot;runtime facts&quot;]
+  I --&gt; G</code></pre>
+<p>工具权限也不是模型说了算。节点配置里有 <code>allowedTools</code>、<code>allowBash</code>、<code>workingDir</code>、<code>timeoutMs</code>、<code>maxOutputChars</code>。模型可以提议“我要改这个文件”，但能不能改、在哪个目录里改、能不能跑命令，是 Runtime 说了算。</p>
+<p>我还专门限制了：<code>changed_files</code>、<code>written_files</code>、<code>verification_results</code>、<code>validator_status</code> 这些运行时事实，不让模型自己编。模型只写它负责的总结和补充上下文，文件变更、命令结果、验证结果来自真实工具日志。</p>
+<p>少了这个限制，调试时会很麻烦。模型一句“验证已通过”，我们还得猜它是真的跑了，还是只是心情不错。</p>
+<h1 id="Studio">Studio</h1>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/QQ_1781097174439.png" alt="Studio界面" loading='lazy'></p>
+<p>Studio 的定位很清楚：它是编辑和调试入口，不是另一套执行系统。</p>
+<p>为什么还需要 Studio？因为 Flow 不是一段线性脚本。节点参数、端口、边、事件、Trace、流式输出混在一起之后，只看 JSON 或 CLI，讲道理还是很容易疲倦的。</p>
+<p>Studio 要解决的就是这个问题：把 Flow 的结构、运行状态和调试证据放在同一个界面里。节点有没有连错，参数是不是引用了正确变量，哪一步开始输出异常 token，工具调用到底返回了什么，都应该能顺着画布一路追下去。</p>
+<p>AI 参与改 Flow 之后，Studio 的价值更明显。AI 可以生成 Graph Operation 或 Patch Proposal，但我们需要有一个地方看差异、看校验错误、看运行结果，再决定要不要接受。它不是给 Runtime 套一层皮，而是给我们和 AI 一个共同的检查台。</p>
+<pre><code class="highlight mermaid">flowchart LR
+  A[&quot;Studio Canvas&quot;] --&gt; B[&quot;Graph Operation&quot;]
+  B --&gt; C[&quot;Runtime Graph Schema&quot;]
+  C --&gt; D[&quot;Flow Validator&quot;]
+  D --&gt; E[&quot;Flow JSON&quot;]
+
+  A --&gt; F[&quot;Run / Stream&quot;]
+  F --&gt; G[&quot;HTTP Handler&quot;]
+  H[&quot;CLI / SDK / MCP&quot;] --&gt; G
+  G --&gt; I[&quot;Invocation Router&quot;]
+  I --&gt; J[&quot;Runtime&quot;]
+  J --&gt; K[&quot;Event Bus&quot;]
+  K --&gt; L[&quot;Run Timeline / Trace / Stream Inspector&quot;]</code></pre>
+<p>React Flow 只负责画布和交互适配，运行时图模型仍然是独立 Schema。编辑动作通过 Graph Operation 表达，运行时还是走同一套 Runtime。从 Studio 点击 Run，和从 HTTP 或 CLI 调用 Flow，本质上是同一条链路。</p>
+<h1 id="实例">实例</h1>
+<h2 id="卡厄斯梦境配队-AI-Agent-与-LOL-海克斯大乱斗-AI-助手">卡厄斯梦境配队 AI Agent 与 LOL 海克斯大乱斗 AI 助手</h2>
+<p>口说无凭，我已经用 NKG AI Flow 做了一个<a target="_blank" rel="noopener" href="https://uni.lfzxb.top/kesmj/">卡厄斯梦境配队 AI Agent</a>，用来处理游戏里的角色配队、机制解释和结果推荐。效果还不错，也收获了很多玩家的认同和喜欢。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/QQ20260610-211648.png" alt="QQ20260610-211648.png" loading='lazy'></p>
+<p>这个场景很适合验证前面那些设计。配队不是简单问答，而是意图分析、检索、候选构建、规则校验、机制解释、最终输出一整套流程。如果把这些都塞进一个大 Prompt，很难调整。拆成节点之后，哪个环节不满意，就改哪个环节，不用把整套 Agent 推翻重来。</p>
+<p>同样的思路，我也用在了另一个实例上：<a target="_blank" rel="noopener" href="https://uni.lfzxb.top/hks/">LOL 海克斯大乱斗 AI 助手</a>。</p>
+<p>海克斯大乱斗的数据更杂，用户问法也更发散。有人问某个英雄怎么玩，有人问技能强化怎么选，有人问装备和强化之间的相性，还有人只是想知道这把到底该怎么爽。看起来都是“攻略问答”，拆开之后就是意图识别、联网搜索、RAG 检索、英雄/装备/强化数据整理、结果生成和规则校验。</p>
+<p>这类 Agent 最怕的就是把所有东西塞进一个大 Prompt，然后祈祷模型别漏规则。某些装备互斥，某些强化只对特定技能有意义，某些推荐还会受到版本环境影响。这些东西如果只靠模型临场发挥，讲道理肯定不稳。</p>
+<p>所以 HKS 这个实例里，我更看重的不是模型能不能说得漂亮，而是 Flow 能不能把它托住：先明确用户意图，再去拿最新资料，再把本地知识和搜索结果合并，最后经过规则约束和结果整理。AI 负责在合理空间内推理，Harness 负责把这个空间圈出来。</p>
+<h2 id="联网搜索和-RAG">联网搜索和 RAG</h2>
+<p>游戏会更新，Flow 可以定型，但数据不是一成不变。角色调整、版本环境、社区理解都可能变化。旧 Prompt 写得再漂亮，也遭不住资料过期。</p>
+<p>所以我更愿意把联网搜索节点放在推理前面。它先去拿最新资料，再让后面的节点判断。这样流程不用天天改，数据和输出还能自动更新。</p>
+<p>RAG 负责另一块：项目自己的资料。角色机制、规则笔记、测试结论、历史方案，这些东西不适合每次都塞进 Prompt。需要的时候查一小段就够了。它的价值不是“多给模型一点上下文”，而是少给模型一堆没用的上下文。</p>
+<p>网页检索节点也不能只当搬运工。整页网页直接丢给 LLM，模型看着累，我们排查也累。更好的方式是先整理一下：这条资料从哪来，什么时候的，主要说了什么，和当前问题有什么关系。</p>
+<p>后面的 LLM 节点拿到的是干净材料，推理质量自然会稳很多。我用的是自建 SearXNG 方案，体验很不错，推荐。</p>
+<h1 id="总结">总结</h1>
+<p>说了这么多，我个人感触最深的其实还是一句话：LLM 像一个极其强力的海克斯科技核心，但它本身不够可控。</p>
+<p>我们需要为它搭一套高达机甲级别的控制系统，也就是 Harness。这个系统要管流程、管工具、管数据源、管规则，也要能留下足够完整的日志和 trace，让人能调试，让 AI 也能自查。</p>
+<p>目前这个高达机甲的设计方案，我给出的答案就是：<a target="_blank" rel="noopener" href="https://github.com/wqaetly/nkg-ai-flow">NKG AI Flow</a>。</p>
+<p>这套东西肯定还会继续迭代。Flow Runtime、Studio、Skill 转 Flow、Agent 节点、联网搜索、RAG、Run Trace，这些模块后面都还有继续打磨的空间。现在先把阶段性的设计思路记下来，后续继续开干。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/aigc-ai-native-flow/">https://www.lfzxb.top/aigc-ai-native-flow/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/AIGC/">AIGC</a><a class="post-meta__tags" href="/tags/AI-Native-Flow/">AI Native Flow</a><a class="post-meta__tags" href="/tags/Agent/">Agent</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/lumio-result-20260610-211402-01.png!webp" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/new-era-ai-agent-development-method/" title="新时代 AI Agent 开发心法"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">新时代 AI Agent 开发心法</div></div><div class="info-2"><div class="info-item-1">前言 最近这段时间一直在做 AI Agent，越做越觉得这事和最开始想的还真不太一样。 一开始大家很容易把注意力放在 Prompt 上，觉得只要规则写得足够细，模型够聪明，事情就能办成。讲道理，这个阶段当然是有用的，尤其是单次任务里，Prompt 写好一点，结果立竿见影。 但真把 Agent 放进一个持续运行的业务流里，问题就完全不是这么简单了。 它不是问一次答一次，而是要拿数据、调工具、过规则、看日志、做验证，失败了还得知道从哪里重新来。这个时候你就会发现，大模型本身只是其中一环，真正决定 Agent 能不能稳定跑起来的，反而是那些看起来很无聊的工程细节。 所以这篇文章就先记一下我目前开发 AI Agent 的一些体感。后面想法肯定还会变，但至少现在看，这几个点已经不是锦上添花了，而是地基。 Harness AI 最应该放在第一个讲的，我觉得还是最近提到比较多的 Harness AI。 如果说大模型提供的是推理能力，那 Harness AI 更像是把推理能力接进真实业务流程里的那套线束。它关心的不是模型某一次回答漂不漂亮，而是输入从哪里来，数据怎么过节点，什么时候调用工具，调用...</div></div></div></a><a class="pagination-related" href="/aigc-uni/" title="用代码重构玄学：我开发了一个免费的 AI 命理公益网站"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/QQ_1779456291445.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">用代码重构玄学：我开发了一个免费的 AI 命理公益网站</div></div><div class="info-2"><div class="info-item-1">最近我干了一件比较跨界的事情：把咱们老祖宗传下来的玄学——涵盖紫微斗数、八字命理、奇门遁甲等传统术数，以及周公解梦等文化瑰宝，和当下最前沿的 AI 大模型结合在了一起，搓出了一个非盈利性质的排盘与解读网站：NKG大千世界。 今天想和大家聊聊，为什么一个敲代码的 AI 开发者，会跑去用科技搞这些传统文化？ 缘起：用代码弘扬传统文化，来一场真实的科技公益 大家平时工作生活压力大，遇到升职加薪、跳槽、脱单这种人生路口，难免会有些迷茫，想找点精神寄托。但市面上的算命看盘，水实在太深了。要么收费动辄成百上千，要么一堆机器生成的套话，甚至还有各种恐吓营销。 作为一个对传统术数颇有研究的爱好者，我觉得中华先民观察人事、体察心象的智慧结晶，不应该变成割韭菜的工具。于是我就想，能不能用科技的手段，把这些高门槛的传统文化拉下神坛，变成一个人人都能触及的普惠工具？ 这就是“NKG大千世界”诞生的初衷。我不打算靠这个赚钱，网站定位就是纯粹的非盈利性质。站内提供的免费“快速报告”其实已经覆盖了结论、依据与建议，足够满足 99% 的使用场景，一般情况下大家白嫖就完全够用了。 当然，如果你偶尔想看更详尽的推演...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/ai-vibe-coding/" title="Vibe Coding心得"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-07-01</div><div class="info-item-2">Vibe Coding心得</div></div><div class="info-2"><div class="info-item-1">AI 模型对比 最核心的 AI 模型自然是我们对比的首选。尽管各大编程 IDE 都涵括了几乎所有主流 AI 模型，但每家 AI 模型官方调教出的工具肯定是最合适和好用的。 截至 2026.7.1，主流 AI 模型对比如下：  Claude Opus 4.8：目前综合能力最强的代码生成模型，在长上下文推理、复杂重构、跨文件理解上仍然是断档水平。特别是对于 Unity、C++、Shader 这类工程链路复杂的场景，Opus 4.8 的规划能力和自查能力肉眼可见地领先，配合 1M 上下文窗口，几乎可以一次吃下一个中小型项目 GPT-5.5：OpenAI 在 2026 年上半年拿出的答卷，主打的是稳。它没有 Opus 那种一冲一个准的爆发力，但是对于经典算法、数学证明、系统设计这类需要长链推理的任务，GPT-5.5 有着极强的准确性，很多 Claude 反复犯错的地方它能一遍过，非常适合做 Code Review 和架构设计  Codex Codex 是 OpenAI 在 2026 年的翻身之作，绑定 GPT-5.5，主打两点：审慎和深度推理。 它和 Claude Code 的差别很像 ...</div></div></div></a><a class="pagination-related" href="/aigc-base/" title="AI GC与游戏行业野望"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20260304205818827.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-04</div><div class="info-item-2">AI GC与游戏行业野望</div></div><div class="info-2"><div class="info-item-1">前言 最近 AI 用得越多，我越觉得自己不能只停留在“会问问题”这一层。 AIGC、AI Agent、MCP、Skills 这些词天天飞，听多了很容易糊成一团。遂有此文：先把 2017 年 Transformer 之后，到现在 2026 年这条线上的关键概念捋一遍，再聊聊它可能怎么撞进游戏行业。 首先，什么是 AI GC？简单来说，AIGC 是指利用人工智能技术（尤其是生成式大模型），通过接收自然语言指令（Prompt）或其他模态的输入，自动或半自动地生成文本、图像、音频、视频、3D 模型甚至代码等数字化内容的一种新型生产方式。 1. 从内容生产的演进史定义：生产力的跨越 理解 AIGC，最好的参照物是 PGC 和 UGC：   PGC (Professionally Generated Content，专业生成内容)： 门槛高、产能低、质量高。比如专业工作室开发 3A 大作、好莱坞团队拍摄电影。   UGC (User Generated Content，用户生成内容)： 门槛低、产能高、质量参差不齐。比如玩家用地图编辑器做自定义关卡、普通用户在平台发布 Vlog。   AIG...</div></div></div></a><a class="pagination-related" href="/aigc-computer/" title="开源免费的AI装机助手"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/920x430.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-10</div><div class="info-item-2">开源免费的AI装机助手</div></div><div class="info-2"><div class="info-item-1">前言 搞了个AI装机助手，原本打算上Steam，但是被Steam审核以不适合Steam平台被拒了，所以开源出来了： https://github.com/wqaetly/ai-computer 开发过程中也算是熟悉了一遍大模型API调用和function call的流程  具体功能 一款基于 Avalonia 的跨平台 AI 智能助手桌面应用 ✨ 功能特性 🤖 智能对话系统   AI 智能助手：集成 DeepSeek AI 模型，提供流畅的对话体验   深度思考模式：启用推理模型（Reasoning Model），让 AI 进行深度分析和推理   多会话管理：支持创建、切换、重命名和删除多个独立对话会话   流式响应：实时显示 AI 生成的内容，提供即时反馈   会话自动保存：对话内容自动保存到本地，应用重启后可恢复   🔍 智能搜索  多引擎支持：  - 百度搜索：国内主流搜索引擎 - Bing 搜索：国际化搜索体验 - SearxNG：开源隐私保护元搜索引擎（支持实例测试和切换）   混合搜索策略：优先使用浏览器搜索，失败后自动降级到 SearxNG   搜索结果整合：A...</div></div></div></a><a class="pagination-related" href="/aigc-gameplay-demo-dev/" title="轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-03-28</div><div class="info-item-2">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案</div></div><div class="info-2"><div class="info-item-1">轻量级游戏引擎与AI辅助开发工作流的深度解析：基于VS Code与Claude Code的自动化原型验证与移动端构建方案 在当今的游戏开发范式中，利用大型语言模型（LLM）驱动自动化编程的技术（常被称为Vibe Coding或AI驱动的快速应用程序原型设计）正在彻底重塑传统的生产管线。对于旨在快速创建Gameplay Demo以验证核心玩法，并期望直接打包为Android APK在移动端测试的开发者而言，选择一个能够与无头AI代理完美契合的底层游戏框架至关重要。传统的商业游戏引擎往往内置了封闭、专有且性能受限的AI辅助工具（如基于轻量级模型的代码补全），这导致开发者难以利用最先进的基础通用模型进行全局上下文推理和跨文件重构。因此，将集成开发环境（VS Code）、顶级通用推理模型（通过命令行运行的Claude Code）与高度文本化、支持命令行自动化的轻量级游戏引擎相结合，成为了解决“通过AI对话完成逻辑搭建而尽量避免手动改写代码”这一痛点的最优解。 本研究报告将全面、深度地评估Godot引擎在这一特定自动化工作流中的绝对优势，深入剖析其文本化存储机制的语义透明度、模型上下文协议...</div></div></div></a><a class="pagination-related" href="/aigc-in-game-skill-config/" title="游戏技能配置AI Agent开发记录"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/202509261151798.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-11-11</div><div class="info-item-2">游戏技能配置AI Agent开发记录</div></div><div class="info-2"><div class="info-item-1">前言 前些天牢米也是发布了自己AI GC的进展： https://mp.weixin.qq.com/s/ONKM34FhdrJOoCFFuoeZEA  我看后大为触动，一方面是感叹AI技术进步的如此迅速，另一方面是我看到了行业外的人员参与游戏技能开发的可能性，试想下：一个游戏本身提供足量的脚本节点，玩家的提出的任何设计都能在无需学习技术的情况下被实现，这无疑会大大提高玩家参与游戏社区开发的积极性，这与：ProjectS企划案 的理念不谋而合，所以我也打算对这个方向狠狠的深入研究一番 基础知识 游戏技能本身就是非常复杂，庞大的配置，在和AI交互的时候，可以预见的是，会遇到很多细节性的问题，而这些问题需要有LLM的知识基础，才能更好的解决，所以我先去了解学习了下LLM相关内容：AI GC基础知识总结 总的来说，目前世界上最先进的Claude Sonnet和GPT-5都是很好的推理大语言模型，以及Cursor，Claude Code也是非常出色，非常适用于编程领域的AI Agent的，相信大家在使用中已经完全能感受到了。两者结合完全可以胜任比较简单的技能配置生成和检查，修改工作，但实践...</div></div></div></a><a class="pagination-related" href="/aigc-memos/" title="给 AI Agent 装上长期记忆：MemOS 本地部署"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46991266-60b3-4d80-b9da-270757df02b6.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-04-30</div><div class="info-item-2">给 AI Agent 装上长期记忆：MemOS 本地部署</div></div><div class="info-2"><div class="info-item-1">给 AI Agent 装上长期记忆：MemOS 本地部署踩坑记 写在前面 最近在研究MemOS，起因很简单——受够了每次打开 AI 对话都要从头自我介绍一遍。“我是写 Unity 的”、“项目在 E 盘”、“不要给我加一堆 emoji”——这些话我这半年说过的次数，大概比跟我妈打电话还多。 但把 MemOS 装完、跑通、接进日常工作流之后，我发现这个事远不止&quot;让 AI 记住偏好&quot;这么简单。 举个让我印象最深的实际用法：通过 git hook 让 AI 在每次 commit 后自动读取变更的代码、整理成结构化记忆，再写进 MemOS。一开始我只是随手试了下，想看看能不能让 AI 帮我记住&quot;这次改了哪个模块、为什么改、引入了什么副作用&quot;。结果用了几周下来我发现，项目的记忆库在以一种很自然的速度长大——每次提交都会沉淀一点，几百次提交之后，整个仓库的关键决策、模块现状、历史上踩过的坑，几乎都被 MemOS 记下来了。 更妙的是这种记忆是全团队共享的。前端同学想了解&quot;后端那个结算模块最近改了什么、有没有已知问题&quot;，不用再去翻 c...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%87%AA%E5%B7%B1%E5%81%9A"><span class="toc-number">2.</span> <span class="toc-text">为什么自己做</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#AI-Native-Flow-%E6%98%AF%E4%BB%80%E4%B9%88"><span class="toc-number">3.</span> <span class="toc-text">AI Native Flow 是什么</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E8%AE%BE%E8%AE%A1"><span class="toc-number">4.</span> <span class="toc-text">核心设计</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Flow-as-Data"><span class="toc-number">4.1.</span> <span class="toc-text">Flow as Data</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%89%88%E6%9C%AC%E5%8C%96%E5%92%8C%E9%BB%91%E6%9D%BF%E5%8F%98%E9%87%8F"><span class="toc-number">4.2.</span> <span class="toc-text">版本化和黑板变量</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8B%E4%BB%B6%E6%B5%81%E3%80%81%E6%97%A5%E5%BF%97%E5%92%8C-AI-%E8%87%AA%E6%9F%A5"><span class="toc-number">4.3.</span> <span class="toc-text">事件流、日志和 AI 自查</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%9E%E8%B7%B5%E5%87%BA%E6%9D%A5%E7%9A%84-Harness-%E8%A7%84%E5%88%99"><span class="toc-number">4.4.</span> <span class="toc-text">实践出来的 Harness 规则</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Skills-%E8%BD%AC-Flow"><span class="toc-number">5.</span> <span class="toc-text">Skills 转 Flow</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Agent-%E8%8A%82%E7%82%B9"><span class="toc-number">6.</span> <span class="toc-text">Agent 节点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#Studio"><span class="toc-number">7.</span> <span class="toc-text">Studio</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%AE%9E%E4%BE%8B"><span class="toc-number">8.</span> <span class="toc-text">实例</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%A1%E5%8E%84%E6%96%AF%E6%A2%A6%E5%A2%83%E9%85%8D%E9%98%9F-AI-Agent-%E4%B8%8E-LOL-%E6%B5%B7%E5%85%8B%E6%96%AF%E5%A4%A7%E4%B9%B1%E6%96%97-AI-%E5%8A%A9%E6%89%8B"><span class="toc-number">8.1.</span> <span class="toc-text">卡厄斯梦境配队 AI Agent 与 LOL 海克斯大乱斗 AI 助手</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%81%94%E7%BD%91%E6%90%9C%E7%B4%A2%E5%92%8C-RAG"><span class="toc-number">8.2.</span> <span class="toc-text">联网搜索和 RAG</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number">9.</span> <span class="toc-text">总结</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '1ab68376e51542133011a9cc42c1cde0'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"aigc-ai-native-flow","contentHash":"b5eff426aa23b0221fbf7c971b1d77a1531bc7b62c8f2e91fd2269efe670f291"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>

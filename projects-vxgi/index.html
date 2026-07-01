@@ -1,0 +1,348 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ProjectS中的全局光照系统（开发中） | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radianc">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ProjectS中的全局光照系统（开发中）">
+<meta property="og:url" content="https://www.lfzxb.top/projects-vxgi/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radianc">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png">
+<meta property="article:published_time" content="2022-12-14T00:00:00.000Z">
+<meta property="article:modified_time" content="2024-08-13T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="图形渲染">
+<meta property="article:tag" content="URP">
+<meta property="article:tag" content="GI">
+<meta property="article:tag" content="VXGI">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ProjectS中的全局光照系统（开发中）",
+  "url": "https://www.lfzxb.top/projects-vxgi/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png",
+  "datePublished": "2022-12-14T00:00:00.000Z",
+  "dateModified": "2024-08-13T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/projects-vxgi/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
+      }
+    }
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ProjectS中的全局光照系统（开发中）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">253</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">203</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ProjectS中的全局光照系统（开发中）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ProjectS中的全局光照系统（开发中）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2022-12-14T00:00:00.000Z" title="发表于 2022-12-14 00:00:00">2022-12-14</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-08-13T00:00:00.000Z" title="更新于 2024-08-13 00:00:00">2024-08-13</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E5%BA%94%E7%94%A8%E5%AE%9E%E6%88%98/">应用实战</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">464</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>1分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/projects-vxgi/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2024-08-13 00:00:00&quot;}" hidden></div><div class="note warning modern"><p>文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI</p>
+</div>
+<h1 id="前言">前言</h1>
+<p>一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷</p>
+<ul>
+<li>数据量大，烘焙慢</li>
+<li>动态物体只能接受漫反射信息，不能影响场景和其他动态物体</li>
+</ul>
+<p>其中第二点尤其致命</p>
+<p>当前较为流行的大世界GI方案有以下几大类</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/541137978">半实时Precomputed Radiance Transfer Global Illumination（PRTGI）</a>，半动态GI方案，多为离线烘焙一部分场景光照数据，运行时实时采样进行光照计算</li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/404520592">动态漫反射全局光照（Dynamic Diffuse Global Illumination）（DDGI）</a>，PRTGI的全实时版本，把烘焙放在运行时，类似的还有<a target="_blank" rel="noopener" href="https://www.ea.com/seed/news/siggraph21-global-illumination-surfels">SurfelGI</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/564215425">Voxel Global Illumination（VXGI）</a>，体素+RayCast流派</li>
+</ul>
+<p>其中VXGI是将场景体素化，并在体素存储几何和材质信息，从而实现实时ReLight</p>
+<p>我们都知道，对于大世界来说，游戏的寻路和碰撞也是很令人头痛的一件事，尤其是在Unity上</p>
+<ul>
+<li>分块烘焙，实时拼接NavMesh</li>
+<li>对于GPU Driven的地形碰撞，需要提前预烘焙数据，并在运行时流式</li>
+</ul>
+<p>那么我们可以借助VXGI的体素化流程，先对场景做一遍粗略，专供给Gameplay的体素化，再在此基础上进行正式的VXGI需要的体素化</p>
+<p>这样我们就同时解决了Gameplay和GI问题，可谓两全其美，所以权衡之下选择了VXGI作为ProjectS的GI方案</p>
+<h1 id="GI知识体系">GI知识体系</h1>
+<iframe id="embed_dom" name="embed_dom" frameborder="0" style="width:100%; height:800px;" src="https://www.processon.com/embed/6399d67c51757002840c74aa"></iframe>
+<h1 id="待续">待续</h1>
+<h1 id="参考">参考</h1>
+<p><a target="_blank" rel="noopener" href="https://assetstore.unity.com/packages/tools/particles-effects/lumina-gi-real-time-voxel-global-illumination-226660">https://assetstore.unity.com/packages/tools/particles-effects/lumina-gi-real-time-voxel-global-illumination-226660</a></p>
+<p><a target="_blank" rel="noopener" href="https://github.com/jose-villegas/VCTRenderer">https://github.com/jose-villegas/VCTRenderer</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/466869586">https://zhuanlan.zhihu.com/p/466869586</a></p>
+<p><a target="_blank" rel="noopener" href="https://liu.diva-portal.org/smash/get/diva2:1148572/FULLTEXT01.pdf">https://liu.diva-portal.org/smash/get/diva2:1148572/FULLTEXT01.pdf</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/350753497">https://zhuanlan.zhihu.com/p/350753497</a></p>
+<p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/463309766">https://zhuanlan.zhihu.com/p/463309766</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/projects-vxgi/">https://www.lfzxb.top/projects-vxgi/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><a class="post-meta__tags" href="/tags/URP/">URP</a><a class="post-meta__tags" href="/tags/GI/">GI</a><a class="post-meta__tags" href="/tags/VXGI/">VXGI</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2022-total/" title="2022个人年度总结"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202301011639876.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">2022个人年度总结</div></div><div class="info-2"><div class="info-item-1">今年算是颇为平淡的一年，没什么惊喜，也没什么失落，但生活就是这样，我们把这些平淡记下，多年后回首往昔，这些平淡就会成为我们珍贵的回忆与感动的来源 在工作方面，倒真不是我懒，工作总结相关的事情没什么好说的，大家都懂，无非都是些套话，场面话，我也懒得在个人博客里写那些，所以就以总结，记录个人生活经历为主了 一月 归乡 1.25号回到老家的县城，感觉有点饿了，先整碗朝思暮想的大碗米线  老家是一如既往的清冷，不过这种清冷我很喜欢，很安静，窗外的大部分时间都是阳光明媚，冬阳暖暖的 由于只带了个MAC，所以就只是整理了下守望先锋GDC的大纲，一边整理，一边感受着若有若无的家乡冬天特有的冷清，别有一番意味 休整了几天后，手就闲不住了，去村头小卖部买了几盒鞭炮，耍一耍   二月 返途 2月7日，早上5点，天还黑着，就坐着父亲的轿车，准备赶早上10点的飞机，因为要提前两小时值机，所以8点前就要到达机场 一路上倒也平稳，不知不觉就睡着了，忽然感受到一丝冷意，睁开充满困意的眼睛，发现车窗外已经飘起了小雪，觉得有些生气，毕竟在家这么多天连个雪影子都没看到，今天要走了，才开始下雪，都没办法好好享受雪天了...</div></div></div></a><a class="pagination-related" href="/non-layered-tidy-trees-practise/" title="以线性时间绘制非分层整齐树的实践与应用"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202211142202297.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">以线性时间绘制非分层整齐树的实践与应用</div></div><div class="info-2"><div class="info-item-1">故事还是要从去年春节说起，当时临近除夕实在闲的蛋疼，随意摩挲着MAC唯一比较舒服的触摸板，突然想起我的行为树乱糟糟的布局，就想着能不能搞个自动布局算法，充分利用空间的同时让行为树更加整洁大方，说干就干  吭哧吭哧3天时间（是的，你没猜错，我猪脑又过载了）终于是写完了一版行为树自动布局工具，当时够用了，于是就没管了  前阵子在给 基于行为树的MOBA技能系统：朝花夕拾 · 现代化的动画系统设计与开发 开发Playable Debug工具的时候，需求是横向布局对齐，参考了 Reingold-Tilford Algorithm 进行实现  最近我的运行时节点编辑器依旧有自动布局的需求，本来可以直接复用之前写的节点自动布局算法，但由于运行时节点编辑器和NodeGraphProcessor的节点数据结构天差地别，改起来非常折磨，想到后面可能还有什么地方有自动布局的需求，干脆抽离出一个通用的算法库，同时支持 从上到下，从左到右，从右到左，从下到上的树结构自动布局 说起来有4类情况，其实只需要写一个算法，然后对结果进行旋转 + 后处理即可 这次没有再埋头苦干，而是翻阅了大量资料，找到了一个无论...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/air-distortion-based-on-pp-in-urp/" title="URP下基于后处理的热空气扭曲效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004036.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-20</div><div class="info-item-2">URP下基于后处理的热空气扭曲效果</div></div><div class="info-2"><div class="info-item-1">前言 前几天在网上看到一位大神的 Unity Shader-热空气扭曲效果 文章，感觉应该是个常见的效果，所以准备在URP里实现一下，正好再次深入使用一下URP，期间也遇到了一些匪夷所思的坑，也会在文章中说明。 原文中的全屏扭曲和基于GrabPass的方式都省略不谈，这里来用URP实现一下基于后处理的热空气扭曲。 环境 URP版本：7.3.1 Unity版本：2019.4.8f1 正文 原文中的实现核心思路是在需要扭曲的地方摆放一个面片，然后将这个面片渲染到一张RenderTexture上作为Mask，后处理的时候以Mask为基准决定ColorTexture哪些地方需要扭曲，然后对一张Noise图进行采样，对目标像素做偏移，达到扭曲的效果。 仔细分析后发现其实就一个难点，就是如何在URP下将物体渲染到一个RenderTexture上。 恰巧前阵子 研究战争迷雾 的时候看到了这篇文章：流朔 -【Unity URP】以Render Feature实现卡通渲染中的刘海投影 ，其中就有将物体渲染到RenderTexture的相关操作，这样一来就没有问题了，开搞。 首先创建一个Render...</div></div></div></a><a class="pagination-related" href="/fog-of-war-based-on-ss-in-urp/" title="基于URP屏幕空间采样与JobSystem加速的战争迷雾"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210920154319.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-21</div><div class="info-item-2">基于URP屏幕空间采样与JobSystem加速的战争迷雾</div></div><div class="info-2"><div class="info-item-1">  本文章已于 2021.9.24 更新，提供一个 JobSystem 加速示例。 本文章已于 2021.3.23 更新，将用到的 Shader 代码转为 HLSL 语言，支持 SRP Batcher（虽然在这里并没有什么卵用），优化模糊 Blit 次数。  前言 这阵子在研究战争迷雾相关的内容，在网上找了一些文章和开源库，主要有两种做法：  一是直接在场景上放一张大面片，用作迷雾，这种方式适用于相机角度不会发生改变的情况，否则会有穿帮的风险，但这种方案性能比较好。 二是基于屏幕空间对迷雾纹理进行采样，然后通过后处理的方式得到最终游戏画面，这种方案最为稳妥，但相应的性能会低一些。  但是网上找得到的战争迷雾方案全都是 Built-In 管线下进行的，那么对于基于屏幕后处理的战争迷雾，就会不可避免的涉及到 OnRenderImage 和 Blit 操作，这些操作在默认不指定相机 RenderTexture 的情况下会涉及对 GPU 中的 FrameBuffer 进行拷贝 + 和 CPU 与 GPU 之间的数据传递，都是比较消耗性能的操作，需要尽量减少，单一个战争迷雾可能还好，后处理...</div></div></div></a><a class="pagination-related" href="/massive-grass-rendering-based-on-gpu-instance/" title="基于GPU Instance的草地渲染学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010135.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-08</div><div class="info-item-2">基于GPU Instance的草地渲染学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 其实这篇文章的内容一直是在我的学习计划中的，但是由于种种事情而耽误了，最近正好有空，可以静下心来好好学习下，这篇文章应该是我2021年渲染学习的一个句号，剩下的一个季度要把精力放到技能编辑器的完善和状态帧同步的实现上。 学习对象依旧是Colin大神的仓库，这次的效果最为震撼和炫酷——基于GPU Instance的草地渲染  本文章主要涉及到的技术内容为：  GPU Instance的底层原理 GPU Instance API 基于GPU Instance的草地渲染实现 草地渲染内容拓展  GPU Instance的底层原理 简单概括一句话就是：传递一个对象的Mesh，指定其绘制次数和材质，Unity就会为我们在GPU的统一/常量缓冲区开辟好必要的缓冲区，然后以我们指定的材质对Mesh进行我们指定次数的渲染，这样就可以达成一次Drawcall绘制海量对象的目的。 好处在于：  传统渲染方式（无合批情形）：绘制多少个对象就要整理和传递多少次数据，其中整理和传递数据的过程消耗极大，多数为性能瓶颈 GPU Instance：只用从CPU往GPU传递一次数据，大大提高了渲染效率。  ...</div></div></div></a><a class="pagination-related" href="/nkgmoba-hpbarwithshader/" title="使用Shader实现LOL血条分隔线效果"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010705.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-04</div><div class="info-item-2">使用Shader实现LOL血条分隔线效果</div></div><div class="info-2"><div class="info-item-1">前言 马上要去上班了，这阵子雀食是啥都不想干，技能编辑器接Slate又费脑子，索性整点小活吧，想起来当前Moba项目的血条间隔还是用虚拟列表做的，性能捉急，准备用Shader重新实现一下。 正文 所谓血条间隔就是在血条中使用分割线来帮助玩家快速计算自身生命值的，个人认为是一个非常优秀的设计，比如下面的大塔姆，玩家可以在一秒钟之内就可以知道其还有360左右的生命值  因为血条间隔宽度和数量与战斗中英雄最大生命值有关，所以根据战斗中的英雄最大血量计算得出每个血条间隔的宽度值，传入Shader进行计算绘制，所以需要进行一些换算，现有以下条件  血条宽度为107px 英雄最大生命值为3700 血条每格代表100生命值  首先是血条间隔的数量，为 3700/100 = 37 个，而这37个间隔要均匀分布在107px中，所以每个间隔的宽度为100 / 37 = 2.70，注意，是100，不是107，因为我们绘制血条间隔与血条UI自身的宽度完全无关，根本原因是我们在Shader中会使用uv.x * 100的方式来构建一个虚拟的血条，所以不论英雄最大生命值是多少，都要除100。 123456Pe...</div></div></div></a><a class="pagination-related" href="/screen-space-plana-reflection-in-urp-study/" title="URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907132640.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-04-24</div><div class="info-item-2">URP下屏幕空间平面反射（ScreenSpacePlanarReflection）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 继续学习Colin大神的渲染示例库，这次学习的是屏幕空间平面反射（ScreenSpacePlanarReflection），一个可以用在移动端的平面反射库，但是对图形API有要求，PC/console/vulkan android/Metal iOS，OSX，因为其中用到了Compute Shader加速计算。项目还对不同平台做了差异化处理，干货很多。 学习过程中我也有很多疑问，有一些是百度谷歌看PPT解决的，有一些就实在不知道怎么办了，在文中有说明，望知道的大佬能不吝赐教。 正文 Compute Shader 简单来说Compute Shader是运行在GPU中的计算管线中的程序，其与渲染管线相互独立，旨在将任务切分成一个个运行单元，然后充分利用GPU的并行计算能力来提高目标的运行效率，也是现代GPGPU（General Purpose Computing on GPU）的基石。 其应用起来的相关概念用一张图即可概括（有一说一这张图感觉比NVIDIA的好看和明了多了，AMD YES！）：  有关Compute Shader的更多内容参见：知乎文章：Compute Shad...</div></div></div></a><a class="pagination-related" href="/screen-space-decal-in-urp-study/" title="URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908120545.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-01-03</div><div class="info-item-2">URP下屏幕空间贴花（ScreenSpaceDecal）学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 这几天学习了下Colin大神的屏幕空间贴花实现，感觉其中的算法实现和坐标转换让本笨比拍案叫绝，故记录分享一下。 大体思路 根据在任意坐标系中，已知一个物体A的坐标，以及另一个物体B相对于物体A的偏移量，即可得知物体B坐标的定理。我们可以将Camera坐标和从Camera到顶点的射线从相机空间转换到模型空间，然后利用从VS到PS的线性插值（其实是类似我们从深度图重建世界坐标时，构造四条从相机到屏幕面片四个顶点的射线，利用VS到PS的线性插值得到片元数目的射线原理，即可得知屏幕面片每一个片元对应的世界空间坐标），即可得知物体每一个片元对应的模型空间坐标，又因为我们使用了单位长度为1的Cube作为投射器，所以就可以直接用这个坐标当成UV去采样贴图（由于我们只是需要类似一个面片一样的贴花，所以需要裁剪掉除0~1范围外的所有UV），达成贴花的效果。 正文 基础设置 RenderQueue 1&quot;Queue&quot; = &quot;Transparent-499&quot; 为了避免渲染顺序问题，把其渲染队列放到Transparent，并且在任何半透明物体之前渲染 ZWri...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#GI%E7%9F%A5%E8%AF%86%E4%BD%93%E7%B3%BB"><span class="toc-number">2.</span> <span class="toc-text">GI知识体系</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%BE%85%E7%BB%AD"><span class="toc-number">3.</span> <span class="toc-text">待续</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%8F%82%E8%80%83"><span class="toc-number">4.</span> <span class="toc-text">参考</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      const mermaidThemeConfig = `%%{init:{ 'theme':'${theme}'}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+      }
+
+      // mermaid v9 and v10 compatibility
+      typeof renderFn === 'string' ? renderMermaid(renderFn) : renderFn.then(({ svg }) => renderMermaid(svg))
+    })
+  }
+
+  const codeToMermaid = () => {
+    const codeMermaidEle = document.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    if (true) codeToMermaid()
+    const $mermaid = document.querySelectorAll('#article-container .mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '04fff9d09b54f4f484e5e4e3f26e9042'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"projects-vxgi","contentHash":"6eeaac587fd1016d0c4197cb1d94390a0d7d53603e0dc48f3079a2932cee8157"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>
