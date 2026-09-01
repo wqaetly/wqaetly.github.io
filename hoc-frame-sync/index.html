@@ -1,0 +1,2142 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="让所有客户端在同一帧施放同一技能：《混沌与秩序之英雄战歌》战斗系统技术设计 下文把《混沌与秩序之英雄战歌》简称为 HOC1。一场移动 MOBA 战斗看起来很直观：我们拖动摇杆、点下技能，角色移动，目标掉血，屏幕上出现动画和特效。 引擎真正要处理的事情多得多。同一条输入需要在多台设备上落到相同的模拟时刻；技能要经历目标选择、施法校验、前摇、事件触发、伤害、Buff 和表现；渲染帧率与网络抖动还要被隔">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解">
+<meta property="og:url" content="https://www.lfzxb.top/hoc-frame-sync/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="让所有客户端在同一帧施放同一技能：《混沌与秩序之英雄战歌》战斗系统技术设计 下文把《混沌与秩序之英雄战歌》简称为 HOC1。一场移动 MOBA 战斗看起来很直观：我们拖动摇杆、点下技能，角色移动，目标掉血，屏幕上出现动画和特效。 引擎真正要处理的事情多得多。同一条输入需要在多台设备上落到相同的模拟时刻；技能要经历目标选择、施法校验、前摇、事件触发、伤害、Buff 和表现；渲染帧率与网络抖动还要被隔">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp">
+<meta property="article:published_time" content="2026-08-31T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-08-31T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="战斗系统">
+<meta property="article:tag" content="技能系统">
+<meta property="article:tag" content="帧同步">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解",
+  "url": "https://www.lfzxb.top/hoc-frame-sync/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp",
+  "datePublished": "2026-08-31T00:00:00.000Z",
+  "dateModified": "2026-08-31T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/hoc-frame-sync/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">212</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-08-31T00:00:00.000Z" title="发表于 2026-08-31 00:00:00">2026-08-31</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-08-31T00:00:00.000Z" title="更新于 2026-08-31 00:00:00">2026-08-31</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">19.5k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>66分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/hoc-frame-sync/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-08-31 00:00:00&quot;}" hidden></div><h1 id="让所有客户端在同一帧施放同一技能：《混沌与秩序之英雄战歌》战斗系统技术设计">让所有客户端在同一帧施放同一技能：《混沌与秩序之英雄战歌》战斗系统技术设计</h1>
+<p>下文把《混沌与秩序之英雄战歌》简称为 HOC1。一场移动 MOBA 战斗看起来很直观：我们拖动摇杆、点下技能，角色移动，目标掉血，屏幕上出现动画和特效。</p>
+<p>引擎真正要处理的事情多得多。同一条输入需要在多台设备上落到相同的模拟时刻；技能要经历目标选择、施法校验、前摇、事件触发、伤害、Buff 和表现；渲染帧率与网络抖动还要被隔离在战斗结果之外。</p>
+<p>这篇文章把视角锁定在战斗运行时，重点回答三个问题：</p>
+<ol>
+<li>HOC1 怎样用帧同步把多名玩家的输入组织成一条统一时间线？</li>
+<li>一条施法输入进入这条时间线后，技能系统怎样把它变成完整的战斗结算？</li>
+<li>Buff、攻击、阵容部署以及表现层怎样接在同一套 Core 框架上？</li>
+</ol>
+<p>我们会沿一条战斗命令，依次讲清帧同步、技能、Buff、攻击、阵容部署和表现层怎样协作。有普通游戏逻辑经验的朋友，可以顺着这条数据流理解整套设计。</p>
+<h2 id="先看全景：四个阶段，一条战斗真值链">先看全景：四个阶段，一条战斗真值链</h2>
+<p>整套战斗可以先压缩成四个阶段：输入、同步、模拟、表现。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    I[输入阶段&lt;br/&gt;触摸 技能提示 目标选择] --&gt; C[战斗命令&lt;br/&gt;UnitAction]
+    C --&gt; S[同步阶段&lt;br/&gt;统一帧与全局顺序]
+    S --&gt; Q[客户端命令队列]
+    Q --&gt; M[模拟阶段&lt;br/&gt;Unit 技能 Buff 弹道]
+    M --&gt; W[战斗真值&lt;br/&gt;位置 HP 状态 冷却]
+    W --&gt; P[表现阶段&lt;br/&gt;模型 粒子 声音 HUD]
+
+    D[技能表 Buff 表 Lua] --&gt; M
+    R[同步随机流] --&gt; M</code></pre>
+<p>这张图里最重要的是中间那条真值链：</p>
+<ul>
+<li>输入层表达玩家意图。</li>
+<li>同步层决定意图在哪个模拟帧执行，以及多个意图之间的先后顺序。</li>
+<li>模拟层执行完整战斗规则，产出位置、生命、状态和冷却等真值。</li>
+<li>表现层读取这些状态，并接收动画、特效、声音和 UI 请求。</li>
+</ul>
+<p>HOC1 的逻辑与表现属于“真值归属和更新时间分层”。代码对象保持老式 C++ 游戏常见的重对象风格：Unit、攻击和 Buff 直接调用表现服务，真值与表现共享对象图，再用更新阶段和写权限划出边界。</p>
+<p>帧同步正好位于这套架构的腰部。上面是玩家意图，下面是确定性战斗模拟。先把这一层讲清楚，技能系统的很多设计就会自然起来。</p>
+<h1 id="第一部分：帧同步怎样让所有客户端走在同一条时间线上">第一部分：帧同步怎样让所有客户端走在同一条时间线上</h1>
+<h2 id="帧同步的核心是命令顺序">帧同步的核心是命令顺序</h2>
+<p>网络游戏常见两类同步思路。</p>
+<table>
+<thead>
+<tr>
+<th>模型</th>
+<th>网络主要传什么</th>
+<th>战斗结果在哪里计算</th>
+<th>典型特点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>状态同步</td>
+<td>位置、速度、HP、状态快照</td>
+<td>服务端为主</td>
+<td>权威性强，状态带宽与插值逻辑更重</td>
+</tr>
+<tr>
+<td>输入帧同步</td>
+<td>移动、攻击、施法等命令</td>
+<td>各客户端执行同一套模拟</td>
+<td>命令很小，对确定性要求高</td>
+</tr>
+</tbody>
+</table>
+<p>HOC1 采用服务端权威调度的输入帧同步。客户端上传“我要移动到哪里”“我要攻击谁”“我要向这个位置施法”；同步服务给这些命令分配统一的帧号和顺序；每个客户端再执行自己的 Unit、技能、Buff、攻击和弹道逻辑。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant A as 客户端 A
+    participant S as 同步服务
+    participant B as 客户端 B
+
+    A-&gt;&gt;S: 移动命令
+    B-&gt;&gt;S: 施法命令
+    S-&gt;&gt;S: 分配 server frame 与 sequence
+    S--&gt;&gt;A: 同一份有序命令帧
+    S--&gt;&gt;B: 同一份有序命令帧
+    A-&gt;&gt;A: 执行移动和施法逻辑
+    B-&gt;&gt;B: 执行移动和施法逻辑
+    Note over A,B: 初始状态、命令顺序、时间步和随机流一致</code></pre>
+<p>服务端在这里更像裁判与节拍器。它决定：</p>
+<ul>
+<li>哪个参与者有权提交这条命令。</li>
+<li>命令属于哪个模拟帧。</li>
+<li>同帧多条命令按什么顺序执行。</li>
+<li>客户端当前应该推进到哪里。</li>
+<li>命令流是否出现缺失、重复或乱序。</li>
+</ul>
+<p>客户端同时运行完整战斗内核。理解这套系统时，可以把主线记成“服务端安排输入、客户端执行模拟”；服务端还可以继续附加同步检查与安全校验。</p>
+<h2 id="确定性模拟需要四个共同输入">确定性模拟需要四个共同输入</h2>
+<p>帧同步能成立，依赖的内容比命令流多。每个客户端至少要共享四类输入：</p>
+<pre><code class="highlight mermaid">flowchart TB
+    A[相同的 BattleStartSnapshot] --&gt; SIM[确定性战斗模拟]
+    B[相同的有序 UnitAction] --&gt; SIM
+    C[相同的离散模拟步] --&gt; SIM
+    D[相同的同步随机流] --&gt; SIM
+
+    SIM --&gt; X[客户端 A 的战斗状态]
+    SIM --&gt; Y[客户端 B 的战斗状态]
+    X --&gt; H&#123;状态摘要一致&#125;
+    Y --&gt; H</code></pre>
+<h3 id="1-BattleStartSnapshot：相同的起跑线">1. BattleStartSnapshot：相同的起跑线</h3>
+<p>战斗开始前需要冻结一份技术快照。它通常包含：</p>
+<ul>
+<li>地图与玩法参数。</li>
+<li>参与者的逻辑 ID 与阵营。</li>
+<li>英雄、皮肤和战斗配置。</li>
+<li>初始等级、技能、属性和状态效果。</li>
+<li>出生位置或出生点索引。</li>
+<li>随机种子。</li>
+<li>数据表与脚本版本。</li>
+</ul>
+<p>这份快照的职责很单纯：让每台设备创建出相同的对象图。某台设备少一个初始 Buff，或者使用另一版技能表，后面的命令完全一致也会很快分叉。</p>
+<h3 id="2-UnitAction：相同的操作命令">2. UnitAction：相同的操作命令</h3>
+<p>UnitAction 只记录足以重放玩家意图的参数。移动需要目标位置，普通攻击需要目标 GUID，单位指向技能需要技能 ID 和目标 GUID，位置技能需要技能 ID 与坐标。</p>
+<p>派生结果不放进命令。一次 AOE 命中谁、造成多少伤害、附加几层 Buff，由各客户端在统一帧上计算。</p>
+<h3 id="3-离散模拟步：相同的时间增量">3. 离散模拟步：相同的时间增量</h3>
+<p>客户端按服务端帧推进离散战斗步，常见步长约为 33ms。Buff 持续时间、技能冷却、攻击前摇、弹道飞行和 AI 状态都使用这条模拟时间。</p>
+<h3 id="4-同步随机流：相同的概率分支">4. 同步随机流：相同的概率分支</h3>
+<p>暴击、概率触发和随机目标使用专门的同步随机源。初始种子相同还不够，每个客户端还要在同一逻辑节点、以同样次数消费随机数。</p>
+<h2 id="三套时钟：渲染时间、模拟时间和网络游标">三套时钟：渲染时间、模拟时间和网络游标</h2>
+<p>帧同步最容易混淆的地方，是项目里同时存在三套“时间”。</p>
+<pre><code class="highlight mermaid">flowchart TB
+    W[Wall Clock&lt;br/&gt;设备外层帧 delta] --&gt; PRE[输入 UI 镜头 特效 音频 绘制]
+
+    F[Server Frame] --&gt; PENDING[pendingFrames]
+    PENDING --&gt; STEP[Simulation Step&lt;br/&gt;约 33ms]
+    STEP --&gt; CORE[Unit 技能 Buff 弹道]
+
+    Q[Sequence] --&gt; ORDER[命令全局顺序与缺口检测]
+    ORDER --&gt; CORE
+
+    CORE --&gt; STATE[共享战斗状态]
+    STATE --&gt; PRE</code></pre>
+<h3 id="Wall-Clock：设备多久画一帧">Wall Clock：设备多久画一帧</h3>
+<p>外层帧使用设备时间 delta。它负责输入采样、UI 动画、镜头、粒子、音频和最终绘制。设备可以运行在 30 FPS、60 FPS 或更高帧率，外层 delta 也会随卡顿变化。</p>
+<h3 id="Server-Frame：服务端批准到了哪个同步前沿">Server Frame：服务端批准到了哪个同步前沿</h3>
+<p><code>server_frame</code> 表示服务端给出的权威同步前沿。客户端收到它时，自己的 <code>cframe</code> 可能还落后若干步；解包器会把时间推进记录展开到 <code>pendingFrames</code>，客户端每消费一个待执行步，才真正让 Unit、状态机、冷却、Buff、弹道与技能事件向前推进一次。</p>
+<h3 id="Sequence：命令流消费到了哪里">Sequence：命令流消费到了哪里</h3>
+<p><code>sequence</code> 是同步记录的严格游标。客户端保存 <code>expectedSequence</code>，它表示“下一条期望消费的同步记录”。向前出现缺口时，客户端就知道自己的命令流已经不完整；重复前缀则可以按 sequence 幂等跳过。</p>
+<p><code>server_frame</code> 与 <code>sequence</code> 需要分开理解：</p>
+<ul>
+<li>一个待执行逻辑帧允许没有玩家命令，时间依然向前推进。</li>
+<li>一个模拟帧也可以包含多条命令，sequence 会连续消耗多次。</li>
+<li>空帧压缩可以一次推进多个模拟帧，却只占一个同步记录序号。</li>
+</ul>
+<pre><code class="highlight mermaid">flowchart LR
+    F100[同步前沿 100&lt;br/&gt;无输入] --&gt; F101[同步前沿 101&lt;br/&gt;移动 + 施法]
+    F101 --&gt; F102[同步前沿 102&lt;br/&gt;无输入]
+
+    S50[Seq 50&lt;br/&gt;时钟记录] --&gt; S51[Seq 51&lt;br/&gt;移动]
+    S51 --&gt; S52[Seq 52&lt;br/&gt;施法]
+    S52 --&gt; S53[Seq 53&lt;br/&gt;帧推进标记]
+    S53 --&gt; S54[Seq 54&lt;br/&gt;时钟记录]</code></pre>
+<p>这两个游标一起存在，能分别检查“时间是否向前”和“命令是否完整”。</p>
+<h2 id="外层帧与同步帧怎样嵌套">外层帧与同步帧怎样嵌套</h2>
+<p>Gameplay 更新被组织为 Pre、Core、Post 三段，每段使用的时钟域不同。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    PRE[UpdatePlayPre&lt;br/&gt;外层帧] --&gt; INPUT[UI 与输入采样]
+    INPUT --&gt; LOOP&#123;pendingFrames 数量&#125;
+    LOOP --&gt;|每个同步帧| SYN[同步动作处理]
+    SYN --&gt; OBJ[对象与 Unit 更新]
+    OBJ --&gt; BULLET[逻辑投射物更新]
+    BULLET --&gt; SPELL[技能事件更新]
+    SPELL --&gt; WORLD[区域与战争迷雾]
+    WORLD --&gt; LOOP
+    LOOP --&gt;|同步帧消费完| POST[UpdatePlayPost&lt;br/&gt;外层帧]
+    POST --&gt; VIEW[镜头 场景 UI 与绘制]</code></pre>
+<p>一帧画面可以消费零个、一个或多个同步模拟步：</p>
+<ul>
+<li>网络帧暂时没到时，本次外层帧可以只更新表现。</li>
+<li>节奏正常时，一帧画面通常消费一个或与时间匹配的同步步。</li>
+<li>客户端落后时，一帧画面可以连续执行多个同步步追赶。</li>
+</ul>
+<p>Core 阶段的顶层顺序大致是：</p>
+<ol>
+<li>同步动作阶段把本帧命令交给统一动作处理器。</li>
+<li>对象与单位阶段推进移动、攻击、状态机、冷却与 Buff。</li>
+<li>逻辑投射物阶段推进会影响命中时序的弹道对象。</li>
+<li>技能事件阶段处理本帧到期的触发上下文。</li>
+<li>区域与战争迷雾等世界服务更新。</li>
+</ol>
+<p>攻击、Buff 和弹道可以立即触发新的技能事件，所以这是一组带回边的阶段，顶层执行顺序依然固定。</p>
+<h2 id="输入先变成意图，在线模式等待权威回灌">输入先变成意图，在线模式等待权威回灌</h2>
+<p>玩家操作先被整理成 UnitAction，战斗真值只在统一执行器中修改。不同运行模式共用同一条命令入口。</p>
+<pre><code class="highlight mermaid">flowchart TB
+    INPUT[触摸或按键] --&gt; ACTION[构造 UnitAction]
+
+    ACTION --&gt;|在线| UP[发送到同步服务]
+    UP --&gt; ORDER[服务端排序与组帧]
+    ORDER --&gt; DOWN[权威帧回灌]
+
+    ACTION --&gt;|单机| SOLO[solo command queue]
+    REPLAY[录像命令流] --&gt; REPLAYQ[replay command queue]
+
+    DOWN --&gt; EXEC[统一动作执行器]
+    SOLO --&gt; EXEC
+    REPLAYQ --&gt; EXEC</code></pre>
+<p>在线路径尤其值得注意：本机触摸只会产生预施法提示、选中描边等即时反馈；移动、攻击、扣血和正式施法要等命令从权威帧回灌后再执行。这样，本机输入与远端输入最终会走同一个动作处理函数。</p>
+<p>单机和录像也复用命令队列。这个设计让一套战斗逻辑同时服务在线、离线与回放，调试时还能直接保存命令流复现问题。</p>
+<h2 id="上行-UnitAction：客户端时间只是参考">上行 UnitAction：客户端时间只是参考</h2>
+<p>一条上行 UnitAction 可以分成两段：</p>
+<table>
+<thead>
+<tr>
+<th>部分</th>
+<th>字段</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>本地时序前缀</td>
+<td><code>client_frame</code></td>
+<td>发送时客户端看到的帧</td>
+</tr>
+<tr>
+<td>本地时序前缀</td>
+<td><code>client_sequence / reserved</code></td>
+<td>本地顺序或保留信息</td>
+</tr>
+<tr>
+<td>本地时序前缀</td>
+<td><code>client_timestamp</code></td>
+<td>本地发送时间参考</td>
+</tr>
+<tr>
+<td>动作体</td>
+<td><code>action_type</code></td>
+<td>移动、攻击、单位施法、位置施法等</td>
+</tr>
+<tr>
+<td>动作体</td>
+<td><code>action_payload</code></td>
+<td>位置、GUID、技能 ID 与特殊参数</td>
+</tr>
+</tbody>
+</table>
+<p>前三个字段合计 12 字节。同步服务读取它们作为客户端提交时的时序信息，然后从权威下行记录中移除这段本地前缀。各客户端的本地时钟彼此不同，全局执行时间统一由服务端重新分配。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    U[上行 UnitAction] --&gt; H[12 字节本地时序前缀]
+    U --&gt; B[action body]
+    H --&gt; OBS[延迟与异常观测]
+    B --&gt; V[身份 长度 频率与类型校验]
+    V --&gt; Q[当前服务端帧的待组帧队列]</code></pre>
+<p>动作体需要保持紧凑。常见命令可以这样理解：</p>
+<table>
+<thead>
+<tr>
+<th>动作</th>
+<th>最小语义参数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Move</td>
+<td>目标平面坐标或方向</td>
+</tr>
+<tr>
+<td>StopMove</td>
+<td>无动作体或极短标志</td>
+</tr>
+<tr>
+<td>Attack</td>
+<td>目标 Unit GUID</td>
+</tr>
+<tr>
+<td>SpellToUnit</td>
+<td>技能 ID、目标 GUID、附加参数</td>
+</tr>
+<tr>
+<td>SpellToPosition</td>
+<td>技能 ID、目标位置、附加参数</td>
+</tr>
+<tr>
+<td>UpgradeSpell</td>
+<td>技能槽与升级信息</td>
+</tr>
+</tbody>
+</table>
+<p>服务端还要用连接上下文覆盖命令里的发送者 ID。客户端负责声明“我要做什么”，逻辑参与者归属由服务端连接上下文决定。</p>
+<h2 id="服务端怎样把-33ms-内的输入装进一个帧">服务端怎样把 33ms 内的输入装进一个帧</h2>
+<p>同步服务维护一个离散帧调度器，tick 固定为 33ms，约 30.3Hz。每个 tick 做四件事：</p>
+<ol>
+<li><code>server_frame</code> 加一。</li>
+<li>取出这个时间窗口内到达的全部合法 UnitAction。</li>
+<li>按权威接收顺序写入动作记录。</li>
+<li>发送且只发送一个能推进本帧时钟的下行包。</li>
+</ol>
+<pre><code class="highlight mermaid">flowchart TB
+    T[33ms tick] --&gt; F[server_frame + 1]
+    F --&gt; D[Drain pending actions]
+    D --&gt; V[校验来源 类型 长度 速率]
+    V --&gt; O[保持权威顺序]
+    O --&gt; C&#123;本帧有动作&#125;
+    C --&gt;|有| A[动作记录 + EmptyFrameRun 1]
+    C --&gt;|无| E[纯时钟帧]
+    A --&gt; B[广播一个下行帧包]
+    E --&gt; B
+    B --&gt; H[写入短期同步历史]</code></pre>
+<p>“一个 tick 只有一个时钟载体”是这里的关键不变量。若同一个 <code>server_frame</code> 先发纯时钟包，再额外发动作聚合，客户端会看到两次相同帧号；第二批动作可能被当成过期数据。</p>
+<h3 id="动作聚合包的结构">动作聚合包的结构</h3>
+<p>动作聚合可以抽象成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">FrameBundle</span><br><span class="line">  start_sequence : uint32</span><br><span class="line">  server_frame   : uint32</span><br><span class="line">  records[]</span><br><span class="line"></span><br><span class="line">ActionRecord</span><br><span class="line">  player_id      : uint8</span><br><span class="line">  action_type    : uint8</span><br><span class="line">  body_length    : uint8</span><br><span class="line">  action_body    : bytes</span><br><span class="line"></span><br><span class="line">EmptyFrameRun</span><br><span class="line">  marker         : 0xFF</span><br><span class="line">  count          : uint8</span><br></pre></td></tr></table></figure>
+<p><code>start_sequence</code> 告诉客户端第一条展开记录应该使用哪个同步序号，<code>server_frame</code> 给出这批记录关联的权威同步前沿。普通记录携带来源、动作类型和最多 255 字节的动作体。</p>
+<h3 id="为什么动作后面还要有-EmptyFrameRun-1">为什么动作后面还要有 EmptyFrameRun(1)</h3>
+<p>HOC1 的普通动作记录只负责把 UnitAction 放进当前待执行逻辑帧的动作队列，本身不等价于“模拟时间向前一步”。因此，有输入的聚合包会在动作记录后追加 <code>EmptyFrameRun(1)</code>。为了方便阅读，下文把这个用法简称为 FrameAdvance：</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[FrameBundle&lt;br/&gt;同步前沿 800] --&gt; R1[Seq 1200&lt;br/&gt;玩家 1 移动]
+    R1 --&gt; R2[Seq 1201&lt;br/&gt;玩家 2 施法]
+    R2 --&gt; ADV[Seq 1202&lt;br/&gt;EmptyFrameRun 1]
+    ADV --&gt; SIM[在当前逻辑帧执行两条动作&lt;br/&gt;随后推进一次 33ms 模拟]</code></pre>
+<p>如果本帧完全没有动作，服务端可以发送纯时钟帧。连续安静期也可以使用 <code>EmptyFrameRun(count)</code> 压缩多个模拟步，安全计数范围是 1 到 127。</p>
+<p>空帧压缩还有一个容易写错的细节：<code>count</code> 表示模拟帧推进量，这条压缩记录本身只消耗一个 sequence。帧游标与记录游标仍然保持两套语义。历史上分别占用 sequence 的多条 <code>EmptyFrameRun(1)</code> 在恢复重放时要保持原样，重新合并会改变记录序列。</p>
+<p>这里还要分清包头 <code>server_frame</code> 与动作的执行逻辑帧。包头描述这一批记录最终批准到的同步前沿；动作先挂到当前待执行逻辑帧，尾部 <code>EmptyFrameRun(1)</code> 随后才让客户端推进到新的前沿。把包头帧号直接写成动作执行帧，会产生一帧偏移。</p>
+<h2 id="客户端怎样展开聚合帧">客户端怎样展开聚合帧</h2>
+<p>客户端收到下行包后，先完成一条严格的数据整理链，整理完成的动作才会进入技能或移动逻辑：</p>
+<pre><code class="highlight mermaid">flowchart TB
+    P[收到 FrameBundle] --&gt; CHECK[校验包头 CRC 与 sequence 覆盖范围]
+    CHECK --&gt; EXPAND[按顺序展开 records]
+    EXPAND --&gt; KIND&#123;记录类型&#125;
+    KIND --&gt;|普通动作| INJECT[注入执行逻辑帧&lt;br/&gt;sequence receive time]
+    INJECT --&gt; SYNQ[同步消息队列]
+    SYNQ --&gt; AIQ[AI / UnitAction 队列]
+    KIND --&gt;|EmptyFrameRun| PENDING[pendingFrames&lt;br/&gt;追加 count 个 33ms 步]
+    PENDING --&gt; STEP[PlayCoreAIFrameOnline&lt;br/&gt;消费一个 pending dt]
+    AIQ --&gt; SYN[同步动作处理&lt;br/&gt;取 actionFrame 等于 cframe 的动作]
+    STEP --&gt; SYN
+    SYN --&gt; HANDLE[统一动作处理器]
+    HANDLE --&gt; CORE[完整 Core 更新]</code></pre>
+<p>普通动作记录会被重新包装成完整 UnitAction。服务端已经剥离的 12 字节本地时序前缀，此时由客户端使用所属执行逻辑帧、严格 sequence 和接收时间重新注入。</p>
+<p>这一步决定了所有客户端最终看到的命令上下文相同。若服务端把原始 12 字节前缀也塞进下行记录，解码器会看到两套时序字段，后面的技能 ID、坐标或目标 GUID 就会整体错位。</p>
+<h3 id="sequence-缺口怎样处理">sequence 缺口怎样处理</h3>
+<p>客户端维护期望的下一条 sequence：</p>
+<pre><code class="highlight mermaid">flowchart TD
+    R[收到记录覆盖范围] --&gt; C&#123;startSequence 与 expectedSequence 比较&#125;
+    C --&gt;|相等| X[从第一条记录开始消费]
+    C --&gt;|小于| OVERLAP&#123;包尾仍覆盖 expectedSequence&#125;
+    OVERLAP --&gt;|否| OLD[整包已消费 直接丢弃]
+    OVERLAP --&gt;|是| SKIP[跳过重复前缀&lt;br/&gt;从 expectedSequence 继续]
+    C --&gt;|大于| GAP[出现向前缺口]
+    X --&gt; N[expectedSequence 前进]
+    SKIP --&gt; N
+    GAP --&gt; STOP[停止继续模拟并进入恢复]</code></pre>
+<p>严格序号让错误尽早暴露。重复记录通过幂等跳过解决，向前缺口代表至少丢了一条待执行同步记录。此时停止继续模拟并进入恢复流程，可以避免错误时间线继续扩散。</p>
+<h2 id="pendingFrames：网络前沿与本机执行前沿">pendingFrames：网络前沿与本机执行前沿</h2>
+<p>客户端可以用两个水位理解自己的同步状态：</p>
+<ul>
+<li><code>sframe</code>：网络已经批准，可以执行到的最远模拟帧。</li>
+<li><code>cframe</code>：客户端已经实际执行完成的模拟帧。</li>
+</ul>
+<p>两者之差就是待执行帧数：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">backlog = sframe - cframe</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight mermaid">flowchart LR
+    C[cframe&lt;br/&gt;本机已执行前沿] --&gt; P[pendingFrames&lt;br/&gt;待执行离散步]
+    P --&gt; S[sframe&lt;br/&gt;网络批准前沿]</code></pre>
+<p>每消费一个 pending frame，客户端按固定顺序工作：</p>
+<ol>
+<li>找出 <code>action_frame == cframe</code> 的全部动作。</li>
+<li>按 sequence 执行这些动作。</li>
+<li>写入本帧模拟 dt。</li>
+<li>推进一次完整 Core 战斗更新。</li>
+<li>弹出一个 pending frame，<code>cframe</code> 加一。</li>
+</ol>
+<p>未来帧动作继续等待。已经落在 <code>cframe</code> 之前的动作说明执行点被错过，应当直接触发时间线错误。</p>
+<p>正常运行时可以持续检查三个不变量：</p>
+<ul>
+<li><code>cframe &lt;= sframe</code>。</li>
+<li><code>pendingFrames.size == sframe - cframe</code>。</li>
+<li>每个 sequence 最多执行一次。</li>
+</ul>
+<p>这些不变量比画面截图更适合做同步健康检查。它们一旦破坏，后面的瞬移、技能失效和 Buff 漂移往往只是结果。</p>
+<h2 id="延迟、抖动与追帧">延迟、抖动与追帧</h2>
+<p>输入帧同步会引入可解释的输入延迟。一次操作从触摸到正式执行，可以粗略分成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Tinput = Tuplink + TtickAlign + Tdownlink + Tbuffer + Texecute</span><br></pre></td></tr></table></figure>
+<table>
+<thead>
+<tr>
+<th>部分</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Tuplink</code></td>
+<td>命令发到同步服务的时间</td>
+</tr>
+<tr>
+<td><code>TtickAlign</code></td>
+<td>等待下一个服务端离散帧的时间</td>
+</tr>
+<tr>
+<td><code>Tdownlink</code></td>
+<td>权威聚合帧返回设备的时间</td>
+</tr>
+<tr>
+<td><code>Tbuffer</code></td>
+<td>客户端为吸收抖动保留的缓冲</td>
+</tr>
+<tr>
+<td><code>Texecute</code></td>
+<td>本机执行器走到目标帧的时间</td>
+</tr>
+</tbody>
+</table>
+<p>33ms 调度下，单看 <code>TtickAlign</code>，平均等待接近半个 tick。UI 可以立即显示技能范围、目标描边和按键反馈，位移、伤害、资源扣除与正式冷却仍然等待权威帧。</p>
+<h3 id="pendingFrames-同时也是抖动缓冲">pendingFrames 同时也是抖动缓冲</h3>
+<p>网络包的到达间隔通常偏离 33ms，可能依次是 10ms、60ms、5ms，也可能一次到达多帧。pending 队列把这种到包节奏转换成相对平稳的模拟节奏。</p>
+<p>我们可以把追帧行为抽象成下面的控制器。目标水位和状态阈值属于调优参数，图里表达的是控制思路。</p>
+<pre><code class="highlight mermaid">stateDiagram-v2
+    state &quot;正常&quot; as Normal
+    state &quot;等待网络&quot; as WaitNetwork
+    state &quot;轻度追帧&quot; as CatchUp
+    state &quot;高速恢复&quot; as FastRecovery
+    state &quot;同步恢复&quot; as SyncRecovery
+    [*] --&gt; Normal
+    Normal --&gt; WaitNetwork: backlog = 0
+    WaitNetwork --&gt; Normal: 收到新帧
+    Normal --&gt; CatchUp: backlog 高于目标水位
+    CatchUp --&gt; Normal: backlog 回落
+    CatchUp --&gt; FastRecovery: backlog 持续扩大
+    FastRecovery --&gt; Normal: 追到安全水位
+    WaitNetwork --&gt; SyncRecovery: 长时间无权威帧
+    FastRecovery --&gt; SyncRecovery: sequence 缺口超出轻量恢复能力
+    SyncRecovery --&gt; FastRecovery: 获得基线或历史帧</code></pre>
+<h3 id="一帧画面可以追多个同步步">一帧画面可以追多个同步步</h3>
+<p>落后时，客户端可以在一次外层帧里连续执行多个 Core 模拟步。追帧阶段常见的降载手段包括：</p>
+<ul>
+<li>暂时少画或跳过世界渲染。</li>
+<li>抑制已经过期的一次性粒子和音效。</li>
+<li>保留必要的 UI 与连接反馈。</li>
+<li>为每个外层帧设置最大追帧预算。</li>
+<li>追到安全水位后，从当前逻辑状态恢复长期表现。</li>
+</ul>
+<p>追帧循环需要上限。无限制地执行 <code>while backlog &gt; 0</code>，会让低性能设备进入“越追越卡”的状态。调度器还要避免服务端追赶风暴：一次卡顿落后数个 tick 后，保持帧号单调，重置下一次调度基准，再恢复正常节拍，通常比瞬间补发一串零间隔 tick 稳定。</p>
+<h3 id="延迟与抖动要分开观察">延迟与抖动要分开观察</h3>
+<p>延迟决定命令整体晚多久，抖动决定包到达得多不均匀。增加缓冲可以吸收抖动，也会增加固定输入延迟。监控时至少要同时看：</p>
+<ul>
+<li>RTT 的 P50、P95 和 P99。</li>
+<li>到包间隔的方差。</li>
+<li>backlog 的分布与峰值。</li>
+<li>每次外层帧追了几个同步步。</li>
+<li>等待网络的持续时间。</li>
+<li>从上行时间戳到权威回帧执行的端到端延迟。</li>
+</ul>
+<h2 id="确定性：相同命令怎样得到相同结果">确定性：相同命令怎样得到相同结果</h2>
+<p>输入帧同步可以写成一个很直观的状态转移式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">State(n + 1) = Simulate(State(n), OrderedInputs(n), SimulationDt, RandomState)</span><br></pre></td></tr></table></figure>
+<p>等号右侧只要有一项不同，后续状态就可能持续分叉。</p>
+<h3 id="数据和脚本版本必须一致">数据和脚本版本必须一致</h3>
+<p>技能原型、Buff 原型、属性表、Lua 脚本和地图碰撞都会影响模拟。战斗开始前冻结版本，运行期间所有客户端统一切换逻辑配置。</p>
+<h3 id="对象遍历顺序必须稳定">对象遍历顺序必须稳定</h3>
+<p>范围技能找到五个目标后，若不同设备按不同哈希桶顺序遍历，连锁技能和随机目标就可能选中不同对象。稳定做法包括：</p>
+<ul>
+<li>目标集合按 GUID 排序。</li>
+<li>事件队列使用 <code>frame + priority + sourceId + eventId</code> 排序。</li>
+<li>指针地址不参与逻辑顺序。</li>
+<li>线程完成先后不决定战斗结果。</li>
+</ul>
+<h3 id="浮点差异需要边界">浮点差异需要边界</h3>
+<p>位置、方向和碰撞长时间积分时容易积累浮点误差。可以把关键逻辑值量化到固定精度，统一数学库与编译选项，并给范围边界规定明确的包含规则。动画插值继续使用本地浮点，因为它不进入战斗真值。</p>
+<h3 id="外层帧率与逻辑时间保持隔离">外层帧率与逻辑时间保持隔离</h3>
+<p>常见错误是让 Buff、冷却或弹道读取渲染 delta。60 FPS 设备会比 30 FPS 设备多更新一倍，或者因为积累误差在不同逻辑帧到期。战斗计时统一读取 SimulationDt，表现系统才读取 Wall Clock delta。</p>
+<h2 id="同步随机：种子相同还不够">同步随机：种子相同还不够</h2>
+<p>战斗使用专门的同步 PRNG。它从 BattleStartSnapshot 的种子开始，暴击、闪避、概率 Buff 和随机目标都从这条受控随机流取值。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    SEED[共同 seed] --&gt; RNG[SynRand]
+    RNG --&gt; R1[draw 1&lt;br/&gt;暴击]
+    R1 --&gt; R2[draw 2&lt;br/&gt;随机目标]
+    R2 --&gt; R3[draw 3&lt;br/&gt;Buff 分支]
+    R3 --&gt; SAVE[PRNG state + usedCount]</code></pre>
+<p>真正决定一致性的还有调用次数和调用顺序。某台设备在“目标为空”的分支多取一次随机数，下一次暴击就会开始错位。</p>
+<p>同步随机需要遵守几条纪律：</p>
+<ul>
+<li>表现层使用独立随机源。</li>
+<li>Lua 只调用同步随机 API。</li>
+<li>提前返回和免疫分支明确是否消费随机数。</li>
+<li>重放和追帧按原顺序重新消费。</li>
+<li>状态摘要包含 PRNG state 或 <code>usedCount</code>。</li>
+</ul>
+<p>记录 <code>frame、eventId、调用点、usedCount</code> 后，随机分叉就能定位到具体技能和具体逻辑节点。</p>
+<h2 id="sequence-检查与状态检查解决两类问题">sequence 检查与状态检查解决两类问题</h2>
+<p>严格 sequence 保证所有客户端消费同一串记录，状态摘要负责检查这串记录是否算出了同一份战斗状态。完整同步需要两层检查。</p>
+<h3 id="第一层：时间线完整性">第一层：时间线完整性</h3>
+<ul>
+<li>幂等跳过重复前缀，拒绝向前缺口。</li>
+<li>维护 <code>expectedSequence</code>。</li>
+<li>回传客户端已经消费到的 frame 与 sequence 水位。</li>
+<li>保存短期帧历史，以便重放缺失尾部。</li>
+</ul>
+<h3 id="第二层：规范化战斗摘要">第二层：规范化战斗摘要</h3>
+<p>状态检查层可以让客户端在固定检查帧生成 canonical state hash。摘要可以包含：</p>
+<ul>
+<li>当前 <code>cframe</code> 与同步随机状态。</li>
+<li>所有逻辑单位，按 GUID 排序。</li>
+<li>量化后的位置、方向、HP 和 MP。</li>
+<li>当前状态机状态。</li>
+<li>技能冷却与充能。</li>
+<li>Buff ID、来源、层数、激活状态和剩余时间。</li>
+<li>投射物与待触发技能事件的稳定标识。</li>
+</ul>
+<p>动画播放进度、粒子句柄、音频通道、镜头、内存地址和 UI 状态应排除在外。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant A as 客户端 A
+    participant S as 同步检查器
+    participant B as 客户端 B
+
+    A-&gt;&gt;A: 在 frame N 生成 canonical hash
+    B-&gt;&gt;B: 在 frame N 生成 canonical hash
+    A-&gt;&gt;S: SynCheck N hash rngUsed
+    B-&gt;&gt;S: SynCheck N hash rngUsed
+    S-&gt;&gt;S: 按相同 frame 比较
+    alt 一致
+        S--&gt;&gt;A: 继续
+        S--&gt;&gt;B: 继续
+    else 分叉
+        S-&gt;&gt;S: 保存输入尾部与分段摘要
+        S--&gt;&gt;A: 请求细粒度诊断或恢复
+        S--&gt;&gt;B: 请求细粒度诊断或恢复
+    end</code></pre>
+<p>发现分叉后，可以按层缩小范围：先比 RNG 游标，再比对象 GUID 集，再比 Unit 基础状态，最后比 Buff、冷却、弹道和事件队列。若系统同时保存命令流和分段摘要，我们还可以用二分重放找到第一处分叉帧。</p>
+<h2 id="同步恢复：基线加有序历史">同步恢复：基线加有序历史</h2>
+<p>短暂断线时，客户端的战斗内存通常仍然存在。它可以携带下一条期望 sequence 请求缺失记录。同步服务在同一条发送串行区间里，从有界历史找到覆盖位置，再按原始 frame 与 sequence 衔接到实时前沿。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant C as 恢复客户端
+    participant S as 帧服务
+    participant O as 其他客户端
+
+    C-xS: 网络中断
+    O-&gt;&gt;S: 继续提交命令
+    S-&gt;&gt;S: 推进帧并保存短期历史
+    C-&gt;&gt;S: Resume nextExpectedSequence
+    S-&gt;&gt;S: 暂停该连接的实时发送
+    S--&gt;&gt;C: 按原 sequence 重放缺失 FrameBundle
+    S--&gt;&gt;C: 衔接实时前沿
+    C-&gt;&gt;C: 高速消费 pendingFrames
+    C-&gt;&gt;C: 追到安全水位后恢复正常表现</code></pre>
+<p>轻量恢复请求有三种结果：</p>
+<ul>
+<li>请求序号等于服务端下一序号：已经追平。</li>
+<li>请求序号落在历史窗口：重放缺失尾部。</li>
+<li>请求序号早于历史窗口：直接转入可信基线与命令尾部恢复。</li>
+</ul>
+<p>长时间断线、客户端进程重启和服务进程重启使用“可信状态基线 + 后续命令尾部”完成恢复。基线覆盖长期 Buff、冷却、Unit 状态、投射物、未到期事件和同步随机状态；已经结束的一次性粒子与声音可以跳过，追平后再从逻辑状态恢复持续表现。</p>
+<p>历史重放与实时广播串行衔接，防止两条发送流交错。frame 与 sequence 使用 32 位模空间比较，正确处理从 <code>0xFFFFFFFF</code> 回到 <code>0</code> 的边界。</p>
+<h2 id="帧排序服务能防住什么">帧排序服务能防住什么</h2>
+<p>输入帧同步天然提供几层安全边界：</p>
+<pre><code class="highlight mermaid">flowchart TB
+    C[客户端命令] --&gt; I[可信发送者映射]
+    I --&gt; P[协议形状与长度校验]
+    P --&gt; R[频率与字节预算]
+    R --&gt; T[动作类型和参数范围]
+    T --&gt; O[权威 frame 与 sequence]
+    O --&gt; H[可选的状态摘要与随机游标检查]
+    H --&gt; A[运行记录 重放与异常定位]</code></pre>
+<p>帧排序层负责保护输入来源和全局顺序。技能冷却、资源消耗、移动速度和目标视野属于语义合法性；服务端需要维护对应的战斗状态，才能继续校验这些规则。</p>
+<p>按照服务端维护战斗状态的粒度，可以分成三档：</p>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>服务端能力</th>
+<th>成本与边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>帧排序</td>
+<td>身份、格式、限流与顺序</td>
+<td>成本低，深层语义依赖客户端一致执行；可附加状态摘要</td>
+</tr>
+<tr>
+<td>选择性权威</td>
+<td>再维护位置包络、资源、冷却等影子状态</td>
+<td>能拦高风险命令，同时省去完整表现与 AI 模拟</td>
+</tr>
+<tr>
+<td>完整权威模拟</td>
+<td>服务端运行完整战斗世界</td>
+<td>校验最强，计算与工程成本最高</td>
+</tr>
+</tbody>
+</table>
+<p>HOC1 的客户端具备完整战斗模拟能力，服务端复算粒度可以独立扩展；权威帧序始终是所有客户端共同执行的时间线。</p>
+<h2 id="帧同步的测试体系">帧同步的测试体系</h2>
+<p>长期一致性测试同时覆盖字节、顺序、时间、确定性和恢复，画面正常运行只是最基础的连通性检查。</p>
+<h3 id="聚合包性质测试">聚合包性质测试</h3>
+<ul>
+<li>任意分片与粘包后仍能增量解析。</li>
+<li>一帧包含 0、1 或多条命令。</li>
+<li>多名参与者同帧输入。</li>
+<li>动作体长度 0、正常值和最大值。</li>
+<li>EmptyFrameRun 的正常值、边界值和非法值。</li>
+<li>重复、缺口、乱序和校验损坏。</li>
+<li>frame 与 sequence 的 32 位回绕。</li>
+<li>伪造发送者 ID。</li>
+<li>一个模拟 tick 只有一个时间推进令牌。</li>
+</ul>
+<p>最重要的性质是：<code>K</code> 条动作加一个 <code>EmptyFrameRun(1)</code>，sequence 前进 <code>K + 1</code>，模拟时间只前进一帧，每条动作恰好执行一次。</p>
+<h3 id="pending-frame-模型测试">pending frame 模型测试</h3>
+<p>用一个小型参考模型随机生成帧包，持续断言：</p>
+<ul>
+<li><code>cframe &lt;= sframe</code>。</li>
+<li><code>pending.size == sframe - cframe</code>。</li>
+<li><code>expectedSequence</code> 单调前进。</li>
+<li>未来动作等待、当前动作执行、过去动作报错。</li>
+<li>backlog 为零时停止推进 Core 模拟。</li>
+<li>追帧预算保持有界，主线程始终给输入与表现留出时间。</li>
+</ul>
+<h3 id="网络故障矩阵">网络故障矩阵</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>观察点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>固定延迟</td>
+<td>输入端到端延迟和稳定 backlog</td>
+</tr>
+<tr>
+<td>抖动</td>
+<td>pending 水位与追帧频率</td>
+</tr>
+<tr>
+<td>丢包或中断</td>
+<td>sequence 缺口与恢复成功率</td>
+</tr>
+<tr>
+<td>重复和乱序</td>
+<td>幂等与严格拒绝策略</td>
+</tr>
+<tr>
+<td>突发阻塞</td>
+<td>高速追帧及表现降载</td>
+</tr>
+<tr>
+<td>服务调度卡顿</td>
+<td>是否出现 tick 追赶风暴</td>
+</tr>
+<tr>
+<td>长时间运行</td>
+<td>队列上界、内存、回绕与状态 hash</td>
+</tr>
+</tbody>
+</table>
+<h3 id="确定性黄金重放">确定性黄金重放</h3>
+<p>固定初始快照、命令日志、模拟步和随机种子，在不同帧率与设备上重放。每隔固定帧比较 canonical hash，并记录第一处分叉。30 FPS 与 120 FPS 设备应该得到相同的战斗摘要。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    CASE[快照 + 命令流 + dt + seed] --&gt; A[模拟实例 A]
+    CASE --&gt; B[模拟实例 B]
+    A --&gt; HA[逐帧摘要 A]
+    B --&gt; HB[逐帧摘要 B]
+    HA --&gt; D&#123;frame by frame 相等&#125;
+    HB --&gt; D
+    D --&gt;|是| NEXT[继续]
+    D --&gt;|否| LOCATE[输出第一处分叉&lt;br/&gt;Unit RNG Buff Event]</code></pre>
+<p>到这里，帧同步可以被概括成一条可重放的战斗时间线：每个输入有唯一位置，每个逻辑帧只推进一次，每次随机消费可以追踪，各客户端也能持续核对自己的模拟状态。</p>
+<h1 id="第二部分：技能系统怎样消费一条同步命令">第二部分：技能系统怎样消费一条同步命令</h1>
+<p>帧同步解决了“什么时候执行、按什么顺序执行”。技能系统接过这条命令后，还要回答另外几件事：施法条件是否成立，技能在哪个逻辑帧提交，目标怎样筛选，效果怎样排队，伤害和 Buff 怎样落地，最后又怎样驱动画面。</p>
+<p>我习惯从三个层次讲这套技能框架：</p>
+<ol>
+<li><strong>命令层</strong>保存施法意图，并把意图放到权威时间线上。</li>
+<li><strong>施法层</strong>负责校验、施法状态机、资源与冷却。</li>
+<li><strong>效果层</strong>负责事件、选目标、脚本、投射物、伤害和 Buff。</li>
+</ol>
+<pre><code class="highlight mermaid">flowchart TD
+    INPUT[输入采样] --&gt; PARAM[SpellCastingParams&lt;br/&gt;施法意图]
+    PARAM --&gt; PREVIEW[UI 瞄准预览&lt;br/&gt;范围与指示器]
+    PARAM --&gt; CMD[UnitAction&lt;br/&gt;单位目标或位置目标]
+    CMD --&gt; FRAME[权威同步帧]
+    FRAME --&gt; EXEC[Unit 动作执行器]
+    EXEC --&gt; CHECK[施法准入校验&lt;br/&gt;等级 资源 占用 状态]
+    CHECK --&gt; PRECAST[Core 预施法状态&lt;br/&gt;追击与目标复核]
+    CHECK --&gt; QUICK[快速施法路径]
+    PRECAST --&gt; SM[Cast Channel ChannelLock AftCast]
+    SM --&gt; COMMIT[普通施法生效点]
+    QUICK --&gt; QUICKFLOW[专用快速处理&lt;br/&gt;成本与触发顺序由技能配置决定]
+    COMMIT --&gt; COST[资源与冷却处理]
+    COMMIT --&gt; EVENT[技能触发上下文&lt;br/&gt;立即处理或排队]
+    EVENT --&gt; EFFECT[技能效果与 Lua 触发]
+    QUICKFLOW --&gt; EFFECT
+    EFFECT --&gt; TARGET[几何查询与条件过滤]
+    TARGET --&gt; RULE[伤害 Buff 位移 召唤]
+    EFFECT --&gt; PROJECTILE[投射物管理&lt;br/&gt;Bullet 更新]
+    PROJECTILE --&gt; RULE
+    SM --&gt; VIEW[动画与音效请求]
+    PROJECTILE --&gt; VIEW
+    RULE --&gt; VIEW</code></pre>
+<p>这张图里有两种容易重名的“预施法”。UI 预施法负责即时更新准星、范围圈和目标高亮；Core 预施法状态只在权威命令进入执行帧后运行，它可以追击到施法距离，并继续复核目标、迷雾和距离。生命、法力、冷却、Buff 与位移也都在 Core 路径里修改。</p>
+<h2 id="SpellCastingParams：先保存“想怎么放”">SpellCastingParams：先保存“想怎么放”</h2>
+<p>玩家按下技能按钮时，输入层先整理施法上下文，再交给 Unit 的施法入口与状态对象。在架构层，我们用 <code>SpellCastingParams</code> 统称这组上下文，内容按技能信息、目标和空间参数组织。</p>
+<table>
+<thead>
+<tr>
+<th>字段类别</th>
+<th>典型内容</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>技能信息</td>
+<td>spell ID</td>
+<td>找到技能原型</td>
+</tr>
+<tr>
+<td>目标类型</td>
+<td>单位目标、位置目标或技能自身规则</td>
+<td>决定后续参数形态</td>
+</tr>
+<tr>
+<td>显式目标</td>
+<td>target GUID</td>
+<td>传递单位目标</td>
+</tr>
+<tr>
+<td>空间参数</td>
+<td>目标位置</td>
+<td>传递位置型施法意图</td>
+</tr>
+<tr>
+<td>附加上下文</td>
+<td>由具体施法入口解释</td>
+<td>承载技能专用参数</td>
+</tr>
+</tbody>
+</table>
+<p>这份参数只表达意图，不直接缓存最终命中列表。命中对象取决于执行帧里的世界状态：单位可能已经移动，Buff 可能改变了阵营关系或可选中性，目标也可能在命令往返期间死亡。所有客户端都在相同执行帧重新查询，从而得到相同的候选集合。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    PRESS[按下技能] --&gt; MODE&#123;施法模式&#125;
+    MODE --&gt;|点目标| PICK[候选 target GUID]
+    MODE --&gt;|点地面| POINT[世界坐标]
+    MODE --&gt;|无显式目标| SELF[spell ID 与附加上下文]
+    PICK --&gt; PARAM[SpellCastingParams]
+    POINT --&gt; PARAM
+    SELF --&gt; PARAM
+    PARAM --&gt; AIM[UI 瞄准预览&lt;br/&gt;范围圈 准星 高亮]
+    PARAM --&gt; RELEASE[松开后生成 UnitAction]
+    PARAM --&gt; CANCEL[取消后丢弃意图]</code></pre>
+<p>输入层还会做一次轻量预检，例如按钮是否可按、当前资源是否明显不足。预检追求响应速度，Core 里的施法准入校验与预施法状态负责最终战斗结果。网络往返期间状态发生变化时，执行帧里的 Core 状态拥有最终效力。</p>
+<h2 id="UnitAction：让施法意图进入同步时间线">UnitAction：让施法意图进入同步时间线</h2>
+<p>技能相关同步动作包括三类：</p>
+<ul>
+<li><code>SpellToUnit</code>：技能标识 + 目标 GUID。</li>
+<li><code>SpellToPosition</code>：技能标识 + 世界坐标。</li>
+<li><code>UpgradeSpell</code>：技能槽与升级信息。</li>
+</ul>
+<p>动作类型本身属于协议契约。点目标命令只携带技能标识与目标 GUID，点地面命令只携带技能标识与世界坐标；距离和命中列表在执行帧内重新计算。方向施法在 Unit 内部转换成位置或方向参数，同步层继续使用上面的三类动作。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant I as 输入层
+    participant P as UI 瞄准预览
+    participant N as 帧同步通道
+    participant Q as 同步命令队列
+    participant U as Unit 执行器
+
+    I-&gt;&gt;P: 更新 SpellCastingParams
+    P--&gt;&gt;I: 准星 范围圈 候选高亮
+    I-&gt;&gt;N: UnitAction SpellToPosition
+    N--&gt;&gt;Q: 执行逻辑帧 + sequence + action
+    Q-&gt;&gt;U: 在对应模拟帧执行
+    U-&gt;&gt;U: 重新校验并进入施法状态机</code></pre>
+<p>在线、离线和重放都可以复用这份命令契约。在线模式经由服务端排序后回灌；离线模式由本地命令源分配帧号；重放模式从日志读取。三条入口最终都落到同一个 <code>UnitAction</code> 执行器，因此技能逻辑只维护一套。</p>
+<h2 id="两层施法校验：基础准入与状态内复核">两层施法校验：基础准入与状态内复核</h2>
+<p>命令到达执行帧后，施法准入层先检查技能等级、资源、技能占用和 Unit 当前状态。需要接近目标的技能随后进入 Core 预施法状态，状态对象在每个固定逻辑步里继续检查目标有效性、迷雾和距离，并在条件满足后转入 Cast。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    START[收到技能 UnitAction] --&gt; PARAM[解析 SpellCastingParams]
+    PARAM --&gt; BASE[施法准入校验&lt;br/&gt;等级 资源 占用 当前状态]
+    BASE --&gt;|失败| REJECT[终止本次施法并反馈]
+    BASE --&gt;|通过| PATH&#123;是否需要追击与持续复核&#125;
+    PATH --&gt;|需要| PRE[Core 预施法状态]
+    PRE --&gt; UPDATE[每个同步 dt 检查&lt;br/&gt;目标 迷雾 距离]
+    UPDATE --&gt;|继续接近| PRE
+    UPDATE --&gt;|条件失效| REJECT
+    UPDATE --&gt;|满足| CAST[进入 Cast]
+    PATH --&gt;|直接满足| CAST</code></pre>
+<p>从职责上看，两层校验关注的内容不同：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>职责重点</th>
+<th>运行时作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>施法准入层</td>
+<td>等级、资源、技能占用、Unit 状态</td>
+<td>决定能否接受这次施法请求</td>
+</tr>
+<tr>
+<td>Core 预施法状态</td>
+<td>目标、迷雾、距离与追击过程</td>
+<td>在固定逻辑步中等待条件成立或结束施法</td>
+</tr>
+<tr>
+<td>Cast 及后续状态</td>
+<td>持续时间、触发时机、引导和后摇</td>
+<td>推进效果、消耗、冷却与表现请求</td>
+</tr>
+</tbody>
+</table>
+<p>失败原因统一收敛为稳定结果码，供 UI、AI 和重放共同消费；相同状态始终产生相同结果。</p>
+<p>同一个权威帧里若有多条命令，校验必须服从 sequence 顺序。前一条命令可能已经消耗资源、施加沉默或击杀目标，后一条命令读取到的就是更新后的世界。稳定顺序让“同帧互相施法”拥有唯一结果。</p>
+<h2 id="施法状态机：用同步-timeSpan-推进规则时间">施法状态机：用同步 timeSpan 推进规则时间</h2>
+<p>通过校验后，单位进入技能状态机。状态机包含 <code>PreCast</code>、<code>Cast</code>、<code>Channel</code>、<code>ChannelLock</code> 和 <code>AftCast</code> 等阶段。<code>ChannelLock</code> 与 <code>Channel</code> 都可以作为 Cast 之后的分支。</p>
+<p>这些状态在每个同步步接收固定的 <code>timeSpan</code>。内部可以累计已用时，也可以递减剩余时长；确定性边界落在同一点：只有消费一个 Core 同步步时，规则时间才增加 33ms。</p>
+<pre><code class="highlight mermaid">stateDiagram-v2
+    [*] --&gt; Idle
+    Idle --&gt; PreCast: 需要追击或持续复核
+    Idle --&gt; Cast: 快速或条件已满足
+    PreCast --&gt; Cast: 目标 距离与迷雾条件满足
+    PreCast --&gt; Idle: 条件失效或施法结束
+    Cast --&gt; Channel: 进入持续引导分支
+    Cast --&gt; ChannelLock: 进入锁定引导分支
+    Cast --&gt; AftCast: 普通施法段结束
+    Channel --&gt; AftCast: 引导结束或被打断
+    ChannelLock --&gt; AftCast: 引导终止
+    AftCast --&gt; Idle: 后摇完成</code></pre>
+<p>状态对象需要携带或引用以下运行时信息：</p>
+<ul>
+<li>当前 spell、施法者、目标和空间参数。</li>
+<li>当前阶段已经消费的逻辑时长。</li>
+<li>引导进度、触发次数和结束条件。</li>
+<li>状态迁移所需的控制标记。</li>
+<li>动画请求 ID，用于让表现层切换或停止对应动作。</li>
+</ul>
+<pre><code class="highlight mermaid">flowchart LR
+    ENTER[进入技能状态] --&gt; REQUEST[发送一次动画请求]
+    REQUEST --&gt; MODEL[动画采样与混合]
+    CORE[固定 33ms Core 步] --&gt; UPDATE[状态逻辑更新 timeSpan]
+    UPDATE --&gt; TIMER[累计逻辑时长并检查状态条件]
+    TIMER --&gt;|继续| KEEP[保持当前状态]
+    TIMER --&gt;|完成| TRANSITION[状态机迁移]</code></pre>
+<p>模型系统负责采样骨骼和混合动作。状态类根据同步 <code>timeSpan</code> 完成逻辑计时并迁移，模型播放回调只服务视觉资源。这样即使设备掉帧、动画资源缺失或玩家关闭特效，施法状态仍沿着相同逻辑步推进。</p>
+<h2 id="普通施法与快速施法两条路径">普通施法与快速施法两条路径</h2>
+<p>一段技能会经历输入、追击或前摇、施法生效、命中和后摇。普通路径在施法生效阶段处理资源、冷却和事件；快速路径使用专用处理链，成本、冷却和触发顺序由具体技能配置决定。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    VALID[Unit CanCast 通过] --&gt; PATH&#123;施法路径&#125;
+    PATH --&gt;|普通路径| PRE[PreCast 或 Cast 状态]
+    PATH --&gt;|快速路径| QUICK[快速施法处理器]
+    PRE --&gt; EFFECTIVE[普通 Cast 生效阶段]
+    EFFECTIVE --&gt; COST[处理资源消耗]
+    EFFECTIVE --&gt; COOL[启动冷却或消耗充能]
+    EFFECTIVE --&gt; EVENTS[创建技能触发上下文]
+    EFFECTIVE --&gt; ANIM[发送施法表现请求]
+    EVENTS --&gt; HIT[立即处理或压入事件队列]
+    QUICK --&gt; QUICKFLOW[专用快速处理&lt;br/&gt;内部顺序由技能配置决定]
+    QUICKFLOW --&gt; QUICKFX[进入对应技能效果路径]</code></pre>
+<p>普通路径把资源消耗、冷却启动和效果触发放在施法生效阶段。普通路径与快速路径都消费同步时间，具体先后和打断后的成本处理由技能配置决定。</p>
+<h2 id="技能原型、技能效果与运行时事件">技能原型、技能效果与运行时事件</h2>
+<p>技能静态数据、效果定义和运行时触发上下文承担不同职责，三类对象的核心关系如下。</p>
+<pre><code class="highlight mermaid">classDiagram
+    class SkillPrototype &#123;
+        +spellId
+        +castMode
+        +costConfig
+        +cooldownConfig
+        +effectRefs
+    &#125;
+    class SkillEffect &#123;
+        +effectId
+        +triggerConfig
+        +targetConfig
+        +scriptEntry
+        +effectParams
+    &#125;
+    class SkillEvent &#123;
+        +casterContext
+        +targetContext
+        +positionContext
+        +triggerParams
+    &#125;
+    class SkillEventManager &#123;
+        +processNow
+        +enqueue
+        +processTrigger
+        +updateBySyncStep
+    &#125;
+
+    SkillPrototype &quot;1&quot; o-- &quot;0..8&quot; SkillEffect : effect refs
+    SkillEvent --&gt; SkillEventManager : trigger context
+    SkillEventManager --&gt; SkillEffect : resolve effect</code></pre>
+<p>技能原型是静态蓝图，一份原型可以引用最多八个技能效果。每个效果保存触发条件、目标条件、脚本入口和效果参数；运行时技能事件则把施法者、显式目标、位置和本次触发参数带进处理链。</p>
+<p>效果槽位按配置顺序读取，空引用可以跳过。每个技能效果再根据自己的触发条件和目标规则执行，因此多个效果可以共享同一技能原型，同时保持各自的查询与脚本逻辑。</p>
+<h2 id="技能事件管理器：立即处理与排队处理两条路径">技能事件管理器：立即处理与排队处理两条路径</h2>
+<p>技能事件存在两种入口。立即入口直接处理当前触发，排队入口把上下文放入管理器，等待后续同步步消费。两条路径最终都会进入统一触发处理，解析相应技能效果，并调用引擎规则或 Lua。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    CREATE[Cast 或其他规则创建技能事件] --&gt; MODE&#123;处理方式&#125;
+    MODE --&gt;|立即| NOW[立即处理入口]
+    MODE --&gt;|排队| QUEUE[事件队列]
+    QUEUE --&gt; UPDATE[技能事件管理器&lt;br/&gt;消费固定同步 timeSpan]
+    UPDATE --&gt; DEQUEUE[消费排队的触发上下文]
+    DEQUEUE --&gt; TRIGGER[统一触发处理]
+    NOW --&gt; TRIGGER
+    TRIGGER --&gt; EFFECT[解析技能效果]
+    EFFECT --&gt; NATIVE[引擎效果规则]
+    EFFECT --&gt; LUA[Lua 入口]
+    NATIVE --&gt; NEXT[可继续产生技能事件]
+    LUA --&gt; NEXT</code></pre>
+<p>技能事件管理器统一承载待处理的触发上下文。同一批事件按相同创建顺序入队，管理器使用同步 dt 消费，重入触发也遵守统一次序。单步触发预算和递归深度保护可以防止脚本或反弹效果形成无限事件链。</p>
+<h2 id="目标解析：几何查询加条件过滤">目标解析：几何查询加条件过滤</h2>
+<p>范围技能先调用不同形状的查询器收集候选，再按技能条件过滤。查询层提供圆形、线形和扇形三类基础入口，复杂技能可以继续组合矩形、射线和碰撞半径规则。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    EFFECT[技能效果 + 运行时事件] --&gt; SHAPE&#123;目标形状&#125;
+    SHAPE --&gt; RANGE[圆形范围查询]
+    SHAPE --&gt; LINE[线形范围查询]
+    SHAPE --&gt; FAN[扇形范围查询]
+    RANGE --&gt; FILTER[阵营 类型 存活 可见 免疫等条件]
+    LINE --&gt; FILTER
+    FAN --&gt; FILTER
+    FILTER --&gt; LIMIT[按效果规则截取或继续处理]
+    LIMIT --&gt; TARGETS[本次效果的目标集合]</code></pre>
+<p>我们可以把目标规则分成两层：</p>
+<ol>
+<li><strong>几何规则</strong>回答单位是否落在形状中。圆形看距离平方，扇形看距离与夹角，矩形看局部坐标区间，射线再叠加碰撞半径。</li>
+<li><strong>语义规则</strong>回答候选对象是否有资格被选中。阵营、单位类型、存活状态、隐身、无敌、魔法免疫、召唤物标签都在这一层。</li>
+</ol>
+<p>每个技能效果按自己的目标配置调用查询器，因此同一技能里的伤害效果和 Buff 效果可以各自收集目标。只有事件上下文显式携带并复用集合时，两段效果才共享同一批对象。</p>
+<p>空间查询的返回顺序、浮点边界和并列裁决都会影响帧同步。查询层因此建立统一的确定性契约：关键坐标量化、边界包含规则固定、候选按稳定 GUID 排序，并列时继续用 GUID 裁决。</p>
+<h2 id="脚本层：让技能可扩展，同时守住确定性">脚本层：让技能可扩展，同时守住确定性</h2>
+<p>大量技能会共享“找目标—循环目标—造成伤害—添加 Buff”的骨架，差异集中在少量条件和数值组合上。脚本层适合承载这部分变化。引擎把技能事件上下文显式传给 Lua，Lua 再通过受控引擎绑定直接读取和修改战斗状态。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    EVENT[技能事件] --&gt; CTX[显式上下文&lt;br/&gt;caster target point params]
+    CTX --&gt; SCRIPT[调用技能脚本入口]
+    SCRIPT --&gt; API&#123;受控引擎绑定&#125;
+    API --&gt; QUERY[查询 Unit 与属性]
+    API --&gt; DAMAGE[伤害与治疗写入]
+    API --&gt; BUFF[创建或移除 Buff]
+    API --&gt; BUFFSET[调整 Buff 数值与时长]
+    API --&gt; CD[调整技能冷却]
+    API --&gt; OTHER[位移与其他战斗操作]
+    QUERY --&gt; WORLD[读取战斗世界]
+    DAMAGE --&gt; WORLD[直接修改战斗世界]
+    BUFF --&gt; WORLD
+    BUFFSET --&gt; WORLD
+    CD --&gt; WORLD
+    OTHER --&gt; WORLD</code></pre>
+<p>这些绑定允许脚本直接写入 Core 状态，也把确定性约束推到了脚本边界。帧同步架构需要保证：</p>
+<ul>
+<li>时间只随固定同步 dt 推进。</li>
+<li>概率逻辑使用同步随机入口，并保持调用次数一致。</li>
+<li>传给 Lua 的对象集合沿用确定性的查询与迭代次序。</li>
+<li>数值转换、除零、溢出和取整策略固定。</li>
+<li>脚本版本与数据版本包含在战斗快照和回放签名中。</li>
+</ul>
+<p>脚本沙箱限制文件、网络和系统时钟访问，并给每次调用设置指令预算或递归深度上限。预算耗尽时，各客户端用相同方式终止当前触发并记录异常上下文。</p>
+<h2 id="冷却、资源和充能都消费同步-timeSpan">冷却、资源和充能都消费同步 timeSpan</h2>
+<p>冷却对象消费固定逻辑 <code>timeSpan</code>，并通过只读查询暴露剩余时间、当前充能和最大充能。内部可以保存剩余毫秒或等价计数，表现层只读取结果。</p>
+<p>普通施法在生效阶段处理资源与冷却，快速施法使用自身技能配置规定的处理链。外层渲染帧率只影响 HUD 刷新频率。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    CAST[施法生效流程] --&gt; COST[资源消耗]
+    CAST --&gt; CDSTART[启动冷却或消耗充能]
+    CDSTART --&gt; CD[冷却对象]
+    STEP[固定同步 timeSpan] --&gt; UPDATE[推进冷却]
+    UPDATE --&gt; CD
+    CD --&gt; REMAIN[查询剩余时间]
+    CD --&gt; CHARGE[查询当前与最大充能]
+    REMAIN --&gt; HUD[HUD 冷却进度]
+    CHARGE --&gt; HUD</code></pre>
+<p>这一层的关键依旧是时钟来源：一次追帧会连续执行多个 33ms 逻辑步，等待网络时暂停 Core 冷却；HUD 在外层帧里平滑显示剩余时间，冷却对象只由同步逻辑步推进。</p>
+<h2 id="混合型-Effect-管理器要按对象行为划分边界">混合型 Effect 管理器要按对象行为划分边界</h2>
+<p>这套 Effect 管理器同时更新多类 Bullet，也管理技能特效、效果线、声音和可见性。它横跨 Core 与表现边界，其中会决定轨迹、碰撞和命中的 Bullet 状态进入确定性模拟。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    EVENT[技能事件管理器触发] --&gt; MGR[混合型 Effect 管理器]
+    MGR --&gt; BULLET[Bullet 对象]
+    BULLET --&gt; STEP[固定同步 timeSpan 更新轨迹]
+    STEP --&gt; COLLIDE&#123;碰撞或到达目标&#125;
+    COLLIDE --&gt;|继续飞行| STEP
+    COLLIDE --&gt;|命中| HIT[生成命中上下文]
+    HIT --&gt; UNIT[Unit 伤害与 Buff 逻辑]
+    HIT --&gt; NEXT[技能事件管理器的后续事件]
+    MGR --&gt; SPELLFX[spell effect / effect line]
+    MGR --&gt; SOUND[声音与可见性控制]
+    BULLET --&gt; VISUAL[模型与粒子轨迹]
+    SPELLFX --&gt; VIEW[表现更新]
+    SOUND --&gt; VIEW
+    VISUAL --&gt; VIEW</code></pre>
+<p>各类 Bullet 子类会保存自身所需的轨迹、目标、碰撞和生命周期数据。它们在固定同步步里更新并产生命中；粒子尾迹、线效、声音和模型插值则可以按外层帧刷新。架构边界按对象行为判断，管理器类名只描述所属容器。</p>
+<p>Bullet 命中后会把结果重新送回 Unit 或技能事件管理器。投射物轨迹与命中属于 Core；同一个管理器里的声音、线效、可见性与视觉对象继续按表现规则更新。</p>
+<h2 id="一次扇形减速技能怎样跑完整条链">一次扇形减速技能怎样跑完整条链</h2>
+<p>下面用一份“位置施法、扇形伤害、附加减速”的技能配置把整条链串起来。成本、冷却、事件与各效果槽的相对顺序由技能配置决定。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    INPUT[位置型施法上下文] --&gt; ACTION[SpellToPosition]
+    ACTION --&gt; SYNC[权威同步记录]
+    SYNC --&gt; UNIT[施法准入校验]
+    UNIT --&gt; PRE[Core 预施法状态&lt;br/&gt;固定 timeSpan 更新]
+    PRE --&gt; CAST[进入普通 Cast]
+    CAST --&gt; COST[处理资源消耗]
+    CAST --&gt; CD[启动冷却]
+    CAST --&gt; EVENT[创建技能触发上下文]
+    CAST --&gt; ANIM[Cast / AftCast 表现请求]
+    EVENT --&gt; PROCESS[立即处理或进入事件队列]
+    PROCESS --&gt; E0[伤害效果]
+    PROCESS --&gt; E1[减速效果]
+    E0 --&gt; Q0[扇形范围查询]
+    E1 --&gt; Q1[按本效果配置查询]
+    Q0 --&gt; DAMAGE[引擎规则或 Lua 伤害操作]
+    DAMAGE --&gt; UNITDMG[Unit 伤害计算与应用]
+    Q1 --&gt; BUFF[创建减速 Buff 并设置时长]
+    BUFF --&gt; BUFMGR[Buff 管理器]
+    UNITDMG --&gt; VIEW[伤害数字与受击表现]
+    BUFMGR --&gt; VIEW2[Buff 图标与特效]
+    ANIM --&gt; VIEW3[模型动画]</code></pre>
+<p>这条链里，UI 瞄准预览只提供操作反馈，Core 的 PreCast 状态继续复核距离与目标；每个技能效果按自己的配置查询并处理对象，共享目标由事件上下文显式表达；动画请求可以晚到或被降级，资源、冷却、生命和 Buff 仍由固定同步步中的逻辑路径结算。</p>
+<h2 id="技能系统的测试体系">技能系统的测试体系</h2>
+<p>技能测试最好围绕“命令—状态—事件—结果”四层展开。</p>
+<h3 id="命令与校验测试">命令与校验测试</h3>
+<ul>
+<li><code>SpellToUnit</code>、<code>SpellToPosition</code> 与 <code>UpgradeSpell</code> 的序列化往返。</li>
+<li>目标 GUID 缺失、坐标越界、方向向量异常。</li>
+<li>资源刚好足够与差一单位的边界。</li>
+<li>冷却剩余时间与充能数的边界。</li>
+<li>同帧多条命令按 sequence 改变校验结果。</li>
+<li>PreCast、Cast、Channel 与 ChannelLock 的结束和打断路径。</li>
+</ul>
+<h3 id="状态机测试">状态机测试</h3>
+<p>给状态对象输入固定的 <code>Update(timeSpan)</code> 序列，断言状态迁移、Cast 触发次数和引导更新次数。改变渲染帧率，Core 状态序列仍应完全一致。动画资源缺失时，逻辑计时仍能结束状态。</p>
+<h3 id="目标与效果测试">目标与效果测试</h3>
+<ul>
+<li>圆、扇形、矩形和射线的边界点。</li>
+<li>各几何查询函数的边界和返回集合。</li>
+<li>目标数量上限、距离并列和生命值并列。</li>
+<li>同一原型多个技能效果的读取与触发次序。</li>
+<li>立即处理与排队处理两条事件路径。</li>
+<li>投射物穿透、擦边、目标死亡和寿命到期。</li>
+<li>随机化底层查询顺序，检查 GUID 规范化排序是否稳定。</li>
+</ul>
+<h3 id="确定性技能重放">确定性技能重放</h3>
+<pre><code class="highlight mermaid">flowchart LR
+    CASE[固定快照 + 单条施法命令] --&gt; FPS30[30 FPS 外层循环]
+    CASE --&gt; FPS120[120 FPS 外层循环]
+    CASE --&gt; CATCHUP[突发追帧循环]
+    FPS30 --&gt; HASH1[逐逻辑帧技能摘要]
+    FPS120 --&gt; HASH2[逐逻辑帧技能摘要]
+    CATCHUP --&gt; HASH3[逐逻辑帧技能摘要]
+    HASH1 --&gt; SAME&#123;状态机 事件 目标 RNG 结果相同&#125;
+    HASH2 --&gt; SAME
+    HASH3 --&gt; SAME</code></pre>
+<p>摘要里至少包含施法状态、资源、冷却、事件队列、目标 GUID、投射物、随机游标、伤害和 Buff 结果。这个测试能同时覆盖技能框架与帧同步边界。</p>
+<h1 id="第三部分：Buff-系统怎样持续改变单位规则">第三部分：Buff 系统怎样持续改变单位规则</h1>
+<p>技能通常只负责“在某个帧触发一次规则”，Buff 负责把规则延续到后面的许多帧。加速、减速、护盾、持续伤害、沉默、免疫和属性光环，看起来差异很大，底层都可以归纳成一份带生命周期的单位附加状态。</p>
+<p>这套 Buff 架构的核心对象是 Buff 管理器、Buff 实例和多态属性修改器。持续时间与周期逻辑都消费固定的 33ms 同步 dt。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    SOURCE[技能 脚本 攻击或 Halo] --&gt; ADD[Buff 管理器添加请求]
+    ADD --&gt; BUF[创建或取得 Buff 实例]
+    BUF --&gt; MODERS[创建属性修改器]
+    MODERS --&gt; MOD[最多四个多态修改器]
+    MOD --&gt; DO[应用规则]
+    DO --&gt; UNIT[修改 Unit 属性与行为]
+    BUF --&gt; UPDATE[按同步 timeSpan 更新 Buff]
+    UPDATE --&gt; TIMER[周期触发与持续时间更新]
+    OPS[重入技能 脚本或管理路径] --&gt; REFRESH[刷新时长或重置实例]
+    OPS --&gt; STACK[设置层数或切换叠层策略]
+    REFRESH --&gt; BUF
+    STACK --&gt; BUF
+    REMOVE[Buff 管理器移除请求] --&gt; UNDO[撤销全部修改器]
+    UNDO --&gt; MODUNDO[还原 Unit 规则]</code></pre>
+<h2 id="Buff-管理器与-Buff-实例的职责">Buff 管理器与 Buff 实例的职责</h2>
+<p>每个单位拥有一个 Buff 管理器。管理器负责添加、移除、更新和查询；单个 Buff 实例保存来源、持续时间、层数、数值与自身更新状态，并负责创建和撤销修改器。</p>
+<p>一份 Buff 实例最多拥有四个多态属性修改器。攻击力变化、护盾、减伤、反伤、控制等规则由不同修改器子类实现，各自提供应用、刷新和撤销能力。Buff 实例负责生命周期，属性修改器负责具体规则钩子。</p>
+<pre><code class="highlight mermaid">classDiagram
+    class Unit &#123;
+        +guid
+        +attributes
+    &#125;
+    class BuffManager &#123;
+        +buffCollection
+        +lifecycleControl
+    &#125;
+    class BuffInstance &#123;
+        +source
+        +duration
+        +stack
+        +runtimeValues
+    &#125;
+    class AttributeModifier &#123;
+        +applyRule
+        +refreshValue
+        +revertRule
+    &#125;
+
+    Unit &quot;1&quot; *-- &quot;1&quot; BuffManager
+    BuffManager &quot;1&quot; *-- &quot;many&quot; BuffInstance
+    BuffInstance &quot;1&quot; *-- &quot;0..4&quot; AttributeModifier</code></pre>
+<h2 id="添加、刷新、叠层和策略切换">添加、刷新、叠层和策略切换</h2>
+<p>Buff 再次命中目标时，生命周期层可以刷新持续时间、重置实例状态、设置层数或切换强制叠层策略。具体选择由技能数据和脚本规则决定。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    ADD[Buff 添加请求] --&gt; PATH&#123;本次 Buff 规则&#125;
+    PATH --&gt;|新实例| NEW[创建 Buff 与修改器]
+    PATH --&gt;|刷新时间| REFRESH[刷新持续时间]
+    PATH --&gt;|重置实例| RESET[重置运行状态]
+    PATH --&gt;|设置层数| STACK[写入新层数]
+    PATH --&gt;|切换叠层策略| FORCE[更新策略标志]
+    NEW --&gt; DO[应用属性修改器]
+    REFRESH --&gt; STATE[更新 Buff 内部状态]
+    RESET --&gt; STATE
+    STACK --&gt; STATE
+    FORCE --&gt; STATE
+    VALUE[脚本或规则要求修改器数值更新] --&gt; MODREFRESH[显式刷新修改器数值]
+    DO --&gt; RESULT[修改 Unit 规则效果]
+    MODREFRESH --&gt; RESULT</code></pre>
+<p>这些入口各自更新 Buff 的时间、状态、层数或策略标志。Buff 状态变更与修改器数值刷新是两条独立路径；需要改变实际规则数值时，生命周期层显式刷新已有修改器。</p>
+<h2 id="多态属性修改器怎样应用和撤销">多态属性修改器怎样应用和撤销</h2>
+<p>Buff 创建阶段根据配置生成最多四个修改器。Buff 生效时逐个应用规则，数值变化时显式刷新修改器，移除时再按同一组实例逐个撤销。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    CREATE[Buff 创建修改器] --&gt; M1[修改器 0]
+    CREATE --&gt; M2[修改器 1]
+    CREATE --&gt; M3[修改器 2]
+    CREATE --&gt; M4[修改器 3]
+    M1 --&gt; DO[应用]
+    M2 --&gt; DO
+    M3 --&gt; DO
+    M4 --&gt; DO
+    DO --&gt; UNIT[Unit 属性 行为与事件钩子]
+    CHANGE[Buff 数值或层数变化] --&gt; REFRESH[刷新数值]
+    REFRESH --&gt; UNIT
+    REMOVE[Buff 移除] --&gt; UNDO[撤销全部修改器]
+    UNDO --&gt; REVERSE[逐项还原 Unit 规则]</code></pre>
+<p>多态修改器让 Buff 的能力超出简单加减属性。某个子类可以参与最终伤害计算，另一个子类可以维护护盾，还有一些子类会处理减伤、伤害转移、吸血、反伤或暴击。创建、刷新和撤销都由同一个对象完成，规则的正向与反向路径就能配对。</p>
+<h2 id="周期触发与到期清理">周期触发与到期清理</h2>
+<p>Unit 更新阶段会推进管理器里的每个 Buff 实例。Buff 内部累计持续时间和周期计时，达到周期条件后触发一次回调；回调可以执行修改器逻辑，也可以通过脚本或技能事件产生伤害、治疗和其他效果。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant Core as Core 模拟
+    participant Mgr as Buff 管理器
+    participant Buf as Buff 实例
+    participant Moder as 属性修改器
+    participant Trigger as 脚本或效果触发
+
+    Core-&gt;&gt;Mgr: Update 33ms
+    Mgr-&gt;&gt;Buf: 推进 timeSpan
+    Buf-&gt;&gt;Buf: 推进持续时间和内部计时
+    opt 周期条件满足
+        Buf-&gt;&gt;Trigger: 周期触发
+    end
+    opt Buff 结束或被移除
+        Mgr-&gt;&gt;Buf: Remove
+        Buf-&gt;&gt;Moder: 撤销全部修改器
+    end</code></pre>
+<p>追帧时，Buff 会随每个补执行的 Core 步连续推进 33ms，所以持续时间和周期触发仍沿用同一条逻辑时间线。表现层只读取剩余时间和层数，或接收添加、刷新、移除带来的视觉请求。</p>
+<h2 id="控制、护盾与伤害钩子由属性修改器表达">控制、护盾与伤害钩子由属性修改器表达</h2>
+<p>沉默、眩晕、定身等控制会影响施法、移动和攻击状态；护盾、减伤、伤害转移、吸血、反伤与暴击修改器会挂到伤害路径。Buff 实例负责拥有这些对象和推进生命周期，具体规则由相应属性修改器子类执行。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    BUF[Buff 实例] --&gt; CONTROL[控制类修改器]
+    BUF --&gt; SHIELD[护盾]
+    BUF --&gt; REDUCE[减伤与伤害转移]
+    BUF --&gt; REACT[吸血 反伤与暴击]
+    CONTROL --&gt; STATE[施法 移动与攻击状态]
+    SHIELD --&gt; DAMAGE[伤害计算路径]
+    REDUCE --&gt; DAMAGE
+    REACT --&gt; DAMAGE
+    REMOVE[Buff 管理器移除] --&gt; UNDO[撤销全部修改器]
+    UNDO --&gt; CONTROL
+    UNDO --&gt; SHIELD
+    UNDO --&gt; REDUCE
+    UNDO --&gt; REACT</code></pre>
+<p>Buff 被移除时，管理器调用同一实例的撤销路径。需要驱散或清除特定 Buff 时，管理器先按技能规则选出实例，再逐个移除；筛选优先级和数量由技能配置决定。</p>
+<h2 id="Halo：光环发射器和接收-Buff">Halo：光环发射器和接收 Buff</h2>
+<p>Halo 由“范围更新 + Buff 管理操作”组成。发射器在固定同步步中查询范围内对象，为命中的单位添加或刷新对应 Buff；目标离开范围或来源失效时，再移除这条 Halo 带来的效果。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    AURA[Halo Update timeSpan] --&gt; QUERY[范围查询]
+    QUERY --&gt; INSIDE[当前范围内对象]
+    INSIDE --&gt; ADD[Buff 管理器添加]
+    INSIDE --&gt; REFRESH[按 Halo 规则刷新已有 Buff]
+    PREV[此前受影响对象] --&gt; CHECK[检查离开范围或来源失效]
+    CHECK --&gt; REMOVE[Buff 管理器移除]
+    REMOVE --&gt; UNDO[撤销属性修改器]</code></pre>
+<p>Halo 的查询与 Buff 更新都处在 Core 阶段，扫描周期由同步 <code>timeSpan</code> 推进。光圈粒子和范围提示可以每个外层帧刷新，视觉频率只影响平滑度。</p>
+<h1 id="第四部分：伤害与攻击怎样接入技能和-Buff">第四部分：伤害与攻击怎样接入技能和 Buff</h1>
+<p>普通攻击和技能伤害最终都会进入 Unit 的伤害结算管线。基础伤害、技能附加伤害和属性修改器在固定阶段协作，再把计算结果交给统一的伤害应用层。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    SOURCE[普通攻击 技能 Bullet 或 Buff 周期触发] --&gt; UNIT[Unit 伤害计算入口]
+    UNIT --&gt; REAL[基础伤害计算]
+    UNIT --&gt; SPELL[技能附加伤害计算]
+    REAL &lt;--&gt; MOD[属性修改器钩子集合]
+    SPELL &lt;--&gt; MOD
+    MOD --&gt; SHIELD[护盾]
+    MOD --&gt; REDUCE[减伤与伤害转移]
+    MOD --&gt; REACT[吸血 反伤与暴击]
+    REAL --&gt; VALUE[伤害计算结果]
+    SPELL --&gt; VALUE
+    MOD --&gt; VALUE
+    VALUE --&gt; APPLY[Damage Apply&lt;br/&gt;应用伤害结果]
+    APPLY --&gt; HP[生命与死亡状态]
+    HP --&gt; VIEW[数字 音效 动画 镜头]</code></pre>
+<p>暴击、减伤、护盾、转移、吸血与反伤通过固定调用阶段接入结算管线，所有客户端沿用同一顺序。把顺序固化为规则契约后，多个修改器叠加时仍能得到唯一结果。</p>
+<h3 id="普通攻击状态机">普通攻击状态机</h3>
+<p>普通攻击可以复用技能状态机的很多思想：选目标、接近、前摇、攻击生效、弹道或即时命中、后摇。攻击间隔和前摇都由固定同步 <code>timeSpan</code> 推进。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    IDLE[AttackIdle] --&gt; APPROACH[Approach]
+    APPROACH --&gt; WINDUP[Windup]
+    WINDUP --&gt;|目标失效| IDLE
+    WINDUP --&gt; COMMIT[Attack Commit]
+    COMMIT --&gt; BACKSWING[立即进入 Backswing]
+    COMMIT --&gt; TYPE&#123;攻击类型&#125;
+    TYPE --&gt;|近战| HIT[即时进入伤害路径]
+    TYPE --&gt;|远程| PROJECTILE[创建独立 Bullet]
+    PROJECTILE --&gt;|后续同步步命中| HIT
+    BACKSWING --&gt;|攻击间隔结束并继续| WINDUP
+    BACKSWING --&gt;|停止或换目标| IDLE</code></pre>
+<p>攻击生效时，近战路径直接进入伤害计算，远程路径创建独立 Bullet。攻击者同时进入 Backswing，因此下一次攻击节奏由攻击状态计时决定，Bullet 飞行时间只决定这次远程伤害何时命中。动画中的武器接触画面可以在表现层微调，伤害时机继续受 Core 时间线控制。</p>
+<h3 id="触发器要防止无限回环">触发器要防止无限回环</h3>
+<p>伤害可能触发吸血，受击也可能触发反伤，修改器之间因此存在回边。每次结算携带父触发上下文、递归深度和终止标签，方便约束递归并定位触发来源。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    D1[一次伤害计算] --&gt; LIFESTEAL[SuckBlood 修改器]
+    D1 --&gt; REFLECT[Rebound 修改器]
+    LIFESTEAL --&gt; HEAL[生命恢复路径]
+    REFLECT --&gt; GUARD&#123;增强的深度与终止标签检查&#125;
+    GUARD --&gt;|允许| D2[再次进入 Unit 伤害计算]
+    GUARD --&gt;|终止| STOP[记录触发链结束]</code></pre>
+<p>单步预算、最大触发深度和反弹终止标签一起守住这条回边。结算记录保存父触发标识后，我们可以从一笔最终伤害回溯到最初的技能或攻击。</p>
+<h1 id="第五部分：阵容部署怎样构造确定性的战斗世界">第五部分：阵容部署怎样构造确定性的战斗世界</h1>
+<p>阵容部署把一组静态参战记录转换成可确定性复现的战斗世界，核心环节包括数据归一化、槽位映射、坐标变换、对象创建和初始校验。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    INPUT[参战记录集合] --&gt; NORMALIZE[字段归一化与版本校验]
+    NORMALIZE --&gt; SORT[按 campId slotId 稳定排序]
+    SORT --&gt; SNAPSHOT[BattleStartSnapshot]
+    SNAPSHOT --&gt; GUID[确定性 GUID 分配]
+    SNAPSHOT --&gt; FORMATION[阵型槽位解析]
+    FORMATION --&gt; TRANSFORM[阵营局部坐标转世界坐标]
+    GUID --&gt; FACTORY[UnitFactory]
+    TRANSFORM --&gt; FACTORY
+    FACTORY --&gt; COMPONENT[属性 技能 Buff AI 与表现绑定信息]
+    COMPONENT --&gt; OBJECT[对象管理器注册]
+    OBJECT --&gt; HASH[初始 canonical hash]</code></pre>
+<h2 id="BattleStartSnapshot-是战斗的共同起点">BattleStartSnapshot 是战斗的共同起点</h2>
+<p>每个参战槽位至少需要这些稳定字段：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>campId / slotId</td>
+<td>决定阵营与阵型位置</td>
+</tr>
+<tr>
+<td>unitTemplateId</td>
+<td>选择单位原型</td>
+</tr>
+<tr>
+<td>appearanceId</td>
+<td>选择外观资源，不参与核心属性裁决</td>
+</tr>
+<tr>
+<td>level / growth data</td>
+<td>构造初始属性</td>
+</tr>
+<tr>
+<td>spell loadout</td>
+<td>装配技能原型</td>
+</tr>
+<tr>
+<td>passive or rune data</td>
+<td>创建初始被动和 Buff</td>
+</tr>
+<tr>
+<td>controller type</td>
+<td>绑定输入、AI 或重放控制器</td>
+</tr>
+</tbody>
+</table>
+<p>快照还包含地图规则版本、技能与 Buff 数据版本、同步步长、随机种子和初始模拟帧。所有客户端在创建第一个单位前比对这份签名，可以更早发现数据版本差异。</p>
+<h2 id="阵型坐标使用两级变换">阵型坐标使用两级变换</h2>
+<p>阵型配置保存相对槽位，地图保存每个阵营的锚点和朝向。局部槽位通过阵营变换得到世界坐标：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">worldPosition = campOrigin + campRotation * localSlotOffset</span><br><span class="line">worldFacing   = campRotation * localSlotFacing</span><br></pre></td></tr></table></figure>
+<pre><code class="highlight mermaid">flowchart LR
+    SLOT[FormationSlot&lt;br/&gt;localOffset localFacing] --&gt; ROTATE[应用 campRotation]
+    CAMP[CampAnchor&lt;br/&gt;origin rotation] --&gt; ROTATE
+    ROTATE --&gt; WORLD[worldPosition worldFacing]
+    WORLD --&gt; NAV[导航落点与碰撞校验]
+    NAV --&gt; SPAWN[生成 Unit]</code></pre>
+<p>这套表达让同一份阵型可以镜像到不同阵营，也方便地图只维护少量锚点。旋转与坐标量化采用固定数学规则，导航落点若需要修正，也要使用确定性搜索顺序。</p>
+<h2 id="对象创建顺序决定初始-GUID">对象创建顺序决定初始 GUID</h2>
+<p>创建前先按 <code>campId → slotId → unitTemplateId</code> 排序，再分配 GUID 和注册组件。GUID 提供稳定对象身份，也可以作为目标与事件并列时的裁决键。初始化阶段的一次顺序差异会扩散到后续对象引用和状态摘要。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant S as SnapshotBuilder
+    participant F as FormationResolver
+    participant U as UnitFactory
+    participant O as 对象管理器
+    participant H as StateHasher
+
+    S-&gt;&gt;S: 规范化并稳定排序槽位
+    loop 每个槽位
+        S-&gt;&gt;F: 解析世界出生变换
+        F--&gt;&gt;U: template + GUID + transform + loadout
+        U-&gt;&gt;U: 构建属性 技能 Buff AI
+        U-&gt;&gt;O: 注册 Unit
+    end
+    O-&gt;&gt;H: 构建初始规范化摘要
+    H--&gt;&gt;S: snapshot hash</code></pre>
+<p>表现资源可以异步加载，战斗对象的逻辑组件必须在第一个同步帧前全部就绪。逻辑单位先完成创建，表现层在模型资源就绪后再绑定，并追上当前状态。</p>
+<h1 id="第六部分：逻辑层与表现层怎样分离">第六部分：逻辑层与表现层怎样分离</h1>
+<p>这套系统采用“阶段分离 + 真值所有权分离”。战斗对象仍然可以直接向动画、粒子、音频和 HUD 服务发送请求。结果型表现消费 Core 真值，UI 瞄准预览消费输入意图，战斗真值的裁决始终留在 Core。</p>
+<h2 id="一次外层帧里的三个阶段">一次外层帧里的三个阶段</h2>
+<pre><code class="highlight mermaid">flowchart TD
+    PRE[Pre 阶段&lt;br/&gt;采样输入 UI 预览 网络收包] --&gt; COUNT[计算本次可消费的同步帧数]
+    COUNT --&gt; LOOP&#123;还有同步帧预算&#125;
+    LOOP --&gt;|是| ACTION[同步动作处理]
+    ACTION --&gt; UNIT[对象与 Unit 更新&lt;br/&gt;状态 冷却 Buff]
+    UNIT --&gt; BULLET[逻辑投射物&lt;br/&gt;Core 轨迹与命中]
+    BULLET --&gt; SPELL[技能事件管理器]
+    SPELL --&gt; WORLD[Zone / WarFog 等世界规则]
+    WORLD --&gt; LOOP
+    LOOP --&gt;|否| POST[Post 阶段&lt;br/&gt;场景 相机 音频 HUD]
+    POST --&gt; RENDER[提交渲染]</code></pre>
+<p>Pre 使用外层时间采样输入和处理界面；Core 每次只吃一个固定逻辑步；Post 使用外层时间更新相机、场景和视觉插值。网络顺畅时一帧画面可能消费一个同步帧，等待数据时消费零个，追赶 backlog 时消费多个。</p>
+<p>Core 的顺序需要固定。同步动作阶段先让当前帧命令落地，Unit 更新再推进状态机、冷却和 Buff，逻辑投射物随后移动并产生命中，技能事件队列继续处理到期规则，最后更新区域与战争迷雾。模块之间允许产生回边，例如 Bullet 命中创建技能事件，Buff 周期回调触发伤害；同帧重入规则和预算必须统一。</p>
+<h2 id="真值归属比类名归属更重要">真值归属比类名归属更重要</h2>
+<table>
+<thead>
+<tr>
+<th>数据或行为</th>
+<th>真值拥有者</th>
+<th>表现层读取方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>生命、资源、属性</td>
+<td>Unit 与属性系统</td>
+<td>HUD 查询或接收变更通知</td>
+</tr>
+<tr>
+<td>冷却、充能</td>
+<td>冷却对象与管理路径</td>
+<td>换算为按钮进度</td>
+</tr>
+<tr>
+<td>Buff 实例与层数</td>
+<td>Buff 管理器</td>
+<td>图标、计时与特效订阅</td>
+</tr>
+<tr>
+<td>施法与攻击状态</td>
+<td>Unit 状态机</td>
+<td>动画请求与当前状态查询</td>
+</tr>
+<tr>
+<td>投射物命中</td>
+<td>Core 中的 Bullet 更新</td>
+<td>外层帧插值轨迹</td>
+</tr>
+<tr>
+<td>技能事件顺序</td>
+<td>技能事件管理器</td>
+<td>特效、音效和提示事件</td>
+</tr>
+<tr>
+<td>模型骨骼与粒子</td>
+<td>模型与视觉效果管理器</td>
+<td>自己维护播放状态</td>
+</tr>
+<tr>
+<td>镜头、震动、声音</td>
+<td>Camera 与 Audio</td>
+<td>消费战斗表现请求</td>
+</tr>
+</tbody>
+</table>
+<p>逻辑对象可以调用类似 <code>PlayAnimation</code>、<code>SpawnEffect</code>、<code>PlaySound</code> 的服务接口，直接发送表现意图。表现服务可以选择低配资源或延迟加载，Core 结果保持不变。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    LOGIC[Unit Buff Attack Spell] --&gt; REQ[表现请求&lt;br/&gt;type sourceGuid targetGuid frame params]
+    REQ --&gt; ANIM[Model / Animation]
+    REQ --&gt; FX[视觉效果管理器]
+    REQ --&gt; AUDIO[Audio]
+    REQ --&gt; HUD[HUD]
+    LOGIC --&gt; TRUTH[战斗真值&lt;br/&gt;HP CD Buff State]
+    TRUTH --&gt; QUERY[只读查询与通知]
+    QUERY --&gt; HUD
+    QUERY --&gt; ANIM</code></pre>
+<p>表现请求携带来源 GUID 和稳定触发标识，表现层据此做幂等处理。追帧期间同一事件被批量送达，粒子管理器可以省略已经过时的起始段，HUD 仍显示最终值；重放跳转时也能先清空表现句柄，再从当前逻辑状态恢复。</p>
+<h2 id="动画完成由逻辑计时器决定">动画完成由逻辑计时器决定</h2>
+<p>施法和攻击进入状态时，逻辑层发送一次动画请求；状态机随后消费固定同步时长，并根据逻辑条件决定状态何时完成。外层渲染独立负责动作混合、速度调节和骨骼采样。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant State as Unit 状态机
+    participant Core as Core 时钟
+    participant Model as 模型动画
+
+    State-&gt;&gt;State: enter Cast
+    State-&gt;&gt;Model: Play CastAnimation(eventId)
+    loop 每个外层帧
+        Model-&gt;&gt;Model: 采样 混合 插值
+    end
+    loop 每个同步帧
+        Core-&gt;&gt;State: Update timeSpan = 33ms
+    end
+    State-&gt;&gt;State: 逻辑时长或状态条件满足后迁移
+    State-&gt;&gt;Model: 切换 AftCast 动画</code></pre>
+<p>为动画、粒子、音频和 HUD 接口提供空实现或适配桩后，这套设计可以运行无渲染仿真和加速重放。模型回调提供视觉播放结束信号，用于回收资源；战斗状态迁移由同步逻辑步和状态条件决定。</p>
+<h2 id="逻辑投射物与视觉效果管理器的边界">逻辑投射物与视觉效果管理器的边界</h2>
+<p>两个名字都带 Effect，很容易混在一起。边界需要细化到对象行为：</p>
+<ul>
+<li>Bullet 的轨迹、碰撞和命中位于 Core。</li>
+<li>同一管理器里的 spell effect、effect line、声音与可见性包含表现职责。</li>
+<li>视觉效果管理器继续管理粒子、贴花、光带等视觉对象。</li>
+<li>Bullet 命中时创建伤害或技能触发，同时发送视觉请求。</li>
+</ul>
+<pre><code class="highlight mermaid">flowchart LR
+    SPELL[技能事件管理器] --&gt; SEM[混合型 Effect 管理器]
+    SEM --&gt; BULLET[Bullet&lt;br/&gt;Core]
+    BULLET --&gt; HIT[命中事件]
+    HIT --&gt; UNIT[Unit / Damage / Buff]
+    HIT --&gt; SPELL
+    SEM --&gt; LINE[spell effect / effect line / sound&lt;br/&gt;表现职责]
+    SEM --&gt; VIS[视觉效果管理器&lt;br/&gt;Post]
+    LINE --&gt; GPU[渲染与音频提交]
+    VIS --&gt; GPU
+    UNIT --&gt; VIS</code></pre>
+<p>这条边界也适用于区域效果。毒雾的范围、周期和目标列表属于 Core；雾的粒子密度、颜色和消散曲线属于 Post。</p>
+<h2 id="UI-采用查询与通知的混合方式">UI 采用查询与通知的混合方式</h2>
+<p>HUD 持续显示生命、资源和冷却，适合每个外层帧通过只读接口查询 Unit、冷却对象等逻辑状态；击杀、升级、Buff 添加等离散变化适合事件通知。混合方式可以减少重复事件，也能避免 HUD 长期缓存一份战斗真值副本。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    UNIT[Unit 与各逻辑管理器] --&gt; CHANGE[离散变更通知]
+    CHANGE --&gt; HUD[HUD Controller]
+    VIEW[Unit / 冷却对象等逻辑状态&lt;br/&gt;只读查询接口] --&gt; HUD
+    HUD --&gt; FRAME[外层帧 UI 模型]
+    FRAME --&gt; WIDGET[血条 技能按钮 Buff 图标]
+    WIDGET --&gt; INTENT[输入意图]
+    INTENT --&gt; ACTION[UnitAction 命令入口]</code></pre>
+<p>UI 输入重新回到命令入口，HUD 保持只读消费。按钮显示为可用只是一份预览，执行帧里的施法准入层与 Core 预施法状态继续完成正式校验。</p>
+<h1 id="把整套架构重新串起来">把整套架构重新串起来</h1>
+<p>现在我们可以从一条技能输入出发，看清各模块怎样合作：</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[输入意图 SpellCastingParams] --&gt; B[UnitAction]
+    B --&gt; C[权威同步前沿 + sequence]
+    C --&gt; AQ[AI / UnitAction 队列]
+    C --&gt; D[pendingFrames&lt;br/&gt;时间推进记录]
+    AQ --&gt; E[同步动作处理]
+    D --&gt; E
+    E --&gt; F[施法准入校验]
+    F --&gt; PRE[Core 预施法状态]
+    F --&gt; QUICK[快速施法路径]
+    PRE --&gt; G[Cast Channel ChannelLock AftCast]
+    QUICK --&gt; QFLOW[专用快速处理&lt;br/&gt;内部顺序由技能配置决定]
+    G --&gt; I[资源与冷却处理]
+    G --&gt; J[技能事件&lt;br/&gt;立即处理或排队]
+    J --&gt; K[技能效果 / 几何查询 / Lua]
+    QFLOW --&gt; K
+    K --&gt; L[伤害管线 / Buff 管理器]
+    J --&gt; M[逻辑投射物 Bullet]
+    M --&gt; L
+    L --&gt; N[规范化战斗真值]
+    N --&gt; O[重放与可选状态 hash]
+    G --&gt; P[动画请求]
+    M --&gt; Q[粒子轨迹请求]
+    L --&gt; R[HUD 音效 镜头请求]
+    P --&gt; S[Post 表现阶段]
+    Q --&gt; S
+    R --&gt; S</code></pre>
+<p>这套架构有一条贯穿始终的原则：命令拥有唯一顺序，时间只由固定模拟步推进，随机数来自受控同步流，几何查询和脚本迭代保持全端一致。结果型表现消费 Core 真值，UI 瞄准预览消费输入意图，战斗裁决留在 Core。</p>
+<h2 id="我们落地时可以按这份清单自检">我们落地时可以按这份清单自检</h2>
+<h3 id="帧同步">帧同步</h3>
+<ul>
+<li>初始快照、命令、步长和随机种子是否足以重放。</li>
+<li>server frame 与 sequence 是否分别表达同步前沿和记录位置。</li>
+<li>一帧多命令是否只有一次时间推进。</li>
+<li>动作队列与 pendingFrames 是否在执行逻辑帧汇合。</li>
+<li>pendingFrames、缺口、追帧和恢复是否有明确上界。</li>
+<li>canonical hash 能否定位第一处分叉。</li>
+</ul>
+<h3 id="技能">技能</h3>
+<ul>
+<li>输入意图与战斗提交是否分开。</li>
+<li>施法准入层与 Core 预施法状态是否各守住自己的校验职责。</li>
+<li>状态类是否只通过同步逻辑步推进规则时间。</li>
+<li>普通施法与快速施法路径是否区分清楚。</li>
+<li>资源、冷却与技能事件触发是否沿用同步时间。</li>
+<li>技能效果的查询、Lua 绑定和随机消费是否确定。</li>
+<li>Bullet 的命中逻辑是否留在 Core。</li>
+</ul>
+<h3 id="Buff-与伤害">Buff 与伤害</h3>
+<ul>
+<li>添加、移除、刷新时间、重置与叠层入口是否职责清楚。</li>
+<li>修改器的创建、应用、刷新与撤销是否闭环。</li>
+<li>Buff 生命周期与周期触发是否只消费同步时间。</li>
+<li>Unit 伤害阶段与各属性修改器钩子是否共享一条明确、确定的执行顺序。</li>
+<li>状态摘要是否覆盖影响后续规则的全部字段。</li>
+</ul>
+<h3 id="初始化与表现">初始化与表现</h3>
+<ul>
+<li>槽位排序、GUID、坐标变换和对象创建是否可重现。</li>
+<li>Core 各管理器的更新顺序是否固定。</li>
+<li>模型播放完成回调是否只影响表现资源，施法与攻击状态是否由逻辑 timeSpan 决定。</li>
+<li>HUD 是否通过查询与通知消费真值，并把操作送回命令入口。</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>从架构视角看，帧同步和技能系统是一件事的两面。帧同步提供一条全员共享、可以校验和重放的时间线；技能系统把时间线上的一条意图展开成状态机、事件、目标、伤害与 Buff；表现层再把这些确定的结果翻译成动作、粒子、声音和界面反馈。</p>
+<p>保持命令、时钟、表现接口与脚本绑定契约后，我们可以逐步替换输入源、网络传输、表现实现和脚本内容；直接依赖处通过兼容接口或适配层衔接。战斗真值始终沿同一条 Core 管线前进，问题也能定位到具体的 frame、sequence、事件、随机游标或状态字段。这套可解释、可重放、可定位的结构，给多人战斗系统提供了长期演进的稳定底座。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/hoc-frame-sync/">https://www.lfzxb.top/hoc-frame-sync/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F/">战斗系统</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F/">技能系统</a><a class="post-meta__tags" href="/tags/%E5%B8%A7%E5%90%8C%E6%AD%A5/">帧同步</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/ai-model-jailbreak-guide/" title="AI 模型破甲使用指南"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">AI 模型破甲使用指南</div></div><div class="info-2"><div class="info-item-1">最近在用 AI 做反编译和网络安全相关的学习，陆陆续续踩了一些坑，遂有此文。 我把这个过程叫作“破甲”。这个词听起来多少有点江湖气，不过我的用法很克制，只在自己拥有或者明确获得授权的程序、靶场、协议和测试环境里研究。我的实际需求也很朴素：让模型别看到“反编译”“漏洞”“抓包”几个词就直接结束对话，能够继续参与后面的分析。 目前实践下来，体验好坏主要看前面的上下文有没有搭好。一句神奇提示词撑不起长任务，目标、授权范围、环境和交付物都说不清楚，模型只能把任务往最危险的方向猜。猜完以后拒绝，其实也很正常。 第一步：先把研究模式开对 刚开始时，我会先把研究背景讲清楚，相当于开启一次受约束的安全研究模式。 这里至少要说明几件事：  分析对象是什么，所有权或者授权从哪里来 研究目的是什么，是学习、兼容性分析、漏洞复现，还是恶意代码检测 工作在哪个环境里进行，比如本地副本、CTF、虚拟机或者隔离靶场 哪些动作允许做，哪些动作禁止做 最终需要什么结果，是函数说明、协议文档、风险报告，还是修复建议  这一步看起来有点啰嗦，实际非常省时间。模型知道我们在分析自己的二进制文件，和它以为我们要入侵线上服...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/nkgmoba-collisionsystem/" title="基于行为树的MOBA技能系统：碰撞系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：碰撞系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 一些游戏中简单的碰撞系统，可能就是手写几个圆形，矩形，扇形就够用了，但是Moba类游戏很多技能碰撞体是畸形的，比如派克的R，男枪的Q，R等都是不规则的，所以我们需要一个稳健的物理库来支持这些，自己处理碰撞体顶点数据，创建碰撞体到物理世界中，因为游戏类型原因，我选择了Box2D：https://github.com/erincatto/Box2D，对于FPS游戏，只有Bullet（3D物理库）：https://github.com/bulletphysics/bullet3 可选，这里就不多说了。 由于碰撞系统本身需要和技能系统产生非常紧密的联系，所以涉及到的内容也会比较多，主要包括  Box2D物理库介绍 Box2D碰撞体编辑器拓展，负责制作碰撞体和导出碰撞体数据：https://www.lfzxb.top/box2d-unityvistualeditor/ Box2D碰撞关系编辑器拓展，负责维护碰撞体之间的碰撞关系，并自动生成代码：https://...</div></div></div></a><a class="pagination-related" href="/nkgmoba-skillandnetwork/" title="基于行为树的MOBA技能系统：技能系统与网络同步"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-11-21</div><div class="info-item-2">基于行为树的MOBA技能系统：技能系统与网络同步</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 从我个人的感受而言，如果说技能系统开发难度为7，那么网络同步的开发难度就是10，因为它的触手涉及技能系统方方面面，稍有不慎就会有可怕的连锁反应导致混乱。 包括守望先锋的三面分享，其中网络同步部分读起来最为吃力，断层的感觉最强，但越是这样，越能说明守望先锋网络同步方案的健壮性 对于本文内容的拓展延伸与具体实现，参见  基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札  本文大量内容参照了：《守望先锋》GDC2017技术分享精粹重制版总目录 中的文章 守望先锋网络同步总结 同步数据设计 感觉先说明一下网络同步环境和数据结构的设计比较容易理解一些 客户端和服务端都各自维护着整局游戏所有的实体和数据，差别就是客户端不负责逻辑计算，逻辑计算是服务器权威的，客户端要能从服务器发来的帧数据恢复到和服务器发送数据那一帧相同的世界状态 对于客户端来说，本地有两...</div></div></div></a><a class="pagination-related" href="/nkgmoba-visualnodeeditor-skill/" title="基于行为树的MOBA技能系统：技能系统与可视化节点技能编辑器"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：技能系统与可视化节点技能编辑器</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 在开始正文之前感觉还是有必要说明为什么需要开发基于行为树的可视化节点技能编辑器（本文简称技能编辑器），并且推荐大家去看下我之前写过的一篇回答：unity怎么去实现act战斗? 试想一下，英雄的技能多种多样，很多技能释放的流程，产生的效果都不一样，可以简单纯粹到如蛮王Q技能的主动回血（泰达米尔消耗怒气，回复生命值），也可以像瑞文那样的三段Q那般复杂（锐雯向前直冲，发起突袭。这个技能可以再次施放另外的2段。 第一段和第二段：向前斩击，对接触到的所有敌人造成物理伤害。 第三段:跃向空中，随后猛击地面，造成物理伤害，并且以冲击点为中心，将周围的敌人击飞。），或者像诺克萨斯之手那让人头痛的被动（在德莱厄斯用斧刃对敌人造成伤害时,敌人会流血,在5秒里持续受到物理伤害,最多叠加5次. 只要有一名敌方英雄身上的【出血】效果叠到最大层数,或死于【诺克萨斯断头台】 ,德莱厄斯就会获得【诺克萨斯之力】,持续5秒,获得额外攻击力,并对命中的敌人施加最大层数的【出血】效果.）...</div></div></div></a><a class="pagination-related" href="/nkgmoba-buffsystem/" title="基于行为树的MOBA技能系统：Buff系统"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-01</div><div class="info-item-2">基于行为树的MOBA技能系统：Buff系统</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-totaltabs/ 本篇文章主要讲一下Buff系统的设计。Buff系统是战斗系统中最为重要的一个部件，我们技能效果就是依靠Buff系统实现的，比如伤害，治疗，破甲，眩晕，护盾，斩杀等，也就是说一个技能真正的核心就是组成它的那些Buff，这一点其实在《可视化节点技能编辑器的制作》一文中的示例中有体现。 这就可以引申出一个“万物皆Buff”的思想，所有的行为/效果都可以用一个Buff来实现，常规的比如一个持续伤害Buff，特殊的比如一个播放特效Buff，往客户端同步数据Buff。 指导思想有了，并且经过《可视化节点技能编辑器的制作》文中Buff系统相关介绍，我们可以知道这种方式确实可行，那么具体怎么抽象出一个健壮的Buff系统就是我们需要考虑的事情了。 本文更多的是介绍Buff系统Runtime的架构设计，Editor的架构设计可从下图得知，更详细的内容在《可视化节点技能编辑器的制作》中：  正文 基类抽象 首先我们Runtime下的Buff需要有数据载体，用于记载此Buf...</div></div></div></a><a class="pagination-related" href="/universal-skill-spell-indicator/" title="万用技能指示器"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20211019230648.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-19</div><div class="info-item-2">万用技能指示器</div></div><div class="info-2"><div class="info-item-1">前言 这几天研究了下 技能指示器 发现作者好久没更新了，而且由于其用到了Projector组件，无法在URP管线下正常工作，所以我把它的Shader稍微改了下，接口之类的也改了下，如果需要技能指示器贴合地形的话可以接入 https://github.com/ColinLeung-NiloCat/UnityURPUnlitScreenSpaceDecalShader ，本仓库 也给了一个示例。 使用此指示器需要Odin插件，因为需要在编辑器编辑指示器的大小，实时预览，用到了OnValueChanged特性。 预览图如下  功能 非指向性  指向性（无范围提示）  指向性（有范围提示）  区域选择性  可变角扇形  状态指示器  贴花  使用说明 指示器基类中重要字段，支持运行时使用其对应属性实时更改。 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757...</div></div></div></a><a class="pagination-related" href="/nkgmoba-framestepstate-architecture-battle-design/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-12-19</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友MOBA项目的技能系统的网络同步部分的开发和完善上来，主要工作内容是：  在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能 将原本状态同步的方案转变到状态帧同步方案  这里还是简单的谈一下为什么不选择帧同步而选择状态帧同步，如果基于帧同步进行开发的话，定点数的使用会大大增加各个模块的时间和人力成本，并且稍不注意就会有毁灭性的不同步出现，再者，帧同步出于安全考虑需要服务端进行校验工作，工作量和状态同步基本上没什么区别，帧同步真正的价值在于其 “帧” 的概念，有了帧的概念，就可以去预测，去回滚，去做录像，去做观战。。。而状态帧方案就可以让我们在不受限于帧同步条条框框的基础上拥有帧同步的开发体验与项目效果，其相对于帧同步来说，最为困难的部分就是根据服务端传来的帧数据进行重新模拟+回滚，这要求状态和逻辑分离的非常纯粹，也就是说对于客户端，接收任意帧内相同的输入必须能回滚到...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E8%AE%A9%E6%89%80%E6%9C%89%E5%AE%A2%E6%88%B7%E7%AB%AF%E5%9C%A8%E5%90%8C%E4%B8%80%E5%B8%A7%E6%96%BD%E6%94%BE%E5%90%8C%E4%B8%80%E6%8A%80%E8%83%BD%EF%BC%9A%E3%80%8A%E6%B7%B7%E6%B2%8C%E4%B8%8E%E7%A7%A9%E5%BA%8F%E4%B9%8B%E8%8B%B1%E9%9B%84%E6%88%98%E6%AD%8C%E3%80%8B%E6%88%98%E6%96%97%E7%B3%BB%E7%BB%9F%E6%8A%80%E6%9C%AF%E8%AE%BE%E8%AE%A1"><span class="toc-number">1.</span> <span class="toc-text">让所有客户端在同一帧施放同一技能：《混沌与秩序之英雄战歌》战斗系统技术设计</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%88%E7%9C%8B%E5%85%A8%E6%99%AF%EF%BC%9A%E5%9B%9B%E4%B8%AA%E9%98%B6%E6%AE%B5%EF%BC%8C%E4%B8%80%E6%9D%A1%E6%88%98%E6%96%97%E7%9C%9F%E5%80%BC%E9%93%BE"><span class="toc-number">1.1.</span> <span class="toc-text">先看全景：四个阶段，一条战斗真值链</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E9%83%A8%E5%88%86%EF%BC%9A%E5%B8%A7%E5%90%8C%E6%AD%A5%E6%80%8E%E6%A0%B7%E8%AE%A9%E6%89%80%E6%9C%89%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%B5%B0%E5%9C%A8%E5%90%8C%E4%B8%80%E6%9D%A1%E6%97%B6%E9%97%B4%E7%BA%BF%E4%B8%8A"><span class="toc-number">2.</span> <span class="toc-text">第一部分：帧同步怎样让所有客户端走在同一条时间线上</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%A7%E5%90%8C%E6%AD%A5%E7%9A%84%E6%A0%B8%E5%BF%83%E6%98%AF%E5%91%BD%E4%BB%A4%E9%A1%BA%E5%BA%8F"><span class="toc-number">2.1.</span> <span class="toc-text">帧同步的核心是命令顺序</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%E6%A8%A1%E6%8B%9F%E9%9C%80%E8%A6%81%E5%9B%9B%E4%B8%AA%E5%85%B1%E5%90%8C%E8%BE%93%E5%85%A5"><span class="toc-number">2.2.</span> <span class="toc-text">确定性模拟需要四个共同输入</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-BattleStartSnapshot%EF%BC%9A%E7%9B%B8%E5%90%8C%E7%9A%84%E8%B5%B7%E8%B7%91%E7%BA%BF"><span class="toc-number">2.2.1.</span> <span class="toc-text">1. BattleStartSnapshot：相同的起跑线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-UnitAction%EF%BC%9A%E7%9B%B8%E5%90%8C%E7%9A%84%E6%93%8D%E4%BD%9C%E5%91%BD%E4%BB%A4"><span class="toc-number">2.2.2.</span> <span class="toc-text">2. UnitAction：相同的操作命令</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-%E7%A6%BB%E6%95%A3%E6%A8%A1%E6%8B%9F%E6%AD%A5%EF%BC%9A%E7%9B%B8%E5%90%8C%E7%9A%84%E6%97%B6%E9%97%B4%E5%A2%9E%E9%87%8F"><span class="toc-number">2.2.3.</span> <span class="toc-text">3. 离散模拟步：相同的时间增量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-%E5%90%8C%E6%AD%A5%E9%9A%8F%E6%9C%BA%E6%B5%81%EF%BC%9A%E7%9B%B8%E5%90%8C%E7%9A%84%E6%A6%82%E7%8E%87%E5%88%86%E6%94%AF"><span class="toc-number">2.2.4.</span> <span class="toc-text">4. 同步随机流：相同的概率分支</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E5%A5%97%E6%97%B6%E9%92%9F%EF%BC%9A%E6%B8%B2%E6%9F%93%E6%97%B6%E9%97%B4%E3%80%81%E6%A8%A1%E6%8B%9F%E6%97%B6%E9%97%B4%E5%92%8C%E7%BD%91%E7%BB%9C%E6%B8%B8%E6%A0%87"><span class="toc-number">2.3.</span> <span class="toc-text">三套时钟：渲染时间、模拟时间和网络游标</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Wall-Clock%EF%BC%9A%E8%AE%BE%E5%A4%87%E5%A4%9A%E4%B9%85%E7%94%BB%E4%B8%80%E5%B8%A7"><span class="toc-number">2.3.1.</span> <span class="toc-text">Wall Clock：设备多久画一帧</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Server-Frame%EF%BC%9A%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%89%B9%E5%87%86%E5%88%B0%E4%BA%86%E5%93%AA%E4%B8%AA%E5%90%8C%E6%AD%A5%E5%89%8D%E6%B2%BF"><span class="toc-number">2.3.2.</span> <span class="toc-text">Server Frame：服务端批准到了哪个同步前沿</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Sequence%EF%BC%9A%E5%91%BD%E4%BB%A4%E6%B5%81%E6%B6%88%E8%B4%B9%E5%88%B0%E4%BA%86%E5%93%AA%E9%87%8C"><span class="toc-number">2.3.3.</span> <span class="toc-text">Sequence：命令流消费到了哪里</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%96%E5%B1%82%E5%B8%A7%E4%B8%8E%E5%90%8C%E6%AD%A5%E5%B8%A7%E6%80%8E%E6%A0%B7%E5%B5%8C%E5%A5%97"><span class="toc-number">2.4.</span> <span class="toc-text">外层帧与同步帧怎样嵌套</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%BE%93%E5%85%A5%E5%85%88%E5%8F%98%E6%88%90%E6%84%8F%E5%9B%BE%EF%BC%8C%E5%9C%A8%E7%BA%BF%E6%A8%A1%E5%BC%8F%E7%AD%89%E5%BE%85%E6%9D%83%E5%A8%81%E5%9B%9E%E7%81%8C"><span class="toc-number">2.5.</span> <span class="toc-text">输入先变成意图，在线模式等待权威回灌</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%8A%E8%A1%8C-UnitAction%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%97%B6%E9%97%B4%E5%8F%AA%E6%98%AF%E5%8F%82%E8%80%83"><span class="toc-number">2.6.</span> <span class="toc-text">上行 UnitAction：客户端时间只是参考</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%9C%8D%E5%8A%A1%E7%AB%AF%E6%80%8E%E6%A0%B7%E6%8A%8A-33ms-%E5%86%85%E7%9A%84%E8%BE%93%E5%85%A5%E8%A3%85%E8%BF%9B%E4%B8%80%E4%B8%AA%E5%B8%A7"><span class="toc-number">2.7.</span> <span class="toc-text">服务端怎样把 33ms 内的输入装进一个帧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8A%A8%E4%BD%9C%E8%81%9A%E5%90%88%E5%8C%85%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">2.7.1.</span> <span class="toc-text">动作聚合包的结构</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8A%A8%E4%BD%9C%E5%90%8E%E9%9D%A2%E8%BF%98%E8%A6%81%E6%9C%89-EmptyFrameRun-1"><span class="toc-number">2.7.2.</span> <span class="toc-text">为什么动作后面还要有 EmptyFrameRun(1)</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E6%80%8E%E6%A0%B7%E5%B1%95%E5%BC%80%E8%81%9A%E5%90%88%E5%B8%A7"><span class="toc-number">2.8.</span> <span class="toc-text">客户端怎样展开聚合帧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#sequence-%E7%BC%BA%E5%8F%A3%E6%80%8E%E6%A0%B7%E5%A4%84%E7%90%86"><span class="toc-number">2.8.1.</span> <span class="toc-text">sequence 缺口怎样处理</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#pendingFrames%EF%BC%9A%E7%BD%91%E7%BB%9C%E5%89%8D%E6%B2%BF%E4%B8%8E%E6%9C%AC%E6%9C%BA%E6%89%A7%E8%A1%8C%E5%89%8D%E6%B2%BF"><span class="toc-number">2.9.</span> <span class="toc-text">pendingFrames：网络前沿与本机执行前沿</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BB%B6%E8%BF%9F%E3%80%81%E6%8A%96%E5%8A%A8%E4%B8%8E%E8%BF%BD%E5%B8%A7"><span class="toc-number">2.10.</span> <span class="toc-text">延迟、抖动与追帧</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#pendingFrames-%E5%90%8C%E6%97%B6%E4%B9%9F%E6%98%AF%E6%8A%96%E5%8A%A8%E7%BC%93%E5%86%B2"><span class="toc-number">2.10.1.</span> <span class="toc-text">pendingFrames 同时也是抖动缓冲</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E5%B8%A7%E7%94%BB%E9%9D%A2%E5%8F%AF%E4%BB%A5%E8%BF%BD%E5%A4%9A%E4%B8%AA%E5%90%8C%E6%AD%A5%E6%AD%A5"><span class="toc-number">2.10.2.</span> <span class="toc-text">一帧画面可以追多个同步步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BB%B6%E8%BF%9F%E4%B8%8E%E6%8A%96%E5%8A%A8%E8%A6%81%E5%88%86%E5%BC%80%E8%A7%82%E5%AF%9F"><span class="toc-number">2.10.3.</span> <span class="toc-text">延迟与抖动要分开观察</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%EF%BC%9A%E7%9B%B8%E5%90%8C%E5%91%BD%E4%BB%A4%E6%80%8E%E6%A0%B7%E5%BE%97%E5%88%B0%E7%9B%B8%E5%90%8C%E7%BB%93%E6%9E%9C"><span class="toc-number">2.11.</span> <span class="toc-text">确定性：相同命令怎样得到相同结果</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%92%8C%E8%84%9A%E6%9C%AC%E7%89%88%E6%9C%AC%E5%BF%85%E9%A1%BB%E4%B8%80%E8%87%B4"><span class="toc-number">2.11.1.</span> <span class="toc-text">数据和脚本版本必须一致</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E9%81%8D%E5%8E%86%E9%A1%BA%E5%BA%8F%E5%BF%85%E9%A1%BB%E7%A8%B3%E5%AE%9A"><span class="toc-number">2.11.2.</span> <span class="toc-text">对象遍历顺序必须稳定</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%B5%AE%E7%82%B9%E5%B7%AE%E5%BC%82%E9%9C%80%E8%A6%81%E8%BE%B9%E7%95%8C"><span class="toc-number">2.11.3.</span> <span class="toc-text">浮点差异需要边界</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A4%96%E5%B1%82%E5%B8%A7%E7%8E%87%E4%B8%8E%E9%80%BB%E8%BE%91%E6%97%B6%E9%97%B4%E4%BF%9D%E6%8C%81%E9%9A%94%E7%A6%BB"><span class="toc-number">2.11.4.</span> <span class="toc-text">外层帧率与逻辑时间保持隔离</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5%E9%9A%8F%E6%9C%BA%EF%BC%9A%E7%A7%8D%E5%AD%90%E7%9B%B8%E5%90%8C%E8%BF%98%E4%B8%8D%E5%A4%9F"><span class="toc-number">2.12.</span> <span class="toc-text">同步随机：种子相同还不够</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#sequence-%E6%A3%80%E6%9F%A5%E4%B8%8E%E7%8A%B6%E6%80%81%E6%A3%80%E6%9F%A5%E8%A7%A3%E5%86%B3%E4%B8%A4%E7%B1%BB%E9%97%AE%E9%A2%98"><span class="toc-number">2.13.</span> <span class="toc-text">sequence 检查与状态检查解决两类问题</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E5%B1%82%EF%BC%9A%E6%97%B6%E9%97%B4%E7%BA%BF%E5%AE%8C%E6%95%B4%E6%80%A7"><span class="toc-number">2.13.1.</span> <span class="toc-text">第一层：时间线完整性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E5%B1%82%EF%BC%9A%E8%A7%84%E8%8C%83%E5%8C%96%E6%88%98%E6%96%97%E6%91%98%E8%A6%81"><span class="toc-number">2.13.2.</span> <span class="toc-text">第二层：规范化战斗摘要</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%90%8C%E6%AD%A5%E6%81%A2%E5%A4%8D%EF%BC%9A%E5%9F%BA%E7%BA%BF%E5%8A%A0%E6%9C%89%E5%BA%8F%E5%8E%86%E5%8F%B2"><span class="toc-number">2.14.</span> <span class="toc-text">同步恢复：基线加有序历史</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%A7%E6%8E%92%E5%BA%8F%E6%9C%8D%E5%8A%A1%E8%83%BD%E9%98%B2%E4%BD%8F%E4%BB%80%E4%B9%88"><span class="toc-number">2.15.</span> <span class="toc-text">帧排序服务能防住什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%A7%E5%90%8C%E6%AD%A5%E7%9A%84%E6%B5%8B%E8%AF%95%E4%BD%93%E7%B3%BB"><span class="toc-number">2.16.</span> <span class="toc-text">帧同步的测试体系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%81%9A%E5%90%88%E5%8C%85%E6%80%A7%E8%B4%A8%E6%B5%8B%E8%AF%95"><span class="toc-number">2.16.1.</span> <span class="toc-text">聚合包性质测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#pending-frame-%E6%A8%A1%E5%9E%8B%E6%B5%8B%E8%AF%95"><span class="toc-number">2.16.2.</span> <span class="toc-text">pending frame 模型测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BD%91%E7%BB%9C%E6%95%85%E9%9A%9C%E7%9F%A9%E9%98%B5"><span class="toc-number">2.16.3.</span> <span class="toc-text">网络故障矩阵</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%E9%BB%84%E9%87%91%E9%87%8D%E6%94%BE"><span class="toc-number">2.16.4.</span> <span class="toc-text">确定性黄金重放</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E9%83%A8%E5%88%86%EF%BC%9A%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E6%80%8E%E6%A0%B7%E6%B6%88%E8%B4%B9%E4%B8%80%E6%9D%A1%E5%90%8C%E6%AD%A5%E5%91%BD%E4%BB%A4"><span class="toc-number">3.</span> <span class="toc-text">第二部分：技能系统怎样消费一条同步命令</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#SpellCastingParams%EF%BC%9A%E5%85%88%E4%BF%9D%E5%AD%98%E2%80%9C%E6%83%B3%E6%80%8E%E4%B9%88%E6%94%BE%E2%80%9D"><span class="toc-number">3.1.</span> <span class="toc-text">SpellCastingParams：先保存“想怎么放”</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UnitAction%EF%BC%9A%E8%AE%A9%E6%96%BD%E6%B3%95%E6%84%8F%E5%9B%BE%E8%BF%9B%E5%85%A5%E5%90%8C%E6%AD%A5%E6%97%B6%E9%97%B4%E7%BA%BF"><span class="toc-number">3.2.</span> <span class="toc-text">UnitAction：让施法意图进入同步时间线</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%A4%E5%B1%82%E6%96%BD%E6%B3%95%E6%A0%A1%E9%AA%8C%EF%BC%9A%E5%9F%BA%E7%A1%80%E5%87%86%E5%85%A5%E4%B8%8E%E7%8A%B6%E6%80%81%E5%86%85%E5%A4%8D%E6%A0%B8"><span class="toc-number">3.3.</span> <span class="toc-text">两层施法校验：基础准入与状态内复核</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%BD%E6%B3%95%E7%8A%B6%E6%80%81%E6%9C%BA%EF%BC%9A%E7%94%A8%E5%90%8C%E6%AD%A5-timeSpan-%E6%8E%A8%E8%BF%9B%E8%A7%84%E5%88%99%E6%97%B6%E9%97%B4"><span class="toc-number">3.4.</span> <span class="toc-text">施法状态机：用同步 timeSpan 推进规则时间</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%99%AE%E9%80%9A%E6%96%BD%E6%B3%95%E4%B8%8E%E5%BF%AB%E9%80%9F%E6%96%BD%E6%B3%95%E4%B8%A4%E6%9D%A1%E8%B7%AF%E5%BE%84"><span class="toc-number">3.5.</span> <span class="toc-text">普通施法与快速施法两条路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E5%8E%9F%E5%9E%8B%E3%80%81%E6%8A%80%E8%83%BD%E6%95%88%E6%9E%9C%E4%B8%8E%E8%BF%90%E8%A1%8C%E6%97%B6%E4%BA%8B%E4%BB%B6"><span class="toc-number">3.6.</span> <span class="toc-text">技能原型、技能效果与运行时事件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E4%BA%8B%E4%BB%B6%E7%AE%A1%E7%90%86%E5%99%A8%EF%BC%9A%E7%AB%8B%E5%8D%B3%E5%A4%84%E7%90%86%E4%B8%8E%E6%8E%92%E9%98%9F%E5%A4%84%E7%90%86%E4%B8%A4%E6%9D%A1%E8%B7%AF%E5%BE%84"><span class="toc-number">3.7.</span> <span class="toc-text">技能事件管理器：立即处理与排队处理两条路径</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87%E8%A7%A3%E6%9E%90%EF%BC%9A%E5%87%A0%E4%BD%95%E6%9F%A5%E8%AF%A2%E5%8A%A0%E6%9D%A1%E4%BB%B6%E8%BF%87%E6%BB%A4"><span class="toc-number">3.8.</span> <span class="toc-text">目标解析：几何查询加条件过滤</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%84%9A%E6%9C%AC%E5%B1%82%EF%BC%9A%E8%AE%A9%E6%8A%80%E8%83%BD%E5%8F%AF%E6%89%A9%E5%B1%95%EF%BC%8C%E5%90%8C%E6%97%B6%E5%AE%88%E4%BD%8F%E7%A1%AE%E5%AE%9A%E6%80%A7"><span class="toc-number">3.9.</span> <span class="toc-text">脚本层：让技能可扩展，同时守住确定性</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%86%B7%E5%8D%B4%E3%80%81%E8%B5%84%E6%BA%90%E5%92%8C%E5%85%85%E8%83%BD%E9%83%BD%E6%B6%88%E8%B4%B9%E5%90%8C%E6%AD%A5-timeSpan"><span class="toc-number">3.10.</span> <span class="toc-text">冷却、资源和充能都消费同步 timeSpan</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%B7%E5%90%88%E5%9E%8B-Effect-%E7%AE%A1%E7%90%86%E5%99%A8%E8%A6%81%E6%8C%89%E5%AF%B9%E8%B1%A1%E8%A1%8C%E4%B8%BA%E5%88%92%E5%88%86%E8%BE%B9%E7%95%8C"><span class="toc-number">3.11.</span> <span class="toc-text">混合型 Effect 管理器要按对象行为划分边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E6%AC%A1%E6%89%87%E5%BD%A2%E5%87%8F%E9%80%9F%E6%8A%80%E8%83%BD%E6%80%8E%E6%A0%B7%E8%B7%91%E5%AE%8C%E6%95%B4%E6%9D%A1%E9%93%BE"><span class="toc-number">3.12.</span> <span class="toc-text">一次扇形减速技能怎样跑完整条链</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8A%80%E8%83%BD%E7%B3%BB%E7%BB%9F%E7%9A%84%E6%B5%8B%E8%AF%95%E4%BD%93%E7%B3%BB"><span class="toc-number">3.13.</span> <span class="toc-text">技能系统的测试体系</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%91%BD%E4%BB%A4%E4%B8%8E%E6%A0%A1%E9%AA%8C%E6%B5%8B%E8%AF%95"><span class="toc-number">3.13.1.</span> <span class="toc-text">命令与校验测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E6%9C%BA%E6%B5%8B%E8%AF%95"><span class="toc-number">3.13.2.</span> <span class="toc-text">状态机测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%AE%E6%A0%87%E4%B8%8E%E6%95%88%E6%9E%9C%E6%B5%8B%E8%AF%95"><span class="toc-number">3.13.3.</span> <span class="toc-text">目标与效果测试</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%E6%8A%80%E8%83%BD%E9%87%8D%E6%94%BE"><span class="toc-number">3.13.4.</span> <span class="toc-text">确定性技能重放</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E9%83%A8%E5%88%86%EF%BC%9ABuff-%E7%B3%BB%E7%BB%9F%E6%80%8E%E6%A0%B7%E6%8C%81%E7%BB%AD%E6%94%B9%E5%8F%98%E5%8D%95%E4%BD%8D%E8%A7%84%E5%88%99"><span class="toc-number">4.</span> <span class="toc-text">第三部分：Buff 系统怎样持续改变单位规则</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Buff-%E7%AE%A1%E7%90%86%E5%99%A8%E4%B8%8E-Buff-%E5%AE%9E%E4%BE%8B%E7%9A%84%E8%81%8C%E8%B4%A3"><span class="toc-number">4.1.</span> <span class="toc-text">Buff 管理器与 Buff 实例的职责</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B7%BB%E5%8A%A0%E3%80%81%E5%88%B7%E6%96%B0%E3%80%81%E5%8F%A0%E5%B1%82%E5%92%8C%E7%AD%96%E7%95%A5%E5%88%87%E6%8D%A2"><span class="toc-number">4.2.</span> <span class="toc-text">添加、刷新、叠层和策略切换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%9A%E6%80%81%E5%B1%9E%E6%80%A7%E4%BF%AE%E6%94%B9%E5%99%A8%E6%80%8E%E6%A0%B7%E5%BA%94%E7%94%A8%E5%92%8C%E6%92%A4%E9%94%80"><span class="toc-number">4.3.</span> <span class="toc-text">多态属性修改器怎样应用和撤销</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%91%A8%E6%9C%9F%E8%A7%A6%E5%8F%91%E4%B8%8E%E5%88%B0%E6%9C%9F%E6%B8%85%E7%90%86"><span class="toc-number">4.4.</span> <span class="toc-text">周期触发与到期清理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A7%E5%88%B6%E3%80%81%E6%8A%A4%E7%9B%BE%E4%B8%8E%E4%BC%A4%E5%AE%B3%E9%92%A9%E5%AD%90%E7%94%B1%E5%B1%9E%E6%80%A7%E4%BF%AE%E6%94%B9%E5%99%A8%E8%A1%A8%E8%BE%BE"><span class="toc-number">4.5.</span> <span class="toc-text">控制、护盾与伤害钩子由属性修改器表达</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Halo%EF%BC%9A%E5%85%89%E7%8E%AF%E5%8F%91%E5%B0%84%E5%99%A8%E5%92%8C%E6%8E%A5%E6%94%B6-Buff"><span class="toc-number">4.6.</span> <span class="toc-text">Halo：光环发射器和接收 Buff</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E5%9B%9B%E9%83%A8%E5%88%86%EF%BC%9A%E4%BC%A4%E5%AE%B3%E4%B8%8E%E6%94%BB%E5%87%BB%E6%80%8E%E6%A0%B7%E6%8E%A5%E5%85%A5%E6%8A%80%E8%83%BD%E5%92%8C-Buff"><span class="toc-number">5.</span> <span class="toc-text">第四部分：伤害与攻击怎样接入技能和 Buff</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%99%AE%E9%80%9A%E6%94%BB%E5%87%BB%E7%8A%B6%E6%80%81%E6%9C%BA"><span class="toc-number">5.0.1.</span> <span class="toc-text">普通攻击状态机</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A7%A6%E5%8F%91%E5%99%A8%E8%A6%81%E9%98%B2%E6%AD%A2%E6%97%A0%E9%99%90%E5%9B%9E%E7%8E%AF"><span class="toc-number">5.0.2.</span> <span class="toc-text">触发器要防止无限回环</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%94%E9%83%A8%E5%88%86%EF%BC%9A%E9%98%B5%E5%AE%B9%E9%83%A8%E7%BD%B2%E6%80%8E%E6%A0%B7%E6%9E%84%E9%80%A0%E7%A1%AE%E5%AE%9A%E6%80%A7%E7%9A%84%E6%88%98%E6%96%97%E4%B8%96%E7%95%8C"><span class="toc-number">6.</span> <span class="toc-text">第五部分：阵容部署怎样构造确定性的战斗世界</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#BattleStartSnapshot-%E6%98%AF%E6%88%98%E6%96%97%E7%9A%84%E5%85%B1%E5%90%8C%E8%B5%B7%E7%82%B9"><span class="toc-number">6.1.</span> <span class="toc-text">BattleStartSnapshot 是战斗的共同起点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%98%B5%E5%9E%8B%E5%9D%90%E6%A0%87%E4%BD%BF%E7%94%A8%E4%B8%A4%E7%BA%A7%E5%8F%98%E6%8D%A2"><span class="toc-number">6.2.</span> <span class="toc-text">阵型坐标使用两级变换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%AF%B9%E8%B1%A1%E5%88%9B%E5%BB%BA%E9%A1%BA%E5%BA%8F%E5%86%B3%E5%AE%9A%E5%88%9D%E5%A7%8B-GUID"><span class="toc-number">6.3.</span> <span class="toc-text">对象创建顺序决定初始 GUID</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E7%AC%AC%E5%85%AD%E9%83%A8%E5%88%86%EF%BC%9A%E9%80%BB%E8%BE%91%E5%B1%82%E4%B8%8E%E8%A1%A8%E7%8E%B0%E5%B1%82%E6%80%8E%E6%A0%B7%E5%88%86%E7%A6%BB"><span class="toc-number">7.</span> <span class="toc-text">第六部分：逻辑层与表现层怎样分离</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E6%AC%A1%E5%A4%96%E5%B1%82%E5%B8%A7%E9%87%8C%E7%9A%84%E4%B8%89%E4%B8%AA%E9%98%B6%E6%AE%B5"><span class="toc-number">7.1.</span> <span class="toc-text">一次外层帧里的三个阶段</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9C%9F%E5%80%BC%E5%BD%92%E5%B1%9E%E6%AF%94%E7%B1%BB%E5%90%8D%E5%BD%92%E5%B1%9E%E6%9B%B4%E9%87%8D%E8%A6%81"><span class="toc-number">7.2.</span> <span class="toc-text">真值归属比类名归属更重要</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8A%A8%E7%94%BB%E5%AE%8C%E6%88%90%E7%94%B1%E9%80%BB%E8%BE%91%E8%AE%A1%E6%97%B6%E5%99%A8%E5%86%B3%E5%AE%9A"><span class="toc-number">7.3.</span> <span class="toc-text">动画完成由逻辑计时器决定</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%80%BB%E8%BE%91%E6%8A%95%E5%B0%84%E7%89%A9%E4%B8%8E%E8%A7%86%E8%A7%89%E6%95%88%E6%9E%9C%E7%AE%A1%E7%90%86%E5%99%A8%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-number">7.4.</span> <span class="toc-text">逻辑投射物与视觉效果管理器的边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#UI-%E9%87%87%E7%94%A8%E6%9F%A5%E8%AF%A2%E4%B8%8E%E9%80%9A%E7%9F%A5%E7%9A%84%E6%B7%B7%E5%90%88%E6%96%B9%E5%BC%8F"><span class="toc-number">7.5.</span> <span class="toc-text">UI 采用查询与通知的混合方式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%8A%8A%E6%95%B4%E5%A5%97%E6%9E%B6%E6%9E%84%E9%87%8D%E6%96%B0%E4%B8%B2%E8%B5%B7%E6%9D%A5"><span class="toc-number">8.</span> <span class="toc-text">把整套架构重新串起来</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%88%91%E4%BB%AC%E8%90%BD%E5%9C%B0%E6%97%B6%E5%8F%AF%E4%BB%A5%E6%8C%89%E8%BF%99%E4%BB%BD%E6%B8%85%E5%8D%95%E8%87%AA%E6%A3%80"><span class="toc-number">8.1.</span> <span class="toc-text">我们落地时可以按这份清单自检</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%B8%A7%E5%90%8C%E6%AD%A5"><span class="toc-number">8.1.1.</span> <span class="toc-text">帧同步</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%8A%80%E8%83%BD"><span class="toc-number">8.1.2.</span> <span class="toc-text">技能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Buff-%E4%B8%8E%E4%BC%A4%E5%AE%B3"><span class="toc-number">8.1.3.</span> <span class="toc-text">Buff 与伤害</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96%E4%B8%8E%E8%A1%A8%E7%8E%B0"><span class="toc-number">8.1.4.</span> <span class="toc-text">初始化与表现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">8.2.</span> <span class="toc-text">结语</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '13c3403192497e469bd8f6d855e4382d'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"hoc-frame-sync","contentHash":"8a4312cc9d2ba1955fafcc1af902bb168a753dc28d0015fe1e9311f97b9cf310"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>

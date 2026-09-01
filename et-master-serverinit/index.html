@@ -1,0 +1,666 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>ET篇：master服务端初始化流程的介绍 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="讲过master客户端的框架初始化，再来说一下服务端的初始化流程吧，因为很多客户端代码在服务端是通用的，所以理解起来也不算困难，就像这样  先来到程序入口  然后就是框架的初始化了（因为很多细节在客户端那篇讲过了，所以就不在这赘述了，内部实现是一样的） 12345678910111213 &#x2F;&#x2F;添加Model.dll到字典维护Game.EventSystem.Add(DLLType.Model, t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ET篇：master服务端初始化流程的介绍">
+<meta property="og:url" content="https://www.lfzxb.top/et-master-serverinit/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="讲过master客户端的框架初始化，再来说一下服务端的初始化流程吧，因为很多客户端代码在服务端是通用的，所以理解起来也不算困难，就像这样  先来到程序入口  然后就是框架的初始化了（因为很多细节在客户端那篇讲过了，所以就不在这赘述了，内部实现是一样的） 12345678910111213 &#x2F;&#x2F;添加Model.dll到字典维护Game.EventSystem.Add(DLLType.Model, t">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp">
+<meta property="article:published_time" content="2020-02-01T00:00:00.000Z">
+<meta property="article:modified_time" content="2020-02-01T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="GameFramework">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "ET篇：master服务端初始化流程的介绍",
+  "url": "https://www.lfzxb.top/et-master-serverinit/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp",
+  "datePublished": "2020-02-01T00:00:00.000Z",
+  "dateModified": "2020-02-01T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/et-master-serverinit/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'ET篇：master服务端初始化流程的介绍',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">212</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">ET篇：master服务端初始化流程的介绍</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">ET篇：master服务端初始化流程的介绍</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2020-02-01T00:00:00.000Z" title="发表于 2020-02-01 00:00:00">2020-02-01</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2020-02-01T00:00:00.000Z" title="更新于 2020-02-01 00:00:00">2020-02-01</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">710</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/et-master-serverinit/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2020-02-01 00:00:00&quot;}" hidden></div><p><strong>讲过master客户端的框架初始化，再来说一下服务端的初始化流程吧，因为很多客户端代码在服务端是通用的，所以理解起来也不算困难，就像这样</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp" alt="" loading='lazy'></p>
+<p><strong>先来到程序入口</strong></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145441856.png!webp" alt="" loading='lazy'><br>
+<strong>然后就是框架的初始化了（因为很多细节在客户端那篇讲过了，所以就不在这赘述了，内部实现是一样的）</strong></p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//添加Model.dll到字典维护</span></span><br><span class="line">Game.EventSystem.Add(DLLType.Model, <span class="keyword">typeof</span>(Game).Assembly);</span><br><span class="line"><span class="comment">//添加Hotfix.dll到字典维护</span></span><br><span class="line">Game.EventSystem.Add(DLLType.Hotfix, DllHelper.GetHotfixAssembly());</span><br><span class="line"><span class="comment">//添加并获取设置组件的引用</span></span><br><span class="line">Options options = Game.Scene.AddComponent&lt;OptionComponent, <span class="built_in">string</span>[]&gt;(<span class="keyword">args</span>).Options;</span><br><span class="line"><span class="comment">//添加并获取初始配置的组件的引用</span></span><br><span class="line">StartConfig startConfig = Game.Scene.AddComponent&lt;StartConfigComponent, <span class="built_in">string</span>, <span class="built_in">int</span>&gt;<span class="comment">//判断配置文件是否正确</span></span><br><span class="line"><span class="keyword">if</span> (!options.AppType.Is(startConfig.AppType))</span><br><span class="line">&#123;</span><br><span class="line">    Log.Error(<span class="string">&quot;命令行参数apptype与配置不一致&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">//增加计时器组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;TimerComponent&gt;();</span><br><span class="line"><span class="comment">//增加OpcodeType组件（是双端通讯协议的重要组成部分）</span></span><br><span class="line">Game.Scene.AddComponent&lt;OpcodeTypeComponent&gt;();</span><br><span class="line"><span class="comment">//增加消息分发组件（确保从服务端收到的消息能正确的送到到接受者手中）</span></span><br><span class="line">Game.Scene.AddComponent&lt;MessageDispatcherComponent&gt;();</span><br><span class="line"><span class="comment">// 根据不同的AppType添加不同的组件</span></span><br><span class="line">OuterConfig outerConfig = startConfig.GetComponent&lt;OuterConfig&gt;();</span><br><span class="line">InnerConfig innerConfig = startConfig.GetComponent&lt;InnerConfig&gt;();</span><br><span class="line">ClientConfig clientConfig = startConfig.GetComponent&lt;ClientConfig&gt;();</span><br></pre></td></tr></table></figure>
+<p><strong>然后是最为重要的服务端组件的添加 ，这里直接拿****case AppType.AllServer:中的组件举例，因为它几乎包括了所有组件</strong></p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"> <span class="comment">// 发送普通actor消息</span></span><br><span class="line">Game.Scene.AddComponent&lt;ActorMessageSenderComponent&gt;();</span><br><span class="line"><span class="comment">// 发送location actor消息</span></span><br><span class="line">Game.Scene.AddComponent&lt;ActorLocationSenderComponent&gt;();</span><br><span class="line"><span class="comment">//添加MongoDB组件，处理与服务器的交互</span></span><br><span class="line">Game.Scene.AddComponent&lt;DBComponent&gt;();</span><br><span class="line"><span class="comment">//添加MongoDB代理组件，代理服务端对数据库的操作</span></span><br><span class="line">Game.Scene.AddComponent&lt;DBProxyComponent&gt;();</span><br><span class="line"><span class="comment">// location server需要的组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;LocationComponent&gt;();</span><br><span class="line"><span class="comment">// 访问location server的组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;LocationProxyComponent&gt;();</span><br><span class="line"><span class="comment">// 这两个组件是处理actor消息使用的</span></span><br><span class="line">Game.Scene.AddComponent&lt;MailboxDispatcherComponent&gt;();</span><br><span class="line">Game.Scene.AddComponent&lt;ActorMessageDispatcherComponent&gt;();</span><br><span class="line"><span class="comment">// 内网消息组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;NetInnerComponent, <span class="built_in">string</span>&gt;(innerConfig.Address);</span><br><span class="line"><span class="comment">// 外网消息组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;NetOuterComponent, <span class="built_in">string</span>&gt;(outerConfig.Address);</span><br><span class="line"><span class="comment">// manager server组件，用来管理其它进程使用</span></span><br><span class="line">Game.Scene.AddComponent&lt;AppManagerComponent&gt;();</span><br><span class="line">Game.Scene.AddComponent&lt;RealmGateAddressComponent&gt;();</span><br><span class="line">Game.Scene.AddComponent&lt;GateSessionKeyComponent&gt;();</span><br><span class="line"><span class="comment">// 配置管理</span></span><br><span class="line">Game.Scene.AddComponent&lt;ConfigComponent&gt;();</span><br><span class="line"><span class="comment">// recast寻路组件</span></span><br><span class="line">Game.Scene.AddComponent&lt;PathfindingComponent&gt;();</span><br><span class="line"><span class="comment">//添加玩家组件（使用字典维护，可当做抽象化的玩家，处于不同的游戏流程会有不同的身份）</span></span><br><span class="line">Game.Scene.AddComponent&lt;PlayerComponent&gt;();</span><br><span class="line"><span class="comment">//添加单位组件（这是游戏中物体的最小单元，继承自Entity）</span></span><br><span class="line">Game.Scene.AddComponent&lt;UnitComponent&gt;();</span><br><span class="line">Game.Scene.AddComponent&lt;ConsoleComponent&gt;();</span><br></pre></td></tr></table></figure>
+<p>** 最后通过while循环让整个框架跑起来，线程沉睡一毫秒的作用是防止直接吃满CPU**</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">	<span class="keyword">while</span> (<span class="literal">true</span>)</span><br><span class="line">&#123;</span><br><span class="line">	<span class="keyword">try</span></span><br><span class="line">	&#123;</span><br><span class="line">		Thread.Sleep(<span class="number">1</span>);</span><br><span class="line">		OneThreadSynchronizationContext.Instance.Update();</span><br><span class="line">		Game.EventSystem.Update();</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">catch</span> (Exception e)</span><br><span class="line">	&#123;</span><br><span class="line">		Log.Error(e);</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/et-master-serverinit/">https://www.lfzxb.top/et-master-serverinit/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/GameFramework/">GameFramework</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190408145412332.png!webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/et-master-tease/" title="ET篇：master项目结构梳理"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190314214035631.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">ET篇：master项目结构梳理</div></div><div class="info-2"><div class="info-item-1">我发现先把项目结构做个梳理有利于后面的学习，所以就整理了这篇笔记 由于我能力有限，可能有些地方理解的不对，恳请各路大大指正，感激不尽 使用Rider编译器打开项目，并把项目视图调整为Solution  下面是更加详细的部分 1.Book 没看过ET Book的小伙伴应该去看看，写的非常好，这些是示例代码，不在本篇笔记范围内 2.Client ET客户端代码 Unity.Editor 里面是ET客户端所有的编辑器拓展工具，以后开发的时候我们会经常用到   AstarPathfindingProject：A*插件的编辑器拓展 BuildEditor：一键打包工具 ComponentViewEditor：Component可视化工具 ExcelExporterEditor：Excel导表工具 GlobalConfigEditor：全局配置工具 Helper：编辑器拓展工具中常用的辅助函数 ILRuntimeHelper：ILRuntime一键绑定代码 Protoc2CSEditor：从protoc一键生成cs代码 ReferenceCollectorEditor：引用收集工具 Rsyn...</div></div></div></a><a class="pagination-related" href="/et-master-message/" title="ET篇：master消息机制介绍"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190429175655.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">ET篇：master消息机制介绍</div></div><div class="info-2"><div class="info-item-1">终于到了核心部分之一了——消息机制 一般消息的流转 既然讲到消息，我们要到消息的源头——客户端 来到Unity.Hotfix的Init文件，并定位到这一句 1Game.EventSystem.Run(EventIdType.InitSceneStart); 他会执行这里的Run代码（不知道为何的去复习ETBook的EventSystem哦）  进入UILoginFactory，他是登录UI的工厂类，在这个工厂将完成一系列的操作 123456789101112 //获取资源组件，用以加载资源ResourcesComponent resourcesComponent = ETModel.Game.Scene.GetComponent&lt;ResourcesComponent&gt;();//加载UI的AB包resourcesComponent.LoadBundle(UIType.UILogin.StringToAB());//获取到登录UIGameObject bundleGameObject = (GameObject)resourcesComponent.GetAsset(UI...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/etbook/" title="ET篇：ETBook笔记汇总"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/b14.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">ET篇：ETBook笔记汇总</div></div><div class="info-2"><div class="info-item-1">1.2 为什么使用C# .net core做服务端？ GitHub原地址： 为什么使用C# .net core做服务端？ 黑体字为作者（熊猫大佬）原创，红色为个人理解 游戏服务端从早期的单服到分布式，开发越来越复杂，对稳定性，开发效率要求越来越高。开发语言的选择也逐步发生了变化，C 到 C++ 到 C++ + PYTHON 或者C++ + LUA 到现在 很多公司开始使用erlang，go，java，c#。目前是一个百花齐放的局面。 但是如果是要你重新做一个网游server，不考虑对公司或者已有的东西兼容性，你会怎么选择？我仔细想了一下这个问题，大概有这个几个方面需要考虑： 1. 语言的稳定性（致命性） 游戏服务器的特点是高负载低延时。所以一般服务端进程都是带状态的，一旦挂掉就意味着数据丢失，这点是无法容忍的。 2. 运行时热更（致命性） 游戏服务器逻辑极其复杂，很容易出现bug，但是又不能经常停服，所以热更修复bug就显得十分必要。出现错误开发人员可以立即编写代码，然后热更修复，线上用户完全感觉不到。 3. 是否有协程支持（重要性5星） 分布式服务器架构，进程与进程之间必然会有...</div></div></div></a><a class="pagination-related" href="/et-fguiandxasset/" title="ET&amp;&amp;FGUI接入xasset流程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190501110327.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-07-09</div><div class="info-item-2">ET&amp;&amp;FGUI接入xasset流程</div></div><div class="info-2"><div class="info-item-1">本文章已于2021.7.9更新，修复FGUI释放UI包时，ab释放所有权问题。感谢网友 小太阳 的提醒。 本文章已于2021.3.29更新，FGUI编辑器升级到2021.1.0，FGUI SDK升级到4.2.0，新增FGUI资源加载全异步支持，简化大量代码。感谢网友ˇ℉un . Shīne的提醒。  前言 技能系统暂时告一段落，现在要花点时间规范一下客户端这边的资源管理以及一些流程优化，这里选择轻量高效资源管理框架xasset：https://github.com/xasset/xasset 版本为：https://github.com/xasset/xasset/commit/3d4983cd24ff92a63156c8078caf34b20d2d4c02 代码量很少，一天就能看个差不多，但是质量很高，如果只追求使用的话，是可以开箱即用的。 另外我对xasset底层源码做了一些修改，主要是为了迎合我们ET传统艺能await/async样式代码，所以推荐大家直接使用我项目（下文的Moba项目）中的xasset源码 想要入门此资源管理框架的可以查看：https://www.lfzx...</div></div></div></a><a class="pagination-related" href="/et-doudizhu-run/" title="ET篇：运行斗地主Demo"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190205205414947.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：运行斗地主Demo</div></div><div class="info-2"><div class="info-item-1">环境准备： 下载斗地主Demo https://github.com/Viagi/LandlordsCore.git 准备2017.4.0版本的Unity https://unity3d.com/cn/get-unity/download/archive 下载并配置MongoDB以及Studio 3T MongoDB地址：****https://www.mongodb.com/download-center/community  选择Custom  我是在D盘新建了MongoDB文件夹来作为安装目录   这个可视化工具看个人喜好，我这里没有安装   找到电脑上的cmd.exe  复制一份到MongoDB安装目录的bin文件夹下面 打开刚刚复制的cmd.exe 执行以下命令(_dbpath后面的路径为你的MongoDB安装路径下的的data文件夹路径) 1mongod -dbpath D:\MongoDB\data 然后他可能会这样  打开浏览器,输入** http://localhost:27017/如果显示如下信息,表示连接成功**  Studio 3T的下载 https://...</div></div></div></a><a class="pagination-related" href="/gameframework-diyevent/" title="GameFramework篇：自定义事件并订阅的流程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：自定义事件并订阅的流程</div></div><div class="info-2"><div class="info-item-1">自定义事件并订阅 正如木头大佬所说  在GF里面创建和使用自定义事件还是比较容易的 这里举个例子 我们进行场景切换,要加载完下一场景所有资源才能切换吧,不然黑屏是什么鬼 这里我是切换场景后,开始生成多个实体,所有实体生成完毕,关闭过渡UI,显示游戏界面 创建  这个事件类里面的变量可以随意定义(至少要包括Clear()方法和Id变量) 其中Fill()函数是用来填充事件类里面的数据的(可有可无,视情况而定),将LoadNextResourcesSuccess设为true 定义好了事件,我们要怎么使用呢 先订阅  HideUI为回调函数的名称,参数必须为(委托的原因)    在最后一行执行Fire,意为抛出事件,所有订阅这个事件的回调函数都将被执行 最后,用完了,要放回去,取消订阅(在UI关闭的时候)  总结 在GF里自定义事件主要分为以下步骤  创建自定义事件 订阅自定义事件并指定回调函数 达成条件,抛出事件 取消订阅 其实我们不难发现,GF的内置事件执行流程也和这大致一样,不过更复杂点就是了,大家可以自行查看内置事件,循着源码过一遍,就理解了   </div></div></div></a><a class="pagination-related" href="/gameframework-base/" title="GameFramework篇：框架基本理解和源码下载"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：框架基本理解和源码下载</div></div><div class="info-2"><div class="info-item-1">先偷偷观察一下E神的GitHub  只有三个项目，尽管如此，我还是感受到来自E神的压迫感。 我们再来看一下官网的描述  什么个意思呢？ 我们先看UGF 可以看到有GameFramework的dll文件，那么它是从哪来的呢？  它来自GameFramework  再看UGF的Scripts，里面就是UnityGameFramework.Runtime和UnityGameFramework.Editor模块啦  我们可以这样理解，GameFramework是完全和Unity分离的的，由它衍生出与Unity相交互的UnityGameFramework，这也是我们在Unity中使用GameFramework框架必不可少的部分，我们可以把UGF当成平时使用的插件。最后UGF和Unity相结合，就做出游戏啦~ 然后就是演示Demo——StarForce（一目了然） 然后我们要把这三个项目都下载 为什么全都要呢，因为我们平时学习肯定要顺藤摸瓜来看代码实现而，GF是GF.dll的来源，也就是最终源码，相对于反编译dll，我更习惯于直接看源码~所以三个都不能少 打开StarForce项目，如果有报...</div></div></div></a><a class="pagination-related" href="/gameframework-starforce/" title="GameFramework篇：StarForce学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：StarForce学习笔记</div></div><div class="info-2"><div class="info-item-1">流程模块 StarForce流程讲解 环境：StarForce matser 3.1.7 之前我们就提到过流程贯穿游戏的始终，那么今天就来详细的说一下流程模块  ProcedureLauch为游戏入口流程，我们就来看他是什么，他做了什么 一眼看见他继承自ProcedureBase 我们一层层跟进，发现他和状态机有着不可分割的关系，每个流程都是一个状态 他们的关系大体上可以用这个UML图解释，当然这只是非常非常简略的版本，如果要把所有特性都列出来，那将会很庞大的。推荐大家仔细研读这部分代码，体会编程的乐趣与开发者的智慧。  我们需要知道，由基层的Fsm更新来驱动状态机状态的更新，状态机状态的切换也会传递到底层的Fsm上，即一切状态都被Fsm持有与维护 我们就以ProcedureChangeScene这个流程类来熟悉上面的流程图  进入流程时，订阅了一些事件，并且为切换场景做好了准备 流程状态更新，如果场景加载已经完成，就根据需要切换场景。其中的procedureOwner为流程持有者，为GameFramework.Fsm.IFsm&lt;GameFramework.Procedur...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">烟雨迷离半世殇</div><div class="author-info-description">愿天下心诚剑士人人可剑开天门！</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">212</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="card-info-social-icons"><a class="social-icon" href="https://gitee.com/NKG_admin" target="_blank" title="Gitee"><i class="iconfont icon-mayun"></i></a><a class="social-icon" href="https://github.com/wqaetly" target="_blank" title="Github"><i class="iconfont icon-github"></i></a><a class="social-icon" href="https://space.bilibili.com/33595745" target="_blank" title="Bilibili"><i class="iconfont icon-bilibili-line"></i></a><a class="social-icon" href="https://music.163.com/#/user/home?id=286997681" target="_blank" title="网易云音乐"><i class="iconfont icon-wangyiyunyinle"></i></a><a class="social-icon" href="https://www.zhihu.com/people/gu-gao-de-wang-1" target="_blank" title="知乎"><i class="iconfont icon-zhihu"></i></a><a class="social-icon" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=QHF3d3hxc3lzcnEAMTFuIy8t" target="_blank" title="QQ邮箱"><i class="iconfont icon-youxiang"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">NKG烟雨阁：<a href="https://uni.lfzxb.top" target="_blank" rel="noopener">https://uni.lfzxb.top</a> 内含多个实用工具，欢迎游玩！</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/hoc-frame-sync/" title="《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解"/ loading='lazy'></a><div class="content"><a class="title" href="/hoc-frame-sync/" title="《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解">《混沌与秩序之英雄战歌》帧同步战斗系统技术拆解</a><time datetime="2026-08-31T00:00:00.000Z" title="更新于 2026-08-31 00:00:00">2026-08-31</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ai-model-jailbreak-guide/" title="AI 模型破甲使用指南"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="AI 模型破甲使用指南"/ loading='lazy'></a><div class="content"><a class="title" href="/ai-model-jailbreak-guide/" title="AI 模型破甲使用指南">AI 模型破甲使用指南</a><time datetime="2026-08-15T00:00:00.000Z" title="更新于 2026-08-15 00:00:00">2026-08-15</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/leanclr-dotnet10/" title="LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时"/ loading='lazy'></a><div class="content"><a class="title" href="/leanclr-dotnet10/" title="LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时">LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时</a><time datetime="2026-07-06T00:00:00.000Z" title="更新于 2026-07-06 00:00:00">2026-07-06</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/ai-vibe-coding/" title="Vibe Coding心得"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Vibe Coding心得"/ loading='lazy'></a><div class="content"><a class="title" href="/ai-vibe-coding/" title="Vibe Coding心得">Vibe Coding心得</a><time datetime="2026-07-01T00:00:00.000Z" title="更新于 2026-07-01 00:00:00">2026-07-01</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/the-coming-loop/" title="即将到来的循环"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="即将到来的循环"/ loading='lazy'></a><div class="content"><a class="title" href="/the-coming-loop/" title="即将到来的循环">即将到来的循环</a><time datetime="2026-06-24T00:00:00.000Z" title="更新于 2026-06-24 00:00:00">2026-06-24</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '3d2b36b8d96adc490395dc4951c67d2a'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"et-master-serverinit","contentHash":"ba49d26581c5e5ca3cb62e4888f27b98690fcc44a3c0de8d8fe0ba1a79e3a985"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>

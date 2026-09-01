@@ -1,0 +1,708 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity Shader入门精要学习笔记：Unity Shader基础 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="Unity Shader概述 材质和Unity Shader 在Unity中需要配合使用材质和Unity Shader才能达到需要的效果 Unity Shader基础：ShaderLab 什么是ShaderLab Unity Shader是Unity为开发者提供的高层级的渲染抽象层。 在Unity中，所有的Unity Shader都是使用ShaderLab来编写的。 ShaderLab是Unity">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity Shader入门精要学习笔记：Unity Shader基础">
+<meta property="og:url" content="https://www.lfzxb.top/shader-unity-shader-base/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="Unity Shader概述 材质和Unity Shader 在Unity中需要配合使用材质和Unity Shader才能达到需要的效果 Unity Shader基础：ShaderLab 什么是ShaderLab Unity Shader是Unity为开发者提供的高层级的渲染抽象层。 在Unity中，所有的Unity Shader都是使用ShaderLab来编写的。 ShaderLab是Unity">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828180847.png!webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="图形渲染">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828180847.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unity Shader入门精要学习笔记：Unity Shader基础",
+  "url": "https://www.lfzxb.top/shader-unity-shader-base/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190828180847.png!webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/shader-unity-shader-base/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity Shader入门精要学习笔记：Unity Shader基础',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">212</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190828180847.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Unity Shader入门精要学习笔记：Unity Shader基础</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Unity Shader入门精要学习笔记：Unity Shader基础</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/%E7%90%86%E8%AE%BA%E7%9F%A5%E8%AF%86/">理论知识</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>3分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/shader-unity-shader-base/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden></div><h2 id="Unity-Shader概述">Unity Shader概述</h2>
+<h3 id="材质和Unity-Shader">材质和Unity Shader</h3>
+<p>在Unity中需要配合使用材质和Unity Shader才能达到需要的效果</p>
+<h2 id="Unity-Shader基础：ShaderLab">Unity Shader基础：ShaderLab</h2>
+<h4 id="什么是ShaderLab">什么是ShaderLab</h4>
+<p>Unity Shader是Unity为开发者提供的高层级的渲染抽象层。<br>
+在Unity中，所有的Unity Shader都是使用ShaderLab来编写的。<br>
+ShaderLab是Unity提供的编写Unity Shader的一种说明性语言。<br>
+Unity在背后会根据使用的平台来把这些结构编译成真正的代码和Shader文件，而开发者只需要和Unity Shader打交道即可。</p>
+<h2 id="Unity-Shader的结构">Unity Shader的结构</h2>
+<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">Shader &quot;Shader的名字，通过增加&#x27;/&#x27;来细分种类&quot;</span><br><span class="line">&#123;</span><br><span class="line">    Properties</span><br><span class="line">    &#123;</span><br><span class="line">		<span class="comment">//Name:属性的名字</span></span><br><span class="line">		<span class="comment">//display name：显示在材质面板上的名字</span></span><br><span class="line">		<span class="comment">//PropertyType：类型</span></span><br><span class="line">		<span class="comment">//DefaultValue：默认值</span></span><br><span class="line">		Name(&quot;display name&quot;,PropertyType) = DefaultValue</span><br><span class="line">    &#125;</span><br><span class="line">    SubShader</span><br><span class="line">    &#123;</span><br><span class="line">		<span class="comment">//可选标签，例如：Tags&#123;&quot;Queue&quot;=&quot;Transparent&quot;&#125;</span></span><br><span class="line">		[Tags]</span><br><span class="line">		<span class="comment">//可选状态</span></span><br><span class="line">		[RenderSetup]</span><br><span class="line">		<span class="comment">//通道，每个通道定义了一次完整的渲染流程，但是如果数目过多会造成渲染性能的下降。</span></span><br><span class="line">		Pass</span><br><span class="line">		&#123;</span><br><span class="line">			[Name]</span><br><span class="line">			[Tags]</span><br><span class="line">			[RenderSetup]</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="comment">//其他通道</span></span><br><span class="line">		<span class="comment">//Other Pass</span></span><br><span class="line">    &#125;</span><br><span class="line">    Fallback &quot;VertexLit&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Unity-Shader名称">Unity Shader名称</h3>
+<p>通过增加’/'来细分种类</p>
+<h3 id="材质与Unity-Sahder的桥梁Properties">材质与Unity Sahder的桥梁Properties</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828180847.png!webp" alt="" loading='lazy'></p>
+<h3 id="SubShader">SubShader</h3>
+<p>每个Unity Shader可以包含多个SubShader语义块，但至少要有一个。<br>
+当Unity加载这个Shader时，会扫描所有SubShader语义块，然后选择第一个能在目标平台运行的SubShader，如果都不支持的话，Unity就会使用Fallback语义指定的Unity Shader。</p>
+<h4 id="状态设置">状态设置</h4>
+<p>这些指令可以设置显卡的各种状态，例如是否开启混合/深度测试等。<br>
+<img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828182445.png!webp" alt="" loading='lazy'><br>
+当在SubShader块中设置了上述渲染状态时。<code>将会应用到所有的Pass。 如果不想这样，我们可以在Pass中单独设置状态。</code></p>
+<h4 id="标签">标签</h4>
+<p>SubShader的标签是一个<code>键值对</code>。键值都是字符串类型。<br>
+<img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828184214.png!webp" alt="" loading='lazy'><br>
+注意，上述标签只可以在SubShader中声明，不可以在Pass中声明，Pass块虽然也可以定义标签，但是这些标签是不同于SubShader的标签类型。</p>
+<h4 id="Pass语义块">Pass语义块</h4>
+<p>Name：在用<code>UserPass</code>命令时必须使用大写形式的名字。<br>
+Tags：也是用于高速渲染引擎我们希望怎样来渲染该物体。<br>
+<img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ%E6%88%AA%E5%9B%BE20190828184628.png!webp" alt="" loading='lazy'><br>
+UsePass：用以复用其他UnityShader的Pass<br>
+GrabPass：负责抓取屏幕并将结果存储在一张纹理中，用于后续的Pass处理。</p>
+<h4 id="Fallback">Fallback</h4>
+<p>Fallback “Name”<br>
+Fallback Off<br>
+<code>注意，为每个Unity Shader正确设置Fallback是非常重要的，这会影响阴影投射。</code></p>
+<h4 id="还有其他的">还有其他的</h4>
+<p>可以使用CostumEditor语义来拓展编辑界面。（注意，和平时拓展Inspector面板不一样哦）。</p>
+<h2 id="Unity-Shader的形式">Unity Shader的形式</h2>
+<h3 id="表面着色器（Surface-Shader）">表面着色器（Surface Shader）</h3>
+<p>Unity提供的一种着色器代码类型，是一个黑箱子，Unity在后面还是会把他转换成顶点片元着色器。</p>
+<h3 id="顶点-片元着色器（Vertex-Fragment-Shader）">顶点/片元着色器（Vertex/Fragment Shader）</h3>
+<p>它更复杂，但灵活性也更高。</p>
+<h3 id="固定函数着色器">固定函数着色器</h3>
+<p>为了支持老式设备，已被淘汰。</p>
+<h2 id="答疑解惑">答疑解惑</h2>
+<h3 id="Unity-Shader-真正的Shader">Unity Shader != 真正的Shader</h3>
+<ul>
+<li>在传统Shader里，我们只可以编写特定类型Shader，而在Unity Shader里，我们可以在同一个文件里同时包含需要的顶点着色器和片元着色器代码。</li>
+<li>在传统Shader里，我们无法设置一些渲染设置，例如是否开启混合，深度测试等。在Unity Shader中，我们通过一行特定指令就可以完成这些设置。</li>
+<li>在传统Shader里，我们需要编写冗长的代码来设置着色器的输入和输出，在Unity Shader中，我们只需要在特定语句块中声明一些属性，就可以依靠材质来方便地改变这些属性。</li>
+</ul>
+<h3 id="Unity-Shader和CG-HLSL之间的关系">Unity Shader和CG/HLSL之间的关系</h3>
+<p>Unity Shader是用ShaderLab编写的，但是对于表面着色器和顶点片元着色器，我们可以在ShaderLab内部嵌套CG/HLSL语言来编写这些着色器代码。这些CG/HLSL代码是嵌套在CGPROGRAM和ENDCG之间的。在Unity中，CG和HLSL是等价的。<br>
+通常，CG代码片段位于Pass语义块内部的。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/shader-unity-shader-base/">https://www.lfzxb.top/shader-unity-shader-base/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%9B%BE%E5%BD%A2%E6%B8%B2%E6%9F%93/">图形渲染</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190828180847.png!webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/socketbase/" title="Socket学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">Socket学习笔记</div></div><div class="info-2"><div class="info-item-1">源代码： https://gitee.com/NKG_admin/SocketTestDemo Socket 基础知识  https://blog.csdn.net/fighting_xa/article/details/50623571 http://liuliliujian.iteye.com/blog/898342 https://baike.baidu.com/item/socket/281150?fr=aladdin 看不懂没关系，因为我也看不懂。（旁白：滚！）  既然谈到Socket，就得牵扯到服务器端，什么是服务器端呢？ 个人理解：服务器端就是自己的代码，让它跑在云主机（云服务器上，比如阿里云，亚马逊云这些）。而这些，其实就是在云端买了一个主机，它和你正在使用的电脑一样，有桌面，有系统，有蜘蛛纸牌。。。 不同的是，它有固定的公网IP，而我们电脑公网IP是变化的（所以如果要把自己电脑变成服务器的话需要用花生壳做内网穿透）。 所以我们要把代码里绑定IP和连接IP的地方改成服务器的公网IP就行了。然后只需要把你服务器代码生成的exe文件在上面打开。让它365天没日没夜开着...</div></div></div></a><a class="pagination-related" href="/shader-render-pipeline/" title="Unity Shader入门精要学习笔记：渲染流水线"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20191009225439.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Unity Shader入门精要学习笔记：渲染流水线</div></div><div class="info-2"><div class="info-item-1">前言 本系列博客记录学习《Unity Shader入门精要》（冯乐乐著）中的笔记和感悟。 渲染流水线 综述 渲染流水线的最终目的在于生成或者说是渲染一张二维纹理。 什么是渲染流水线 渲染流水线的任务在于：从一系列的的顶点数据，纹理等信息出发，把这些信息最终转换成一张人眼可以看到的图像。而这个工作通常是由CPU和GPU共同完成的。 渲染流程分为三个阶段： 应用阶段 主要提供渲染图元（点，线，三角面），以及渲染状态（顶点片元着色器，光源属性，材质等），我们开发者在这一阶段有绝对控制权。 几何阶段 处理所有和我们要绘制的几何相关的事情（例如应用阶段提供的渲染图元），决定需要绘制的图元，如何绘制图元，在哪里绘制图元。这一阶段在GPU进行。 一个重要任务是把顶点坐标变换到屏幕空间中，再交给光栅器进行处理。 这一阶段会输出屏幕空间的二维顶点坐标，每个顶点对应的深度值，着色等相关信息，并传递给下一个阶段。 光栅化阶段 使用几何阶段传递的数据来产生屏幕上的像素，并渲染出最后的图像。 这一阶段也是在GPU上运行。 光栅化的主要任务是决定每个渲染图元中的哪些像素应该被绘制在屏幕上，他需要对上一个阶段...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/unity-shader-usenoise/" title="Unity Shader入门精要学习笔记：使用噪声"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/10.gif!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-06-19</div><div class="info-item-2">Unity Shader入门精要学习笔记：使用噪声</div></div><div class="info-2"><div class="info-item-1">消融效果 常见于游戏中角色死亡，地图烧毁等效果，这些效果中，消融往往从不同区域开始，并向看似随机的方向扩张，最后整个物体消失不见。 下面是来自《英魂之刃口袋版》的一个击杀特效：  原理非常简单，就是噪声纹理+透明度测试。我们使用对噪声纹理采样的结果和某个控制消融程度的阈值比较，如果小于阈值，就是用clip函数把它对应的像素裁剪掉，也就是被“烧毁的部分”，镂空区域边缘的烧焦效果则是将两种颜色混合，再用pow函数处理后，与原纹理颜色混合后的结果。 12345678910111213141516171819202122232425262728293031323334353637383940414243using UnityEngine;using System.Collections;/// &lt;summary&gt;/// 控制消融动画的辅助脚本/// &lt;/summary&gt;public class BurnHelper : MonoBehaviour&#123;    public Material material;    [Range(0.01f, 1.0f)] ...</div></div></div></a><a class="pagination-related" href="/unity-shader-unityshaderstudygo/" title="Unity Shader入门精要学习笔记：开始Unity Shader学习之旅"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/08/QQ截图20190831102907.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-06-19</div><div class="info-item-2">Unity Shader入门精要学习笔记：开始Unity Shader学习之旅</div></div><div class="info-2"><div class="info-item-1">一个最简单的顶点/片元着色器 顶点/片元着色器的基本结构 123456789101112131415161718192021222324252627282930// Upgrade NOTE: replaced &#x27;mul(UNITY_MATRIX_MVP,*)&#x27; with &#x27;UnityObjectToClipPos(*)&#x27;shader &quot;Unity Shader Book/Chapter 5/Simple Shader&quot;&#123;    SubShader    &#123;        Pass         &#123;            CGPROGRAM            //表示vert函数是顶点着色器代码            #pragma vertex vert             //表示fragment函数是片元着色器代码            #pragma fragment frag                        float4 vert(float4 v : PO...</div></div></div></a><a class="pagination-related" href="/unity-shader-pbs-base/" title="Unity Shader入门精要学习笔记：基于物理的渲染"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/12/QQ截图20191221090146.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-06-19</div><div class="info-item-2">Unity Shader入门精要学习笔记：基于物理的渲染</div></div><div class="info-2"><div class="info-item-1">引言 随着计算机的处理能力越来越强，人们开始考虑使用更加复杂的算法来渲染更加真实的画面。 在二十世纪八十年代左右， 基于物理的渲染技术（Physically Based Shading, PBS） 首次被引入图形学的正统研究中，学者们提出了使用光线追踪的方法来渲染全局光照，由此打开了精确渲染光线传播的大门。 在实时渲染领域， 人们也发现了这种基于物理的光照模型的巨大优势。 在这之前， Lambert光照模型、 Phong 光照模型和 Blinn-Phong 光照模型等经验模型占据了主流。 然而，这种不满足能量守恒的光照模型使得美术人员需要花费大量的时间在参数调节上。 尤其是， 美术人员往往好不容易为一个物体调节好了所有参数，使得它在当前的光照条件下看起来是满意的。然而， 一旦光照环境发生了变化， 这一切都得从头再来。 因此， 近年来游戏从业者开始着手把基于物理的光照模型应用于实时渲染中。 PBS的理论和数学基础 光是什么 在物理学中，光是一种电磁波。首先，光由太阳或其他光源中被发射出来，然后与场景中的对象相交，一些光线被吸收（absorption），而另一些则被散射（scatte...</div></div></div></a><a class="pagination-related" href="/projects-gpu-driven/" title="ProjectS中的GPU Driven"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2023-05-22</div><div class="info-item-2">ProjectS中的GPU Driven</div></div><div class="info-2"><div class="info-item-1">架构 前阵子敲定了ProjectS GI方案的大体架构，但只对着那几个Cube可看不出落地效果，也没法做针对性的优化，所以准备启动地形相关的开发工作 立项之时就考虑到美术成本问题，所以采用程序化生成作为构建ProjectS世界的主要手段，程序化生成意味着大量重复instance和大地形，这时候就得利用GPU Driven来作为整个PCG系统的底层支柱之一了，我们常说的GPU Driven包括以下几个方面 地形渲染 制作  Houdini 生成高度图+Mask VS 直接生成Mesh  Houdini生成高度图+Mask方案对于Houdini来说更加轻量，不需要处理地形Mesh 直接生成最终Mesh可以离线对Mesh做处理，包括岩壁重展UV，LOD计算等 但对于ProjectS来说，没有太特殊的需求对Mesh做处理，一些岩壁拉伸问题也可以通过处理贴图渲染进行解决，最终选用高度图方案    渲染  DrawInstanceIndirectly通用Quad Mesh + LOD + 高度图采样 实现地形渲染 VS Mesh Cluster Rendering + LOD 实现地形渲染 ...</div></div></div></a><a class="pagination-related" href="/projects-vxgi/" title="ProjectS中的全局光照系统（开发中）"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-08-13</div><div class="info-item-2">ProjectS中的全局光照系统（开发中）</div></div><div class="info-2"><div class="info-item-1">文章已于2024.2.18重写，去掉老旧的传统GI方案，准备全面转向VXGI  前言 一开始还是使用的lightmap+lightprobe的传统GI方案，但其实这套方案在大世界项目中并不适用，主要有以下几个缺陷  数据量大，烘焙慢 动态物体只能接受漫反射信息，不能影响场景和其他动态物体  其中第二点尤其致命 当前较为流行的大世界GI方案有以下几大类  半实时Precomputed Radiance Transfer Global Illumination（PRTGI），半动态GI方案，多为离线烘焙一部分场景光照数据，运行时实时采样进行光照计算 动态漫反射全局光照（Dynamic Diffuse Global Illumination）（DDGI），PRTGI的全实时版本，把烘焙放在运行时，类似的还有SurfelGI Voxel Global Illumination（VXGI），体素+RayCast流派  其中VXGI是将场景体素化，并在体素存储几何和材质信息，从而实现实时ReLight 我们都知道，对于大世界来说，游戏的寻路和碰撞也是很令人头痛的一件事，尤其是在Unity上 ...</div></div></div></a><a class="pagination-related" href="/unity-shader-texturebase/" title="Unity Shader入门精要学习笔记：基础纹理"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/10/QQ截图20191004231336.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-06-19</div><div class="info-item-2">Unity Shader入门精要学习笔记：基础纹理</div></div><div class="info-2"><div class="info-item-1">前言 纹理最初的目的就是使用一张图片来控制模型的外观。 在美术人员建模的时候，通常会在建模软件中利用纹理展开技术，把纹理映射坐标存储在每个顶点上。纹理映射坐标定义了该顶点在纹理中对应的2D坐标。 通常这些坐标使用一个二维变量(u,v)来表示，其中u是横向坐标，而v是纵向坐标，因此纹理映射坐标也被称为UV坐标。 但顶点UV坐标的范围通常都被归一化到[0,1]范围内。纹理采样时使用的纹理坐标不一定是在[0,1]范围内。实际上，这种不在[0,1]范围内的纹理坐标又是会非常有用，与之关系紧密的是纹理的平铺模式，它将决定渲染引擎在遇到不在[0,1]范围内的纹理坐标时如何进行纹理采样。 单张纹理 我们通常会使用一张纹理来代替物体的漫反射颜色。 实践 我们使用Blinn-Phong光照模型来计算光照。 1234567891011121314151617181920212223242526272829303132333435363738394041424344454647484950515253545556575859606162636465666768697071727374757677787...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Unity-Shader%E6%A6%82%E8%BF%B0"><span class="toc-number">1.</span> <span class="toc-text">Unity Shader概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%90%E8%B4%A8%E5%92%8CUnity-Shader"><span class="toc-number">1.1.</span> <span class="toc-text">材质和Unity Shader</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unity-Shader%E5%9F%BA%E7%A1%80%EF%BC%9AShaderLab"><span class="toc-number">2.</span> <span class="toc-text">Unity Shader基础：ShaderLab</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFShaderLab"><span class="toc-number">2.0.1.</span> <span class="toc-text">什么是ShaderLab</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unity-Shader%E7%9A%84%E7%BB%93%E6%9E%84"><span class="toc-number">3.</span> <span class="toc-text">Unity Shader的结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Unity-Shader%E5%90%8D%E7%A7%B0"><span class="toc-number">3.1.</span> <span class="toc-text">Unity Shader名称</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%9D%90%E8%B4%A8%E4%B8%8EUnity-Sahder%E7%9A%84%E6%A1%A5%E6%A2%81Properties"><span class="toc-number">3.2.</span> <span class="toc-text">材质与Unity Sahder的桥梁Properties</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#SubShader"><span class="toc-number">3.3.</span> <span class="toc-text">SubShader</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E7%8A%B6%E6%80%81%E8%AE%BE%E7%BD%AE"><span class="toc-number">3.3.1.</span> <span class="toc-text">状态设置</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%A0%87%E7%AD%BE"><span class="toc-number">3.3.2.</span> <span class="toc-text">标签</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Pass%E8%AF%AD%E4%B9%89%E5%9D%97"><span class="toc-number">3.3.3.</span> <span class="toc-text">Pass语义块</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Fallback"><span class="toc-number">3.3.4.</span> <span class="toc-text">Fallback</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E8%BF%98%E6%9C%89%E5%85%B6%E4%BB%96%E7%9A%84"><span class="toc-number">3.3.5.</span> <span class="toc-text">还有其他的</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Unity-Shader%E7%9A%84%E5%BD%A2%E5%BC%8F"><span class="toc-number">4.</span> <span class="toc-text">Unity Shader的形式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%A1%A8%E9%9D%A2%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%88Surface-Shader%EF%BC%89"><span class="toc-number">4.1.</span> <span class="toc-text">表面着色器（Surface Shader）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E9%A1%B6%E7%82%B9-%E7%89%87%E5%85%83%E7%9D%80%E8%89%B2%E5%99%A8%EF%BC%88Vertex-Fragment-Shader%EF%BC%89"><span class="toc-number">4.2.</span> <span class="toc-text">顶点&#x2F;片元着色器（Vertex&#x2F;Fragment Shader）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9B%BA%E5%AE%9A%E5%87%BD%E6%95%B0%E7%9D%80%E8%89%B2%E5%99%A8"><span class="toc-number">4.3.</span> <span class="toc-text">固定函数着色器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%AD%94%E7%96%91%E8%A7%A3%E6%83%91"><span class="toc-number">5.</span> <span class="toc-text">答疑解惑</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Unity-Shader-%E7%9C%9F%E6%AD%A3%E7%9A%84Shader"><span class="toc-number">5.1.</span> <span class="toc-text">Unity Shader !&#x3D; 真正的Shader</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unity-Shader%E5%92%8CCG-HLSL%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="toc-number">5.2.</span> <span class="toc-text">Unity Shader和CG&#x2F;HLSL之间的关系</span></a></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '83589ac6e0f6149682bdcdf777287dac'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"shader-unity-shader-base","contentHash":"74786f217f42b4462b3fed4bf55878bcb29751b513848f0b931b8fbdee4cc45b"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>

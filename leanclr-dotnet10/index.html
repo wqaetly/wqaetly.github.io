@@ -1,0 +1,1360 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="对普通 C# 项目来说，切到新版本通常就是改个 SDK、重新编译一下。LeanCLR 这种自研 runtime 会更底层一些：它要看懂我们写的业务代码，也要看懂 .NET 10 基础类库到底在向 runtime 要什么。 LeanCLR 现在已经有自己的 metadata loader、类型系统、对象模型、解释器、GC、异常、委托、泛型、基础反射和 AOT 生成框架。接入 .NET 10 的重点，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时">
+<meta property="og:url" content="https://www.lfzxb.top/leanclr-dotnet10/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="对普通 C# 项目来说，切到新版本通常就是改个 SDK、重新编译一下。LeanCLR 这种自研 runtime 会更底层一些：它要看懂我们写的业务代码，也要看懂 .NET 10 基础类库到底在向 runtime 要什么。 LeanCLR 现在已经有自己的 metadata loader、类型系统、对象模型、解释器、GC、异常、委托、泛型、基础反射和 AOT 生成框架。接入 .NET 10 的重点，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp">
+<meta property="article:published_time" content="2026-07-06T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-07-06T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="游戏框架">
+<meta property="article:tag" content="LeanCLR">
+<meta property="article:tag" content="NKGFramework">
+<meta property="article:tag" content="CLR">
+<meta property="article:tag" content=".NET10">
+<meta property="article:tag" content="跨引擎框架">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时",
+  "url": "https://www.lfzxb.top/leanclr-dotnet10/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp",
+  "datePublished": "2026-07-06T00:00:00.000Z",
+  "dateModified": "2026-07-06T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/leanclr-dotnet10/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/33ec68b7fe1bb742.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">256</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">212</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">57</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">LeanCLR 适配 .NET 10：一个完全跨平台，跨引擎的C#运行时</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-07-06T00:00:00.000Z" title="发表于 2026-07-06 00:00:00">2026-07-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-07-06T00:00:00.000Z" title="更新于 2026-07-06 00:00:00">2026-07-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">10.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>41分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/leanclr-dotnet10/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-07-06 00:00:00&quot;}" hidden></div><p>对普通 C# 项目来说，切到新版本通常就是改个 SDK、重新编译一下。LeanCLR 这种自研 runtime 会更底层一些：它要看懂我们写的业务代码，也要看懂 <code>.NET 10</code> 基础类库到底在向 runtime 要什么。</p>
+<p>LeanCLR 现在已经有自己的 metadata loader、类型系统、对象模型、解释器、GC、异常、委托、泛型、基础反射和 AOT 生成框架。接入 <code>.NET 10</code> 的重点，是做一层清晰的 <strong>BCL / runtime contract 适配</strong>：让 LeanCLR 能在明确边界内跑 <code>net10.0</code> 纯逻辑程序集；暂时跑不了的 BCL 能力，也给出清楚的诊断，问题能早一点暴露出来。</p>
+<h2 id="为什么专门适配-NET-10">为什么专门适配 .NET 10</h2>
+<p>如果只是想“跑一点 C# 逻辑”，LeanCLR 兼容旧版 corlib，或者自己做一套很小的基础库，也能用。目标一旦变成商业项目、跨引擎迁移、长期维护，<code>.NET 10</code> 就成了新的基线。后面的工具、库、语言特性和项目习惯，都会慢慢围着它走。</p>
+<p>第一，<code>.NET 10</code> 是 LTS。按照 Microsoft 的 <a target="_blank" rel="noopener" href="https://devblogs.microsoft.com/dotnet/announcing-dotnet-10/">.NET 10 发布说明</a> 和 <a target="_blank" rel="noopener" href="https://devblogs.microsoft.com/dotnet/dotnet-8-9-end-of-support/">.NET 8 / .NET 9 生命周期公告</a>，<code>.NET 10</code> 会长期支持，<code>.NET 8</code> 和 <code>.NET 9</code> 会在 2026 年 11 月 10 日结束支持。LeanCLR 盯住一个 LTS 做 profile，可以少很多“刚适配完又要迁移”的麻烦，也方便商业项目安排工具链、CI、依赖审计和发布节奏。</p>
+<p>第二，<code>.NET 10</code> 对应当前这一代 C#、SDK、BCL 和 runtime contract。<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/dotnet/csharp/whats-new/csharp-14">C# 14</a> 有 extension members、field-backed properties、null-conditional assignment、更多 <code>Span&lt;T&gt;</code> 隐式转换；<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/sdk">.NET 10 SDK</a> 也在继续改善 tool、restore、publish、native AOT 和诊断体验。这些东西 LeanCLR 第一阶段未必要完整支持，它们会影响我们写代码的方式、编译出来的 metadata，以及最后会调用到哪些 BCL 入口。对齐 <code>.NET 10</code> 以后，我们就可以继续用现代 C# 写纯逻辑 DLL。</p>
+<p>第三，<code>.NET 10</code> 的 <a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/dotnet/core/whats-new/dotnet-10/runtime">runtime</a> 和 BCL 已经代表了现代 .NET 的很多默认形态：对象模型、反射模型、泛型、Span/Memory、async、source generator、AOT 友好 API、安全库。LeanCLR 可以先不追 CoreCLR 的 JIT、线程池、<a target="_blank" rel="noopener" href="http://ASP.NET">ASP.NET</a> 或完整系统库，先弄清楚现代 BCL 会向 runtime 提哪些要求。单独做一个 <code>coreclr-net10</code> profile，就是把这些要求画成一张地图：哪些 LeanCLR 自己接，哪些交给宿主 bridge，哪些直接报 NotSupported。</p>
+<p>最后，这个选择也直接服务后面的引擎适配。AI 可以帮我们把代码从一个引擎迁到另一个引擎。迁完之后，还需要一个稳定、现代、能部署的托管运行时接住它。<code>.NET 10</code> 给业务代码一个足够新的语言和库基线，LeanCLR 再把这条基线收敛成一个精简可控的 runtime profile。这样，引擎适配模块面对的是一条明确的 <code>net10.0</code> 托管逻辑通道。</p>
+<p>如果我们平时主要写业务层 C#，下面先垫几个基础概念。搞清楚这些，再看后面的架构图会轻松很多。</p>
+<h2 id="C-程序会先变成-IL">C# 程序会先变成 IL</h2>
+<p>C# 源码经过 <code>dotnet build</code> 后，通常会生成 <code>.dll</code> 或 <code>.exe</code> 托管程序集。这个程序集里最重要的两类内容是：</p>
+<ul>
+<li><code>IL</code>：Intermediate Language，中间语言。一组面向 .NET runtime 的指令。</li>
+<li><code>metadata</code>：描述类型、字段、方法、泛型、特性、程序集引用等信息的数据表。</li>
+</ul>
+<p>可以把程序集理解成“代码指令 + 自我介绍”。runtime 加载它以后，先看 metadata，知道里面有哪些类型、字段、方法，再按 IL 指令去执行方法体。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;C# source&quot;] --&gt; B[&quot;dotnet build&quot;]
+    B --&gt; C[&quot;托管程序集 .dll / .exe&quot;]
+    C --&gt; D[&quot;IL 指令&quot;]
+    C --&gt; E[&quot;metadata: 类型 / 方法 / 字段 / 引用&quot;]
+    D --&gt; F[&quot;runtime 执行&quot;]
+    E --&gt; F</code></pre>
+<p>所以 LeanCLR 要跑一个 C# 程序，最基础的能力是加载程序集、读取 metadata、解释或编译 IL、创建对象、调用方法，再把异常、GC、反射这些运行时状态管起来。C# 语法在编译阶段已经处理完了。</p>
+<h2 id="Runtime-和-BCL-分别负责什么">Runtime 和 BCL 分别负责什么</h2>
+<p>日常写 C# 时，我们会直接用 <code>object</code>、<code>string</code>、<code>List&lt;T&gt;</code>、<code>Task</code>、<code>File</code>、<code>Console</code>、<code>Type</code> 这些类型。它们大多来自 .NET 的基础类库，也就是 BCL。</p>
+<p>BCL 需要 runtime 配合，很多底层能力要找 runtime 帮忙。例如：</p>
+<ul>
+<li><code>object.GetType()</code> 需要 runtime 知道某个对象真实的运行时类型。</li>
+<li><code>new string(...)</code> 需要 runtime 按字符串对象布局分配和初始化内存。</li>
+<li><code>Array.GetLength()</code> 需要 runtime 读取数组对象头里的长度。</li>
+<li><code>Type.GetMethods()</code> 需要 runtime 能把 metadata 转成反射对象。</li>
+<li><code>GC.Collect()</code> 需要 runtime 真的执行对象扫描和回收。</li>
+<li><code>FileStream</code>、<code>Console</code> 这类 API 可能需要进入操作系统或宿主平台。</li>
+</ul>
+<p>两者的分工大致是：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>负责什么</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>业务程序集</td>
+<td>项目自己的业务逻辑</td>
+<td>游戏逻辑、工具代码、框架核心 DLL</td>
+</tr>
+<tr>
+<td>BCL</td>
+<td>.NET 基础类型和库 API</td>
+<td><code>System.String</code>、<code>System.Collections</code>、<code>System.Reflection</code></td>
+</tr>
+<tr>
+<td>runtime</td>
+<td>执行 IL，管理对象、类型、GC、异常、线程、反射和 native 边界</td>
+<td>LeanCLR、CoreCLR、自研托管运行时</td>
+</tr>
+<tr>
+<td>宿主 / OS</td>
+<td>提供平台能力</td>
+<td>文件、控制台、Unity/Godot 主线程 API</td>
+</tr>
+</tbody>
+</table>
+<p>所以“能编译”和“能运行”是两回事。编译器只需要 reference assemblies 来确认 API 存在；跑起来时，runtime 还要满足 BCL 对对象布局、类型系统、反射、GC 和平台能力的假设。</p>
+<h2 id="corlib-是整个世界的地基">corlib 是整个世界的地基</h2>
+<p>.NET 里有一个最核心的基础库，通常叫 <code>corlib</code>。<code>System.Object</code>、<code>System.String</code>、<code>System.Array</code>、<code>System.Type</code>、<code>System.Exception</code>、<code>System.Delegate</code> 这些最基础的类型都在这里。</p>
+<p>在 <code>.NET 10</code> 里，这个 core library 是 <code>System.Private.CoreLib</code>。LeanCLR 要承载 <code>.NET 10</code>，第一步就是把它当作地基加载起来，并且看懂它对 runtime 的要求。</p>
+<p><code>System.Private.CoreLib</code> 里的核心类型、私有字段、内部方法、反射对象、句柄模型和 runtime 调用方式，合在一起定义了 <code>.NET 10</code> 想看到的 runtime 长什么样。LeanCLR 需要重新确认：</p>
+<ul>
+<li>核心类型从哪里加载。</li>
+<li>对象、数组、字符串、异常等基础对象如何初始化。</li>
+<li><code>RuntimeType</code>、<code>RuntimeMethodInfo</code>、<code>RuntimeFieldInfo</code> 等反射对象如何和 runtime 内部结构对应。</li>
+<li>BCL 里由 runtime 实现的底层方法，最后该落到哪个 native helper。</li>
+</ul>
+<p>这就是后面会反复出现的 <code>runtime contract</code>：BCL 期待 runtime 提供哪些入口、对象形态和行为语义。</p>
+<h2 id="TFM、runtime-pack-和运行时支持">TFM、runtime pack 和运行时支持</h2>
+<p><code>TargetFramework=net10.0</code> 里的 TFM 是 Target Framework Moniker。简单说，它是在告诉 SDK：“这个项目按 .NET 10 的 API 面来编译”。</p>
+<p>运行时还涉及另一组东西：</p>
+<ul>
+<li>reference assemblies：给编译器看的 API 声明。</li>
+<li>runtime assemblies：运行时加载的 BCL 实现。</li>
+<li>runtime pack：包含目标平台所需的 runtime assemblies 和 native 组件。</li>
+<li>runtime contract：BCL 调用 native helper 时，runtime 需要提供的入口和语义。</li>
+</ul>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;TargetFramework=net10.0&quot;] --&gt; B[&quot;编译器使用 .NET 10 reference assemblies&quot;]
+    B --&gt; C[&quot;生成 net10.0 业务程序集&quot;]
+    C --&gt; D&#123;&quot;LeanCLR 能否运行&quot;&#125;
+    D --&gt; E[&quot;加载 .NET 10 runtime assemblies&quot;]
+    D --&gt; F[&quot;识别 System.Private.CoreLib&quot;]
+    D --&gt; G[&quot;支持 .NET 10 metadata / IL 组合&quot;]
+    D --&gt; H[&quot;实现 BCL 需要的 runtime contract&quot;]</code></pre>
+<p>所以对 LeanCLR 来说，支持 <code>.NET 10</code> 涉及一整条链路：程序集怎么加载、corlib 怎么识别、metadata 怎么解析、BCL/native 边界怎么接。</p>
+<h2 id="什么是-runtime-contract">什么是 runtime contract</h2>
+<p>BCL 里有些方法就是普通 C# 写的，有 IL 方法体，runtime 照着执行就行。另一类方法会直接进入 runtime helper，或者由 runtime 做特殊处理。这些地方就是 contract 最容易扎堆的地方。</p>
+<p>常见边界包括：</p>
+<table>
+<thead>
+<tr>
+<th>名词</th>
+<th>可以先这样理解</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>internal call / icall</td>
+<td>BCL 方法直接进入 C++ runtime 实现</td>
+</tr>
+<tr>
+<td>intrinsic</td>
+<td>runtime 或 AOT 对某个方法做特殊识别，不按普通方法调用处理</td>
+</tr>
+<tr>
+<td>P/Invoke</td>
+<td>托管代码调用 native 函数，例如操作系统 API 或宿主 API</td>
+</tr>
+<tr>
+<td>runtime handle</td>
+<td>BCL 用来代表类型、方法、字段、模块等 runtime 对象的轻量句柄</td>
+</tr>
+<tr>
+<td>reflection</td>
+<td>托管代码在运行时查询类型、方法、字段、特性等 metadata 的能力</td>
+</tr>
+</tbody>
+</table>
+<p>LeanCLR 适配 <code>.NET 10</code> 的核心，就是让 <code>System.Private.CoreLib</code> 和必要 BCL 在这些边界上看到它们想要的入口；至于 LeanCLR 内部，仍然可以继续用自己的类型系统、metadata cache、解释器、GC 和反射框架。</p>
+<h2 id="BCL-contract-是从哪里发起的">BCL contract 是从哪里发起的</h2>
+<p>这里很容易想反：好像是 LeanCLR 先定义一套“BCL 接口协议”，然后让 BCL 配合。实际顺序刚好反过来。</p>
+<p><strong>contract 的源头是当前选择的 BCL assemblies。</strong> 编译器会把业务代码里的 <code>object.GetType()</code>、<code>typeof(int)</code>、<code>new string(...)</code>、<code>GC.Collect()</code> 编成 metadata token 和方法引用。LeanCLR 加载业务程序集后，再继续解析这些 token 指向哪个 BCL 类型、哪个 BCL 方法。只要这些方法来自 core library 或 runtime pack，它们就会反过来要求 runtime 提供某些能力。</p>
+<p>可以把发起路径理解成：</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;业务 C# 代码&quot;] --&gt; B[&quot;编译器生成 IL + metadata token&quot;]
+    B --&gt; C[&quot;token 指向 BCL 方法&quot;]
+    C --&gt; D&#123;&quot;BCL 方法如何实现&quot;&#125;
+    D --&gt; E[&quot;普通 IL: runtime 解释执行&quot;]
+    D --&gt; F[&quot;InternalCall / intrinsic / PInvoke&quot;]
+    F --&gt; G[&quot;BCL 向 runtime 发起 contract 要求&quot;]
+    G --&gt; H[&quot;LeanCLR profile/catalog 映射到 C++ runtime&quot;]</code></pre>
+<p><code>runtime API catalog</code> 是 LeanCLR 给这些入口做的一张登记表。contract 的源头是：</p>
+<ul>
+<li>当前 profile 选择的 BCL assemblies。</li>
+<li>这些 assemblies 里的 metadata、IL、方法签名和 P/Invoke 声明。</li>
+<li>对 <code>.NET 10</code> 来说，还要参考 <code>System.Private.CoreLib</code> 和 CoreCLR VM 源码理解语义。</li>
+</ul>
+<p>这就是为什么 profile 很关键。本文只讨论 <code>coreclr-net10</code>：也就是 LeanCLR 面向 <code>.NET 10</code> runtime pack 和 <code>System.Private.CoreLib</code> 建的一套独立规则。</p>
+<p>对 <code>coreclr-net10</code> 来说，关键假设是：</p>
+<ul>
+<li>core library 是 <code>System.Private.CoreLib</code>。</li>
+<li>BCL contract 来源是 <code>.NET 10</code> runtime assemblies 里的 metadata、IL、方法签名和 P/Invoke 声明。</li>
+<li>native 边界按 <code>.NET 10</code> 的 internal call、intrinsic、generated P/Invoke 和 runtime handle 形态登记。</li>
+<li>LeanCLR 内部仍然映射到自己的 <code>RtClass</code>、<code>RtMethodInfo</code>、<code>RtFieldInfo</code>、metadata cache 和解释器。</li>
+</ul>
+<p>从仓库结构上看，这个选择已经写进了 <code>coreclr-net10</code> profile：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;coreclr-net10&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;coreLibraryModules&quot;</span><span class="punctuation">:</span> <span class="punctuation">[</span></span><br><span class="line">    <span class="string">&quot;System.Private.CoreLib&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Runtime&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Console&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Collections&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Linq&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Threading&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Runtime.InteropServices&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Reflection&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;System.Private.Uri&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;netstandard&quot;</span><span class="punctuation">,</span></span><br><span class="line">    <span class="string">&quot;LeanCLR&quot;</span></span><br><span class="line">  <span class="punctuation">]</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这段配置来自 <code>src/leanaot/LeanAOT/runtime-apis/coreclr-net10/profile.json</code>。它告诉 LeanCLR 工具链：这些模块属于当前 <code>.NET 10</code> profile 的核心 BCL 范围。后面判断 icall、intrinsic、P/Invoke，都要按这套世界来解释。</p>
+<p>runtime 侧也有对应入口。<code>src/runtime/vm/assembly.cpp</code> 中的 <code>Assembly::load_corlib()</code> 当前会加载 <code>System.Private.CoreLib</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">RtResult&lt;metadata::RtAssembly*&gt; <span class="title">Assembly::load_corlib</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    metadata::RtAssembly* loaded_corlib = <span class="built_in">get_corlib</span>();</span><br><span class="line">    <span class="keyword">if</span> (loaded_corlib)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">RET_OK</span>(loaded_corlib);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">load_by_name</span>(STR_SYSTEM_PRIVATE_CORELIB_NAME);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>BCL 对齐要做的事，是先选定一个 BCL 世界，再让 LeanCLR 的类型系统、metadata、解释器和 native helper 能接住这个世界抛过来的调用。</p>
+<h2 id="一个-C-方法如何走到-LeanCLR-runtime">一个 C# 方法如何走到 LeanCLR runtime</h2>
+<p>下面用一个很小的例子把路径串起来。我们的业务代码只是做 boxing、取类型、比较类型、再拆箱：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">using</span> System;</span><br><span class="line"></span><br><span class="line"><span class="keyword">namespace</span> <span class="title">BlogDemo</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title">Program</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="built_in">int</span> <span class="title">Run</span>()</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="built_in">object</span> <span class="keyword">value</span> = <span class="number">123</span>;</span><br><span class="line">        Type type = <span class="keyword">value</span>.GetType();</span><br><span class="line">        <span class="keyword">return</span> type == <span class="keyword">typeof</span>(<span class="built_in">int</span>) ? (<span class="built_in">int</span>)<span class="keyword">value</span> + <span class="number">1</span> : <span class="number">-1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>项目文件选择 <code>.NET 10</code>：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">Project</span> <span class="attr">Sdk</span>=<span class="string">&quot;Microsoft.NET.Sdk&quot;</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">PropertyGroup</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">TargetFramework</span>&gt;</span>net10.0<span class="tag">&lt;/<span class="name">TargetFramework</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;/<span class="name">PropertyGroup</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">Project</span>&gt;</span></span><br></pre></td></tr></table></figure>
+<p>编译之后，<code>Run()</code> 会变成类似下面这样的 IL 和 metadata 引用。这里为了方便看，做了简化：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">ldc.i4.s 123</span><br><span class="line">box        [System.Private.CoreLib]System.Int32</span><br><span class="line">stloc.0</span><br><span class="line"></span><br><span class="line">ldloc.0</span><br><span class="line">callvirt   instance class [System.Private.CoreLib]System.Type</span><br><span class="line">           [System.Private.CoreLib]System.Object::GetType()</span><br><span class="line">stloc.1</span><br><span class="line"></span><br><span class="line">ldloc.1</span><br><span class="line">ldtoken    [System.Private.CoreLib]System.Int32</span><br><span class="line">call       class [System.Private.CoreLib]System.Type</span><br><span class="line">           [System.Private.CoreLib]System.Type::GetTypeFromHandle(</span><br><span class="line">               valuetype [System.Private.CoreLib]System.RuntimeTypeHandle)</span><br><span class="line">call       bool [System.Private.CoreLib]System.Type::op_Equality(</span><br><span class="line">               class [System.Private.CoreLib]System.Type,</span><br><span class="line">               class [System.Private.CoreLib]System.Type)</span><br></pre></td></tr></table></figure>
+<p>这里有几个点值得盯一下：</p>
+<ul>
+<li><code>box System.Int32</code> 要求 runtime 知道 value type 如何装箱成对象。</li>
+<li><code>System.Object::GetType()</code> 来自 <code>System.Private.CoreLib</code>。</li>
+<li><code>RuntimeTypeHandle</code>、<code>System.Type</code>、<code>Type.GetTypeFromHandle()</code> 都是 core library 的反射 contract。</li>
+<li>这些引用的归属都是 <code>[System.Private.CoreLib]</code>，所以 runtime 要按 <code>.NET 10</code> 的核心库形态解释。</li>
+</ul>
+<p>如果用 <code>leanrun</code> 执行这个入口，命令大概是这样：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">leanrun `</span><br><span class="line">  <span class="literal">-l</span> out\dotnet\BlogDemo\Release\net10.<span class="number">0</span> `</span><br><span class="line">  <span class="literal">-l</span> &lt;dotnet10<span class="literal">-runtime-pack-dir</span>&gt; `</span><br><span class="line">  <span class="literal">-e</span> BlogDemo.Program::Run `</span><br><span class="line">  BlogDemo</span><br></pre></td></tr></table></figure>
+<p><code>leanrun</code> 里面的路径可以先简化成下面这样，对应 <code>src/tools/leanrun/main.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">vm::Runtime::<span class="built_in">initialize</span>();</span><br><span class="line"></span><br><span class="line"><span class="keyword">auto</span> ass = vm::Assembly::<span class="built_in">load_by_name</span>(dll_name.<span class="built_in">c_str</span>());</span><br><span class="line">metadata::RtModuleDef* mod = ass.<span class="built_in">unwrap</span>()-&gt;mod;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> metadata::RtMethodInfo* entry_method =</span><br><span class="line">    <span class="built_in">find_entry_method</span>(mod, <span class="string">&quot;BlogDemo.Program::Run&quot;</span>);</span><br><span class="line"></span><br><span class="line">vm::Runtime::<span class="built_in">invoke_array_arguments_with_run_cctor</span>(</span><br><span class="line">    entry_method,</span><br><span class="line">    <span class="literal">nullptr</span>,</span><br><span class="line">    <span class="literal">nullptr</span>);</span><br></pre></td></tr></table></figure>
+<p>进入解释器以后，普通 IL 比如 <code>ldc.i4</code>、<code>stloc</code>、条件分支，LeanCLR 自己就能执行。解释到 <code>System.Object::GetType()</code> 时，事情会进入 BCL contract：这个方法来自 <code>System.Private.CoreLib</code>，它要求 runtime 返回当前对象的真实运行时类型。</p>
+<p>在 <code>coreclr-net10</code> profile 里，LeanCLR 用 catalog 登记这个入口。摘自 <code>src/leanaot/LeanAOT/runtime-apis/coreclr-net10/icalls.json</code>：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="punctuation">&#123;</span></span><br><span class="line">  <span class="attr">&quot;name&quot;</span><span class="punctuation">:</span> <span class="string">&quot;System.Object::GetType&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;func&quot;</span><span class="punctuation">:</span> <span class="string">&quot;SystemObject::get_type&quot;</span><span class="punctuation">,</span></span><br><span class="line">  <span class="attr">&quot;header&quot;</span><span class="punctuation">:</span> <span class="string">&quot;icalls/system_object.h&quot;</span></span><br><span class="line"><span class="punctuation">&#125;</span></span><br></pre></td></tr></table></figure>
+<p>这段登记的意思很直白：</p>
+<ul>
+<li>BCL 侧调用的是 <code>System.Object::GetType</code>。</li>
+<li>LeanCLR runtime 侧用 <code>SystemObject::get_type</code> 实现。</li>
+<li>这个入口属于 <code>coreclr-net10</code> profile 的 native helper 边界。</li>
+</ul>
+<p>对应 C++ 实现在 <code>src/runtime/icalls/system_object.cpp</code>：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">RtResult&lt;vm::RtReflectionType*&gt; <span class="title">SystemObject::get_type</span><span class="params">(vm::RtObject* obj)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (obj == <span class="literal">nullptr</span>)</span><br><span class="line">        <span class="built_in">RET_ERR</span>(RtErr::NullReference);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> vm::Reflection::<span class="built_in">get_klass_reflection_object</span>(obj-&gt;klass);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个函数做的事也很直接：</p>
+<ol>
+<li>从托管对象指针 <code>obj</code> 取出 LeanCLR 内部的 <code>klass</code>。</li>
+<li>把 <code>klass</code> 映射成托管世界可见的 reflection type 对象。</li>
+<li>返回给 <code>System.Private.CoreLib</code> 的 <code>Object.GetType()</code> 调用点。</li>
+</ol>
+<p>把链路画出来，大概是这样：</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant User as &quot;BlogDemo.Program.Run&quot;
+    participant IL as &quot;IL interpreter&quot;
+    participant BCL as &quot;System.Private.CoreLib method&quot;
+    participant Catalog as &quot;coreclr-net10 icalls.json&quot;
+    participant Native as &quot;SystemObject::get_type&quot;
+    participant VM as &quot;LeanCLR Reflection / TypeSystem&quot;
+
+    User-&gt;&gt;IL: value.GetType()
+    IL-&gt;&gt;BCL: 解析到 System.Object::GetType
+    IL-&gt;&gt;Catalog: 方法属于 core library, 查 runtime helper
+    Catalog--&gt;&gt;IL: 映射到 SystemObject::get_type
+    IL-&gt;&gt;Native: 传入 RtObject*
+    Native-&gt;&gt;VM: obj-&gt;klass -&gt; reflection type object
+    VM--&gt;&gt;Native: RtReflectionType*
+    Native--&gt;&gt;IL: 返回 System.Type 对象
+    IL--&gt;&gt;User: 继续执行 typeof(int) 比较</code></pre>
+<p>这样就能看出来，为什么整条链路最好都落在同一个 <code>coreclr-net10</code> 规则下：</p>
+<ul>
+<li>如果业务程序集引用的是 <code>[System.Private.CoreLib]System.Object::GetType()</code>，runtime API catalog 里就得有 <code>.NET 10</code> 视角下的这个入口。</li>
+<li>如果 <code>.NET 10</code> BCL 期待返回的是它能识别的 <code>RuntimeType</code> / <code>RuntimeTypeHandle</code> 形态，LeanCLR 就要把内部 <code>RtClass</code> 映射成对应的托管反射对象。</li>
+<li>如果某个入口只按短名宽松匹配，不按完整签名匹配，就可能把 <code>.NET 10</code> 的包装方法、不同参数形态或不兼容 native helper 误连到一起。</li>
+</ul>
+<p>所以 LeanCLR 对齐 BCL，要保证整条链路都在同一个 profile 下说得通：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">业务 IL token</span><br><span class="line">  -&gt; System.Private.CoreLib 方法</span><br><span class="line">  -&gt; coreclr-net10 catalog</span><br><span class="line">  -&gt; LeanCLR native helper</span><br><span class="line">  -&gt; LeanCLR 类型系统 / metadata / reflection 对象</span><br><span class="line">  -&gt; 返回给 .NET 10 BCL 可理解的对象形态</span><br></pre></td></tr></table></figure>
+<h2 id="minimal-net10-profile-的边界">minimal net10 profile 的边界</h2>
+<p>一上来就承载完整 <code>Microsoft.NETCore.App</code>，LeanCLR 基本会被推成“小型 CoreCLR”。ThreadPool、网络、文件系统、反射全量语义、动态代码生成、平台 PAL、COM/Interop 这些东西都会被拉进来，范围会一下子膨胀。</p>
+<p>更稳的做法是先收住边界，也就是 <strong>minimal net10 profile</strong>：</p>
+<ul>
+<li>运行项目自己的、受控的、纯逻辑 <code>net10.0</code> DLL。</li>
+<li>支持基础对象模型、数组、字符串、异常、委托、泛型、基础反射和必要 Span/Unsafe 路径。</li>
+<li>使用 <code>.NET 10</code> runtime pack 作为托管 BCL 输入，当前阶段承诺 profile 白名单内的 runtime API。</li>
+<li>对越界的 BCL、ThreadPool、Timer、I/O、网络、动态代码生成等能力给出可诊断失败，别用静默 stub 混过去。</li>
+<li>Unity/Godot 等引擎 API 通过宿主 bridge 暴露，不把引擎程序集当作普通 BCL 直接加载进 runtime。</li>
+</ul>
+<p>这个边界的重点是：LeanCLR 先接住当前 profile 下真的会跨到 native 边界的那些能力。</p>
+<h2 id="托管代码在-LeanCLR-中如何执行">托管代码在 LeanCLR 中如何执行</h2>
+<p>一个 C# 程序进入 LeanCLR 以后，大致会走下面这条路：</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;C# source&quot;] --&gt; B[&quot;dotnet build 生成程序集&quot;]
+    B --&gt; C[&quot;LeanCLR 加载业务程序集&quot;]
+    C --&gt; D[&quot;解析 AssemblyRef / TypeRef / MemberRef&quot;]
+    D --&gt; E[&quot;选择 runtime API profile&quot;]
+    E --&gt; F[&quot;加载 profile 对应 core library&quot;]
+    F --&gt; G[&quot;初始化核心类型 Object / String / Array / Type&quot;]
+    G --&gt; H[&quot;读取 metadata: 类型 / 字段 / 方法 / 泛型 / 特性&quot;]
+    H --&gt; I&#123;&quot;方法如何执行&quot;&#125;
+    I --&gt; J[&quot;解释执行 IL&quot;]
+    I --&gt; K[&quot;LeanAOT 生成 native 路径&quot;]
+    J --&gt; L[&quot;调用 LeanCLR runtime 服务&quot;]
+    K --&gt; L
+    L --&gt; M&#123;&quot;遇到 runtime 边界&quot;&#125;
+    M --&gt; N[&quot;internal call / QCall / FCall 风格入口&quot;]
+    M --&gt; O[&quot;intrinsic&quot;]
+    M --&gt; P[&quot;P/Invoke / host bridge&quot;]
+    N --&gt; Q[&quot;C++ runtime 或宿主 native API&quot;]
+    O --&gt; Q
+    P --&gt; Q
+    Q --&gt; R[&quot;返回托管世界继续执行&quot;]</code></pre>
+<p>对 <code>coreclr-net10</code> 来说，图里的 profile 选择会把 core library 固定到 <code>System.Private.CoreLib</code>，也会把 BCL runtime API 固定到 <code>.NET 10</code> runtime pack 里的入口和签名。入口没登记，或者返回的对象形态不对，问题通常会出现在 core library 加载、核心类型初始化、反射句柄解析，或者 BCL runtime API 调用这些地方。</p>
+<h2 id="profile-是隔离边界">profile 是隔离边界</h2>
+<p>profile 决定当前 runtime 要面对哪套 BCL、哪套路由规则。本文只讨论 <code>coreclr-net10</code>，它的作用就是把 <code>.NET 10</code> core library、runtime pack、runtime API catalog 和 LeanCLR native helper 绑到同一套解释规则里。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;选择 coreclr-net10 profile&quot;] --&gt; B[&quot;core library: System.Private.CoreLib&quot;]
+    A --&gt; C[&quot;BCL 输入: .NET 10 runtime pack&quot;]
+    A --&gt; D[&quot;runtime API catalog: coreclr-net10&quot;]
+    D --&gt; E[&quot;icall / intrinsic / PInvoke entries&quot;]
+    E --&gt; F[&quot;LeanCLR C++ runtime helpers&quot;]
+    F --&gt; G[&quot;RtClass / RtMethodInfo / RtFieldInfo / metadata cache&quot;]</code></pre>
+<p>比较靠谱的做法，是让 corlib 识别、required type 表、internal call 表、intrinsic 表、P/Invoke facade 和诊断逻辑都跟着 <code>coreclr-net10</code> 走。这样看到某个 BCL 入口时，就能一路追下去：它在 <code>.NET 10</code> runtime pack 里从哪来，在 catalog 里怎么登记，最后落到 LeanCLR C++ runtime 的哪段实现。</p>
+<h2 id="runtime-API-catalog-的作用">runtime API catalog 的作用</h2>
+<p><code>.NET 10</code> BCL 里有不少方法会直接进入 runtime helper，或者需要 runtime 做特殊处理。它们通常会落在几类边界上：</p>
+<table>
+<thead>
+<tr>
+<th>边界</th>
+<th>含义</th>
+<th>LeanCLR 需要做的事</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>internal call / QCall / FCall</td>
+<td>托管 BCL 直接调用 runtime native helper</td>
+<td>按完整类型名、方法名和签名注册 C++ 实现</td>
+</tr>
+<tr>
+<td>intrinsic</td>
+<td>解释器或 AOT 对特定方法做特殊识别</td>
+<td>为 <code>Span&lt;T&gt;</code>、<code>RuntimeHelpers</code>、<code>Interlocked</code> 等建立 profile 内映射</td>
+</tr>
+<tr>
+<td>P/Invoke / LibraryImport</td>
+<td>托管代码调用 native 动态库或 generated P/Invoke stub</td>
+<td>映射到 LeanCLR 平台层、host bridge 或明确 NotSupported</td>
+</tr>
+<tr>
+<td>runtime implemented method</td>
+<td>方法语义由 runtime 提供，不适合按普通 IL 执行</td>
+<td>在解释器和 AOT 中共享同一 contract</td>
+</tr>
+</tbody>
+</table>
+<p>runtime API catalog 就是这些边界的索引。它告诉 LeanCLR：当前 profile 下，哪些托管方法要找 runtime 帮忙，签名是什么，应该走 icall、intrinsic，还是 P/Invoke。</p>
+<p>AOT 暂时后置时，这张表也很重要。解释器遇到 BCL 内部方法时同样要查 runtime helper；以后 AOT codegen 也可以复用同一套 catalog，少维护一份语义。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;输入程序集和 BCL&quot;] --&gt; B[&quot;读取 metadata / IL&quot;]
+    B --&gt; C[&quot;按 profile 加载 runtime API catalog&quot;]
+    C --&gt; D&#123;&quot;遇到方法调用&quot;&#125;
+    D --&gt; E[&quot;普通 IL: 解释器执行&quot;]
+    D --&gt; F[&quot;icall: 调用 runtime helper&quot;]
+    D --&gt; G[&quot;intrinsic: runtime 特殊处理&quot;]
+    D --&gt; H[&quot;P/Invoke: 进入 native / host 边界&quot;]
+    E --&gt; I[&quot;统一 runtime 语义&quot;]
+    F --&gt; I
+    G --&gt; I
+    H --&gt; I
+    I --&gt; J[&quot;解释执行与 AOT 共享 contract&quot;]</code></pre>
+<h2 id="icall-要精确匹配">icall 要精确匹配</h2>
+<p>internal call 是 BCL 和 runtime 之间最直接的通道。托管侧可能长这样：</p>
+<figure class="highlight csharp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">[<span class="meta">MethodImpl(MethodImplOptions.InternalCall)</span>]</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">extern</span> RuntimeType <span class="title">InternalGetType</span>(<span class="params"><span class="built_in">object</span> obj</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>这个方法会直接进入 runtime，所以 runtime 需要根据“类型名 + 方法名 + 签名”找到 native 实现：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">&quot;System.Type::internal_from_handle&quot;</span>, (vm::InternalCallFunction)&amp;SystemType::internal_from_handle&#125;</span><br></pre></td></tr></table></figure>
+<p>调用流程可以这样理解：</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant Managed as &quot;托管 BCL 方法&quot;
+    participant VM as &quot;LeanCLR 调用解析&quot;
+    participant Table as &quot;icall 表&quot;
+    participant Native as &quot;C++ runtime 实现&quot;
+
+    Managed-&gt;&gt;VM: 调用 InternalCall 方法
+    VM-&gt;&gt;Table: 按完整签名查找入口
+    alt 找到入口
+        Table--&gt;&gt;VM: 返回函数指针和 invoker
+        VM-&gt;&gt;Native: 转换参数并调用 C++ 实现
+        Native--&gt;&gt;VM: 返回结果或异常
+        VM--&gt;&gt;Managed: 回到托管调用点
+    else 没找到入口或签名不匹配
+        VM--&gt;&gt;Managed: 抛出清晰诊断
+    end</code></pre>
+<p>这里最容易出事的是“宽松匹配”。runtime 只按 <code>System.RuntimeFieldHandle::GetToken</code> 这种短名称找入口，又不校验完整签名时，就可能把 <code>.NET 10</code> 托管侧的包装方法误当成 native 入口，甚至把托管对象指针当作 native 字段句柄传进去。</p>
+<p>所以 <code>coreclr-net10</code> profile 要尽量偏向精确签名：</p>
+<ul>
+<li>icall 注册以完整方法签名为主。</li>
+<li><code>coreclr-net10</code> catalog 之外的入口，在 <code>System.Private.CoreLib</code> 路径下直接报清晰诊断。</li>
+<li>找不到匹配项时应 fail fast，并输出 profile、方法签名和调用来源。</li>
+</ul>
+<h2 id="CoreCLR-contract-怎么落到-LeanCLR-模型">CoreCLR contract 怎么落到 LeanCLR 模型</h2>
+<p>适配 <code>.NET 10</code> 时，CoreCLR VM 源码更适合作为参考。它能告诉我们 BCL 调用链、QCall/FCall/InternalCall 名称、签名、异常语义和 runtime handle 预期。LeanCLR 的对象布局、GC、metadata loader、method table、exception、reflection handle、解释器调用协议，继续保持自己的实现。</p>
+<p>更适合 LeanCLR 的做法是：外面长得像 <code>.NET 10</code> BCL 期待的样子，里面仍然映射到 LeanCLR 自己的模型。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;.NET 10 System.Private.CoreLib&quot;] --&gt; B[&quot;CoreCLR 风格 runtime contract&quot;]
+    B --&gt; C[&quot;LeanCLR net10 facade&quot;]
+    C --&gt; D[&quot;RtClass&quot;]
+    C --&gt; E[&quot;RtMethodInfo&quot;]
+    C --&gt; F[&quot;RtFieldInfo&quot;]
+    C --&gt; G[&quot;metadata cache&quot;]
+    C --&gt; H[&quot;interpreter / GC / exception / reflection&quot;]</code></pre>
+<p>典型例子就是：</p>
+<ul>
+<li><code>RuntimeType</code> / <code>RuntimeTypeHandle</code> 映射到 LeanCLR 的类型系统。</li>
+<li><code>RuntimeMethodHandle</code> 映射到 <code>RtMethodInfo</code> 和解释器可调用方法描述。</li>
+<li><code>RuntimeFieldHandle</code> 映射到 <code>RtFieldInfo</code>、字段布局和静态字段存储。</li>
+<li><code>RuntimeModule</code>、<code>MetadataImport</code> 和 token 查询映射到 LeanCLR metadata cache。</li>
+<li><code>CustomAttributeData</code>、<code>Activator</code>、泛型实例化和私有成员访问落到 LeanCLR 反射框架。</li>
+</ul>
+<p>这样做的好处是把 <code>.NET 10</code> BCL 看到的外部形状，和 LeanCLR 内部实现拆开。BCL 看到的是熟悉的 CoreCLR 风格 facade；LeanCLR 内部还是自己的 VM 架构。</p>
+<h2 id="为什么还要谈引擎适配">为什么还要谈引擎适配</h2>
+<p>AI 时代有个很明显的变化：把已有项目代码迁到另一套引擎，成本比以前低多了。以前从 Unity 换到 Godot，或者从自研框架迁到 Unreal，很多代码都要人肉重写。现在 AI 可以帮忙翻译 API、补样板代码、解释生命周期差异，甚至把一个 gameplay 系统拆成更适合目标引擎的结构。</p>
+<p>这事真落到商业项目上，还会被一个更底层的问题卡住：主流引擎的脚本语言和 runtime 生态并不统一。</p>
+<ul>
+<li>Unity 主路径是 C#，它的 managed runtime、BCL profile、IL2CPP、平台裁剪和引擎 API 绑定都有自己的边界。</li>
+<li>Godot 官方主路径是 GDScript，C# 支持依赖 Godot 的 .NET 集成状态，不同平台、导出模板和版本组合会影响可用性。</li>
+<li>Unreal 主路径是 C++ / Blueprint，社区 C# 方案可以提供很好的开发体验，也通常会受 UE 版本、平台、热重载、构建链和发行限制影响。</li>
+</ul>
+<p>对个人项目、编辑器工具或实验玩法来说，这些限制经常还能接受。商业项目会更看重可控的部署平台、稳定的构建链、明确的授权边界、能诊断的崩溃路径，还要尽量在移动端、主机、桌面、服务器这些环境里保持一致。社区版语言扩展一旦只能覆盖部分平台，或者必须绑在某个引擎自己的 managed runtime 上，承担跨项目、跨引擎核心技术栈的压力会很大。</p>
+<p>这就是 <a target="_blank" rel="noopener" href="https://github.com/wqaetly/leanclr">wqaetly/leanclr</a> 这类“精简但完整”的 CLR 有意思的地方。它在引擎之外放一个可控的托管运行时地基：能加载程序集、解析 metadata、执行 IL、管理对象和 GC，再逐步对齐 <code>.NET 10</code> BCL contract。这样，项目里真正值得保留的 gameplay、ECS、规则、配置、序列化、调试域和业务框架，就可以沉到 LeanCLR 托管层里；具体引擎继续负责渲染、资源、场景、输入、物理和平台能力。</p>
+<p>这样一来，引擎适配模块的意义就很清楚了：在 LeanCLR 和真实引擎对象之间搭一条薄而稳定的桥。我们在框架层继续写普通 C# 对象和属性；桥接层负责把这些属性映射到 Unity/Godot/UE 的真实对象。AI 可以帮忙迁移上层业务代码，LeanCLR 和 adapter 则负责给迁移后的代码一个一致、可部署、可调试的 runtime 落点。</p>
+<h2 id="BCL-兼容和引擎-bridge-是两件事">BCL 兼容和引擎 bridge 是两件事</h2>
+<p><code>.NET 10</code> BCL 兼容解决的是：<code>System.*</code>、<code>System.Private.CoreLib</code> 和必要的 <code>Microsoft.NETCore.App</code> 能否在 LeanCLR 上跑。Unity/Godot/UE 接入解决的是另一件事：引擎对象、资源、场景、主线程 API、异步结果，怎么暴露给托管业务代码。</p>
+<p>这两件事分开看会清楚很多。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;LeanCLR 托管业务代码&quot;] --&gt; B[&quot;.NET 10 / profile BCL&quot;]
+    A --&gt; C[&quot;框架层引擎 facade: Node / Entity / Actor / Component&quot;]
+    C --&gt; D[&quot;属性 setter / 方法调用&quot;]
+    D --&gt; E[&quot;LeanCLR host bridge ABI&quot;]
+    E --&gt; F[&quot;宿主侧 handle registry&quot;]
+    F --&gt; G[&quot;即时写入真实引擎对象属性&quot;]
+    G --&gt; H[&quot;UnityEngine / Godot / Unreal API&quot;]</code></pre>
+<p>比较稳的接入方式是：</p>
+<ul>
+<li>LeanCLR 只运行引擎无关核心逻辑、业务程序集和必要 <code>.NET 10</code> BCL 子集。</li>
+<li>Unity/Godot/UE 进程作为宿主，负责创建 LeanCLR runtime、装载程序集、驱动 frame pump。</li>
+<li>引擎对象跨 runtime 边界时，用 <code>int</code>、<code>long</code>、<code>IntPtr</code> 或 opaque handle 表示。</li>
+<li>宿主维护 handle registry，把 handle 映射到真实 Unity <code>Object</code>、Godot <code>Object</code>、Unreal <code>UObject</code>、Node、Resource、Actor、Component 等。</li>
+<li>框架层提供薄 facade，例如 <code>Transform.Position</code>、<code>Node.Visible</code>、<code>Actor.Location</code> 这类属性；我们改属性时，setter 立即进入 bridge，宿主立刻修改真实引擎对象。</li>
+<li>所有只能在主线程调用的引擎 API，都进入宿主主线程 dispatcher。</li>
+<li>异步加载、场景切换、资源请求等结果通过 bridge 回填到 LeanCLR 的 continuation 或等价调度结构。</li>
+</ul>
+<p>这个模型里，LeanCLR 是一个 native CLR-like runtime；Unity/Godot/UE 则像外部 service provider。我们看到的是框架层 facade 和普通属性。LeanCLR 只要理解 bridge 边界，业务层也不用维护一份等着提交的 snapshot。</p>
+<h2 id="三类引擎接入的共同骨架">三类引擎接入的共同骨架</h2>
+<p>更适合 LeanCLR 的通用路径是：业务程序集面向 <code>net10.0</code> 编译，LeanCLR 在引擎进程内加载业务 DLL、框架 DLL、adapter DLL 和 staged BCL。框架层给引擎对象套一层很薄的封装，里面只保存 handle、少量本地缓存和 bridge 入口；我们一改属性，setter 就直接进 bridge，bridge 再通过 handle registry 找到真实引擎对象，马上写进去。</p>
+<p>这条路让 LeanCLR 避开 GodotSharp、UnityEngine 或 Unreal Engine 的 managed runtime，也绕开“先把 mutation 收集成 snapshot / command buffer，再在帧尾统一应用”的模式。snapshot 的边界比较集中，代价也很实在：要设计 diff/merge、序列化、对象生命周期同步、帧间一致性规则；复杂以后还会多一层内存搬运和命令解码。对多数 gameplay 属性写入来说，最古朴的 setter -&gt; bridge -&gt; engine object 反而更直接，性能也更好把握。</p>
+<p>通用流程可以抽象成：</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;业务 / 框架 C# 源码&quot;] --&gt; B[&quot;dotnet build: net10.0 managed assemblies&quot;]
+    B --&gt; C[&quot;计算 AssemblyRef 闭包&quot;]
+    C --&gt; D[&quot;stage minimal net10 BCL / framework / adapter assemblies&quot;]
+    E[&quot;引擎插件 / native module&quot;] --&gt; F[&quot;启动 LeanCLR Runtime&quot;]
+    F --&gt; G[&quot;注册 assembly loader&quot;]
+    G --&gt; H[&quot;加载业务程序集、framework 和 adapter assembly&quot;]
+    H --&gt; I[&quot;绑定 managed entry: Reset / Tick / Debug / Host callbacks&quot;]
+    J[&quot;引擎主循环&quot;] --&gt; K[&quot;主线程 dispatcher / frame pump&quot;]
+    K --&gt; I
+    I --&gt; L[&quot;RuntimeContext.Update / ECS / gameplay logic&quot;]
+    L --&gt; M[&quot;框架 facade 修改属性&quot;]
+    M --&gt; N[&quot;setter 立即调用 host bridge&quot;]
+    N --&gt; O[&quot;handle registry 定位真实对象&quot;]
+    O --&gt; P[&quot;Object.set / SetProperty / UFunction thunk&quot;]
+    P --&gt; Q[&quot;真实引擎对象 / 资源 / 场景立即更新&quot;]
+    R[&quot;debug transport&quot;] --&gt; K
+    K --&gt; S[&quot;managed Diagnostics command endpoint&quot;]</code></pre>
+<p>这里的重点是三个引擎共用同一条边界：</p>
+<table>
+<thead>
+<tr>
+<th>层次</th>
+<th>放什么</th>
+<th>不放什么</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LeanCLR core</td>
+<td><code>.NET 10</code> BCL profile、metadata、IL、GC、反射、icall catalog</td>
+<td>引擎对象模型</td>
+</tr>
+<tr>
+<td>managed game assemblies</td>
+<td>RuntimeContext、ECS、玩法、debug domain、框架层对象 facade</td>
+<td>UnityEngine/GodotSharp/Unreal managed 全量 API</td>
+</tr>
+<tr>
+<td>adapter assembly</td>
+<td>handle、Variant、bridge binding、属性 marshal、少量 service interface</td>
+<td>真实引擎对象生命周期</td>
+</tr>
+<tr>
+<td>native engine plugin</td>
+<td>runtime loader、assembly loader、主线程 pump、object/resource registry、property setter thunk、transport</td>
+<td>BCL 兼容逻辑</td>
+</tr>
+</tbody>
+</table>
+<p>即时属性桥接再拆细一点，大概是这样：</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;我们的代码: player.Transform.Position = p&quot;] --&gt; B[&quot;框架 facade: Transform.set_Position&quot;]
+    B --&gt; C[&quot;Adapter: marshal Vector3 + handle&quot;]
+    C --&gt; D[&quot;LeanCLR host bridge ABI&quot;]
+    D --&gt; E[&quot;native bridge thunk&quot;]
+    E --&gt; F[&quot;handle registry&quot;]
+    F --&gt; G&#123;&quot;当前是否主线程&quot;&#125;
+    G --&gt;|是| H[&quot;立即调用真实引擎 setter&quot;]
+    G --&gt;|否| I[&quot;投递到主线程 dispatcher&quot;]
+    I --&gt; H
+    H --&gt; J[&quot;真实 Transform / Node / Actor 属性更新&quot;]</code></pre>
+<p>这里说“框架层不关心引擎”，意思是我们的业务和框架核心不依赖具体引擎程序集。框架层可以定义稳定的对象和属性语义，adapter 自动把它们映射到 Godot/Unity/UE 的真实对象。好处很直接：</p>
+<ul>
+<li>setter 路径短：省掉 snapshot diff、命令聚合、批量解码和帧尾回放。</li>
+<li>对象语义直观：我们写属性就等于修改引擎对象，调试时看到的状态更接近真实状态。</li>
+<li>桥接层集中处理差异：属性名、类型 marshal、主线程要求、弱引用有效性都收在 adapter/native plugin 里。</li>
+<li>后续仍可优化热点：如果某些属性写入特别频繁，可以在 bridge 内部做去重、批处理或 dirty flag，整体架构继续保持即时属性桥接。</li>
+</ul>
+<h3 id="Godot-接入流程">Godot 接入流程</h3>
+<p>Godot 这条路可以保留现在这套结构：GDExtension 启动 LeanCLR，注册文件加载器，加载 sample assembly，再把 <code>_process</code> 转成 managed tick。需要改的是对象同步方式：从 command buffer 换成即时 facade。<code>NKGGameFramework.Adapter.Godot</code> 负责 managed contract、<code>GodotObjectHandle</code>、<code>GodotNodeFacade</code>、<code>GodotResourceFacade</code> 和属性 bridge；GDExtension native 层维护 Godot <code>Object</code> / <code>Node</code> / <code>Resource</code> registry，再把 facade setter 映射到 <code>Object::set</code>、<code>Object::callv</code>、<code>ResourceLoader</code> 这些 Godot API。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;dotnet build Godot sample: net10.0&quot;] --&gt; B[&quot;NKGGameFramework.GodotPlaneSample.dll&quot;]
+    A --&gt; C[&quot;NKGGameFramework.dll / Adapter.Godot.dll / Diagnostics.dll&quot;]
+    B --&gt; D[&quot;stage-leanclr-bcl: 复制 System.Private.CoreLib 和引用闭包&quot;]
+    C --&gt; D
+    E[&quot;Godot project.godot&quot;] --&gt; F[&quot;GDExtension: nkg_leanclr_bridge&quot;]
+    F --&gt; G[&quot;NkgLeanClrRuntimeBridge.configure(managedDir + bclDir)&quot;]
+    G --&gt; H[&quot;Runtime::initialize + Settings::set_file_loader&quot;]
+    H --&gt; I[&quot;Assembly::load_by_name(sample assembly)&quot;]
+    I --&gt; J[&quot;绑定 PlaneGameBridge 静态入口&quot;]
+    K[&quot;NkgLeanClrPlaneHost._process(delta)&quot;] --&gt; L[&quot;ClearInput / Press* / StepSession&quot;]
+    L --&gt; M[&quot;RuntimeContext.Update + World.Update&quot;]
+    M --&gt; N[&quot;Godot facade 属性 setter / service call&quot;]
+    N --&gt; O[&quot;Adapter.Godot marshal handle + Variant&quot;]
+    O --&gt; P[&quot;NkgGodotObjectRegistry / ResourceRegistry&quot;]
+    P --&gt; Q[&quot;Godot Object::set / Object::callv / ResourceLoader&quot;]
+    R[&quot;native HTTP/SSE debug transport&quot;] --&gt; S[&quot;主线程安全点&quot;]
+    S --&gt; T[&quot;PlaneGameBridge.HandleDebugRequest&quot;]
+    T --&gt; U[&quot;Diagnostics GameDebugEndpointDispatcher&quot;]</code></pre>
+<p>Godot 这边的经验，可以沉淀成几个很实用的约束：</p>
+<ul>
+<li><code>leanclr_bcl/net10.0</code> 是随工程 staged 的 runtime assembly 目录，运行时不启动 CoreCLR host。</li>
+<li>Godot 官方 C# / GodotSharp 不在主路径里，Godot 的 .NET 支持状态就不会变成 LeanCLR 的平台限制。</li>
+<li>GDScript 只做 autoload、配置和可选 facade，不承载 ECS、Gameplay、Serialization、Debug domain。</li>
+<li>debug transport 在 native/Godot 层，managed 侧只处理 command endpoint 和 payload，LeanCLR 先不实现 <code>System.Net</code> server。</li>
+<li>所有对象属性写入、pause/step 和 debug mutation 都通过主线程安全点执行；调用来自 transport 线程时，bridge 只投递到 dispatcher，由主线程读写 ECS 或 Godot 对象。</li>
+</ul>
+<h3 id="Unity-接入流程">Unity 接入流程</h3>
+<p>Unity 可以复用同一个即时 facade 模型，只是宿主胶水会不一样。Unity 自己已经有 C# 域，LeanCLR 这边仍然把 Unity managed runtime 放在外面，业务依赖也走 adapter facade。更稳的做法是：Unity C# 侧保留一个很薄的 <code>MonoBehaviour</code> host，加载 LeanCLR native plugin，传入 managed/BCL 路径。之后每帧只做输入采集、主线程调度和必要的 host 回调。我们在托管层拿到的是框架层 <code>Entity</code>、<code>TransformFacade</code>、<code>RendererFacade</code> 这类对象；属性 setter 立即进入 Unity bridge，由 host 找到 <code>GameObject</code> / <code>Component</code> 并写入真实属性。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;NKG / game logic: net10.0&quot;] --&gt; B[&quot;NKGGameFramework.dll&quot;]
+    A --&gt; C[&quot;NKGGameFramework.Adapter.Unity.dll&quot;]
+    B --&gt; D[&quot;Unity StreamingAssets 或 package 内 managed 目录&quot;]
+    C --&gt; D
+    E[&quot;Unity Editor / Player&quot;] --&gt; F[&quot;LeanCLR native plugin&quot;]
+    G[&quot;LeanClrUnityHost MonoBehaviour&quot;] --&gt; F
+    G --&gt; H[&quot;传入 managedDir / bclDir / entry assembly&quot;]
+    F --&gt; I[&quot;Runtime::initialize + assembly loader&quot;]
+    I --&gt; J[&quot;绑定 managed Reset / Tick / Debug 方法&quot;]
+    K[&quot;Update / FixedUpdate / LateUpdate&quot;] --&gt; G
+    G --&gt; L[&quot;采集 Input / Time / scene context&quot;]
+    L --&gt; J
+    J --&gt; M[&quot;RuntimeContext.Update / gameplay logic&quot;]
+    M --&gt; N[&quot;Unity facade 属性 setter / service call&quot;]
+    N --&gt; O[&quot;Unity adapter marshal handle + value&quot;]
+    O --&gt; P[&quot;handle registry: GameObject / Component / Asset&quot;]
+    P --&gt; Q[&quot;Transform.position / Component.enabled / Instantiate / LoadAsset&quot;]
+    R[&quot;Editor debug window / loopback transport&quot;] --&gt; G
+    G --&gt; S[&quot;managed Diagnostics command endpoint&quot;]</code></pre>
+<p>Unity 首版不用追求“在 LeanCLR 里完整写 Unity 脚本”。可以先这样分期：</p>
+<ol>
+<li><code>Adapter.Unity</code> 先定义 <code>IUnityGameLoopDriver</code>、asset、scene、audio、UI 等 host service contract。</li>
+<li>Unity host 把 <code>Update</code> / <code>FixedUpdate</code> 映射成 LeanCLR 的 frame pump。</li>
+<li>我们通过 facade 修改对象属性，Unity host 维护 <code>int</code>/<code>long</code> handle 到 <code>GameObject</code>、<code>Component</code>、<code>ScriptableObject</code>、asset 的映射。</li>
+<li>Editor/desktop debug transport 可以由 Unity C# 或 native plugin 承载，再转成 Diagnostics command。</li>
+<li>后续如果要暴露更多 Unity API，优先做生成式 adapter 和受控 facade，让 <code>UnityEngine</code> 留在 Unity adapter 一侧。</li>
+</ol>
+<h3 id="Unreal-Engine-接入流程">Unreal Engine 接入流程</h3>
+<p>UE 会更麻烦一点，因为它还要处理反射、UObject 生命周期、GC、蓝图和热重载边界。这里可以参考 UnrealSharp 的方向：它面向 UE5，把 C# 放在 <code>.NET 10</code> 上，支持从 <code>UClass</code> 派生、用特性标注 <code>UProperty</code> / <code>UFunction</code>，并根据 Unreal 反射出来的 C++ 类型生成 C# binding。LeanCLR 可以借鉴这种“生成 binding + native module 承载 UObject 边界”的结构，运行时仍然使用 LeanCLR。</p>
+<pre><code class="highlight mermaid">flowchart TD
+    A[&quot;Unreal C++ project / plugin&quot;] --&gt; B[&quot;UHT 生成反射数据&quot;]
+    B --&gt; C[&quot;LeanCLR Unreal binding generator&quot;]
+    C --&gt; D[&quot;Leanclr.Unreal.Adapter.dll: UObjectHandle / Actor facade / generated thunks&quot;]
+    E[&quot;Gameplay C# net10.0&quot;] --&gt; F[&quot;managed game assemblies&quot;]
+    D --&gt; F
+    G[&quot;Unreal plugin module&quot;] --&gt; H[&quot;StartupModule / GameInstanceSubsystem&quot;]
+    H --&gt; I[&quot;启动 LeanCLR Runtime&quot;]
+    I --&gt; J[&quot;加载 BCL / adapter / gameplay assemblies&quot;]
+    J --&gt; K[&quot;绑定 Tick / BeginPlay / EndPlay / Debug / event dispatch&quot;]
+    L[&quot;UE game thread Tick&quot;] --&gt; K
+    K --&gt; M[&quot;managed gameplay / ECS / state machine&quot;]
+    M --&gt; N[&quot;UObject / Actor facade 属性 setter&quot;]
+    N --&gt; O[&quot;native bridge thunks&quot;]
+    O --&gt; P[&quot;UObject registry: handle -&gt; TWeakObjectPtr&lt;UObject&gt;&quot;]
+    P --&gt; Q[&quot;SetProperty / Call UFunction / SpawnActor / LoadObject&quot;]
+    R[&quot;Blueprint / UFunction event&quot;] --&gt; S[&quot;native event thunk&quot;]
+    S --&gt; K</code></pre>
+<p>UE 可以拆成两步走：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>目标</th>
+<th>边界</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Phase 1</td>
+<td>LeanCLR 托管逻辑通过 facade 即时驱动 UE 对象属性</td>
+<td>我们通过 handle facade 控制 Actor、Component、Asset</td>
+</tr>
+<tr>
+<td>Phase 2</td>
+<td>生成式 UClass/UFunction 代理</td>
+<td>参考 UnrealSharp 的 generated binding 思路，为 C# partial 类型生成 native proxy、UFunction thunk 和属性 marshal</td>
+</tr>
+</tbody>
+</table>
+<p>Phase 1 更适合先验证 LeanCLR 的 runtime contract，因为它只要求：</p>
+<ul>
+<li>UE plugin module 在 game thread 初始化 LeanCLR，并在 Tick 安全点调用 managed entry。</li>
+<li>adapter assembly 提供 <code>UObjectHandle</code>、<code>ActorHandle</code>、<code>ComponentHandle</code>、<code>UnrealVariant</code>、属性 setter thunk 和 host service interface。</li>
+<li>native bridge 用 <code>TWeakObjectPtr&lt;UObject&gt;</code> 或等价结构维护 handle registry，让 LeanCLR 只持有受控 handle。</li>
+<li>蓝图事件、input、timer、asset load 先进入 UE game thread，再通过 dispatch queue 进入 LeanCLR。</li>
+<li>UE GC 与 LeanCLR GC 不互相扫描对象图，只通过 handle 的 pin/release/weak validity contract 协作。</li>
+</ul>
+<p>Phase 2 再引入更接近 UnrealSharp 的体验：C# 类型用特性描述 <code>UClass</code>、<code>UProperty</code>、<code>UFunction</code>，生成器根据 UHT/reflection 数据生成 C# facade 和 C++ thunk。这里仍然要守住一个原则：Unreal 的反射系统属于 UE adapter，<code>.NET 10</code> BCL profile 只看到 adapter DLL、metadata 和受控 native bridge。</p>
+<h2 id="接入验证矩阵">接入验证矩阵</h2>
+<p>三类引擎最好先用同一组最小验收把边界跑通，完整引擎 API 放到后面扩展：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>Godot</th>
+<th>Unity</th>
+<th>UE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime 启动</td>
+<td>GDExtension 初始化 LeanCLR</td>
+<td>native plugin 初始化 LeanCLR</td>
+<td>plugin module / subsystem 初始化 LeanCLR</td>
+</tr>
+<tr>
+<td>Assembly 加载</td>
+<td>managed dir + <code>leanclr_bcl/net10.0</code></td>
+<td>StreamingAssets/package staged BCL</td>
+<td>plugin content staged BCL</td>
+</tr>
+<tr>
+<td>Frame pump</td>
+<td><code>_process</code> / <code>_physics_process</code></td>
+<td><code>Update</code> / <code>FixedUpdate</code></td>
+<td>game thread Tick</td>
+</tr>
+<tr>
+<td>对象输出</td>
+<td>Godot facade setter 立即 <code>Object::set</code></td>
+<td>Unity facade setter 立即写 <code>GameObject</code> / <code>Component</code></td>
+<td>UE facade setter 立即写 <code>UObject</code> / <code>AActor</code></td>
+</tr>
+<tr>
+<td>对象 registry</td>
+<td><code>Object</code> / <code>Node</code> / <code>Resource</code></td>
+<td><code>GameObject</code> / <code>Component</code> / asset</td>
+<td><code>UObject</code> / <code>AActor</code> / <code>UActorComponent</code></td>
+</tr>
+<tr>
+<td>属性桥接</td>
+<td>handle + Godot <code>Variant</code> marshal</td>
+<td>handle + Unity value marshal</td>
+<td>handle + <code>FProperty</code> / thunk marshal</td>
+</tr>
+<tr>
+<td>Debug transport</td>
+<td>native HTTP/SSE 或 JS bridge</td>
+<td>Editor window / loopback / player bridge</td>
+<td>Editor tool / loopback / console command</td>
+</tr>
+<tr>
+<td>首个 smoke</td>
+<td>managed sampler 每帧驱动可见对象</td>
+<td>managed sampler 创建/移动 GameObject</td>
+<td>managed sampler SpawnActor/SetProperty</td>
+</tr>
+</tbody>
+</table>
+<p>只要这张矩阵跑通，后面扩展资源、UI、动画、物理、蓝图、热重载，就可以继续围绕 facade、adapter 和 host bridge 往外长。每个引擎的复杂度留在 adapter 里。真的遇到需要批处理的热点，也可以在 bridge 内部局部优化，业务层继续保持即时属性桥接模型。</p>
+<h2 id="单线程-runtime-的同步边界">单线程 runtime 的同步边界</h2>
+<p>如果 LeanCLR 的 Standard/Core 形态明确是单线程 runtime，那 <code>.NET 10</code> profile 也要把同步语义说清楚。</p>
+<p>async/await 仍然可以跑一部分。很多 async state machine、completed task、同步 continuation、next-frame continuation，都可以映射到单线程 frame scheduler 或宿主 dispatcher。需要小心的是 ThreadPool worker、Timer、WaitHandle、后台线程、I/O completion port 和跨线程调度。</p>
+<p>可以先把同步能力分成三类：</p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>处理方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单线程可表达</td>
+<td>async state machine、同步 continuation、frame scheduler、host dispatcher</td>
+</tr>
+<tr>
+<td>可降级或替代</td>
+<td>timer/next-frame、资源加载回调、主线程任务队列</td>
+</tr>
+<tr>
+<td>不进入 profile</td>
+<td>ThreadPool worker、后台线程、复杂 WaitHandle、跨线程 Monitor 语义</td>
+</tr>
+</tbody>
+</table>
+<p>对第三类 API，清楚地报 NotSupported 比空实现更好。空 stub 表面上“没炸”，后面会让我们的业务代码在更远、更难定位的地方失败。</p>
+<h2 id="哪些-LeanCLR-能力应该复用">哪些 LeanCLR 能力应该复用</h2>
+<p><code>.NET 10</code> 适配的主战场在 BCL/runtime contract 这一层。下面这些 LeanCLR VM 能力能复用就尽量复用：</p>
+<ul>
+<li>程序集与 metadata 解析。</li>
+<li>类型系统和对象模型。</li>
+<li>IL 解释器。</li>
+<li>LeanAOT IL 到 C++ 的生成框架。</li>
+<li>GC 和对象扫描。</li>
+<li>异常处理。</li>
+<li>委托调用。</li>
+<li>泛型与泛型共享。</li>
+<li>基础反射框架。</li>
+</ul>
+<p>需要重建或重新校准的是：</p>
+<ul>
+<li>corlib 名称和核心模块识别。</li>
+<li><code>System.Private.CoreLib</code> 对核心类型、runtime handle 和反射对象的预期。</li>
+<li><code>coreclr-net10</code> runtime API catalog。</li>
+<li>internal call、intrinsic、P/Invoke 和 runtime implemented method 的签名与行为。</li>
+<li>assembly resolver 对业务程序集、NuGet 依赖、runtime pack 和 adapter assembly 的搜索策略。</li>
+<li>现代 C# / .NET metadata 与 IL 组合。</li>
+<li>单线程 async、continuation、timer 与宿主调度的边界。</li>
+<li>反射型序列化、private member access、attribute 查询等真实 workload 会组合触发的能力。</li>
+</ul>
+<h2 id="结语">结语</h2>
+<p>把 LeanCLR 接到 <code>.NET 10</code> 上，真正让人兴奋的地方不只是“又支持了一个 TFM”。更大的想象空间在后面：我们可以把一套 C# 业务框架、一套玩法逻辑、一套调试和工具链，放到更稳定的托管层里，再让它去连接不同平台、不同引擎、不同宿主环境。</p>
+<p>这件事一旦跑通，Unity、Godot、Unreal 就不再只是三条彼此分叉的技术路线。它们可以变成不同的渲染、编辑器和平台入口。我们真正沉淀下来的东西，是 <code>net10.0</code> 的业务程序集，是 LeanCLR 托管层里的规则、状态、序列化、调试域和框架对象。</p>
+<p>到那一步，AI 迁移代码也会更有落点。AI 可以帮我们把工程从一个引擎搬到另一个引擎，LeanCLR + <code>.NET 10</code> 则负责提供一条稳定的运行通道。我们不用每换一次引擎，就重新押注一套脚本语言、一套 runtime 生态、一套调试方式。</p>
+<p>所以这条路值得继续敢想：同一套 gameplay 核心跑在桌面、移动端、服务器、编辑器工具里；同一套框架对象通过 adapter 落到 Unity、Godot、Unreal 的真实对象上；同一套 <code>.NET 10</code> 逻辑程序集，随着项目需要去选择不同引擎，而不是被某个引擎提前锁死。</p>
+<p>LeanCLR 要做的，就是把这条路铺得足够轻、足够稳、足够透明。底层把 runtime contract 接好，上层把引擎差异藏进 bridge。最后留给我们的，是更自由的 C# 项目形态：代码可以跨平台，框架可以跨引擎，想法也可以跑得更远一点。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/leanclr-dotnet10/">https://www.lfzxb.top/leanclr-dotnet10/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E6%A1%86%E6%9E%B6/">游戏框架</a><a class="post-meta__tags" href="/tags/LeanCLR/">LeanCLR</a><a class="post-meta__tags" href="/tags/NKGFramework/">NKGFramework</a><a class="post-meta__tags" href="/tags/CLR/">CLR</a><a class="post-meta__tags" href="/tags/NET10/">.NET10</a><a class="post-meta__tags" href="/tags/%E8%B7%A8%E5%BC%95%E6%93%8E%E6%A1%86%E6%9E%B6/">跨引擎框架</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/dotnet10-runtime-architecture-cover-v5.png!webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/ai-model-jailbreak-guide/" title="AI 模型破甲使用指南"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">AI 模型破甲使用指南</div></div><div class="info-2"><div class="info-item-1">最近在用 AI 做反编译和网络安全相关的学习，陆陆续续踩了一些坑，遂有此文。 我把这个过程叫作“破甲”。这个词听起来多少有点江湖气，不过我的用法很克制，只在自己拥有或者明确获得授权的程序、靶场、协议和测试环境里研究。我的实际需求也很朴素：让模型别看到“反编译”“漏洞”“抓包”几个词就直接结束对话，能够继续参与后面的分析。 目前实践下来，体验好坏主要看前面的上下文有没有搭好。一句神奇提示词撑不起长任务，目标、授权范围、环境和交付物都说不清楚，模型只能把任务往最危险的方向猜。猜完以后拒绝，其实也很正常。 第一步：先把研究模式开对 刚开始时，我会先把研究背景讲清楚，相当于开启一次受约束的安全研究模式。 这里至少要说明几件事：  分析对象是什么，所有权或者授权从哪里来 研究目的是什么，是学习、兼容性分析、漏洞复现，还是恶意代码检测 工作在哪个环境里进行，比如本地副本、CTF、虚拟机或者隔离靶场 哪些动作允许做，哪些动作禁止做 最终需要什么结果，是函数说明、协议文档、风险报告，还是修复建议  这一步看起来有点啰嗦，实际非常省时间。模型知道我们在分析自己的二进制文件，和它以为我们要入侵线上服...</div></div></div></a><a class="pagination-related" href="/ai-vibe-coding/" title="Vibe Coding心得"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Vibe Coding心得</div></div><div class="info-2"><div class="info-item-1">AI 模型对比 最核心的 AI 模型自然是我们对比的首选。尽管各大编程 IDE 都涵括了几乎所有主流 AI 模型，但每家 AI 模型官方调教出的工具肯定是最合适和好用的。 截至 2026.7.1，主流 AI 模型对比如下：  Claude Opus 4.8：目前综合能力最强的代码生成模型，在长上下文推理、复杂重构、跨文件理解上仍然是断档水平。特别是对于 Unity、C++、Shader 这类工程链路复杂的场景，Opus 4.8 的规划能力和自查能力肉眼可见地领先，配合 1M 上下文窗口，几乎可以一次吃下一个中小型项目 GPT-5.5：OpenAI 在 2026 年上半年拿出的答卷，主打的是稳。它没有 Opus 那种一冲一个准的爆发力，但是对于经典算法、数学证明、系统设计这类需要长链推理的任务，GPT-5.5 有着极强的准确性，很多 Claude 反复犯错的地方它能一遍过，非常适合做 Code Review 和架构设计  Codex Codex 是 OpenAI 在 2026 年的翻身之作，绑定 GPT-5.5，主打两点：审慎和深度推理。 它和 Claude Code 的差别很像 ...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/et-fgui-smallmap/" title="ET篇：基于FGUI的小地图制作"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/05/QQ截图20190523125800.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：基于FGUI的小地图制作</div></div><div class="info-2"><div class="info-item-1">前言 小地图开发对于我们来说是再常见不过的需求了，单用Unity中的UGUI来说倒也方便，但是用FGUI又如何呢？ 正式开始 FGUI资源的搭建 注意小地图图片要用装载器来包装，不然他将会是不可触摸的，小地图宽高我们设置为200，大地图我们设置大小为100  然后导出到Unity FGUI坐标系统 http://www.fairygui.com/guide/unity/transform.html 小地图到大地图的坐标映射  落实到代码就是 12345678910111213141516     public override void Start(FUI5V5Map self)     &#123;//为小地图图片添加点击事件         self.SmallMapSprite.onRightClick.Add(this.AnyEventHandler);     &#125;     void AnyEventHandler(EventContext context)     &#123;         //Log.Info(&quot;点击了小地图&quot;);  ...</div></div></div></a><a class="pagination-related" href="/et-masterrun/" title="ET篇：运行master的Demo"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190118220241584.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2020-02-01</div><div class="info-item-2">ET篇：运行master的Demo</div></div><div class="info-2"><div class="info-item-1">环境：  Rider 2018.3.0 ET Master branch Unity 2018.3.1f1  源码下载 建议大家使用master https://github.com/egametang/ET.git 环境配置 下载.NET Core2.2和.NET Framework 4.7.2 https://dotnet.microsoft.com/download 其实这个也不是绝对的，主要是ET更新的很快，并且也经常用到新的语法糖，所以大家见机行事~     好了,基本的环境配置和准备工作已经做好了,可以运行Demo了 运行Demo 这时候打开  启动   然后回到Unity,运行场景  随便输入账号密码,进入游戏,然后就看到这个寻路Demo了  ET的教程先告一段落,过阵子我会和大家一起学习 (绝对不鸽!!!) </div></div></div></a><a class="pagination-related" href="/et6-manual/" title="ET6.0使用手册"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907004244.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-09-01</div><div class="info-item-2">ET6.0使用手册</div></div><div class="info-2"><div class="info-item-1">前言 本文章不包含代码分析，仅仅为使用手册。 ET本身就是一个很优秀的框架，对于ET的设计理念和核心思想，可以去阅读下原作者写的一系列文章：ETBook 这里也列举出一些学习资料，供大家参考  ET 6.0学习笔记——着重介绍ET6.0的新概念与设计思路 我的B站ET6.0视频教程——偏代码解读 字母哥Binary的B站ET6.0视频教程——偏实践  环境 服务器 .Net版本：.Net Core 5.0 云端服务器：CentOS 7.6 公共部分 基础架构 ET是一个单线程，多进程的框架，好处是单线程的开发效率更高，写出的代码更安全，Bug也更好查，多进程可以做分布式架构，均衡负载等。 ET框架采用了ECS架构（Entity-Component-System），而非传统的OOP架构，好处是开发效率非常高，并且借助于ECS的解耦功能，重构起来也很快。 但是ET的ECS也并非纯正的ECS，而是在架构学术派与实用派做了折衷，严格来说是E + S（Entity是纯数据，System是纯逻辑），那么把Component放哪了呢？在ET里Component就是Entity，Entity就是...</div></div></div></a><a class="pagination-related" href="/gameframework-fornew/" title="GameFramework篇：新项目使用GameFramework框架需知"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：新项目使用GameFramework框架需知</div></div><div class="info-2"><div class="info-item-1">1.AB包相关配置 GF资源管理实属牛批，但要使用它，并不是全自动的，还是要配置一下 创建一个静态类，类名随意，注意里面至少要包含以下三个属性，后面的地址所指就是打AB包所必须的三个配置文件（这个地址可以自己更改，注意改变路径就行） 12345678 [AssetBundleBuilderConfigPath] public static string AssetBundleBuilderConfig =    Utility.Path.GetCombinePath(Application.dataPath, &quot;GameMain/Configs/AssetBundleBuilder.xml&quot;);[AssetBundleEditorConfigPath] public static string AssetBundleEditorConfig =    Utility.Path.GetCombinePath(Application.dataPath, &quot;GameMain/Configs/AssetBundleEditor.xml&quot;);[Ass...</div></div></div></a><a class="pagination-related" href="/gameframework-base/" title="GameFramework篇：框架基本理解和源码下载"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：框架基本理解和源码下载</div></div><div class="info-2"><div class="info-item-1">先偷偷观察一下E神的GitHub  只有三个项目，尽管如此，我还是感受到来自E神的压迫感。 我们再来看一下官网的描述  什么个意思呢？ 我们先看UGF 可以看到有GameFramework的dll文件，那么它是从哪来的呢？  它来自GameFramework  再看UGF的Scripts，里面就是UnityGameFramework.Runtime和UnityGameFramework.Editor模块啦  我们可以这样理解，GameFramework是完全和Unity分离的的，由它衍生出与Unity相交互的UnityGameFramework，这也是我们在Unity中使用GameFramework框架必不可少的部分，我们可以把UGF当成平时使用的插件。最后UGF和Unity相结合，就做出游戏啦~ 然后就是演示Demo——StarForce（一目了然） 然后我们要把这三个项目都下载 为什么全都要呢，因为我们平时学习肯定要顺藤摸瓜来看代码实现而，GF是GF.dll的来源，也就是最终源码，相对于反编译dll，我更习惯于直接看源码~所以三个都不能少 打开StarForce项目，如果有报...</div></div></div></a><a class="pagination-related" href="/etfguiwithurp/" title="ET&amp;&amp;FGUI接入URP流程"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-01-01</div><div class="info-item-2">ET&amp;&amp;FGUI接入URP流程</div></div><div class="info-2"><div class="info-item-1">前言 前几天技能系统发布了新版本，休息了以下，接下来要开始开发Moba项目的特效部分了，准备使用Shader Graph（简称SG）技术栈，但是SG只在SRP中才可以正常工作，所以要做一些适配。 环境 DCET中的FGUI模块（Model层与Hotfix层） ET 5.0 Unity 2019.4.8 LTS URP 7.3.1 步骤 由于URP版本中Camera的特殊性(使用Render Type和CameraStack控制渲染)，需要先对相机模块进行更改 首先Unity.Model和ThirdParty的Assembly Definition需要索引Unity.RenderPipeline.Universal.Runtime 我们要确保整个项目只有一个Render Type为Base的Camera，否则渲染将不会如我们所愿的那样（指Build-in管线中相机渲染结果的自动叠加） 首先更改FGUI源码中的StageCamera.cs文件 123456789101112131415161718192021222324252627282930313233        /// &l...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%93%E9%97%A8%E9%80%82%E9%85%8D-NET-10"><span class="toc-number">1.</span> <span class="toc-text">为什么专门适配 .NET 10</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#C-%E7%A8%8B%E5%BA%8F%E4%BC%9A%E5%85%88%E5%8F%98%E6%88%90-IL"><span class="toc-number">2.</span> <span class="toc-text">C# 程序会先变成 IL</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Runtime-%E5%92%8C-BCL-%E5%88%86%E5%88%AB%E8%B4%9F%E8%B4%A3%E4%BB%80%E4%B9%88"><span class="toc-number">3.</span> <span class="toc-text">Runtime 和 BCL 分别负责什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#corlib-%E6%98%AF%E6%95%B4%E4%B8%AA%E4%B8%96%E7%95%8C%E7%9A%84%E5%9C%B0%E5%9F%BA"><span class="toc-number">4.</span> <span class="toc-text">corlib 是整个世界的地基</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#TFM%E3%80%81runtime-pack-%E5%92%8C%E8%BF%90%E8%A1%8C%E6%97%B6%E6%94%AF%E6%8C%81"><span class="toc-number">5.</span> <span class="toc-text">TFM、runtime pack 和运行时支持</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BB%80%E4%B9%88%E6%98%AF-runtime-contract"><span class="toc-number">6.</span> <span class="toc-text">什么是 runtime contract</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BCL-contract-%E6%98%AF%E4%BB%8E%E5%93%AA%E9%87%8C%E5%8F%91%E8%B5%B7%E7%9A%84"><span class="toc-number">7.</span> <span class="toc-text">BCL contract 是从哪里发起的</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%B8%AA-C-%E6%96%B9%E6%B3%95%E5%A6%82%E4%BD%95%E8%B5%B0%E5%88%B0-LeanCLR-runtime"><span class="toc-number">8.</span> <span class="toc-text">一个 C# 方法如何走到 LeanCLR runtime</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#minimal-net10-profile-%E7%9A%84%E8%BE%B9%E7%95%8C"><span class="toc-number">9.</span> <span class="toc-text">minimal net10 profile 的边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%89%98%E7%AE%A1%E4%BB%A3%E7%A0%81%E5%9C%A8-LeanCLR-%E4%B8%AD%E5%A6%82%E4%BD%95%E6%89%A7%E8%A1%8C"><span class="toc-number">10.</span> <span class="toc-text">托管代码在 LeanCLR 中如何执行</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#profile-%E6%98%AF%E9%9A%94%E7%A6%BB%E8%BE%B9%E7%95%8C"><span class="toc-number">11.</span> <span class="toc-text">profile 是隔离边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#runtime-API-catalog-%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="toc-number">12.</span> <span class="toc-text">runtime API catalog 的作用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#icall-%E8%A6%81%E7%B2%BE%E7%A1%AE%E5%8C%B9%E9%85%8D"><span class="toc-number">13.</span> <span class="toc-text">icall 要精确匹配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#CoreCLR-contract-%E6%80%8E%E4%B9%88%E8%90%BD%E5%88%B0-LeanCLR-%E6%A8%A1%E5%9E%8B"><span class="toc-number">14.</span> <span class="toc-text">CoreCLR contract 怎么落到 LeanCLR 模型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E8%A6%81%E8%B0%88%E5%BC%95%E6%93%8E%E9%80%82%E9%85%8D"><span class="toc-number">15.</span> <span class="toc-text">为什么还要谈引擎适配</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#BCL-%E5%85%BC%E5%AE%B9%E5%92%8C%E5%BC%95%E6%93%8E-bridge-%E6%98%AF%E4%B8%A4%E4%BB%B6%E4%BA%8B"><span class="toc-number">16.</span> <span class="toc-text">BCL 兼容和引擎 bridge 是两件事</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E7%B1%BB%E5%BC%95%E6%93%8E%E6%8E%A5%E5%85%A5%E7%9A%84%E5%85%B1%E5%90%8C%E9%AA%A8%E6%9E%B6"><span class="toc-number">17.</span> <span class="toc-text">三类引擎接入的共同骨架</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Godot-%E6%8E%A5%E5%85%A5%E6%B5%81%E7%A8%8B"><span class="toc-number">17.1.</span> <span class="toc-text">Godot 接入流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unity-%E6%8E%A5%E5%85%A5%E6%B5%81%E7%A8%8B"><span class="toc-number">17.2.</span> <span class="toc-text">Unity 接入流程</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Unreal-Engine-%E6%8E%A5%E5%85%A5%E6%B5%81%E7%A8%8B"><span class="toc-number">17.3.</span> <span class="toc-text">Unreal Engine 接入流程</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8E%A5%E5%85%A5%E9%AA%8C%E8%AF%81%E7%9F%A9%E9%98%B5"><span class="toc-number">18.</span> <span class="toc-text">接入验证矩阵</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%8D%95%E7%BA%BF%E7%A8%8B-runtime-%E7%9A%84%E5%90%8C%E6%AD%A5%E8%BE%B9%E7%95%8C"><span class="toc-number">19.</span> <span class="toc-text">单线程 runtime 的同步边界</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%93%AA%E4%BA%9B-LeanCLR-%E8%83%BD%E5%8A%9B%E5%BA%94%E8%AF%A5%E5%A4%8D%E7%94%A8"><span class="toc-number">20.</span> <span class="toc-text">哪些 LeanCLR 能力应该复用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%BB%93%E8%AF%AD"><span class="toc-number">21.</span> <span class="toc-text">结语</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || 'f0fdbd714d5e22a57e07672d5dbac8d9'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"leanclr-dotnet10","contentHash":"1a4ea0ca0cf6efd4965cb22bf5d46a2a5e3d57d737c8241db031c1cb2d36809c"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>
