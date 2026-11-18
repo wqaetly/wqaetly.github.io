@@ -1,0 +1,1043 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>自研跨平台播放器的帧调度与 GPU 管线 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="当视频进入登录背景、角色展示、动态 UI 与透明特效后，播放器的职责不再是从头播到尾的线性流媒体。它需要随界面频繁启闭，随剧情演出时间轴精确跳转，与实时 3D 场景混合渲染，并在切后台时释放大块显存、回前台时无缝恢复进度。 CRIWARE、AVPro Video 等成熟中间件提供了可靠的跨平台解码接入，却未能消除生命周期管理的内在复杂性。Unity 组件、原生会话、系统解码器与 GPU 显存往往">
+<meta property="og:type" content="article">
+<meta property="og:title" content="自研跨平台播放器的帧调度与 GPU 管线">
+<meta property="og:url" content="https://www.lfzxb.top/native-video-player/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="当视频进入登录背景、角色展示、动态 UI 与透明特效后，播放器的职责不再是从头播到尾的线性流媒体。它需要随界面频繁启闭，随剧情演出时间轴精确跳转，与实时 3D 场景混合渲染，并在切后台时释放大块显存、回前台时无缝恢复进度。 CRIWARE、AVPro Video 等成熟中间件提供了可靠的跨平台解码接入，却未能消除生命周期管理的内在复杂性。Unity 组件、原生会话、系统解码器与 GPU 显存往往">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp">
+<meta property="article:published_time" content="2026-10-07T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-07T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity">
+<meta property="article:tag" content="性能优化">
+<meta property="article:tag" content="视频播放器">
+<meta property="article:tag" content="H.264">
+<meta property="article:tag" content="跨平台">
+<meta property="article:tag" content="GPU">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "自研跨平台播放器的帧调度与 GPU 管线",
+  "url": "https://www.lfzxb.top/native-video-player/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp",
+  "datePublished": "2026-10-07T00:00:00.000Z",
+  "dateModified": "2026-10-07T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/native-video-player/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const start = 6
+          const end = 8
+          const isNight =
+            start < end
+                ? hour < start || hour >= end
+                : hour >= start || hour < end
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '自研跨平台播放器的帧调度与 GPU 管线',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">260</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">230</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">59</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">自研跨平台播放器的帧调度与 GPU 管线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">自研跨平台播放器的帧调度与 GPU 管线</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-10-07T00:00:00.000Z" title="发表于 2026-10-07 00:00:00">2026-10-07</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-07T00:00:00.000Z" title="更新于 2026-10-07 00:00:00">2026-10-07</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E%E4%B8%8E%E5%BA%95%E5%B1%82%E6%9E%B6%E6%9E%84/">游戏引擎与底层架构</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">7.3k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>24分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/native-video-player/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-10-07 00:00:00&quot;}" hidden></div><p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp" alt="跨平台视频播放完整流程：离线 MFV 资源、游戏帧调度、平台解码与 GPU 桥接、透明合成及安全回收" loading='lazy'></p>
+<p>当视频进入登录背景、角色展示、动态 UI 与透明特效后，播放器的职责不再是从头播到尾的线性流媒体。它需要随界面频繁启闭，随剧情演出时间轴精确跳转，与实时 3D 场景混合渲染，并在切后台时释放大块显存、回前台时无缝恢复进度。</p>
+<p>CRIWARE、AVPro Video 等成熟中间件提供了可靠的跨平台解码接入，却未能消除生命周期管理的内在复杂性。Unity 组件、原生会话、系统解码器与 GPU 显存往往各行其道，上层业务仍需修补繁琐的状态流转与释放时序。</p>
+<p>以 CRIWARE 的 CriMana 为例，<code>Stop()</code> 仅发送异步停止请求，底层实例销毁必须显式调用 <code>Dispose()</code>；应用切后台若涉及渲染挂起，还需使用 <code>PauseOnApplicationPause()</code>，底层 Player 甚至需自行注册 Unity 生命周期回调。普通暂停、后台暂停、停止与销毁的语义各自分散，接入方必须自行维护大量胶水代码以处理预热撤销、对象池复用与快速切歌。<a target="_blank" rel="noopener" href="https://game.criware.jp/manual/unity_plugin_en/latest/contents/classCriWare_1_1CriMana_1_1Player.html">CRIWARE Player 官方文档</a>。</p>
+<p>AVPro Video 也有据可查：其 3.3.4 版本曾修复 Android ExoPlayer 在尚未执行 <code>Play()</code> 前调用 <code>CloseMedia()</code> 导致的内存泄漏，以及关闭媒体时的竞态崩溃。这印证了预热取消与快速切换并非罕见边缘分支，而是游戏客户端的高频日常场景。<a target="_blank" rel="noopener" href="https://www.renderheads.com/content/docs/AVProVideo-v3/versions/index.html">AVPro Video 官方版本记录</a>。</p>
+<p>更根本的矛盾在于时钟与画面的主导权：游戏逻辑 Tick 能否严格决定当前展示帧？Seek 成功究竟意味着解码器已产出样本，还是纹理已写入 GPU？多路并播占用多少显存，关闭后何时真正被操作系统释放？在 60 FPS 下，单帧仅约 16.67 ms，一次不当的同步阻塞就会导致卡顿；而当演出时间轴已跳转至第 240 帧，迟到的第 120 帧绝对不能再被错误地上屏。</p>
+<p>这套自研播放器的核心设计是将帧调度、资源所有权与回收条件保留在游戏侧，让底层系统媒体框架专心负责解码，再通过原生图形接口桥接至 Unity。本文讨论的技术边界聚焦于：标准 MP4 容器封装的单路固定帧率（CFR）H.264 视频，无音轨，8 位 SDR，且具有明确的 RGB/Alpha 打包布局（音画同步与泛格式软解不在本文范畴；各平台支持边界见第 4 节）。</p>
+<pre><code class="highlight mermaid">flowchart TB
+    BUILD[&quot;离线处理工具&lt;br/&gt;探测 / 规范化 / RGB 与 Alpha 打包&quot;] --&gt; ASSET[&quot;MFV 资源&lt;br/&gt;MP4 + 布局元数据&quot;]
+    ASSET --&gt; INPUT[&quot;资源输入&lt;br/&gt;路径 / 包内 fd 范围 / 内存副本&quot;]
+    GAME[&quot;游戏控制端&lt;br/&gt;UI / 演出时间轴 / 逻辑 Tick&quot;] --&gt; CONTROL[&quot;Unity 主线程&lt;br/&gt;播放意图 / 目标帧 / 请求代次&quot;]
+    INPUT --&gt; DECODE[&quot;每会话工作线程&lt;br/&gt;系统解码 / PTS 校验 / 帧租约&quot;]
+    CONTROL --&gt; DECODE
+    DECODE --&gt; GPU[&quot;渲染线程与 GPU&lt;br/&gt;平台桥接 / 颜色转换 / RGBA 提交&quot;]
+    GPU --&gt; SHADER[&quot;MFV 材质&lt;br/&gt;RGB 与 Alpha 采样 / 合成&quot;]
+    SHADER --&gt; OUTPUT[&quot;RawImage / Renderer&quot;]
+    GPU -.-&gt;|&quot;已提交帧 / 代次 / 纹理版本&quot;| CONTROL
+    CONTROL -.-&gt;|&quot;关闭&quot;| RETIRE[&quot;异步回收器&lt;br/&gt;等待解码退出与 GPU 使用完成&quot;]
+    DECODE -.-&gt;|&quot;归还租约&quot;| RETIRE
+    OUTPUT -.-&gt;|&quot;解除绑定 / 标记最后使用&quot;| RETIRE</code></pre>
+<p>下文沿这条管线，系统解析资源规范、时钟调度、异步解码、GPU 桥接、透明合成、显存核算与安全回收的协同机制。</p>
+<h2 id="1-资源契约：先把素材变成可预测的资产">1. 资源契约：先把素材变成可预测的资产</h2>
+<p>运行时对素材约定的猜测越少，后续的调度与渲染逻辑就越轻量。离线工具负责消化原始工程素材的差异，播放器按严格的协议读取，并在两端设立防御性校验。</p>
+<h3 id="1-1-从原片到-MFV">1.1 从原片到 MFV</h3>
+<p>统一视频处理工具以 FFprobe 探测素材、以 FFmpeg 执行剪裁与转码，最终由导出层注入 MFV 专属元数据。流水线如下：</p>
+<p>素材探测 → 时间与画布规范化 → RGB/Alpha 布局拼接 → H.264 编码 → 元数据注入与成品检查 → 发布。</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>关键处理</th>
+<th>影响</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>输入规范化</td>
+<td>锁定帧率、方形像素、裁剪缩放、剥离音轨</td>
+<td>统一时间轴单位与渲染尺寸</td>
+</tr>
+<tr>
+<td>透明布局</td>
+<td>RGB 与 Alpha 同步对齐，遮罩可选降采样与拼接</td>
+<td>决定 Alpha 保真度与编码面积</td>
+</tr>
+<tr>
+<td>编码转码</td>
+<td>设定目标码率、恒定 GOP 结构与 Profile</td>
+<td>平衡文件体积、画质与随机寻帧开销</td>
+</tr>
+<tr>
+<td>校验与发布</td>
+<td>校验实际尺寸、总帧数、时间戳线性度与布局</td>
+<td>杜绝元数据声明不符与半成品外溢</td>
+</tr>
+</tbody>
+</table>
+<p>通用转换工具即使成功导出，也未必符合本播放器的前置假设。生产端需显式采用 CFR 模式，通过丢帧或复制帧消除可变帧率（VFR），并剔除音轨。带有镜头旋转或 HDR 标记的素材必须在离线阶段烘焙规范化，不可依赖运行时处理。</p>
+<p>透明度必须直接提取自源文件的像素 Alpha 通道，严禁基于黑底色扣取。原片采用直通（straight）还是预乘（premultiplied）必须显式标记，该参数用于指示运行时 Shader 运算逻辑，转码过程本身不修改数值语义。</p>
+<p>透明视频采用 RGB 与灰度 Alpha 同屏拼接方案，支持分别配置颜色与遮罩的采样分辨率，具体成本与采样策略见第 5 节。</p>
+<h3 id="1-2-标准容器中的游戏语义">1.2 标准容器中的游戏语义</h3>
+<p>MFV 沿用标准 MP4 容器组织媒体样本，在自定义 UUID Box 中记录渲染所需的几何与色彩元数据。这保证了底层系统解封装器能够直接识别音视频轨道，同时自研运行时能快速提取额外指导信息。直接修改普通 MP4 的后缀并不能生成合法的 MFV。</p>
+<table>
+<thead>
+<tr>
+<th>元数据字段</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>encoded_size</code></td>
+<td>解码输出图像与分配 GPU 纹理的实际物理尺寸</td>
+</tr>
+<tr>
+<td><code>display_size</code>、<code>rgb_rect</code></td>
+<td>最终呈现画面尺寸以及颜色区域在整图中的归一化坐标</td>
+</tr>
+<tr>
+<td><code>alpha_rect</code>、<code>alpha_mode</code></td>
+<td>灰度遮罩区域坐标以及直通或预乘 Alpha 语义</td>
+</tr>
+<tr>
+<td><code>frame_count</code>、<code>avg_frame_rate</code>、<code>time_base</code></td>
+<td>视频总帧数、有理数帧率以及时间基准单位</td>
+</tr>
+<tr>
+<td><code>color</code></td>
+<td>BT.709、limited range 等色彩空间标准定义</td>
+</tr>
+</tbody>
+</table>
+<p>显示尺寸不等于编码尺寸。拼接后的全图不仅决定了解码器的硬件规格要求，还直接决定了 GPU 纹理显存的分配大小。若遮罩使用了非对称降采样，高度并非简单减半，绝不能用显示尺寸代替编码尺寸去估算显存占用与硬解负载。</p>
+<p>元数据解析器通过逐 Box 步进并跳过 <code>mdat</code> 媒体大包，无需将完整视频读取进内存即可完成解析。解析过程内置严格边界检查，覆盖 JSON 结构层级、重复键值、无效矩形范围以及区域重叠等异常。</p>
+<h3 id="1-3-整数帧的时间基础">1.3 整数帧的时间基础</h3>
+<p>设帧率为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>f</mi><mo>=</mo><mi>N</mi><mi mathvariant="normal">/</mi><mi>D</mi></mrow><annotation encoding="application/x-tex">f = N/D</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord mathnormal" style="margin-right:0.10764em;">f</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span>，总帧数为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi></mrow><annotation encoding="application/x-tex">F</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span>，首帧时间戳归零，则第 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi></mrow><annotation encoding="application/x-tex">k</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span></span></span></span> 帧的理论时间戳为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>t</mi><mi>k</mi></msub><mo>=</mo><mfrac><mrow><mi>k</mi><mi>D</mi></mrow><mi>N</mi></mfrac><mo separator="true">,</mo><mspace width="2em"/><mn>0</mn><mo>≤</mo><mi>k</mi><mo>&lt;</mo><mi>F</mi></mrow><annotation encoding="application/x-tex">t_k = \frac{kD}{N},\qquad 0 \le k &lt; F
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7651em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal">t</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.0574em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3714em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≤</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7335em;vertical-align:-0.0391em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&lt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span></span></span></span></span></p>
+<p>以常见的 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>30000</mn><mi mathvariant="normal">/</mi><mn>1001</mn></mrow><annotation encoding="application/x-tex">30000/1001</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">30000/1001</span></span></span></span> FPS 为例，第 300 帧对应 10.01 秒。使用有理数分子分母表达帧率，可彻底消除将帧率近似为 30 FPS 带来的长期漂移误差。</p>
+<p>非循环模式下，由游戏时间计算目标帧的公式为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>k</mi><mo stretchy="false">(</mo><mi>t</mi><mo stretchy="false">)</mo><mo>=</mo><mi mathvariant="normal">clamp</mi><mo>⁡</mo><mrow><mo fence="true">(</mo><mrow><mo fence="true">⌊</mo><mi>t</mi><mfrac><mi>N</mi><mi>D</mi></mfrac><mo fence="true">⌋</mo></mrow><mo separator="true">,</mo><mtext> </mtext><mn>0</mn><mo separator="true">,</mo><mtext> </mtext><mi>F</mi><mo>−</mo><mn>1</mn><mo fence="true">)</mo></mrow></mrow><annotation encoding="application/x-tex">k(t) = \operatorname{clamp}\left(\left\lfloor t\frac{N}{D}\right\rfloor,\ 0,\ F-1\right)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.03148em;">k</span><span class="mopen">(</span><span class="mord mathnormal">t</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.4em;vertical-align:-0.95em;"></span><span class="mop"><span class="mord mathrm">clamp</span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">(</span></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size3">⌊</span></span><span class="mord mathnormal">t</span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.3603em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02778em;">D</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">⌋</span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord">0</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">1</span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size3">)</span></span></span></span></span></span></span></p>
+<p>视频总物理时长为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>F</mi><mi>D</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">FD/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>，最后一帧的起点时间为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false">(</mo><mi>F</mi><mo>−</mo><mn>1</mn><mo stretchy="false">)</mo><mi>D</mi><mi mathvariant="normal">/</mi><mi>N</mi></mrow><annotation encoding="application/x-tex">(F-1)D/N</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord mathnormal" style="margin-right:0.13889em;">F</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">1</span><span class="mclose">)</span><span class="mord mathnormal" style="margin-right:0.02778em;">D</span><span class="mord">/</span><span class="mord mathnormal" style="margin-right:0.10903em;">N</span></span></span></span>。循环播放时，先将时间求模折算至单一周期内，再计算目标帧。</p>
+<p>API 层面提供整数帧接口 <code>SeekFrame(k)</code>，底层自动转换为原生时间单位。例如 Windows Media Foundation 采用 100 ns 刻度，换算时必须校验数值溢出并控制微小截断误差。</p>
+<p>常规运行时打开仅进行轻量级元数据与容器头校验；只有开启 <code>DebugValidation</code> 时才会遍历抽检各帧样本。这兼顾了运行时的无感知启动，也将码流损坏的排查前置在制作验收阶段。</p>
+<h2 id="2-帧调度：控制目标，也识别迟到的结果">2. 帧调度：控制目标，也识别迟到的结果</h2>
+<p>资源层明确了帧与时间的映射，调度层的核心任务则是将业务想要的帧与当前渲染管线中已提交的帧清晰隔离。</p>
+<h3 id="2-1-自动时间与外部-Tick">2.1 自动时间与外部 Tick</h3>
+<p>自动播放模式通过 <code>Time.realtimeSinceStartupAsDouble</code> 配合时钟锚点推进进度，暂停恢复时重新校准锚点，避免将切出时间计入播放历程。该时钟独立于 <code>Time.timeScale</code>，默认不受游戏慢动作缩放影响。</p>
+<p>启用 <code>ManualUpdate</code> 后，外部驱动（如剧情 Timeline、状态机）通过 <code>SeekFrame</code> 明确指定目标帧。需要指出，这种外部控制本质上是对播放时间和帧请求的异步编排：主线程发起请求后，由原生工作线程解码，并在帧末通过渲染事件提交至 GPU，它并非一个同步完成解码上屏的阻塞调用。</p>
+<p>当 60 FPS 游戏驱动 30 FPS 视频时，连续两个游戏帧会请求相同的视频帧号。内部常规请求会合并幂等目标，避免冗余消耗；但显式调用的 Seek 每次都会递增代次。因此，手动驱动逻辑应当在目标帧真正变更时才调用请求。</p>
+<p>若一次逻辑跳转跨越了多个视频帧，播放器会直接定位至目标帧，但由于 H.264 的 GOP 帧间依赖，底层解码器仍可能需要顺序解码前置参考帧。在此期间，游戏画面保持当前帧不变，直到新帧就绪。高精度的寻帧指令并不能抹平底层解码的物理耗时；对于有严苛逐帧对齐要求的预览工具，应当等待当前代次完成确认后再推进时间轴。</p>
+<h3 id="2-2-请求代次与完成条件">2.2 请求代次与完成条件</h3>
+<p>当业务先后下发第 120 帧与第 240 帧请求时，旧任务可能已在原生线程开始解码。此时不强求立即强杀在途解码，但必须通过版本机制废除旧结果的发布资格。</p>
+<pre><code class="highlight mermaid">sequenceDiagram
+    participant G as 游戏主线程
+    participant W as 解码工作线程
+    participant R as 渲染线程
+    G-&gt;&gt;W: 帧 120，代次 41
+    Note over W: 开始定位与解码
+    G-&gt;&gt;W: 帧 240，代次 42
+    W-&gt;&gt;W: 检查代次，丢弃旧结果
+    W--&gt;&gt;R: 帧 240 的租约，代次 42
+    R-&gt;&gt;R: 发布前再次检查代次
+    R--&gt;&gt;G: 已提交帧 240，代次 42，纹理版本递增</code></pre>
+<p>方案引入单调递增的 64 位代次（Generation）标记每一次请求。仅当以下条件全部满足时，C# 托管层才判定该次帧请求已顺利完成提交：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>TextureVersion</mtext><mo>&gt;</mo><mn>0</mn><mspace width="1em"/><mo>∧</mo><mspace width="1em"/><mtext>SubmittedGeneration</mtext><mo>=</mo><mtext>RequestGeneration</mtext><mspace width="1em"/><mo>∧</mo><mspace width="1em"/><mtext>SubmittedFrame</mtext><mo>=</mo><mtext>TargetFrame</mtext></mrow><annotation encoding="application/x-tex">\text{TextureVersion} &gt; 0
+\quad\land\quad
+\text{SubmittedGeneration} = \text{RequestGeneration}
+\quad\land\quad
+\text{SubmittedFrame} = \text{TargetFrame}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7224em;vertical-align:-0.0391em;"></span><span class="mord text"><span class="mord">TextureVersion</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">&gt;</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">0</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">∧</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">SubmittedGeneration</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">RequestGeneration</span></span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">∧</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6944em;"></span><span class="mord text"><span class="mord">SubmittedFrame</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord text"><span class="mord">TargetFrame</span></span></span></span></span></span></p>
+<p>进行跨会话比对时，还必须叠加 Session 句柄一致性校验，防止对象池复用时误判历史残留状态。</p>
+<p>在工程观测上必须严格区分三个时间节点：解码完成（原生解出数据）、提交 GPU（纹理更新完毕）、屏幕上屏（显示器光栅化扫出）。确认提交仅代表 GPU 纹理已就绪供下一次 Draw Call 采样，并不等同于当前游戏帧的人眼可见延迟。</p>
+<h2 id="3-异步解码：精确定位如何避免阻塞主线程">3. 异步解码：精确定位如何避免阻塞主线程</h2>
+<h3 id="3-1-异步调度与软硬解是两个维度">3.1 异步调度与软硬解是两个维度</h3>
+<p>每个播放会话独立维护一个原生工作线程，负责文件解封装、寻帧和驱动系统解码器；主线程仅通过轻量命令环与其通信。</p>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>计算核心</th>
+<th>典型流程与开销</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>软件解码</td>
+<td>CPU 通用核心</td>
+<td>输出 YUV 内存平面，需占用总线带宽上传至 GPU 显存</td>
+</tr>
+<tr>
+<td>硬件解码</td>
+<td>专属视频硬解单元（NVDEC、MediaCodec 等）</td>
+<td>直接输出 GPU 显存表面，仍涉及跨上下文转换或显卡内部拷贝</td>
+</tr>
+</tbody>
+</table>
+<p>将调用移入工作线程只是避免了主线程挂起，并不等同于启用了硬件加速；拿到 GPU 纹理句柄，也不意味着全流程免去了内存拷贝。软硬解管线都必须携带帧号、PTS 与代次信息，接受相同的生命周期校验。</p>
+<p>工作线程在循环关键节点执行代次核对，属于协作式响应。对于已经陷入系统驱动底层的同步阻塞接口，仍需等待其正常返回方可退出，因此异步化无法实现纳秒级的绝对中断。</p>
+<h3 id="3-2-连续读取与随机定位">3.2 连续读取与随机定位</h3>
+<p>H.264 视频的随机跳转通常需要先 Seek 至前一个最近的关键帧（IDR/I 帧），重建参考图像列表，再快速顺序追帧至目标 PTS。定位耗时取决于 GOP 间距与码率。</p>
+<p>以 Windows 实现为例，<code>H264Decoder::at</code> 维护 <code>nextFrame</code> 状态计数：当请求帧恰好为连续下一帧时，直接推进读取；当发生跳转时，调用 <code>SetCurrentPosition</code>，并丢弃到达目标帧之前的解码输出。当前逻辑容许一个基准时间单位的量化浮动；若解码越过目标点仍未匹配 PTS，则立即报错，坚决不用临近画面冒充目标帧。</p>
+<p>较短的 GOP 结构有利于缩短随机寻帧延迟，但会牺牲压缩比；长 GOP 在逆向播放或高频跳跃时会造成显著的追帧抖动。资源制作阶段需要在此取得平衡。</p>
+<h3 id="3-3-单帧租约与背压">3.3 单帧租约与背压</h3>
+<p>为防止解码线程无限制缓冲导致显存飞涨，系统引入了单帧租约（Frame Lease）机制：当前会话至多允许持有一个未归还的输出租约。</p>
+<pre><code class="highlight mermaid">flowchart LR
+    A[&quot;解码目标帧&quot;] --&gt; B[&quot;发布租约&quot;]
+    B --&gt; C[&quot;上传 / GPU 转换或拷贝&quot;]
+    C --&gt; D[&quot;确认不再使用&quot;]
+    D --&gt; E[&quot;归还租约&quot;]
+    E --&gt; A</code></pre>
+<p>CPU 内存缓冲必须维持存活，直至 GPU 上传完成；GPU 显存表面也必须等待渲染格式转换结束后方可释放。一旦消费端未确认归还，解码工作线程将暂停产出新帧，从而形成自然背压。该机制杜绝了内存堆积，但同时也对单帧跨线程周转效率提出了更高要求。</p>
+<h2 id="4-GPU-桥接：统一语义，保留平台差异">4. GPU 桥接：统一语义，保留平台差异</h2>
+<p>控制层对外抹平了调度接口，但解码帧最终如何转化为 Unity 可采样的纹理，取决于各操作系统的底层图形接口与驱动架构。</p>
+<table>
+<thead>
+<tr>
+<th>平台</th>
+<th>媒体接口与输出路径</th>
+<th>当前边界与取舍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Windows</td>
+<td>Media Foundation → D3D11 NV12 → D3D11 / D3D12 / Vulkan 桥接</td>
+<td>优先走硬件加速表面，通过视频处理器色彩转换；无独立 CPU 内存软解兜底</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>MediaExtractor / MediaCodec → Surface 或线性 YUV 上传 → GLES / Vulkan</td>
+<td>Surface 遇到异常时回退线性 I420/NV12 平面；硬件状态需结合实机测试</td>
+</tr>
+<tr>
+<td>Apple</td>
+<td>AVFoundation → NV12 PixelBuffer → Metal 纹理缓存映射</td>
+<td>依赖 Metal 跨平面映射；当前工程入口主要面向 iOS 验证</td>
+</tr>
+<tr>
+<td>OpenHarmony</td>
+<td>原生解封装与 AVCodec → NV12 NativeBuffer → GLES / Vulkan</td>
+<td>通过 NativeBuffer 共享表面；依赖特定硬件平台驱动支持</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-1-Windows：GPU-表面转换与多图形-API-桥接">4.1 Windows：GPU 表面转换与多图形 API 桥接</h3>
+<p>Media Foundation 的 Source Reader 挂接 D3D 设备管理器，启用 DXVA 硬件变换以获取 NV12 显存表面。<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/medfound/mf-source-reader-d3d-manager">D3D 设备管理器</a>、<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/medfound/mf-readwrite-enable-hardware-transforms">硬件 MFT 配置</a>。</p>
+<p>获取的 D3D11 采样样本经由 Direct3D 视频处理器执行色彩空间转换，输出为 RGBA 格式。对于非 D3D11 宿主（如 D3D12 或 Vulkan），运行时在同一物理适配器上建立共享句柄与跨 API 围栏进行资源交换。此方案彻底省去了像素在 CPU 内存中的往返拷贝，但仍存在显卡内部从解码表面到渲染纹理的转换消耗。</p>
+<h3 id="4-2-Android：应对驱动差异的输出回退">4.2 Android：应对驱动差异的输出回退</h3>
+<p>Android MediaCodec 提供直接输出至 Surface 与暴露内存缓冲两种模式。<a target="_blank" rel="noopener" href="https://developer.android.com/reference/android/media/MediaCodec">MediaCodec 官方文档</a>。</p>
+<p>实测发现，部分模拟器（如 MuMu）或特定 SoC 在 Surface 模式下可能强制采用 RGB565 格式，破坏了色彩动态范围与 Alpha 灰度精度。针对此类设备，播放器动态回退至线性 I420/NV12 原始输出模式，由 CPU 上传各个平面至 GPU，再通过 Compute Shader 或 Fragment Shader 执行 BT.709 转换。对于非标准的厂商平铺格式则直接报错中断，杜绝花屏隐患。</p>
+<h3 id="4-3-Apple-与-OpenHarmony-的接入特征">4.3 Apple 与 OpenHarmony 的接入特征</h3>
+<p>Apple 路径利用 CoreVideo Metal 纹理缓存直接将 CVPixelBuffer 的两个 Y/UV 平面映射为 Metal 纹理对象，极大降低了转换开销。OpenHarmony 则依赖系统 NativeBuffer 实现跨进程的显存无拷贝共享。</p>
+<p>跨平台的纯 CPU 软解回退存在相当大的代价：不仅需要管理依赖库体积，还要应对会话重建、CPU 发热与带宽瓶颈。因此在架构设计上，当前策略优先保障主流硬解通路的健壮性，而非无条件引入全套 FFmpeg 运行时。</p>
+<h3 id="4-4-宿主渲染线程提交">4.4 宿主渲染线程提交</h3>
+<p>Unity 原生图形插件接口要求所有直接操作 GPU 资源的行为必须排入渲染线程执行，杜绝跨线程调用污染图形管线上下文。<a target="_blank" rel="noopener" href="https://docs.unity3d.com/Manual/native-plugin-interface.html">Unity 低级原生插件接口</a>。</p>
+<p>在帧末通过 <code>IssuePluginEventAndData</code> 排入原生渲染回调。桥接层负责校验目标纹理可写性、执行跨 API 同步，并在提交完成前夕再次核对代次，确保发布给材质采样的纹理与当前请求严格同代。</p>
+<h2 id="5-透明视频：编码策略、成本与合成">5. 透明视频：编码策略、成本与合成</h2>
+<p>游戏 UI 和特效中广泛使用带透明通道的短视频。若将 RGB 颜色与 Alpha 遮罩拆分成两个独立视频文件解码，极难在移动端保证两路解码器帧级同步，一旦错开一帧就会在边缘引发严重的黑边或透视穿帮。</p>
+<p>MFV 采用单流同屏拼接策略，使颜色与透明度共享相同的码流、PTS 与解码上下文。</p>
+<h3 id="5-1-单流拼接策略与编码面积">5.1 单流拼接策略与编码面积</h3>
+<p>当前 MFV 将彩色画面置于上方，将 Alpha 灰度遮罩置于下方，并在两者之间保留两行黑像素隔离带，避免双线性过滤采样时颜色渗透。解码后由 Shader 分别按 UV 采样并重新合成。</p>
+<p>工具默认对遮罩区域采用宽高各折半（0.5 缩放）的离线降采样处理以节约码率。以 1920×1080 尺寸的源片为例，RGB 区域占 1920×1080，下方遮罩区域实际为 960×540；为保证矩形整图编码，遮罩右侧需填充黑像素，拼接后的物理画面尺寸为 1920×1622：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mtext>实际编码像素</mtext><mo>=</mo><mn>1920</mn><mo>×</mo><mo stretchy="false">(</mo><mn>1080</mn><mo>+</mo><mn>2</mn><mo>+</mo><mn>540</mn><mo stretchy="false">)</mo><mo>=</mo><mn>1920</mn><mo>×</mo><mn>1622</mn><mo>≈</mo><mn>3.11</mn><mtext> Mpixel</mtext></mrow><annotation encoding="application/x-tex">\text{实际编码像素} = 1920 \times (1080 + 2 + 540) = 1920 \times 1622 \approx 3.11\text{ Mpixel}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord text"><span class="mord cjk_fallback">实际编码像素</span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1920</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1080</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">2</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">540</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7278em;vertical-align:-0.0833em;"></span><span class="mord">1920</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6444em;"></span><span class="mord">1622</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8889em;vertical-align:-0.1944em;"></span><span class="mord">3.11</span><span class="mord text"><span class="mord"> Mpixel</span></span></span></span></span></span></p>
+<p>总编码面积约为原始画面的 1.5 倍（而非直觉上的 1.25 倍）。该整图必须整体参与硬解、显存分配与色彩转换。遮罩降采样是否满足美术品质要求，需在柔和边缘、光晕与细小粒子场景中重点检验。</p>
+<h3 id="5-2-备选优化方向评估">5.2 备选优化方向评估</h3>
+<table>
+<thead>
+<tr>
+<th>方案</th>
+<th>预期收益</th>
+<th>工程代价与当前取舍</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>紧凑排布遮罩</td>
+<td>消除半尺寸遮罩右侧的填充黑区，压低整体编码面积</td>
+<td>需对遮罩进行切片与异构重排，Shader 采样映射变复杂，需额外处理接缝</td>
+</tr>
+<tr>
+<td>颜色与 Alpha 独立双流</td>
+<td>各自按需设置尺寸与 Profile，无无效填充区</td>
+<td>运行时需维持双倍解码器，双路 Seek 同步与回收复杂度极高</td>
+</tr>
+<tr>
+<td>原生 Alpha 格式（如 HEVC with Alpha）</td>
+<td>单流内置 Alpha 层，硬件级原生支持</td>
+<td>跨平台兼容性差（Apple 支持良好，Android/Windows 缺乏统一标准），不满足多端一致性</td>
+</tr>
+<tr>
+<td>保留 YUV 平面直接采样</td>
+<td>省去转换为 RGBA 中间纹理的显存与带宽消耗</td>
+<td>增加材质 Shader 多平面采样与色彩转换计算，跨 API 桥接较复杂，当前仍保留 RGBA 中间输出</td>
+</tr>
+</tbody>
+</table>
+<p>综合多端稳定性与工程复杂度，单流同屏拼接仍是当前平衡性最好的方案。</p>
+<h3 id="5-3-严格限制区域采样">5.3 严格限制区域采样</h3>
+<p>双线性过滤在纹理贴图边界会与邻近像素混合。<code>MfvUv</code> 函数将 UV 严格限定在有效像素中心以内。设有效区域起始像素为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">r</mi></mrow><annotation encoding="application/x-tex">\mathbf r</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4444em;"></span><span class="mord mathbf">r</span></span></span></span>、区域尺寸为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">s</mi></mrow><annotation encoding="application/x-tex">\mathbf s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4444em;"></span><span class="mord mathbf">s</span></span></span></span>、拼接整图尺寸为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">T</mi></mrow><annotation encoding="application/x-tex">\mathbf T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6861em;"></span><span class="mord mathbf">T</span></span></span></span>、局部归一化坐标为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="bold">u</mi></mrow><annotation encoding="application/x-tex">\mathbf u</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.4444em;"></span><span class="mord mathbf">u</span></span></span></span>：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mrow><mi mathvariant="bold">u</mi><mi mathvariant="bold">v</mi></mrow><mrow><mi>p</mi><mi>a</mi><mi>c</mi><mi>k</mi><mi>e</mi><mi>d</mi></mrow></msub><mo>=</mo><mfrac><mrow><mi mathvariant="normal">clamp</mi><mo>⁡</mo><mo stretchy="false">(</mo><mi mathvariant="bold">r</mi><mo>+</mo><mi mathvariant="bold">u</mi><mi mathvariant="bold">s</mi><mo separator="true">,</mo><mtext> </mtext><mi mathvariant="bold">r</mi><mo>+</mo><mn>0.5</mn><mo separator="true">,</mo><mtext> </mtext><mi mathvariant="bold">r</mi><mo>+</mo><mi mathvariant="bold">s</mi><mo>−</mo><mn>0.5</mn><mo stretchy="false">)</mo></mrow><mi mathvariant="bold">T</mi></mfrac></mrow><annotation encoding="application/x-tex">\mathbf{uv}_{packed} = \frac{\operatorname{clamp}(\mathbf r + \mathbf u\mathbf s,\ \mathbf r + 0.5,\ \mathbf r + \mathbf s - 0.5)}{\mathbf T}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.7305em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">uv</span></span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">p</span><span class="mord mathnormal mtight">a</span><span class="mord mathnormal mtight">c</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mord mathnormal mtight">e</span><span class="mord mathnormal mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.113em;vertical-align:-0.686em;"></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.427em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathbf">T</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mop"><span class="mord mathrm">clamp</span></span><span class="mopen">(</span><span class="mord mathbf">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathbf">us</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathbf">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">0.5</span><span class="mpunct">,</span><span class="mspace"> </span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord mathbf">r</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord mathbf">s</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mord">0.5</span><span class="mclose">)</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span></span></span></span></span></p>
+<p>拼接纹理关闭 Mipmap。若强行生成 Mipmap，低层级低分辨率纹理会将上方颜色与下方遮罩彻底混合，破坏边缘合成。</p>
+<h3 id="5-4-色彩线性化与预乘合成">5.4 色彩线性化与预乘合成</h3>
+<p>YUV 样本转换至 Packed RGBA 纹理后，材质仅读取遮罩区域的红通道作为透明度数值，不再执行二次范围扩展或传递函数。</p>
+<p>项目使用线性色彩空间（Linear Space）时，Shader 负责色彩逆传递。对于预乘素材，需先在存储值域解除预乘，再做色彩空间线性转换，最后乘以 Alpha 输出；当 Alpha 为零时颜色直接置零，防止除以零产生 NaN。</p>
+<p>材质使用混合模式 <code>Blend One OneMinusSrcAlpha</code>，对于线性空间非预乘素材与不透明背景，最终上屏颜色为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">C</mi><mrow><mi>o</mi><mi>u</mi><mi>t</mi></mrow></msub><mo>=</mo><mi>α</mi><msub><mi mathvariant="bold">C</mi><mrow><mi>v</mi><mi>i</mi><mi>d</mi><mi>e</mi><mi>o</mi></mrow></msub><mo>+</mo><mo stretchy="false">(</mo><mn>1</mn><mo>−</mo><mi>α</mi><mo stretchy="false">)</mo><msub><mi mathvariant="bold">C</mi><mrow><mi>b</mi><mi>a</mi><mi>c</mi><mi>k</mi><mi>g</mi><mi>r</mi><mi>o</mi><mi>u</mi><mi>n</mi><mi>d</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\mathbf C_{out} = \alpha \mathbf C_{video} + (1 - \alpha) \mathbf C_{background}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.2806em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">t</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mord"><span class="mord mathbf">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.03588em;">v</span><span class="mord mathnormal mtight">i</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight">eo</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord">1</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1.0361em;vertical-align:-0.2861em;"></span><span class="mord mathnormal" style="margin-right:0.0037em;">α</span><span class="mclose">)</span><span class="mord"><span class="mord mathbf">C</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">ba</span><span class="mord mathnormal mtight">c</span><span class="mord mathnormal mtight" style="margin-right:0.03148em;">k</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">g</span><span class="mord mathnormal mtight">ro</span><span class="mord mathnormal mtight">u</span><span class="mord mathnormal mtight">n</span><span class="mord mathnormal mtight">d</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>各平台色彩验证必须涵盖色彩空间矩阵、Limited/Full 范围、传递函数与预乘语义，杜绝色彩发灰、泛白或半透明发黑。</p>
+<h2 id="6-内存：按资源层次核算，按编码尺寸估算">6. 内存：按资源层次核算，按编码尺寸估算</h2>
+<p>压缩后的 MP4 文件大小无法作为显存估算依据。解码过程中的解封装数据、参考帧缓存、中间表面和 Unity 纹理均有独立的生命周期与内存驻留。</p>
+<h3 id="6-1-显存与带宽基准量级">6.1 显存与带宽基准量级</h3>
+<p>以标准 8 位 NV12 与 RGBA8 为基准，单帧无额外压缩时的纯像素占用公式为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi>M</mi><mrow><mi>N</mi><mi>V</mi><mn>12</mn></mrow></msub><mo>≈</mo><mn>1.5</mn><mi>W</mi><mi>H</mi><mo separator="true">,</mo><mspace width="2em"/><msub><mi>M</mi><mrow><mi>R</mi><mi>G</mi><mi>B</mi><mi>A</mi><mn>8</mn></mrow></msub><mo>=</mo><mn>4</mn><mi>W</mi><mi>H</mi></mrow><annotation encoding="application/x-tex">M_{NV12} \approx 1.5WH,\qquad M_{RGBA8} = 4WH
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.10903em;">N</span><span class="mord mathnormal mtight" style="margin-right:0.22222em;">V</span><span class="mord mtight">12</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">≈</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8778em;vertical-align:-0.1944em;"></span><span class="mord">1.5</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span><span class="mpunct">,</span><span class="mspace" style="margin-right:2em;"></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.10903em;">M</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3283em;"><span style="top:-2.55em;margin-left:-0.109em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight" style="margin-right:0.05017em;">RGB</span><span class="mord mathnormal mtight">A</span><span class="mord mtight">8</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.6833em;"></span><span class="mord">4</span><span class="mord mathnormal" style="margin-right:0.13889em;">W</span><span class="mord mathnormal" style="margin-right:0.08125em;">H</span></span></span></span></span></p>
+<p>以典型的 <strong>1920×1080 编码尺寸</strong> 为例：</p>
+<table>
+<thead>
+<tr>
+<th>资源单元</th>
+<th>理论显存量级</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单帧 NV12 解码表面</td>
+<td>约 2.97 MiB</td>
+</tr>
+<tr>
+<td>单帧 RGBA8 渲染纹理</td>
+<td>约 7.91 MiB</td>
+</tr>
+<tr>
+<td>缓存 30 帧 RGBA8 历史样本</td>
+<td>约 237.3 MiB</td>
+</tr>
+<tr>
+<td>60 FPS 下全带宽更新 RGBA8</td>
+<td>约 474.6 MiB/s 显存吞吐</td>
+</tr>
+</tbody>
+</table>
+<p>若加上透明上下拼接，物理面积增大至 1.5 倍，上述显存与总线吞吐需求相应等比放大。多实例并播时，必须将解码器自身的参考帧池与管线双缓冲一同纳入显存预算核算。</p>
+<h3 id="6-2-降低位深的精度代价">6.2 降低位深的精度代价</h3>
+<p>将输出纹理从 RGBA8（32 位/像素）降至 RGB565（16 位/像素），1080p 单张纹理理论显存由 7.91 MiB 减半至 3.96 MiB。<a target="_blank" rel="noopener" href="https://learn.microsoft.com/en-us/windows/win32/api/dxgiformat/ne-dxgiformat-dxgi_format">Microsoft 像素格式定义</a>。</p>
+<p>然而此方案在透明拼接素材上存在明显缺陷：RGB565 的 R 通道仅有 5 位（共 32 个量化阶），用于表达 Alpha 遮罩会导致半透明边缘、烟雾与渐隐效果出现严重的色阶断裂与台阶效应。因此，除纯不透明背景视频外，透明播放器当前仍强制输出 RGBA8。</p>
+<h3 id="6-3-输入源所有权与并发配额">6.3 输入源所有权与并发配额</h3>
+<table>
+<thead>
+<tr>
+<th><code>MediaInput</code> 类型</th>
+<th>所有权与内存特征</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>磁盘文件路径</td>
+<td>按需流式读取，几乎无额外常驻内存</td>
+</tr>
+<tr>
+<td>包内 <code>fd + offset + length</code></td>
+<td>持有描述符直接流式映射，无冗余内存拷贝</td>
+</tr>
+<tr>
+<td>内存字节数组（<code>byte[]</code>）</td>
+<td>打开时需深拷贝至原生堆内存，在视频关闭前产生双倍内存常驻</td>
+</tr>
+</tbody>
+</table>
+<p>Android 优先通过 <code>AssetManager.openFd</code> 访问未压缩资源，OpenHarmony 通过 rawfile 描述符直连，规避将整个文件解压到内存中。</p>
+<p>并发控制方面，除了设置最大会话上限（如 Windows 默认 8 个槽位），还需建立基于像素面积的总预算管理。四路 4K 视频的显存压力远超八路 480p 视频；所有会话必须在确认完全回收后才归还配额。</p>
+<h2 id="7-生命周期：关闭返回之后，谁继续持有资源">7. 生命周期：关闭返回之后，谁继续持有资源</h2>
+<p>在游戏快速切换 UI 时，上层调用 <code>Close()</code> 时工作线程可能正在解码，GPU 可能仍在执行格式转换，材质甚至还在执行光栅化采样。若直接同步销毁会导致管线崩溃，若强行阻塞等待则会导致主线程掉帧。</p>
+<h3 id="7-1-意图与状态正交解耦">7.1 意图与状态正交解耦</h3>
+<p>播放器将底层硬件物理状态与上层业务意图明确解耦。底层状态包含 <code>Idle</code>、<code>Opening</code>、<code>Preparing</code>、<code>Ready</code>、<code>Closing</code>、<code>Faulted</code>、<code>Disposed</code>；进入 <code>Ready</code> 后再细分 <code>Playing</code>、<code>Paused</code>、<code>Seeking</code>、<code>Ended</code>。</p>
+<p>当用户在打开（Opening）阶段下发 Pause，底层状态继续准备，完成后直接进入 Paused；在关闭（Closing）阶段下发 Play，播放器会等待旧资源回收彻底完成，再自动触发新会话开启。首帧必定经历一次完整的 Seeking，只有当前目标帧实际提交后才启动播放时钟，防止将初始化与解码延迟计入视频流逝时间。</p>
+<h3 id="7-2-安全回收与-GPU-栅栏">7.2 安全回收与 GPU 栅栏</h3>
+<p>插件完成纹理写入并不代表 GPU 已完成材质采样，必须等待 GPU 执行完全部绘制命令。</p>
+<pre><code class="highlight mermaid">flowchart TB
+    CLOSE[&quot;Close / Disable / Destroy&quot;] --&gt; DETACH[&quot;停止新工作&lt;br/&gt;解除自有输出绑定&quot;]
+    DETACH --&gt; CANCEL[&quot;通知解码取消&quot;]
+    DETACH --&gt; MARK[&quot;帧末排入宿主最后使用标记&quot;]
+    CANCEL --&gt; WORKER[&quot;工作线程退出&lt;br/&gt;帧租约归还&quot;]
+    MARK --&gt; GPU[&quot;确认插件写入与宿主采样完成&quot;]
+    WORKER --&gt; RETIRED[&quot;原生会话 Retired&quot;]
+    GPU --&gt; RETIRED
+    RETIRED --&gt; RELEASE[&quot;回收句柄、纹理与材质&quot;]</code></pre>
+<p>D3D11 通过 Event Query 轮询完成状态，Metal 与 Vulkan 通过专属 Fence/CommandBuffer 回调确认。<code>VideoRetirement</code> 异步管理器接管生命周期终止的资源，待原生解码线程安全退出且 GPU 围栏信号被触发后，方才安全销毁 Unity 纹理与底层句柄。</p>
+<p>对于自定义材质采样者，上层业务需在组件销毁前主动解绑，避免悬空采样已废弃纹理。</p>
+<h3 id="7-3-前后台切换与异常容错">7.3 前后台切换与异常容错</h3>
+<p>客户端切后台时，播放器记录当前播放进度与意图，主动关闭会话并释放全部解码表面与临时纹理；回到前台后按需重建会话并恢复进度。若遭遇 GPU 设备丢失（Device Lost），系统进入 Faulted 状态，通知业务层显式重试，避免静默黑屏。</p>
+<p>在 Unity 编辑器退出或域重载（Domain Reload）期间，退出管理类执行安全排空（Drain），设置最大超时门限，防止非托管动态链接库卸载引发宿主崩溃。</p>
+<h1 id="总结">总结</h1>
+<p>自研游戏视频播放器的核心价值，在于让复杂管线具备确定性与可观测性：</p>
+<ul>
+<li>渲染迟到时，可清晰定位是 I 帧追帧开销、线程调度延迟还是 GPU 提交等待。</li>
+<li>显存上涨时，可明确界定是内存输入副本、硬解参考帧表面还是待回收队列滞留。</li>
+<li>透明边缘异常时，可追溯是色彩空间转换、线性化去预乘还是双线性采样外溢。</li>
+</ul>
+<p>将帧调度归于游戏时钟，将解码交付系统原生框架，将生命周期交付异步安全回收，视频才能真正作为受控的表现单元，无缝融入现代游戏引擎的渲染体系。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/native-video-player/">https://www.lfzxb.top/native-video-player/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity/">Unity</a><a class="post-meta__tags" href="/tags/%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96/">性能优化</a><a class="post-meta__tags" href="/tags/%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE%E5%99%A8/">视频播放器</a><a class="post-meta__tags" href="/tags/H-264/">H.264</a><a class="post-meta__tags" href="/tags/%E8%B7%A8%E5%B9%B3%E5%8F%B0/">跨平台</a><a class="post-meta__tags" href="/tags/GPU/">GPU</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/dying-light-2-dismemberment-pipeline/" title="深入拆解《消逝的光芒 2》断肢管线"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">深入拆解《消逝的光芒 2》断肢管线</div></div><div class="info-2"><div class="info-item-1">前言 先给结论：本文拆解的《消逝的光芒 2》肢体切断路径，采用“预先设计断点与伤口资产，运行时选择并执行”的方案。它不属于刀刃划到任意位置，就沿着刀刃轨迹实时切开三角形、生成任意新断面的自由切割。 以前臂为例，制作阶段就已经定义好“左手切断”“左前臂切断”“左上臂切断”等配方。每种配方指定隐藏身体的哪一片区域、伤口放在哪里、用哪块模型封住断口，以及碎块使用什么物理配置。战斗发生时，程序根据命中和伤害条件选中其中一种配方，再把它应用到正在运动的角色上。    问题 提前制作或配置 运行时计算     哪些部位能断？ 可用断点、对应骨骼与身体关系 本次命中选中哪个候选，是否满足切断条件   断掉后露出什么？ 隐藏体积、定位辅助元素、两端补片及体型变体 更新隐藏参数，将补片装到当前姿态下的对应位置   掉下来的肢体是什么姿势？ 模型、蒙皮、骨架与碰撞代理 继承切断瞬间的姿态，计算后续运动、碰撞与落地    这里的“预制”指提前准备断点方案与伤口资产，不意味着提前录好每次掉落动画，也不要求把完整角色预先拆成一堆互不相连的模型。外表仍可以是连续的蒙皮网格；切断时隐藏其中一部分，再用预制补片...</div></div></div></a><a class="pagination-related" href="/fluidninja2-agi/" title="深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46-live2-stage13-front.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线</div></div><div class="info-2"><div class="info-item-1">前言 在 AGI 浪潮席卷内容生产管线的当下，游戏特效的生成边界正被广泛讨论。然而，目前生成式 AI 在游戏资产与特效领域的探索，绝大多数仍局限于 2D 图像与预渲染序列帧；即使前沿模型具备了直接调度 Blender 等 DCC 工具进行自动化建模与节点搭建的能力，面对高要求的 3D 实时动态交互特效，在微调控制精度、空间物理一致性以及瞬态响应上依然显得捉襟见肘。 当画面从离线生成走向 60 帧的实时交互场景——无论是随角色骨骼动作撕扯翻卷的烈焰，还是在涉水踏步时层层推开的湍流与涟漪——真正决定画面可信度与控制上限的，依然深植于程序化图形学与物理模拟的根基之中。计算流体力学凭借不可压缩连续流场、涡旋拓扑以及对外界扰动的自然耦合，天然赋予了特效极其高级的动态质感与视觉张力。在生成式模型尚难跨越实时动态交互鸿沟的当下，程序化流体模拟依然是一条极具壁垒与深耕价值的硬核路径。 FluidNinja LIVE 2 彻底重构了 1.x 时代的蓝图与纯材质解算链，将整套 2D 纳维-斯托克斯（Navier-Stokes）流体求解管线完整搬进了 Unreal Engine 的 Niagara G...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/graphic-profilertools-guides/" title="常见游戏渲染Profiler工具使用指南"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20211203115213.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-11-26</div><div class="info-item-2">常见游戏渲染Profiler工具使用指南</div></div><div class="info-2"><div class="info-item-1">前言 最近除了拼UI之外也在断断续续做着渲染性能优化工作，其实这块内容说难也不难，说简单肯定也不简单，不难是因为当今Profiler工具相当完善，甚至可以精确到每一条Shader汇编指令的耗时，XCode还可以给出优化建议，不简单是因为很多时候就算得知了性能热点，但却不知道如何下手，因为需要掌握的知识很多，比如要会看Nvidia，OpenGL，Vulkan等后端API的汇编码，要知道做了优化操作之后对渲染流程中各个模块的影响，比如为了减少OverDraw把Alpha Blend改成Alpha Test，Early-z会不会失效，在移动平台是不是性能更高，还有些情况让人纠结，比如优化了下ALU耗时，带宽又上去了。 对于老手来说可能一行代码写下来，什么带宽，ALU耗时，精度转换，甚至汇编码都知道是什么个情况了，对于新手来说，就得老老实实对着Profiler工具慢慢看，慢慢调。当然这是少数情况了，大部分情况下老手们依旧要看Profiler，因为谁也捉摸不透不同的GPU架构和指令集会做出怎么样的优化（负优化），所以于情于理Profiler工具的学习还是很必要的。 目前用下来感觉最好用的移...</div></div></div></a><a class="pagination-related" href="/srp-batcher-speed-up-your-rendering/" title="(译)SRP Batcher Speed up your rendering!"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210908122557.jpg" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-14</div><div class="info-item-2">(译)SRP Batcher Speed up your rendering!</div></div><div class="info-2"><div class="info-item-1">推荐去个人网站或者原文观阅文章，因为文章中有嵌入式视频： https://www.lfzxb.top/srp-batcher-speed-up-your-rendering/ 本文翻译自：SRP Batcher: Speed up your rendering! 和 https://docs.unity3d.com/Manual/SRPBatcher.html  在2018，我们介绍了一个被称为SRP的高度自定义的渲染技术，一个被称为SRP Batcher新的引擎底层Loop就是这个技术的一部分，SRP Batcher可以在渲染时加速你的CPU 1.2到4倍（这取决于你的场景）。让我们看看如何这个功能的最佳实践吧！   上面那个视频显示了Unity渲染时最坏的一个场景：每个对象都是动态的，并且使用不同的材质（材质的颜色或者贴图等属性不同），所以尽管非常多相同的Mesh，但是在渲染时每个Mesh都会被当成不同的Mesh进行渲染（所以无法使用GPU Instance优化技术）。这个场景使用SRP Batcher在PS4平台上可以加速4倍（这个视频是PC的，渲染API是DX11） 注意...</div></div></div></a><a class="pagination-related" href="/what-causes-csharp-invoke-method-by-reflection-slowly-and-how-to-solve-it/" title="（译）C#的反射为什么慢？怎么加快反射调用？"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907131137.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-06-03</div><div class="info-item-2">（译）C#的反射为什么慢？怎么加快反射调用？</div></div><div class="info-2"><div class="info-item-1">前言 我们知道C#反射慢，但是当中很多人不知道它为什么慢，并且如何解决反射调用方法慢的问题呢？ 这篇文章会给你一个答案。本文译自：https://mattwarren.org/2016/12/14/Why-is-Reflection-slow/ C#的反射为什么慢 反射的设计初衷  在运行时非常快的访问我们所需要的代码的信息。 在编译时非常直接的访问生成代码所需的信息。 垃圾回收器/计算堆栈能够在不对程序加锁/分配内存的情况下访问必要的信息。 能极大减少一次性需要加载的类型数量。 能极大减少给定类型加载时所需要加载的额外类型数目。 类型系统数据结构必须在NGEN映像中是可存储的。  我们可以看到，它只强调了最少依赖加载，并没有说我们可以直接从元数据获取所有CLR数据类型。也没有说所有的反射用法都是快的，只是说反射获取一些信息很快。 MethodTable的数据被分为“热”和“冷”两种数据结构来提升工作效率和缓存利用率，MethodTable本身只存储那些在程序稳定状态（是否可以翻译成一般运行时？）下被需求的“热”数据。EEClass储存那些只在类型加载时，JIT编译时，反射时需要...</div></div></div></a><a class="pagination-related" href="/from-unity6-to-tuanjie/" title="记一次从Unity6转TuanJie引擎"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509231715579.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2025-09-23</div><div class="info-item-2">记一次从Unity6转TuanJie引擎</div></div><div class="info-2"><div class="info-item-1">前言 自从团结引擎发布，Unity中国愈发收紧了对国际版Unity的限制，现在你甚至没法从国际版的Unity Hub下载国际版的Unity（目前还可以通过科学上网强行下载，但要开tun模式） 更让人烦躁的是，国际版的Unity和团结引擎的Package也不再互通，而且下载也受限，因为这个原因，甚至没法正常打开Unity6的项目了 实在被逼的没办法，准备下载尝试下团结引擎，既然都要捏鼻子开赤了，我们先看看团结引擎近一年都在搞什么飞机 TuanJie引擎 更新记录 团结引擎目前已经更新到1.7（beta），我挑选了从1.0到1.7一些比较有价值的内容 Editor  团结引擎编辑器新增资源导入模式：-ondemand。使用该模式时，仅需导入少量资源即可打开项目，后续资源按需自动触发导入；显著缩短了首次打开项目所需时间，减少了磁盘占用。 好评，项目大了之后每次初始化工程都要几分钟时间。希望以后的版本能顺带优化大项目代码编译后需要扫描资源带来的超高耗时  Shader Graph  ShaderGraph支持UGUIShader 好评，和UGUI无缝衔接，再也不用手写UGUI Shade...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E8%B5%84%E6%BA%90%E5%A5%91%E7%BA%A6%EF%BC%9A%E5%85%88%E6%8A%8A%E7%B4%A0%E6%9D%90%E5%8F%98%E6%88%90%E5%8F%AF%E9%A2%84%E6%B5%8B%E7%9A%84%E8%B5%84%E4%BA%A7"><span class="toc-number">1.</span> <span class="toc-text">1. 资源契约：先把素材变成可预测的资产</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E4%BB%8E%E5%8E%9F%E7%89%87%E5%88%B0-MFV"><span class="toc-number">1.1.</span> <span class="toc-text">1.1 从原片到 MFV</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E6%A0%87%E5%87%86%E5%AE%B9%E5%99%A8%E4%B8%AD%E7%9A%84%E6%B8%B8%E6%88%8F%E8%AF%AD%E4%B9%89"><span class="toc-number">1.2.</span> <span class="toc-text">1.2 标准容器中的游戏语义</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E6%95%B4%E6%95%B0%E5%B8%A7%E7%9A%84%E6%97%B6%E9%97%B4%E5%9F%BA%E7%A1%80"><span class="toc-number">1.3.</span> <span class="toc-text">1.3 整数帧的时间基础</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E5%B8%A7%E8%B0%83%E5%BA%A6%EF%BC%9A%E6%8E%A7%E5%88%B6%E7%9B%AE%E6%A0%87%EF%BC%8C%E4%B9%9F%E8%AF%86%E5%88%AB%E8%BF%9F%E5%88%B0%E7%9A%84%E7%BB%93%E6%9E%9C"><span class="toc-number">2.</span> <span class="toc-text">2. 帧调度：控制目标，也识别迟到的结果</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-%E8%87%AA%E5%8A%A8%E6%97%B6%E9%97%B4%E4%B8%8E%E5%A4%96%E9%83%A8-Tick"><span class="toc-number">2.1.</span> <span class="toc-text">2.1 自动时间与外部 Tick</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E8%AF%B7%E6%B1%82%E4%BB%A3%E6%AC%A1%E4%B8%8E%E5%AE%8C%E6%88%90%E6%9D%A1%E4%BB%B6"><span class="toc-number">2.2.</span> <span class="toc-text">2.2 请求代次与完成条件</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%BC%82%E6%AD%A5%E8%A7%A3%E7%A0%81%EF%BC%9A%E7%B2%BE%E7%A1%AE%E5%AE%9A%E4%BD%8D%E5%A6%82%E4%BD%95%E9%81%BF%E5%85%8D%E9%98%BB%E5%A1%9E%E4%B8%BB%E7%BA%BF%E7%A8%8B"><span class="toc-number">3.</span> <span class="toc-text">3. 异步解码：精确定位如何避免阻塞主线程</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E5%BC%82%E6%AD%A5%E8%B0%83%E5%BA%A6%E4%B8%8E%E8%BD%AF%E7%A1%AC%E8%A7%A3%E6%98%AF%E4%B8%A4%E4%B8%AA%E7%BB%B4%E5%BA%A6"><span class="toc-number">3.1.</span> <span class="toc-text">3.1 异步调度与软硬解是两个维度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E8%BF%9E%E7%BB%AD%E8%AF%BB%E5%8F%96%E4%B8%8E%E9%9A%8F%E6%9C%BA%E5%AE%9A%E4%BD%8D"><span class="toc-number">3.2.</span> <span class="toc-text">3.2 连续读取与随机定位</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E5%8D%95%E5%B8%A7%E7%A7%9F%E7%BA%A6%E4%B8%8E%E8%83%8C%E5%8E%8B"><span class="toc-number">3.3.</span> <span class="toc-text">3.3 单帧租约与背压</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-GPU-%E6%A1%A5%E6%8E%A5%EF%BC%9A%E7%BB%9F%E4%B8%80%E8%AF%AD%E4%B9%89%EF%BC%8C%E4%BF%9D%E7%95%99%E5%B9%B3%E5%8F%B0%E5%B7%AE%E5%BC%82"><span class="toc-number">4.</span> <span class="toc-text">4. GPU 桥接：统一语义，保留平台差异</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-Windows%EF%BC%9AGPU-%E8%A1%A8%E9%9D%A2%E8%BD%AC%E6%8D%A2%E4%B8%8E%E5%A4%9A%E5%9B%BE%E5%BD%A2-API-%E6%A1%A5%E6%8E%A5"><span class="toc-number">4.1.</span> <span class="toc-text">4.1 Windows：GPU 表面转换与多图形 API 桥接</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-Android%EF%BC%9A%E5%BA%94%E5%AF%B9%E9%A9%B1%E5%8A%A8%E5%B7%AE%E5%BC%82%E7%9A%84%E8%BE%93%E5%87%BA%E5%9B%9E%E9%80%80"><span class="toc-number">4.2.</span> <span class="toc-text">4.2 Android：应对驱动差异的输出回退</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-Apple-%E4%B8%8E-OpenHarmony-%E7%9A%84%E6%8E%A5%E5%85%A5%E7%89%B9%E5%BE%81"><span class="toc-number">4.3.</span> <span class="toc-text">4.3 Apple 与 OpenHarmony 的接入特征</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E5%AE%BF%E4%B8%BB%E6%B8%B2%E6%9F%93%E7%BA%BF%E7%A8%8B%E6%8F%90%E4%BA%A4"><span class="toc-number">4.4.</span> <span class="toc-text">4.4 宿主渲染线程提交</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E9%80%8F%E6%98%8E%E8%A7%86%E9%A2%91%EF%BC%9A%E7%BC%96%E7%A0%81%E7%AD%96%E7%95%A5%E3%80%81%E6%88%90%E6%9C%AC%E4%B8%8E%E5%90%88%E6%88%90"><span class="toc-number">5.</span> <span class="toc-text">5. 透明视频：编码策略、成本与合成</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E5%8D%95%E6%B5%81%E6%8B%BC%E6%8E%A5%E7%AD%96%E7%95%A5%E4%B8%8E%E7%BC%96%E7%A0%81%E9%9D%A2%E7%A7%AF"><span class="toc-number">5.1.</span> <span class="toc-text">5.1 单流拼接策略与编码面积</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E5%A4%87%E9%80%89%E4%BC%98%E5%8C%96%E6%96%B9%E5%90%91%E8%AF%84%E4%BC%B0"><span class="toc-number">5.2.</span> <span class="toc-text">5.2 备选优化方向评估</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E4%B8%A5%E6%A0%BC%E9%99%90%E5%88%B6%E5%8C%BA%E5%9F%9F%E9%87%87%E6%A0%B7"><span class="toc-number">5.3.</span> <span class="toc-text">5.3 严格限制区域采样</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E8%89%B2%E5%BD%A9%E7%BA%BF%E6%80%A7%E5%8C%96%E4%B8%8E%E9%A2%84%E4%B9%98%E5%90%88%E6%88%90"><span class="toc-number">5.4.</span> <span class="toc-text">5.4 色彩线性化与预乘合成</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%86%85%E5%AD%98%EF%BC%9A%E6%8C%89%E8%B5%84%E6%BA%90%E5%B1%82%E6%AC%A1%E6%A0%B8%E7%AE%97%EF%BC%8C%E6%8C%89%E7%BC%96%E7%A0%81%E5%B0%BA%E5%AF%B8%E4%BC%B0%E7%AE%97"><span class="toc-number">6.</span> <span class="toc-text">6. 内存：按资源层次核算，按编码尺寸估算</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E6%98%BE%E5%AD%98%E4%B8%8E%E5%B8%A6%E5%AE%BD%E5%9F%BA%E5%87%86%E9%87%8F%E7%BA%A7"><span class="toc-number">6.1.</span> <span class="toc-text">6.1 显存与带宽基准量级</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E9%99%8D%E4%BD%8E%E4%BD%8D%E6%B7%B1%E7%9A%84%E7%B2%BE%E5%BA%A6%E4%BB%A3%E4%BB%B7"><span class="toc-number">6.2.</span> <span class="toc-text">6.2 降低位深的精度代价</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E8%BE%93%E5%85%A5%E6%BA%90%E6%89%80%E6%9C%89%E6%9D%83%E4%B8%8E%E5%B9%B6%E5%8F%91%E9%85%8D%E9%A2%9D"><span class="toc-number">6.3.</span> <span class="toc-text">6.3 输入源所有权与并发配额</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%9A%E5%85%B3%E9%97%AD%E8%BF%94%E5%9B%9E%E4%B9%8B%E5%90%8E%EF%BC%8C%E8%B0%81%E7%BB%A7%E7%BB%AD%E6%8C%81%E6%9C%89%E8%B5%84%E6%BA%90"><span class="toc-number">7.</span> <span class="toc-text">7. 生命周期：关闭返回之后，谁继续持有资源</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E6%84%8F%E5%9B%BE%E4%B8%8E%E7%8A%B6%E6%80%81%E6%AD%A3%E4%BA%A4%E8%A7%A3%E8%80%A6"><span class="toc-number">7.1.</span> <span class="toc-text">7.1 意图与状态正交解耦</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E5%AE%89%E5%85%A8%E5%9B%9E%E6%94%B6%E4%B8%8E-GPU-%E6%A0%85%E6%A0%8F"><span class="toc-number">7.2.</span> <span class="toc-text">7.2 安全回收与 GPU 栅栏</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-%E5%89%8D%E5%90%8E%E5%8F%B0%E5%88%87%E6%8D%A2%E4%B8%8E%E5%BC%82%E5%B8%B8%E5%AE%B9%E9%94%99"><span class="toc-number">7.3.</span> <span class="toc-text">7.3 前后台切换与异常容错</span></a></li></ol></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E6%80%BB%E7%BB%93"><span class="toc-number"></span> <span class="toc-text">总结</span></a></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '90c0e0464ecb25e170b35781887c4b6e'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"native-video-player","contentHash":"080dcbceac10bffa20f99bb31b7ee95a5d8c838d54081b0758aba264a6dbb228"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>
