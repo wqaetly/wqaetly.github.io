@@ -1,0 +1,1151 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>深入拆解《消逝的光芒 2》断肢管线 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="前言 先给结论：本文拆解的《消逝的光芒 2》肢体切断路径，采用“预先设计断点与伤口资产，运行时选择并执行”的方案。它不属于刀刃划到任意位置，就沿着刀刃轨迹实时切开三角形、生成任意新断面的自由切割。 以前臂为例，制作阶段就已经定义好“左手切断”“左前臂切断”“左上臂切断”等配方。每种配方指定隐藏身体的哪一片区域、伤口放在哪里、用哪块模型封住断口，以及碎块使用什么物理配置。战斗发生时，程序根据命中和伤">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入拆解《消逝的光芒 2》断肢管线">
+<meta property="og:url" content="https://www.lfzxb.top/dying-light-2-dismemberment-pipeline/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="前言 先给结论：本文拆解的《消逝的光芒 2》肢体切断路径，采用“预先设计断点与伤口资产，运行时选择并执行”的方案。它不属于刀刃划到任意位置，就沿着刀刃轨迹实时切开三角形、生成任意新断面的自由切割。 以前臂为例，制作阶段就已经定义好“左手切断”“左前臂切断”“左上臂切断”等配方。每种配方指定隐藏身体的哪一片区域、伤口放在哪里、用哪块模型封住断口，以及碎块使用什么物理配置。战斗发生时，程序根据命中和伤">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png">
+<meta property="article:published_time" content="2026-10-29T00:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-29T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Dying Light 2">
+<meta property="article:tag" content="技术美术">
+<meta property="article:tag" content="骨骼动画">
+<meta property="article:tag" content="物理模拟">
+<meta property="article:tag" content="角色渲染">
+<meta property="article:tag" content="游戏开发">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "深入拆解《消逝的光芒 2》断肢管线",
+  "url": "https://www.lfzxb.top/dying-light-2-dismemberment-pipeline/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png",
+  "datePublished": "2026-10-29T00:00:00.000Z",
+  "dateModified": "2026-10-29T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/dying-light-2-dismemberment-pipeline/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const start = 6
+          const end = 8
+          const isNight =
+            start < end
+                ? hour < start || hour >= end
+                : hour >= start || hour < end
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '深入拆解《消逝的光芒 2》断肢管线',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">261</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">233</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">60</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">深入拆解《消逝的光芒 2》断肢管线</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">深入拆解《消逝的光芒 2》断肢管线</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-10-29T00:00:00.000Z" title="发表于 2026-10-29 00:00:00">2026-10-29</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-29T00:00:00.000Z" title="更新于 2026-10-29 00:00:00">2026-10-29</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%AE%9E%E6%97%B6%E5%9B%BE%E5%BD%A2%E4%B8%8E%E7%89%A9%E7%90%86%E6%A8%A1%E6%8B%9F/">实时图形与物理模拟</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">12.2k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>40分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/dying-light-2-dismemberment-pipeline/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2026-10-29 00:00:00&quot;}" hidden></div><h1 id="前言">前言</h1>
+<p><strong>先给结论：本文拆解的《消逝的光芒 2》肢体切断路径，采用“预先设计断点与伤口资产，运行时选择并执行”的方案。它不属于刀刃划到任意位置，就沿着刀刃轨迹实时切开三角形、生成任意新断面的自由切割。</strong></p>
+<p>以前臂为例，制作阶段就已经定义好“左手切断”“左前臂切断”“左上臂切断”等配方。每种配方指定隐藏身体的哪一片区域、伤口放在哪里、用哪块模型封住断口，以及碎块使用什么物理配置。战斗发生时，程序根据命中和伤害条件选中其中一种配方，再把它应用到正在运动的角色上。</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>提前制作或配置</th>
+<th>运行时计算</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>哪些部位能断？</td>
+<td>可用断点、对应骨骼与身体关系</td>
+<td>本次命中选中哪个候选，是否满足切断条件</td>
+</tr>
+<tr>
+<td>断掉后露出什么？</td>
+<td>隐藏体积、定位辅助元素、两端补片及体型变体</td>
+<td>更新隐藏参数，将补片装到当前姿态下的对应位置</td>
+</tr>
+<tr>
+<td>掉下来的肢体是什么姿势？</td>
+<td>模型、蒙皮、骨架与碰撞代理</td>
+<td>继承切断瞬间的姿态，计算后续运动、碰撞与落地</td>
+</tr>
+</tbody>
+</table>
+<p>这里的“预制”指<strong>提前准备断点方案与伤口资产</strong>，不意味着提前录好每次掉落动画，也不要求把完整角色预先拆成一堆互不相连的模型。外表仍可以是连续的蒙皮网格；切断时隐藏其中一部分，再用预制补片盖住开口。</p>
+<p>因此，需要区分两件事：**切断方案是预设的，方案的选择、姿态交接和物理运动是实时的。**真正的任意切割则需要根据每次输入的切面求交、拆分网格并生成新的封口，制作约束和运行成本都不同。</p>
+<p>明确这一点后，问题就变成：怎样让有限的预设断点，在各种动作、衣物和连续受击情况下都表现正确？如果只隐藏手部再生成一个模型，往往会出现手臂弯曲时断口裂开、碎块跳回默认姿态、袖子仍然相连，以及角色继续用缺失的手发动攻击等问题。</p>
+<p>下面沿着一次<strong>感染者左前臂被切断</strong>的过程，讲清楚命中选择、断口生成、骨架交接和动画适配，再反推美术应该交付哪些资产。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png" alt="角色资产、部件装配与运行时分离" loading='lazy'></p>
+<p><em>流程示意图使用 AI 生成的丧尸模型：橙色表示断点或补片，青色表示骨架与空间辅助信息。文末另有使用游戏资产制作的 UE 复现实验图。</em></p>
+<hr>
+<h2 id="1-身体模型：一次命中怎样变成“切掉左前臂”">1. 身体模型：一次命中怎样变成“切掉左前臂”</h2>
+<h3 id="1-1-身体区域、骨骼和损伤操作是三层数据">1.1 身体区域、骨骼和损伤操作是三层数据</h3>
+<p>角色身上有很多骨骼，但战斗逻辑不需要对每根手指骨单独设计一套受伤规则。游戏先将身体分成 <code>Head</code>、<code>Torso</code>、<code>ArmLeft</code>、<code>ArmRight</code>、<code>LegLeft</code>、<code>LegRight</code> 等区域，再在区域里定义具体骨骼支持的操作。</p>
+<p><code>damageable_body_models.scr</code> 的左臂定义，简化后可以写成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 身体模型脚本展开：区域内的骨骼 → 对应损伤表现</span></span><br><span class="line">ArmLeft = &#123;</span><br><span class="line">    l_upperarm: &#123;</span><br><span class="line">        parent: l_clavicle,</span><br><span class="line">        Cut:         left_upperarm_cut,</span><br><span class="line">        Deformation: left_upperarm_deformation</span><br><span class="line">    &#125;,</span><br><span class="line">    l_forearm: &#123;</span><br><span class="line">        parent: l_upperarm,</span><br><span class="line">        Cut:         left_forearm_cut,</span><br><span class="line">        Deformation: left_forearm_deformation</span><br><span class="line">    &#125;,</span><br><span class="line">    l_hand: &#123;</span><br><span class="line">        parent: l_forearm,</span><br><span class="line">        Cut:    left_hand_cut</span><br><span class="line">    &#125;,</span><br><span class="line">    Break: left_arm_break</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这里有两个容易忽略的细节。</p>
+<p>首先，<strong>切断与骨折没有共用一个表现入口</strong>。前臂切断走 <code>left_forearm_cut</code>，整条左臂的骨折走 <code>left_arm_break</code>。前者要产生脱落体，后者可以让手臂仍然挂在身体上，只是失去主动支撑。</p>
+<p>其次，<code>l_forearm</code> 只是语义定位点，不等于最终断面必须贴着这根骨骼的原点。具体补口位置还会引用网格中的辅助元素，左前臂使用 <code>patch_elem_arm_left_b</code>。这样，骨骼负责动作，辅助元素负责伤口摆放，两者不必强行挤在同一个坐标上。</p>
+<h3 id="1-2-破洞也不一定需要增加动画骨骼">1.2 破洞也不一定需要增加动画骨骼</h3>
+<p>左臂还定义了 <code>hole_forearm_left</code>，类型是 <code>VirtualBone</code>，父级为 <code>l_forearm</code>，关联辅助元素 <code>helper_forearm_left</code>，最后执行 <code>Hole</code> 类操作。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 虚拟损伤位置：借用已有骨骼的空间关系</span></span><br><span class="line">hole_forearm_left = VirtualDamageLocation &#123;</span><br><span class="line">    parent: l_forearm,</span><br><span class="line">    helper: helper_forearm_left,</span><br><span class="line">    helperExtentsScale: [<span class="number">1.0</span>, <span class="number">1.5</span>, <span class="number">2.0</span>],</span><br><span class="line">    operation: &#123; input: Cut, visual: hole_forearm_left, category: Hole &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这类位置用于表达“前臂表面的一处破损”，不要求动画师为每个伤口制作一根参与动作的骨骼。它把损伤定位从动画层级里抽离出来，避免角色骨架随着伤口数量不断膨胀。</p>
+<h3 id="1-3-损伤关系图与动画骨架必须分开">1.3 损伤关系图与动画骨架必须分开</h3>
+<p><code>Parent</code> 容易被误读成建模软件里的骨骼父级。身体模型却给 <code>neck</code> 同时写了 <code>l_clavicle</code> 和 <code>r_clavicle</code> 两个父节点：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏逻辑：身体模型中的关系</span></span><br><span class="line">damageParents[neck]      = &#123; l_clavicle, r_clavicle &#125;;</span><br><span class="line">damageParents[neck1]     = &#123; neck &#125;;</span><br><span class="line">damageParents[head]      = &#123; neck1 &#125;;</span><br><span class="line">damageParents[l_forearm] = &#123; l_upperarm &#125;;</span><br><span class="line">damageParents[l_hand]    = &#123; l_forearm &#125;;</span><br></pre></td></tr></table></figure>
+<p>动画骨架是一棵树，一个骨骼通过唯一父级计算变换；这里组织的则是<strong>损伤节点之间的关系图</strong>。同一套骨骼名称可以用于两套系统，但不能把这份表直接拿去重建 Skeleton。否则脖子应该跟随哪一个锁骨，就已经说不通了。</p>
+<p>这个区别也解释了断肢系统为什么需要额外的身体状态：动画描述骨骼怎样运动，损伤图描述部位之间的关联。手不再可见以后，动画轨道仍然可以保留手骨的变换数据。</p>
+<h3 id="1-4-腰斩还会筛选攻击平面的方向">1.4 腰斩还会筛选攻击平面的方向</h3>
+<p>大切口也不只是“命中了躯干”。<code>pelvis</code> 对应的 <code>horizontal_cut</code> 使用间接损伤条件，指定 <code>helper_waist_0</code>，将辅助区域沿三个局部轴放大为 <code>[3.0, 2.5, 2.5]</code>，允许的攻击平面偏差为 <code>30°</code>。左右纵向切断使用胸部辅助区域，允许偏差为 <code>45°</code>。</p>
+<p>把这几项输入展开：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏逻辑：腰斩候选的条件与操作</span></span><br><span class="line">horizontalCutCandidate = &#123;</span><br><span class="line">    location: pelvis,</span><br><span class="line">    requirement: Indirect,</span><br><span class="line">    helper: helper_waist_0,</span><br><span class="line">    helperExtentsScale: [<span class="number">3.0</span>, <span class="number">2.5</span>, <span class="number">2.5</span>],</span><br><span class="line">    maxPlaneAngleDeviationDegrees: <span class="number">30.0</span>,</span><br><span class="line">    indirectPriority: <span class="number">2</span>,</span><br><span class="line">    operation: &#123; input: Cut, visual: horizontal_cut, category: FullBodyCut &#125;,</span><br><span class="line">    damageExclusive: <span class="literal">true</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这些参数让美术预制的切口与攻击方向发生联系。辅助区域决定在哪里接受候选，平面偏差限制什么方向的挥砍适合这个断面，优先级用于候选选择。它并不要求刀刃走到哪里，就实时沿着那条轨迹重建一个任意形状的切口。</p>
+<h3 id="1-5-先匹配身体语义，再交给规则层">1.5 先匹配身体语义，再交给规则层</h3>
+<p>把关系串起来，数据流是：</p>
+<pre><code class="highlight mermaid">%%&#123;init: &#123;&quot;theme&quot;:&quot;base&quot;,&quot;themeVariables&quot;:&#123;&quot;primaryColor&quot;:&quot;#25201d&quot;,&quot;primaryTextColor&quot;:&quot;#f1ece4&quot;,&quot;primaryBorderColor&quot;:&quot;#ef8950&quot;,&quot;lineColor&quot;:&quot;#79cbd5&quot;&#125;&#125;&#125;%%
+flowchart LR
+    A[武器命中] --&gt; B[左臂区域]
+    B --&gt; C[前臂骨骼]
+    C --&gt; D[切断候选]
+    D --&gt; E[伤害条件与概率]
+    E --&gt; F[左前臂切断表现]
+    F --&gt; G[身体隐藏与补口]
+    F --&gt; H[脱落体与物理]</code></pre>
+<p>因此，命中检测不应该直接负责生成碎块。它提供受击位置和上下文，由身体模型解释这个位置，再让规则层决定最终效果。</p>
+<hr>
+<h2 id="2-伤害决策：砍中、砍断和死亡为什么必须分开">2. 伤害决策：砍中、砍断和死亡为什么必须分开</h2>
+<h3 id="2-1-75-表示生命比例条件，不是断肢概率">2.1 75 表示生命比例条件，不是断肢概率</h3>
+<p><code>damageable_body_presets.scr</code> 的 <code>Biter</code> 预设，将左臂的 <code>Cut</code> 和 <code>Break</code> 都配置为最大身体生命百分比 <code>75.0</code>，同时标记为 <code>NonLethal</code>。</p>
+<p>用伪代码表达这组规则：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Biter 左臂规则展开；healthPercent 是规则求值时使用的身体生命比例</span></span><br><span class="line"><span class="built_in">EvaluateArmRule</span>(operation, healthPercent) &#123;</span><br><span class="line">    <span class="keyword">if</span> (operation != Cut &amp;&amp; operation != Break)</span><br><span class="line">        <span class="keyword">return</span> NoRule;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (healthPercent &gt; <span class="number">75.0</span>)</span><br><span class="line">        <span class="keyword">return</span> Rejected;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Allowed &#123;</span><br><span class="line">        operationItselfIsLethal: <span class="literal">false</span></span><br><span class="line">    &#125;;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>NonLethal</code> 的含义是这次身体损伤操作本身不强制杀死角色，而不是免除武器本身的伤害。一次攻击仍可能先把生命值打空，然后同时产生断肢。</p>
+<p>同一个 <code>Biter</code> 预设里，头部切断的生命比例条件是 <code>50.0</code>，另外还配置 <code>ProbabilityMul(&quot;Cut&quot;, 0.5)</code>。这两个数控制不同的事情：前者限制是否进入候选，后者调整概率权重。不能把它们相加，也不能因为身体已经低血量，就默认每次命中都必然断头。</p>
+<h3 id="2-2-受击状态会继续修改断肢概率">2.2 受击状态会继续修改断肢概率</h3>
+<p><code>damage_rules.scr</code> 中有一个很具体的规则：<code>ragdoll_during_bleeding_increases_limb_cut_prob</code>。它要求这次伤害带有 <code>Ragdoll</code> 反应标记，并且目标正在流血，然后调用 <code>AddLimbCutProb(0.1)</code>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 伤害规则脚本展开</span></span><br><span class="line"><span class="built_in">ApplyBleedingRagdollModifier</span>(damage, victim) &#123;</span><br><span class="line">    <span class="keyword">if</span> (damage.reactionFlags.<span class="built_in">contains</span>(Ragdoll)</span><br><span class="line">        &amp;&amp; victim.bodyStates.<span class="built_in">contains</span>(Bleeding)) &#123;</span><br><span class="line">        damage.limbCutProbability += <span class="number">0.1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个判断检查的是<strong>伤害携带的反应标记</strong>，不是笼统地判断“敌人已经躺在地上”。例如其他规则可以给一次命中加上布娃娃反应，从而影响后续伤害处理。</p>
+<p>这一条规则给当前概率加上 <code>0.1</code>；头部的 <code>ProbabilityMul</code> 则属于部位倍率。实现自己的规则系统时，要明确两者在哪个阶段求值，否则“先加再乘”和“先乘再加”会产生不同的手感。</p>
+<h3 id="2-3-处决与环境撞击走不同的伤害预设">2.3 处决与环境撞击走不同的伤害预设</h3>
+<p><code>sync_action_damage_presets.scr</code> 中的 <code>finisher_limb_cut</code> 组合了以下设置：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 处决伤害预设展开</span></span><br><span class="line">finisher_limb_cut = &#123;</span><br><span class="line">    damageDefinition: Player_KillVictim,</span><br><span class="line">    limbCutProbability: <span class="number">1.0</span>,</span><br><span class="line">    flags: &#123;</span><br><span class="line">        BodyDamageEnforced,</span><br><span class="line">        BodyDamageUnconstrained,</span><br><span class="line">        Kill</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>处决不是普通挥刀简单增加一点伤害，而是把“致死”和“身体损伤要求”一起写进预设。表现层仍要找到目标可用的损伤操作和资源；概率设成 <code>1.0</code> 不会替美术生成一套不存在的断面。</p>
+<p>环境碰撞也能进入同一套身体损伤系统。<code>ai_damage_presets.scr</code> 中的 <code>wall_hit_ragdoll</code> 使用 <code>AI_WallHitRagdoll</code>，配置 <code>BodyDamageEnforced</code>、切断概率 <code>1.0</code> 和破坏概率 <code>0.6</code>，同时引用墙面碰撞的反应预设。</p>
+<p>两者的共同点，是把不同来源的攻击统一转成“伤害定义、身体损伤参数、反应参数”。这样刀刃、处决和环境碰撞可以复用后面的断肢资产，不必各做一套生成碎块的逻辑。</p>
+<hr>
+<h2 id="3-外观分离：原身体怎么消失，断面怎么出现">3. 外观分离：原身体怎么消失，断面怎么出现</h2>
+<h3 id="3-1-一个切断操作包含两个端口">3.1 一个切断操作包含两个端口</h3>
+<p><code>left_forearm_cut</code> 并不是一个单独的模型文件。它是一份表现配方，组织了原身体和脱落体两侧的资源：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// left_forearm_cut 的表现配置展开，省略各体型的椭球数值</span></span><br><span class="line">LeftForearmCut = &#123;</span><br><span class="line">    helper: patch_elem_arm_left_b,</span><br><span class="line">    hideVolume: HideEllipsoidBySkeletonGroup,</span><br><span class="line"></span><br><span class="line">    bodyPatch: &#123;</span><br><span class="line">        type: Simple,</span><br><span class="line">        prefab: human_patch,</span><br><span class="line">        defaultMesh: chr_dmg_cut_patch_default_a,</span><br><span class="line">        slimMesh:    chr_dmg_cut_patch_default_a_slim</span><br><span class="line">    &#125;,</span><br><span class="line">    bodyEffect: left_forearm_off_wound_bleeding,</span><br><span class="line"></span><br><span class="line">    gib: &#123;</span><br><span class="line">        prefab: human_gib,</span><br><span class="line">        patch: SameDefaultAndSlimPatchChoice,</span><br><span class="line">        effect: left_forearm_off_bleeding,</span><br><span class="line">        physicsSimset: sim_cut_limbs,</span><br><span class="line">        additionalPhysicsBone: l_upperarm,</span><br><span class="line">        collideWithMainBody: <span class="literal">true</span>,</span><br><span class="line">        bloodPuddle: gib_blood_puddle</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>BodyPatch</code> 填住身体剩下的那一端，<code>Gib.Patch</code> 填住掉落前臂的另一端。两端必须各自封口，否则无论从身体还是地面碎块看过去，都可能看到空壳内部。</p>
+<p>补片选择还检查 <code>DamageSize</code>。尺寸为 <code>slim</code> 时使用细版，普通尺寸使用默认版。把这个局部选择展开就是：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">SelectForearmPatch</span>(characterProperties) &#123;</span><br><span class="line">    <span class="keyword">if</span> (characterProperties.DamageSize == <span class="string">&quot;slim&quot;</span>)</span><br><span class="line">        <span class="keyword">return</span> chr_dmg_cut_patch_default_a_slim;</span><br><span class="line">    <span class="keyword">return</span> chr_dmg_cut_patch_default_a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这比“所有感染者都用一块伤口模型，再统一缩放”更稳妥。瘦手臂、厚外套和特殊感染者的断面轮廓不同，单纯缩放常常只能匹配直径，无法同时匹配轮廓和厚度。</p>
+<h3 id="3-2-隐藏外壳为什么能比切三角形更省事">3.2 隐藏外壳为什么能比切三角形更省事</h3>
+<p><code>HideEllipsoid</code> 描述了一种体积隐藏需求：在角色表面限定一个区域，让这一带的外层不再显示。后面的补片负责填充可见内部。</p>
+<p>**这里实时计算的是“哪些表面不再显示”，隐藏范围来自预先配置的椭球；这与根据刀刃轨迹生成任意新断面是两回事。**例如 <code>left_forearm_cut</code> 已经有自己的隐藏参数和 <code>patch_elem_arm_left_b</code> 定位元素，本次执行消费的是这套配方。</p>
+<p>这类算法不必首先把每个相交三角形切成两半。用一个椭球判断表面是否处于隐藏范围，就可以在外观上形成缺口。下面用最小着色实现说明这个计算：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 实现示例：所有输入先转换到同一个参考空间</span></span><br><span class="line"><span class="built_in">ShouldHideSurface</span>(position, ellipsoid) &#123;</span><br><span class="line">    local = <span class="built_in">transpose</span>(ellipsoid.rotation)</span><br><span class="line">          * (position - ellipsoid.center);</span><br><span class="line">    q = local / ellipsoid.halfAxes;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">dot</span>(q, q) &lt; <span class="number">1.0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">ShadeSurface</span>(position) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ShouldHideSurface</span>(position, woundVolume))</span><br><span class="line">        discard;</span><br><span class="line">    <span class="keyword">return</span> <span class="built_in">ShadeSkinOrClothes</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>椭球本质上是一个经过旋转和非均匀缩放的球。把位置逆变换回单位球空间后，只需检查距离平方是否小于 1。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/ellipsoid.png" alt="椭球限定隐藏范围，再由独立补片填充" loading='lazy'></p>
+<p><em>外壳负责角色的连续表面，补片负责损伤后露出的内部；图中的灰色和橙色是辅助材质。</em></p>
+<p>这样的“外层隐藏 + 内部补片”有公开的工业先例。Valve 在 <em>Rendering Wounds in Left 4 Dead 2</em> 中使用姿态空间椭球、投影纹理与独立伤口模型，并强调阴影和深度 Pass 也要应用裁剪。<a target="_blank" rel="noopener" href="https://cdn.akamai.steamstatic.com/apps/valve/2010/gdc2010_vlachos_l4d2wounds.pdf">技术展开：GDC 2010 演讲</a></p>
+<p>实际落地时，坐标空间比距离公式更重要。伤口如果固定在世界空间，角色一转身，它就会在皮肤上滑动；补片如果跟骨骼走、隐藏区域却不跟，二者又会错开。隐藏区域和补片必须遵守同一套附着与形变约定。</p>
+<p>在 UE 中复现时，可以把蒙皮前的位置经 <code>VertexInterpolator</code> 传到像素阶段，再与绑定姿态中的椭球参数比较。这样，某个表面点是否被隐藏由它在原始角色上的位置决定；骨骼弯曲只改变这个点最终出现在哪里。皮肤和袖子都用同一组参数，但还要乘上各自原有的透明遮罩，否则头发和破布边缘会变成实心片。</p>
+<h3 id="3-3-大切口需要能够变形的补片">3.3 大切口需要能够变形的补片</h3>
+<p>普通前臂切口使用 <code>Simple</code> 类型。躯干纵向切断则使用 <code>Skinned</code> 补片，身体端和脱落端分别引用胸部补片模型；脱落体还配置 <code>ShowEllipsoid</code>，物理改用 <code>sim_ragdoll.lite</code>。</p>
+<p>这组差异对应了两个制作问题：</p>
+<ul>
+<li>小型端口的局部形状比较稳定，可以围绕一个附着位置组织。</li>
+<li>胸部切口跨越更大的形变范围，角色弯腰或旋转时，内部模型也要随骨架变形。</li>
+</ul>
+<p>因此，美术交付不能只有一张“断面贴图”。小补片、蒙皮补片、身体端与脱落端各有职责；哪种资产用于哪种断点，要由表现配方明确指定。</p>
+<h3 id="3-4-骨架类型与断面尺寸是两次独立选择">3.4 骨架类型与断面尺寸是两次独立选择</h3>
+<p>前臂配方里有一组按 <code>man</code>、<code>woman</code>、<code>banshee</code> 等名字索引的隐藏体积，同时又有一组按 <code>DamageSize</code> 选择的补片。两组选择解决不同问题。</p>
+<p><code>damageable_body_skeleton_groups.scr</code> 把 <code>man_zmb_skeleton.msh</code>、<code>man_zmb_light_skeleton.msh</code>、<code>man_srv_skinybiter_skeleton.msh</code> 等骨架都映射到 <code>man</code>。因此，某个瘦感染者可以使用 <code>man</code> 的隐藏参数，同时使用 <code>slim</code> 的补片模型：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏数据关系展开：两个索引不能合并成一个体型枚举</span></span><br><span class="line">group = SkeletonGroups.<span class="built_in">Find</span>(character.skeletonName);</span><br><span class="line">hideVolume = left_forearm_cut.HideEllipsoid[group];</span><br><span class="line"></span><br><span class="line">patchMesh = character.properties.DamageSize == <span class="string">&quot;slim&quot;</span></span><br><span class="line">    ? <span class="string">&quot;chr_dmg_cut_patch_default_a_slim.msh&quot;</span></span><br><span class="line">    : <span class="string">&quot;chr_dmg_cut_patch_default_a.msh&quot;</span>;</span><br></pre></td></tr></table></figure>
+<p>对制作管线而言，这意味着调整骨架比例时要复查隐藏区域，调整局部粗细时要复查补片轮廓。只把模型整体缩放一遍，并不能自动完成这两层适配。</p>
+<hr>
+<h2 id="4-美术管线：怎样制作一套真正能用的断肢资产">4. 美术管线：怎样制作一套真正能用的断肢资产</h2>
+<h3 id="4-1-从断点表开始制作">4.1 从断点表开始制作</h3>
+<p>以左前臂为一个完整制作单元，交付物应围绕运行时实际需要的输入组织：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">左前臂断点</span><br><span class="line"> ├── 定位：patch_elem_arm_left_b</span><br><span class="line"> ├── 外层：皮肤、袖子、手套和附件的处理范围</span><br><span class="line"> ├── 身体端：补片模型、材质、附着与权重</span><br><span class="line"> ├── 脱落端：前臂外观、补片、骨架与碰撞代理</span><br><span class="line"> ├── 变体：普通尺寸、细尺寸及特殊体型</span><br><span class="line"> └── 反馈：身体端效果、脱落端效果、落地效果</span><br></pre></td></tr></table></figure>
+<p>先把这些关系定好，再去雕刻伤口。否则高模做得再精细，进入引擎后也可能发现补片没有可靠的附着点，或者袖口压根不在隐藏范围里。</p>
+<h3 id="4-2-完整角色和损伤内部可以分开生产">4.2 完整角色和损伤内部可以分开生产</h3>
+<p>基础角色仍然按照常规流程完成高模、低模、UV、烘焙、材质和蒙皮。额外的损伤资产主要集中在允许露出的区域：局部断面、破洞内部、衣物破边，以及必要的体型变体。</p>
+<p>不必为了三个前臂断点就给整个人制作完整的可解剖内部。能被镜头看到的部分才需要真实几何；永远被外壳挡住的区域没有必要支付建模、贴图和运行时成本。</p>
+<p>制作补片时，先让低模轮廓与外壳开口吻合，再增加内部层次。伤口外沿需要适度覆盖原表面，用来隐藏微小误差；覆盖过宽会形成凸起，表面过近则会闪烁。贴图要留足边缘扩张，避免缩小采样后出现一圈亮边。</p>
+<h3 id="4-3-袖子必须和皮肤响应同一个断点">4.3 袖子必须和皮肤响应同一个断点</h3>
+<p>“皮肤断了，袖子还连着”并不是材质问题，而是部件归属没有定义完整。袖子、皮肤可以是不同网格，却必须知道同一个断点会移走哪些部分。</p>
+<p>手套一般跟随手，护腕可能跟随前臂，挂在腰间的道具则留在身体。长外套、披挂与布料还要检查连接关系：不能让一块属于脱落体的布料继续被身体端的约束拉住。</p>
+<p>游戏的 <code>human_gib</code> 组件里有 <code>CoMeshPartClothSet</code>，说明碎块对象本身预留了处理衣物部件的职责。它不会替代美术对衣服边界和归属的制作。</p>
+<h3 id="4-4-蒙皮不是沿着断点一刀切成硬权重">4.4 蒙皮不是沿着断点一刀切成硬权重</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/authoring.png" alt="切口边界、蒙皮权重与双侧补口" loading='lazy'></p>
+<p><em>左侧展示边界定位，中间展示骨骼影响的连续分布，右侧展示独立封口资产。预分段路线需要匹配边界顶点；体积隐藏路线则重点检查补片与遮罩的重合。</em></p>
+<p>正常手肘需要多骨骼混合才能自然弯曲。不能为了方便断肢，就把断点两侧所有顶点分别硬绑定到一根骨骼。</p>
+<p>线性混合蒙皮的核心关系是：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">p</mi><mi>w</mi></msub><mo>=</mo><mi mathvariant="bold">W</mi><munder><mo>∑</mo><mi>i</mi></munder><msub><mi>w</mi><mi>i</mi></msub><msub><mi mathvariant="bold">G</mi><mi>i</mi></msub><msubsup><mi mathvariant="bold">B</mi><mi>i</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi mathvariant="bold">p</mi><mi>b</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf p_w=\mathbf W\sum_i w_i\mathbf G_i\mathbf B_i^{-1}\mathbf p_b
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.6389em;vertical-align:-0.1944em;"></span><span class="mord"><span class="mord mathbf">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight" style="margin-right:0.02691em;">w</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:2.3277em;vertical-align:-1.2777em;"></span><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mop op-limits"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.05em;"><span style="top:-1.8723em;margin-left:0em;"><span class="pstrut" style="height:3.05em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.05em;"><span class="pstrut" style="height:3.05em;"></span><span><span class="mop op-symbol large-op">∑</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:1.2777em;"><span></span></span></span></span></span><span class="mspace" style="margin-right:0.1667em;"></span><span class="mord"><span class="mord mathnormal" style="margin-right:0.02691em;">w</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:-0.0269em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3117em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">B</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-2.433em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">i</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.267em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">p</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">b</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>顶点最终位置取决于所有影响骨骼的变换。如果一圈前臂顶点仍受上臂影响，生成脱落体时就必须为这部分影响安排姿态来源，或者使用提前处理好权重的脱落版本。直接删除上臂骨骼，再归一化剩余权重，很容易让断口瞬间收缩或偏移。</p>
+<p>制作时可以把检查写成一条清楚的约束：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 资产验收逻辑</span></span><br><span class="line"><span class="built_in">ValidateDetachedMesh</span>(mesh, detachedSkeleton) &#123;</span><br><span class="line">    <span class="keyword">for</span> (vertex : mesh.vertices) &#123;</span><br><span class="line">        <span class="built_in">assert</span>(<span class="built_in">NearlyEqual</span>(<span class="built_in">Sum</span>(vertex.weights), <span class="number">1.0</span>));</span><br><span class="line">        <span class="keyword">for</span> (influence : vertex.nonzeroInfluences)</span><br><span class="line">            <span class="built_in">assert</span>(detachedSkeleton.<span class="built_in">hasPoseSource</span>(influence.bone));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不同 LOD 也要满足同样的约束。低 LOD 可以减少细节，但不能删掉补片依赖的骨骼，却不提供替代映射。</p>
+<h3 id="4-5-给美术的交付表应该具体到一个断点">4.5 给美术的交付表应该具体到一个断点</h3>
+<p>以前臂为例，可以将制作和导出约定落实成下面这张表。前两列对应前面配方实际消费的输入，最后一列是制作时的检查方法。</p>
+<table>
+<thead>
+<tr>
+<th>交付内容</th>
+<th>接入位置</th>
+<th>制作与验收要点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>前臂断口定位元素</td>
+<td><code>patch_elem_arm_left_b</code></td>
+<td>记录局部轴方向；身体端、碎块端用各自的安装变换测试，不能只看模型原点重合</td>
+</tr>
+<tr>
+<td>各骨架组的隐藏范围</td>
+<td><code>HideEllipsoid(group, …)</code></td>
+<td>叠加显示隐藏边界与补片；检查伸肘、弯肘、前臂扭转</td>
+</tr>
+<tr>
+<td>默认和细尺寸补片</td>
+<td>两个 <code>chr_dmg_cut_patch_default_a</code> 变体</td>
+<td>外圈盖住开口，内面从身体侧和碎块侧分别可见；检查法线、UV 和材质</td>
+</tr>
+<tr>
+<td>衣物部件与附件归属</td>
+<td>身体及 <code>human_gib</code> 的网格、布料部件</td>
+<td>袖子和皮肤一起处理，护腕随前臂，跨断面的布料约束需要解除</td>
+</tr>
+<tr>
+<td>蒙皮与绑定姿态</td>
+<td><code>CoSkinnedMesh</code>、<code>CoSkeleton</code></td>
+<td>保留每个非零权重需要的姿态来源；不要把物理代理骨数量当成蒙皮骨数量</td>
+</tr>
+<tr>
+<td>胶囊体和关节</td>
+<td><code>sim_cut_limbs</code></td>
+<td>用碰撞调试视图检查接缝；关闭粒子也应能正常分离和落地</td>
+</tr>
+<tr>
+<td>远距离版本</td>
+<td>网格、补片及骨骼 LOD</td>
+<td>在断口已出现时切换 LOD，检查补片消失、穿插和残余袖口</td>
+</tr>
+</tbody>
+</table>
+<p>这些检查适合做成 DCC 导出前的校验，再配一个引擎内预览动作集。检测缺失名称、权重引用和资源引用可以自动完成；补片贴合与动作观感仍要在运动中检查。</p>
+<hr>
+<h2 id="5-骨架交接：身体继续动，掉下来的前臂由谁控制">5. 骨架交接：身体继续动，掉下来的前臂由谁控制</h2>
+<h3 id="5-1-动画骨架与物理骨架不是一回事">5.1 动画骨架与物理骨架不是一回事</h3>
+<p>动画层级里可能有很多手指骨，物理系统却只用一个胶囊体代表整只手。动画需要保留局部动作细节，物理需要少量稳定、便宜的碰撞代理，两者服务的目标不同。</p>
+<p>所以，“前臂不再显示”不意味着必须从原角色的 Skeleton 中删除前臂骨。保留骨架索引可以继续使用已有动画；可见性、碰撞和能力状态再分别决定哪些结果仍然有效。</p>
+<p>这一原则解决的是兼容性。角色缺了手之后是否仍然播放双手动作，是下一层行为选择的问题，不能指望删几根骨骼就自动解决。</p>
+<h3 id="5-2-脱落体拥有自己的骨架和物理组件">5.2 脱落体拥有自己的骨架和物理组件</h3>
+<p><code>human_gib.prefab</code> 把碎块组织成一个完整对象：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 预制体组件与连接的简化表达</span></span><br><span class="line">gib.mesh        = <span class="built_in">CoSkinnedMesh</span>();</span><br><span class="line">gib.skeleton    = <span class="built_in">CoSkeleton</span>(rootTransform = <span class="literal">true</span>);</span><br><span class="line">gib.collidable  = <span class="built_in">CoSkeletonCollidable</span>();</span><br><span class="line">gib.physics     = <span class="built_in">CoPhysics</span>(type = Ragdoll,</span><br><span class="line">                            spec = <span class="string">&quot;ragdoll_human.lite.phx&quot;</span>);</span><br><span class="line">gib.cloth       = <span class="built_in">CoMeshPartClothSet</span>();</span><br><span class="line">gib.damageForce = <span class="built_in">CoDamageToPhysicsImpulse</span>(forceMultiplier = <span class="number">2.0</span>);</span><br><span class="line">gib.puddle      = <span class="built_in">CoBloodPuddleGenerator</span>();</span><br><span class="line">gib.meleeTarget = <span class="built_in">CoMeleeTargetBody</span>(obstacleType = DeadEnemyGib);</span><br><span class="line"></span><br><span class="line"><span class="built_in">Bind</span>(gib.skeleton, gib.collidable.skeleton);</span><br><span class="line"><span class="built_in">Bind</span>(gib.skeleton, gib.cloth.skeleton);</span><br><span class="line"><span class="built_in">Bind</span>(gib.skeleton, gib.puddle.skeleton);</span><br><span class="line"><span class="built_in">Bind</span>(gib.physics,  gib.puddle.physics);</span><br><span class="line"><span class="built_in">Bind</span>(gib.skeleton, gib.meleeTarget.skeleton);</span><br><span class="line"></span><br><span class="line"><span class="built_in">Connect</span>(gib.TakeDamage, gib.damageForce.Damage);</span><br><span class="line"><span class="built_in">Connect</span>(gib.damageForce.PhysicsImpulse, gib.physics.PhysicsImpulse);</span><br></pre></td></tr></table></figure>
+<p>最后两行很关键：碎块被再次击中时，伤害输入能够继续转成物理冲量。它不是生成后只负责播放一个下落动画的摆设。</p>
+<p><code>CoSkinnedMesh</code> 和 <code>CoSkeleton</code> 则解释了为什么不能一概用静态网格替代脱落体。若需要前臂、手腕继续有相对运动，仍然需要由物理结果驱动骨骼，再由骨骼驱动表面。</p>
+<p>前臂的配方还显式请求了 <code>PhysicsAdditionalBone(&quot;l_upperarm&quot;)</code>。因此，不能按“名字叫前臂”就把它需要的骨骼集合写死成 <code>l_forearm</code> 以下的子树。**可见几何的范围、蒙皮所需的姿态范围、物理需要的骨骼范围，是三个不同集合。**这项额外物理骨配置也不能代替蒙皮权重检查。</p>
+<h3 id="5-3-新骨架必须继承切断瞬间的世界姿态">5.3 新骨架必须继承切断瞬间的世界姿态</h3>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/pose-transfer.png" alt="记录姿态、姿态交接与独立物理运动" loading='lazy'></p>
+<p><em>交接的第一步是保持位置和姿态连续，再让身体与脱落体各自继续运动。</em></p>
+<p>这里展开姿态交接所需的坐标计算。设原角色的模型到世界矩阵为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">W</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf W_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，骨骼当前模型空间矩阵为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">G</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf G_s</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>，脱落体自己的模型到世界矩阵为 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">W</mi><mi>d</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf W_d</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span>。希望新骨骼出现在同一个世界位置，就应满足：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">W</mi><mi>d</mi></msub><msub><mi mathvariant="bold">G</mi><mi>d</mi></msub><mo>=</mo><msub><mi mathvariant="bold">W</mi><mi>s</mi></msub><msub><mi mathvariant="bold">G</mi><mi>s</mi></msub><mspace width="1em"/><mo>⇒</mo><mspace width="1em"/><msub><mi mathvariant="bold">G</mi><mi>d</mi></msub><mo>=</mo><msubsup><mi mathvariant="bold">W</mi><mi>d</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi mathvariant="bold">W</mi><mi>s</mi></msub><msub><mi mathvariant="bold">G</mi><mi>s</mi></msub></mrow><annotation encoding="application/x-tex">\mathbf W_d\mathbf G_d=\mathbf W_s\mathbf G_s
+\quad\Rightarrow\quad
+\mathbf G_d=\mathbf W_d^{-1}\mathbf W_s\mathbf G_s
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">⇒</span><span class="mspace" style="margin-right:1em;"></span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.1555em;vertical-align:-0.2914em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8641em;"><span style="top:-2.4086em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span><span style="top:-3.113em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2914em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>相应算法可以写成：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 姿态转换算法示意：要求双方骨骼映射与绑定姿态空间已经对齐</span></span><br><span class="line"><span class="built_in">CopyPoseAtSeparation</span>(source, detached, boneMap) &#123;</span><br><span class="line">    snapshot = source.<span class="built_in">CaptureCurrentPose</span>();</span><br><span class="line">    toDetached = <span class="built_in">Inverse</span>(detached.world) * source.world;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> ((srcBone, dstBone) : boneMap)</span><br><span class="line">        detached.globalPose[dstBone] =</span><br><span class="line">            toDetached * snapshot.globalPose[srcBone];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (bone : detached.parentBeforeChildOrder) &#123;</span><br><span class="line">        detached.localPose[bone] = bone.isRoot</span><br><span class="line">            ? detached.globalPose[bone]</span><br><span class="line">            : <span class="built_in">Inverse</span>(detached.globalPose[bone.parent])</span><br><span class="line">              * detached.globalPose[bone];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这不是把动画文件再播放一遍。它复制的是<strong>当前这一刻已经求出的姿态</strong>，所以无论角色正弯肘、挥手还是跌倒，脱落体都能从正确形状开始。</p>
+<p>还要保证根变换和骨骼姿态来自同一个时刻。拿上一帧的手臂姿态搭配这一帧的角色位置，会导致高速运动中的肢体突然“弹”出一截。</p>
+<p>碰撞体还多一层偏移。骨骼原点通常放在关节，胶囊体原点却可能位于前臂中段。设 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">L</mi><mrow><mi>b</mi><mi>o</mi><mi>d</mi><mi>y</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\mathbf L_{body}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9722em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathbf">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span> 是碰撞体相对骨骼的安装矩阵，那么初始刚体世界矩阵应当是：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">T</mi><mrow><mi>b</mi><mi>o</mi><mi>d</mi><mi>y</mi></mrow></msub><mo>=</mo><msub><mi mathvariant="bold">W</mi><mi>s</mi></msub><msub><mi mathvariant="bold">G</mi><mi>s</mi></msub><msub><mi mathvariant="bold">L</mi><mrow><mi>b</mi><mi>o</mi><mi>d</mi><mi>y</mi></mrow></msub></mrow><annotation encoding="application/x-tex">\mathbf T_{body}=\mathbf W_s\mathbf G_s\mathbf L_{body}
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.9722em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathbf">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.9722em;vertical-align:-0.2861em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">s</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span></span></span></span></span></p>
+<p>物理求解完成后，再通过 <span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi mathvariant="bold">G</mi><mi>d</mi></msub><mo>=</mo><msubsup><mi mathvariant="bold">W</mi><mi>d</mi><mrow><mo>−</mo><mn>1</mn></mrow></msubsup><msub><mi mathvariant="bold">T</mi><mrow><mi>b</mi><mi>o</mi><mi>d</mi><mi>y</mi></mrow></msub><msubsup><mi mathvariant="bold">L</mi><mrow><mi>b</mi><mi>o</mi><mi>d</mi><mi>y</mi></mrow><mrow><mo>−</mo><mn>1</mn></mrow></msubsup></mrow><annotation encoding="application/x-tex">\mathbf G_d=\mathbf W_d^{-1}\mathbf T_{body}\mathbf L_{body}^{-1}</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.8361em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf">G</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.2917em;vertical-align:-0.4374em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8542em;"><span style="top:-2.3987em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span><span style="top:-3.1031em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.3013em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">T</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.2861em;"><span></span></span></span></span></span></span><span class="mord"><span class="mord mathbf">L</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.8542em;"><span style="top:-2.3987em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mathnormal mtight">b</span><span class="mord mathnormal mtight">o</span><span class="mord mathnormal mtight">d</span><span class="mord mathnormal mtight" style="margin-right:0.03588em;">y</span></span></span></span><span style="top:-3.1031em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mtight"><span class="mord mtight">−</span><span class="mord mtight">1</span></span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.4374em;"><span></span></span></span></span></span></span></span></span></span> 写回新骨架。少乘或少除这层安装矩阵，就会出现“网格出生位置正确，一开启物理就错位”的问题。</p>
+<h3 id="5-4-骨折为什么不会直接掉下来">5.4 骨折为什么不会直接掉下来</h3>
+<p><code>left_arm_break</code> 引用的 <code>partial_ragdoll_left_arm</code>，把 <code>spine3</code> 设置为运动学刚体，左上臂、前臂和手设置为动态刚体。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 局部布娃娃配置展开</span></span><br><span class="line">spine<span class="number">3.</span>mode    = Kinematic;</span><br><span class="line">l_upperarm.mode = Dynamic;</span><br><span class="line">l_forearm.mode  = Dynamic;</span><br><span class="line">l_hand.mode     = Dynamic;</span><br><span class="line"></span><br><span class="line"><span class="built_in">ConnectJoint</span>(spine3,    l_upperarm);</span><br><span class="line"><span class="built_in">ConnectJoint</span>(l_upperarm, l_forearm);</span><br><span class="line"><span class="built_in">ConnectJoint</span>(l_forearm,  l_hand);</span><br></pre></td></tr></table></figure>
+<p>运动学胸部跟随角色动作，动态手臂接受物理求解；连接它们的关节约束仍然存在，所以手臂会垂落和摆动，却不会成为独立碎块。</p>
+<p>肩、肘、腕使用 <code>Dof6Spring2</code> 约束。三个平移轴的上下限都设为零，表示关节连接点不能自由拉开；旋转方向则给不同范围。肘部示例还设置 <code>frame_b_rotation_xyz([0, 0, -90])</code>，用来调整约束坐标系。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 肘部约束参数展开：角度定义在约束局部坐标系中</span></span><br><span class="line">elbow.linearLower = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>];</span><br><span class="line">elbow.linearUpper = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>];</span><br><span class="line">elbow.angularLowerDegrees = [<span class="number">10</span>, <span class="number">-80</span>, <span class="number">90</span>];</span><br><span class="line">elbow.angularUpperDegrees = [<span class="number">125</span>, <span class="number">10</span>, <span class="number">90</span>];</span><br><span class="line">elbow.frameBRotationDegrees = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">-90</span>];</span><br></pre></td></tr></table></figure>
+<p>不能把这些角度直接当成世界坐标里的抬手角度。约束坐标系放错了，即使角度数值相同，手肘也可能朝相反方向弯曲。</p>
+<h3 id="5-5-脱落体使用另一套约束参数">5.5 脱落体使用另一套约束参数</h3>
+<p><code>sim_cut_limbs</code> 里，左上臂、前臂、手分别对应槽位 <code>3</code>、<code>5</code>、<code>14</code>，三者都是动态胶囊体；肘连接 <code>3 → 5</code>，腕连接 <code>5 → 14</code>。这套模板覆盖全身可分离部件，并不表示每次切下前臂都创建整个人的物理体。</p>
+<p>两套配置的左肘限制就有所不同：</p>
+<table>
+<thead>
+<tr>
+<th>左肘参数</th>
+<th>挂在身体上的断臂</th>
+<th>脱落体模板</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>角度下限</td>
+<td><code>[10, -80, 90]</code></td>
+<td><code>[10, -40, 90]</code></td>
+</tr>
+<tr>
+<td>角度上限</td>
+<td><code>[125, 10, 90]</code></td>
+<td><code>[120, 30, 90]</code></td>
+</tr>
+<tr>
+<td>平移上下限</td>
+<td>均为 <code>[0, 0, 0]</code></td>
+<td>均为 <code>[0, 0, 0]</code></td>
+</tr>
+<tr>
+<td>B 端坐标系旋转</td>
+<td><code>[0, 0, -90]</code></td>
+<td><code>[0, 0, -90]</code></td>
+</tr>
+</tbody>
+</table>
+<p>所以复用骨骼不等于复用全部物理参数。悬挂手臂要跟随角色运动，落地碎块要避免夸张扭转，两者可以共享骨名和胶囊体结构，再分别调整关节活动范围。</p>
+<hr>
+<h2 id="6-动画适配：断肢之后的挣扎，是一条带事件的时间轴">6. 动画适配：断肢之后的挣扎，是一条带事件的时间轴</h2>
+<h3 id="6-1-专用反应动作不只是换一个动画名字">6.1 专用反应动作不只是换一个动画名字</h3>
+<p>感染者动画资源中存在断臂、断腿和断头的专用片段。比如 <code>biter.scr</code> 的 <code>m_bit_death_arm_cutoff_sl</code>，除了动作片段，还配置了一系列事件。</p>
+<p>将其中最重要的部分按轨道时间展开：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// m_bit_death_arm_cutoff_sl 的事件脚本展开</span></span><br><span class="line"><span class="comment">// 数字保留脚本的 Event 时间坐标，不当作屏幕渲染帧号</span></span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">0</span>,   EnableDamageOnCollision);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">0</span>,   PlayPainScream);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">6</span>,   PlayRightFootStep);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">8</span>,   RightFootLand);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">61</span>,  PlayRightFootStep);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">81</span>,  DisableDamageOnCollision);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">156</span>, PlayDeathScream);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">159</span>, [] &#123;</span><br><span class="line">    <span class="built_in">PlayAudioEvent</span>(<span class="string">&quot;biter_body_falling&quot;</span>);</span><br><span class="line">    <span class="built_in">SurfaceInteraction</span>(<span class="string">&quot;collision_body_surface_layer&quot;</span>, <span class="string">&quot;pelvis&quot;</span>, <span class="number">4.0</span>);</span><br><span class="line">&#125;);</span><br><span class="line"><span class="built_in">OnTrackEvent</span>(<span class="number">161</span>, AllowBlendOut);</span><br></pre></td></tr></table></figure>
+<p>这一条时间轴承担了三件事。</p>
+<p>**第一，控制碰撞伤害窗口。**动作开始时开启，到了指定事件关闭。角色正在踉跄、倒下还是已经稳定落地，适用的碰撞反馈并不相同。</p>
+<p>**第二，让声音和落地位置对齐。**身体砸地时，事件既播放 <code>biter_body_falling</code>，也以 <code>pelvis</code> 为位置关联表面交互。音效和地面反馈不是随便延迟一个固定秒数后触发，而是放在动作的合适位置。</p>
+<p><strong>第三，控制什么时候允许离开动作。</strong><code>USER_CAN_BLEND_OUT</code> 表示开放混出窗口，不等于立即删除角色或强制切成全身布娃娃。具体接下一个状态什么动作，由上层控制器决定。</p>
+<h3 id="6-2-不同动作的交接窗口并不相同">6.2 不同动作的交接窗口并不相同</h3>
+<p>断腿轨道 <code>m_bit_death_leg_cutoff_sr</code> 的对应事件是：在 <code>0</code> 开启碰撞伤害，<code>63</code> 关闭，<code>83</code> 允许混出，<code>87</code> 触发身体落地音效和骨盆表面交互。</p>
+<p>这意味着不能写一个所有断肢通用的“受击后等待两秒再倒地”。每条动作的重心变化、迈步和落地节奏不同，事件也要跟着动作制作。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 动画事件消费逻辑示意：跳帧时处理跨过的事件，而非只判断相等</span></span><br><span class="line"><span class="built_in">AdvanceReaction</span>(previousTime, currentTime) &#123;</span><br><span class="line">    <span class="keyword">for</span> (event : <span class="built_in">EventsCrossed</span>(previousTime, currentTime)) &#123;</span><br><span class="line">        <span class="keyword">switch</span> (event.type) &#123;</span><br><span class="line">            <span class="keyword">case</span> EnableDamageOnCollision:  collisionDamageEnabled = <span class="literal">true</span>;  <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> DisableDamageOnCollision: collisionDamageEnabled = <span class="literal">false</span>; <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">case</span> AllowBlendOut:            canBlendOut = <span class="literal">true</span>;             <span class="keyword">break</span>;</span><br><span class="line">            <span class="keyword">default</span>: <span class="built_in">DispatchAudioAndContactEvent</span>(event);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里的消费函数展示实现要点：如果一帧跨过了某个时间点，事件仍然需要执行。单纯写 <code>currentFrame == 81</code>，低帧率时可能漏掉关闭事件，导致碰撞伤害状态一直残留。</p>
+<h3 id="6-3-活着时还要适配攻击、装备和-IK">6.3 活着时还要适配攻击、装备和 IK</h3>
+<p>专用死亡反应解决的是一部分情况。前面 <code>Biter</code> 的左臂损伤允许非致命，因此活体角色还需要处理能力变化。</p>
+<p>这层可以按依赖关系来组织：缺少手部时，依赖该手的握持目标和攻击判定失效；武器明确留在身体、随肢体脱落还是单独掉落；使用双手的动作需要退出或切换。下面是用于自建控制器的适配示意：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">RefreshCapabilities</span>(bodyState) &#123;</span><br><span class="line">    canAttackWithLeftHand = bodyState.<span class="built_in">HasUsableLeftArmAndHand</span>();</span><br><span class="line">    leftHandIK.enabled = canAttackWithLeftHand &amp;&amp; actionNeedsLeftHand;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (!canAttackWithLeftHand)</span><br><span class="line">        <span class="built_in">CancelAttacksRequiringLeftHand</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>不要用“骨骼还存在”作为手仍然可用的判断条件。骨架可以为了动画兼容而保留，能力状态必须依据身体损伤结果计算。</p>
+<hr>
+<h2 id="7-物理反馈与特效：让切断具有速度、重量和持续性">7. 物理反馈与特效：让切断具有速度、重量和持续性</h2>
+<h3 id="7-1-脱落体需要继承运动">7.1 脱落体需要继承运动</h3>
+<p>掉下来的前臂原本就在运动。若创建时速度清零，它会像突然被刹住一样垂直掉落。对于一个刚体参考，其空间点速度可以写为：</p>
+<p><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><msub><mi mathvariant="bold">v</mi><mi>d</mi></msub><mo>=</mo><msub><mi mathvariant="bold">v</mi><mi>c</mi></msub><mo>+</mo><mi mathvariant="bold-italic">ω</mi><mo>×</mo><mo stretchy="false">(</mo><msub><mi mathvariant="bold">x</mi><mi>d</mi></msub><mo>−</mo><msub><mi mathvariant="bold">x</mi><mi>c</mi></msub><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">\mathbf v_d=\mathbf v_c+\boldsymbol\omega\times(\mathbf x_d-\mathbf x_c)
+</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.5944em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:0.7333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathbf" style="margin-right:0.01597em;">v</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:-0.016em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:0.6667em;vertical-align:-0.0833em;"></span><span class="mord"><span class="mord"><span class="mord boldsymbol" style="margin-right:0.03704em;">ω</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">×</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mopen">(</span><span class="mord"><span class="mord mathbf">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.3361em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">d</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">−</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord"><span class="mord mathbf">x</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.1514em;"><span style="top:-2.55em;margin-left:0em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathnormal mtight">c</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mclose">)</span></span></span></span></span></p>
+<p>其中后半项就是旋转带来的速度。对于动画驱动的手臂，还需要从连续世界姿态估计局部运动，不能只复制角色根节点的奔跑速度。</p>
+<p>游戏的 <code>DefaultGibPhysicsImpulse</code> 进一步为碎块提供表现性调节：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 默认碎块运动参数展开；这是参数，不是完整求解公式</span></span><br><span class="line">gibImpulse = &#123;</span><br><span class="line">    target: AllPhysicsBodies,</span><br><span class="line">    impactDirectionMaxDeviation: <span class="number">1.0</span>,</span><br><span class="line">    impactVelocityMultiplierRange: [<span class="number">2.0</span>, <span class="number">3.0</span>],</span><br><span class="line">    additionalVerticalVelocityRange: [<span class="number">1.0</span>, <span class="number">3.0</span>],</span><br><span class="line">    torqueMin: [<span class="number">1.0</span>, <span class="number">2.0</span>, <span class="number">1.0</span>],</span><br><span class="line">    torqueMax: [<span class="number">10.0</span>, <span class="number">10.0</span>, <span class="number">10.0</span>]</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>设计师可以放大攻击方向上的运动，再叠加向上速度和旋转。整段躯干切断则还使用沿切面法线的附加速度，使分离方向更清楚。</p>
+<p>这些范围展示了物理反馈的调参入口，不应把它们当成真实人体质量或严格守恒的实验结果。游戏表现追求的是动作读起来清楚，且运动能与碰撞稳定衔接。</p>
+<h3 id="7-2-隐藏网格不会自动移除碰撞">7.2 隐藏网格不会自动移除碰撞</h3>
+<p>身体上已经消失的部分不能继续作为原角色的有效受击表面；脱落体也不能继续被跨越断面的旧约束拉回去。这要求视觉和物理对同一个身体状态作出响应。</p>
+<p>同时，碎块与身体相互碰撞是允许的：普通切断和全身切断的相关开关都设置为 <code>true</code>。因此生成时的碰撞代理和初始姿态必须足够准确，否则两者严重穿插，求解器可能把碎块突然推出很远。</p>
+<p>检查问题时，应先画出胶囊体和约束。看到网格位置正确，不代表物理代理也正确；视觉网格和碰撞骨骼的原点偏差，往往比冲量参数更值得先排查。</p>
+<h3 id="7-3-两端出血与表面血迹分别更新">7.3 两端出血与表面血迹分别更新</h3>
+<p>左前臂配方分别指定身体端和碎块端效果。身体端效果跟着残余角色运动，碎块端效果跟着新骨架运动，落地血泊则由碎块自己的组件管理。</p>
+<p>此外，<code>blood_mask_default</code> 使用 <code>Incremental</code> 模式和 <code>12</code> 个等级，值域配置为 <code>0</code> 到 <code>51</code>。这是另一层持续外观状态，不等于每次切断都新建一组粒子。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 表现配置的职责划分</span></span><br><span class="line">body.<span class="built_in">AttachEffect</span>(left_forearm_off_wound_bleeding);</span><br><span class="line">gib.<span class="built_in">AttachEffect</span>(left_forearm_off_bleeding);</span><br><span class="line">gib.<span class="built_in">SetPuddlePreset</span>(gib_blood_puddle);</span><br><span class="line"></span><br><span class="line">bloodMask = &#123;</span><br><span class="line">    mode: Incremental,</span><br><span class="line">    levels: <span class="number">12</span>,</span><br><span class="line">    minValue: <span class="number">0</span>,</span><br><span class="line">    maxValue: <span class="number">51</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>瞬时飞溅负责命中的那一下，端口效果负责位置连续性，表面血迹负责保留变化。把它们分开，才可以分别调整时长和成本，而不是通过无限增加粒子来掩盖错误的几何。</p>
+<hr>
+<h2 id="8-状态与回收：断过的身体必须记得自己缺了什么">8. 状态与回收：断过的身体必须记得自己缺了什么</h2>
+<h3 id="8-1-一张状态表不够">8.1 一张状态表不够</h3>
+<p>游戏程序的身体损伤状态字段里，同时存在 <code>bones_states</code>、<code>body_elements_states</code>、<code>body_masks_values</code>、命中计数和最近命中信息。保留字段名，用不限定底层类型的伪代码表达如下：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">DamageableBodyReplicatedState &#123;</span><br><span class="line">    bones_states;</span><br><span class="line">    body_elements_states;</span><br><span class="line">    body_masks_values;</span><br><span class="line">    body_deformation_value;</span><br><span class="line">    body_elements_hit_counts;</span><br><span class="line">    body_hit_count;</span><br><span class="line">    last_hit_impact_position;</span><br><span class="line">    last_hit_impact_direction;</span><br><span class="line">    time_since_last_hit;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>它们解决的问题不同：骨骼级状态对应具体损伤位置，区域级状态对应整条手臂等更粗的语义，遮罩状态保存血迹等持续外观，命中计数服务于累计条件，最近命中信息则为反应提供位置和方向。</p>
+<p>把这些都塞进一个 <code>isDismembered</code> 布尔值，会马上失去表达能力：一个角色可能手已经没了，上臂还在；左臂失能，右臂仍能攻击；全身有血迹，但没有任何部位脱落。</p>
+<p>联机时，应先让各端得到一致的部位状态，再更新外观。碎块飞到哪里可以采用较便宜的表现同步，但“这只手是否还在、还能否攻击”必须保持一致。</p>
+<h3 id="8-2-候选检查：先排除重复状态，再选择一个槽">8.2 候选检查：先排除重复状态，再选择一个槽</h3>
+<p><code>DamageableBodyRuntime</code> 把状态掩码和四个活动槽分开维护。下面将候选检查与执行入口的选槽部分合并成一个函数，保留实际判断顺序。两个状态掩码沿用中性名称 <code>stateMaskA</code>、<code>stateMaskB</code>；函数名为了阅读重新命名。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏逻辑：掩码为 64 位，返回执行入口选择的槽位</span></span><br><span class="line"><span class="built_in">FindCandidateSlot</span>(runtime, candidate) &#123;</span><br><span class="line">    mask = candidate.mask;</span><br><span class="line">    <span class="keyword">if</span> ((runtime.stateMaskB &amp; mask) == mask)</span><br><span class="line">        <span class="keyword">return</span> InvalidSlot;</span><br><span class="line">    <span class="keyword">if</span> ((runtime.stateMaskA &amp; mask) == mask)</span><br><span class="line">        <span class="keyword">return</span> InvalidSlot;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (runtime.occupiedSlotsMask == <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">4</span>; ++i) &#123;</span><br><span class="line">        existing = runtime.slots[i];</span><br><span class="line">        <span class="keyword">if</span> (existing == null)</span><br><span class="line">            <span class="keyword">return</span> i;</span><br><span class="line">        <span class="keyword">if</span> ((existing.mask &amp; candidate.relationMask) != <span class="number">0</span>)</span><br><span class="line">            <span class="keyword">return</span> i;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> InvalidSlot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>开头检查的是<strong>候选要求的位是否已经全部被覆盖</strong>。例如当前状态是 <code>0011</code>，候选为 <code>0010</code>，相与后仍是 <code>0010</code>，所以拒绝；候选为 <code>0110</code> 时只重叠了一部分，这一条不会拒绝它。</p>
+<p>槽位扫描则按顺序返回第一个符合条件的项。空槽可以用，已有项与候选的关系掩码相交也可以用。它没有先扫描所有槽寻找关联项、再回头找空槽；先遇到哪个就返回哪个。</p>
+<p><code>occupiedSlotsMask</code> 是<strong>占用位图</strong>。例如 <code>0101</code> 表示槽 <code>0</code> 和槽 <code>2</code> 被占用，数值是 <code>5</code>，但活动项只有两个。不能拿这个数直接与槽数比较。</p>
+<h3 id="8-3-从身体状态到渲染：把矩阵写进蒙皮网格">8.3 从身体状态到渲染：把矩阵写进蒙皮网格</h3>
+<p>选好槽并处理完关联节点以后，执行路径会保存候选、设置占用位，然后调用引擎的 <code>CoSkinnedMesh::SetMeshAttributeMtx</code>。传入的属性索引是 <code>3 * slot + 1</code>，参数类型是 <code>mtx34</code>，也就是一个 3×4 矩阵。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏逻辑：执行路径中的槽位提交部分</span></span><br><span class="line"><span class="built_in">PublishSlot</span>(runtime, skinnedMesh, candidate, slot, matrix34) &#123;</span><br><span class="line">    runtime.slots[slot] = candidate;</span><br><span class="line">    runtime.occupiedSlotsMask |= (<span class="number">1u</span> &lt;&lt; slot);</span><br><span class="line"></span><br><span class="line">    attributeIndex = <span class="number">3</span> * slot + <span class="number">1</span>;       <span class="comment">// 四个入口：1、4、7、10</span></span><br><span class="line">    skinnedMesh.<span class="built_in">SetMeshAttributeMtx</span>(attributeIndex, matrix34);</span><br><span class="line"></span><br><span class="line">    runtime.stateMaskA |= candidate.mask;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这一步把“角色发生了某个损伤”接到了“蒙皮网格收到一份空间参数”。美术配置的隐藏体积与补片位置，最终必须进入这样的运行时通道，才能影响可见结果。</p>
+<p>这里的固定容量属于这条矩阵属性通道，不代表整个游戏只能存在四个伤口或四块碎块。第 3 节的椭球距离判断给出一种着色实现；这条调用已经明确的是矩阵如何送到网格，完整 Shader 内部仍需要另外解析。</p>
+<p>移除路径也会主动复位网格属性，而不只是把指针清空。它使用一个固定矩阵：旋转部分为单位矩阵，平移为 <code>[0, -1024, 0]</code>。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 游戏逻辑：对应槽位的网格属性复位</span></span><br><span class="line"><span class="built_in">ResetSlotMatrix</span>(skinnedMesh, slot) &#123;</span><br><span class="line">    <span class="keyword">if</span> (slot &gt;= <span class="number">4</span>)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    resetMatrix = <span class="built_in">Identity3x4</span>();</span><br><span class="line">    resetMatrix.translation = [<span class="number">0</span>, <span class="number">-1024</span>, <span class="number">0</span>];</span><br><span class="line">    skinnedMesh.<span class="built_in">SetMeshAttributeMtx</span>(<span class="number">3</span> * slot + <span class="number">1</span>, resetMatrix);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 游戏逻辑：移除路径的前置判断和槽位清理部分</span></span><br><span class="line"><span class="built_in">RemoveCandidateSlots</span>(runtime, skinnedMesh, candidate) &#123;</span><br><span class="line">    mask = candidate.mask;</span><br><span class="line">    <span class="keyword">if</span> ((runtime.stateMaskB &amp; mask) == mask)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">if</span> ((runtime.stateMaskA &amp; candidate.linkMask) != <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    <span class="keyword">if</span> ((runtime.stateMaskA &amp; mask) != mask)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    runtime.stateMaskA &amp;= ~mask;</span><br><span class="line">    <span class="keyword">if</span> (runtime.occupiedSlotsMask != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">4</span>; ++i) &#123;</span><br><span class="line">            <span class="keyword">if</span> (runtime.slots[i] == candidate) &#123;</span><br><span class="line">                <span class="built_in">ResetSlotMatrix</span>(skinnedMesh, i);</span><br><span class="line">                runtime.occupiedSlotsMask &amp;= ~(<span class="number">1u</span> &lt;&lt; i);</span><br><span class="line">                runtime.slots[i] = null;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 后续继续刷新关联节点的状态。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>linkMask</code> 是移除入口使用的另一份关联掩码，与选槽时的 <code>relationMask</code> 分开。这里最实用的经验是：**逻辑状态、槽位占用和网格属性必须一起更新。**只清掉逻辑状态，旧矩阵仍可能继续影响外观；只清掉矩阵，重复命中检查又可能认为损伤仍然存在。</p>
+<h3 id="8-4-重复切断还要处理上下游关系">8.4 重复切断还要处理上下游关系</h3>
+<p>先切掉手，再切掉前臂，第二次生成的前臂不能长出一只新手。因此，碎块生成应消费当前部位状态，而不是每次都取完整身体模板。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 基于部件关系的生成算法示意</span></span><br><span class="line"><span class="built_in">CollectDetachedParts</span>(cutRoot, bodyState) &#123;</span><br><span class="line">    result = [];</span><br><span class="line">    <span class="keyword">for</span> (part : <span class="built_in">DescendantsIncludingSelf</span>(cutRoot)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (bodyState.<span class="built_in">IsPresent</span>(part))</span><br><span class="line">            result.<span class="built_in">append</span>(part);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> result;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于体积隐藏路线，同样的关系可以直接写成遮罩组合。假设 <code>H</code> 表示手部隐藏体积，<code>F</code> 表示前臂隐藏体积，两者都在角色绑定姿态空间求值。先切手时，身体显示 <code>1-H</code>，手部碎块显示 <code>H</code>；随后切前臂，新碎块显示的是 <strong><code>F × (1-H)</code></strong>，身体显示 <strong><code>(1-F) × (1-H)</code></strong>。如果新碎块只使用 <code>F</code>，完整模型里的手就会重新出现。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 实现示例：从完整网格复制姿态，用遮罩保留正确的碎块表面</span></span><br><span class="line"><span class="built_in">DetachWithExistingDamage</span>(body, newCut) &#123;</span><br><span class="line">    oldHiddenVolumes = body.hiddenVolumes;  <span class="comment">// 提交新损伤之前取快照</span></span><br><span class="line">    pose = body.<span class="built_in">CaptureCurrentPose</span>();</span><br><span class="line"></span><br><span class="line">    gib = <span class="built_in">CreateSkinnedFragment</span>(body.meshes);</span><br><span class="line">    gib.<span class="built_in">ApplyPose</span>(pose);</span><br><span class="line">    gib.showVolume = newCut.volume;</span><br><span class="line">    gib.hiddenVolumes = oldHiddenVolumes;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (patch : <span class="built_in">Copy</span>(body.woundPatches)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">IsInsideDetachedSubtree</span>(patch.helper, newCut.bone)) &#123;</span><br><span class="line">            <span class="comment">// 手腕伤口现在属于掉下来的前臂，不能留在身体的手骨上。</span></span><br><span class="line">            gib.<span class="built_in">AddPatch</span>(patch.mesh, patch.helper, patch.localTransform);</span><br><span class="line">            body.<span class="built_in">RemovePatch</span>(patch);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    body.<span class="built_in">AddPatch</span>(newCut.bodyPatch, newCut.helper);</span><br><span class="line">    gib.<span class="built_in">AddPatch</span>(newCut.gibPatch, newCut.helper);</span><br><span class="line">    body.hiddenVolumes.<span class="built_in">Add</span>(newCut.volume);</span><br><span class="line">    gib.<span class="built_in">StartPhysics</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>补片迁移与遮罩继承必须一起做。只复制遮罩，新前臂的手腕会留下一个空洞；只复制补片，补片外面又可能长出完整的手。这里迁移的是部件与附着关系，不是把旧补片当成一个世界坐标固定的物体搬过去。</p>
+<p>随后，身体端移除的是这批仍然存在的部分，脱落端生成的也是同一批。重复事件不能再生成第二份；角色已经被回收时，迟到的资源回调也不能把旧碎块重新放回场景。</p>
+<h3 id="8-5-创建距离与保留距离要分开">8.5 创建距离与保留距离要分开</h3>
+<p><code>parts_manager_params.scr</code> 将镜头前方的创建距离设置为 <code>25</code>、保留距离设置为 <code>30</code>；后方分别是 <code>15</code> 和 <code>20</code>。按这组距离策略，可以写出一个容易理解的管理算法：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 距离策略示意；前后判定细节由相机系统提供</span></span><br><span class="line"><span class="built_in">ChooseDistanceLimits</span>(isInFrontOfCamera) &#123;</span><br><span class="line">    <span class="keyword">return</span> isInFrontOfCamera</span><br><span class="line">        ? &#123; create: <span class="number">25</span>, keep: <span class="number">30</span> &#125;</span><br><span class="line">        : &#123; create: <span class="number">15</span>, keep: <span class="number">20</span> &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">CanCreatePart</span>(distance, limits) &#123;</span><br><span class="line">    <span class="keyword">return</span> distance &lt;= limits.create;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">ShouldRemoveExistingPart</span>(distance, limits) &#123;</span><br><span class="line">    <span class="keyword">return</span> distance &gt; limits.keep;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>假设镜头前方有一个已经生成的碎块，玩家退到距离 <code>27</code> 时，它仍然保留；但在同样位置发生的新断肢，不必继续生成同等级碎块。这中间的距离差形成了滞回区，可以避免镜头在阈值附近移动时反复创建和删除。</p>
+<p>管理器还将更新间隔、移除检查间隔和最大寿命分开配置。它们属于对象生命周期策略，不能当成刚体求解频率。数量多起来后，真正需要预算的是活动刚体、约束、蒙皮与特效，不只是碎块的三角形数。</p>
+<hr>
+<h2 id="9-把一条断肢链真正做通">9. 把一条断肢链真正做通</h2>
+<p>回到最开始的左前臂。假设身体规则求值时，Biter 的生命比例是 <code>60%</code>，目标位置是 <code>l_forearm</code>，本次切断概率判定也已通过。那么后面的输入和输出应当具体到这些内容：</p>
+<table>
+<thead>
+<tr>
+<th>阶段</th>
+<th>本次例子的结果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>身体模型</td>
+<td><code>ArmLeft → l_forearm → left_forearm_cut</code></td>
+</tr>
+<tr>
+<td>规则</td>
+<td>满足 <code>≤ 75%</code> 的条件；切断操作本身非强制致死</td>
+</tr>
+<tr>
+<td>定位</td>
+<td><code>patch_elem_arm_left_b</code></td>
+</tr>
+<tr>
+<td>外观</td>
+<td>按骨架组选择隐藏体积，按 <code>DamageSize</code> 选择双侧补片</td>
+</tr>
+<tr>
+<td>运行时槽</td>
+<td>检查状态掩码，选择槽，将矩阵写入蒙皮网格属性</td>
+</tr>
+<tr>
+<td>脱落体</td>
+<td><code>human_gib</code>，自己的骨架、蒙皮网格、布料与物理组件</td>
+</tr>
+<tr>
+<td>物理</td>
+<td><code>sim_cut_limbs</code>，额外请求 <code>l_upperarm</code>，应用碎块运动参数</td>
+</tr>
+<tr>
+<td>反馈</td>
+<td>身体端出血、碎块端出血、碎块血泊；角色按生死状态选择后续反应</td>
+</tr>
+</tbody>
+</table>
+<p>把这些接口组装成自己的系统时，最容易犯的错误，是<strong>先把身体状态标成“前臂不存在”，再去读取要生成的前臂</strong>。第二步读到的已经是修改后的状态，可能漏掉部件，或退回完整模板把之前切掉的手重新带回来。</p>
+<p>因此，集成顺序应当先取快照、准备对象，再提交状态。下面是一个实现示例：</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 实现示例：快照中同时保存当前部件、姿态和运动</span></span><br><span class="line"><span class="built_in">HandleBodyDamage</span>(hit, victim) &#123;</span><br><span class="line">    location = <span class="built_in">ResolveBodyLocation</span>(hit, victim.bodyModel);</span><br><span class="line">    decision = <span class="built_in">EvaluateDamageRules</span>(hit, location, victim.bodyState);</span><br><span class="line">    <span class="keyword">if</span> (!decision.hasBodyOperation)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    visual = <span class="built_in">ResolveVisualization</span>(decision.operation, victim.properties);</span><br><span class="line">    <span class="keyword">if</span> (!<span class="built_in">ResourcesReady</span>(visual)) &#123;</span><br><span class="line">        <span class="built_in">RequestResources</span>(visual);</span><br><span class="line">        <span class="keyword">return</span>;                         <span class="comment">// 此时还不改变身体</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    before = <span class="built_in">CaptureBodySnapshot</span>(victim);</span><br><span class="line">    parts = <span class="built_in">CollectDetachedParts</span>(decision.cutRoot, before.bodyState);</span><br><span class="line">    <span class="keyword">if</span> (parts.<span class="built_in">empty</span>())</span><br><span class="line">        <span class="keyword">return</span>;                         <span class="comment">// 重复事件不再生成第二份</span></span><br><span class="line"></span><br><span class="line">    staged = <span class="built_in">PrepareHiddenObjects</span>(visual, parts);</span><br><span class="line">    <span class="keyword">if</span> (!staged.valid)</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">CopyPoseAtSeparation</span>(before, staged.gib, staged.boneMap);</span><br><span class="line">    <span class="built_in">InitializePhysicsTransforms</span>(staged.gib, before, visual.physics);</span><br><span class="line">    <span class="built_in">InitializePhysicsVelocities</span>(staged.gib, before, hit);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (victim.bodyRevision != before.revision) &#123;</span><br><span class="line">        <span class="built_in">Discard</span>(staged);                 <span class="comment">// 准备期间状态变了，重新求值</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 在同一次提交中更新两端，随后才开放碎块模拟。</span></span><br><span class="line">    <span class="built_in">ApplyBodyStateChange</span>(victim, decision);</span><br><span class="line">    <span class="built_in">UpdateBodyVisibilityAndCollisions</span>(victim, visual);</span><br><span class="line">    <span class="built_in">AttachPreparedPatches</span>(victim, staged, visual.helper);</span><br><span class="line">    <span class="built_in">RevealAndActivateGib</span>(staged.gib);</span><br><span class="line">    <span class="built_in">ConnectGibEffectsAndLifecycle</span>(staged.gib, visual);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">RefreshActionCapabilities</span>(victim);</span><br><span class="line">    <span class="built_in">StartAppropriateHitOrDeathReaction</span>(victim, decision);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这个例子专门处理产生碎块的切断路径，破洞、骨折分别进入自己的表现分支。实际接入时，可以在角色生成阶段就预载常用断口资源，避免第一次挥刀才开始加载；如果必须延后创建，则需要保存命中请求，资源就绪后重新检查目标和身体状态。</p>
+<p>姿态交接和状态提交应当发生在明确的更新阶段：动画先得到这一帧的姿态，身体与碎块使用同一份快照，物理从初始化好的碰撞体开始接管。这样才能同时避免缺口先出现、碎块晚出现，以及碰撞体出生在旧位置的问题。</p>
+<p>做原型时，先用一个调试按钮触发左前臂切断，把这条链跑通，再接真实武器命中。依次检查四组情况：</p>
+<table>
+<thead>
+<tr>
+<th>检查</th>
+<th>要回答的问题</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>静止、弯肘与挥臂时切断</td>
+<td>断口是否贴合，碎块有没有姿态跳变？</td>
+</tr>
+<tr>
+<td>先断手再断前臂</td>
+<td>会不会重复生成或重新长出部件？</td>
+</tr>
+<tr>
+<td>不同衣服和远近 LOD</td>
+<td>袖口、补片与骨骼映射是否仍然正确？</td>
+</tr>
+<tr>
+<td>倒地、贴墙与连续受击</td>
+<td>约束、碰撞窗口和动画事件是否协同？</td>
+</tr>
+</tbody>
+</table>
+<h3 id="9-1-在-UE-中把网格、遮罩与补口接起来">9.1 在 UE 中把网格、遮罩与补口接起来</h3>
+<p>使用游戏中的瘦感染者模型，可以把前面的逻辑落实成一个小实验。皮肤、衣物和附件仍是多个蒙皮网格，共用骨架姿态；身体与碎块则各有自己的材质参数。切断发生时，先把姿态复制给碎块，再分别设置两边的显示与隐藏体积。</p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/ue-intact.png" alt="UE 中的完整感染者模型" loading='lazy'></p>
+<p><em>切断前：皮肤、破布和附件保持完整，左前臂参与程序化的弯肘动作。</em></p>
+<p><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/ue-sequential-cut.png" alt="先断手再断前臂后的身体与两个碎块" loading='lazy'></p>
+<p><em>连续切断后的分离对照：右下是先切下的手，右上是随后切下的前臂。前臂继承手部缺损，手腕的旧补口也随它迁移。图中将碎块移到旁边，以便观察接缝。</em></p>
+<p>这个实验保留完整骨架来提供蒙皮姿态，只让碎块整体接受一个胶囊刚体的驱动。它解决了切断瞬间的姿态连续性和连续损伤的外观继承；如果要让掉落前臂的手腕继续摆动，就需要按第 5 节增加多刚体与关节，再把物理结果写回相应骨骼。补片几何来自游戏资产，表面使用简化材质。</p>
+<p>把一条手臂上的这些问题解决，再扩展到全身，才会得到可维护的断肢系统。角色美术交付的是一组能够分离、补口和继续变形的资产；运行时则负责让这些资产在正确时刻，由正确的动画或物理系统接管。</p>
+<h3 id="9-2-配套-UE-工程与源码">9.2 配套 UE 工程与源码</h3>
+<p>前面的运行时思路已经整理成一个可以下载、编译和修改的 UE 工程：<strong><a target="_blank" rel="noopener" href="https://github.com/wqaetly/UE-DismembermentLab">UE-DismembermentLab：完整工程与插件源码</a></strong>。</p>
+<p>公开工程使用自制的三段蒙皮手臂，包含测试模型、骨架、断点配置和可运行关卡。它与上面的丧尸实验使用同一套断肢组件，但不包含从游戏提取的模型与贴图，也不是原作引擎代码。这样，读者不需要安装游戏，就能学习遮罩、补口、姿态交接和连续切断的实现。</p>
+<p>使用 <strong>Windows、UE 5.8.1 和 C++ 编译工具链</strong>，下载仓库后编译并打开 <code>DismembermentLab.uproject</code>，运行默认测试关卡：<strong>空格切前臂，1 切手，R 重置</strong>。建议先切手、再切前臂，观察后产生的前臂碎块如何继承已有缺口。详细编译步骤和安装到自己项目的方法见仓库 README。</p>
+<p>阅读代码时，可以沿着本文的数据流依次查看：</p>
+<table>
+<thead>
+<tr>
+<th>本文的技术环节</th>
+<th>对应源码</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>断点、骨骼、椭球与补片配置</td>
+<td><code>LabProfile.h</code></td>
+</tr>
+<tr>
+<td>命中选择、动画后执行、姿态复制与碎块物理</td>
+<td><code>DismembermentComponent.cpp</code></td>
+</tr>
+<tr>
+<td>连续切断、旧补口迁移与碰撞恢复</td>
+<td><code>DismembermentComponent.cpp</code></td>
+</tr>
+<tr>
+<td>在原材质中加入绑定姿态空间遮罩</td>
+<td><code>DismembermentSetup.cpp</code></td>
+</tr>
+<tr>
+<td>测试角色、程序化弯肘与调试输入</td>
+<td><code>LabSubject.cpp</code></td>
+</tr>
+<tr>
+<td>动画组件与材质接入的自动检查</td>
+<td><code>ComponentChecks.cpp</code>、<code>test_portable_plugin.py</code></td>
+</tr>
+</tbody>
+</table>
+<p>这些文件的直接链接已整理在仓库首页。当前实现使用预设断点，碎块内部姿态冻结，由单个胶囊刚体驱动；多关节碎块、布料撕裂和联网同步仍需继续扩展。</p>
+<hr>
+<h3 id="延伸阅读">延伸阅读</h3>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://cdn.akamai.steamstatic.com/apps/valve/2010/gdc2010_vlachos_l4d2wounds.pdf">Rendering Wounds in Left 4 Dead 2 — Alex Vlachos，GDC 2010</a></li>
+<li><a target="_blank" rel="noopener" href="https://dyinglightgame.com/news/update-1-10-0/">Gut Feeling Update — Techland</a></li>
+</ul>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/dying-light-2-dismemberment-pipeline/">https://www.lfzxb.top/dying-light-2-dismemberment-pipeline/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Dying-Light-2/">Dying Light 2</a><a class="post-meta__tags" href="/tags/%E6%8A%80%E6%9C%AF%E7%BE%8E%E6%9C%AF/">技术美术</a><a class="post-meta__tags" href="/tags/%E9%AA%A8%E9%AA%BC%E5%8A%A8%E7%94%BB/">骨骼动画</a><a class="post-meta__tags" href="/tags/%E7%89%A9%E7%90%86%E6%A8%A1%E6%8B%9F/">物理模拟</a><a class="post-meta__tags" href="/tags/%E8%A7%92%E8%89%B2%E6%B8%B2%E6%9F%93/">角色渲染</a><a class="post-meta__tags" href="/tags/%E6%B8%B8%E6%88%8F%E5%BC%80%E5%8F%91/">游戏开发</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/my-investment-journey-2022-2026/" title="个人理财总结与分享"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/20261116005404301.png" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">个人理财总结与分享</div></div><div class="info-2"><div class="info-item-1"> 前言 我自己的理财之路其实算是蛮经典的一个路程： 一开始什么都不懂，可能就是听朋友的各种赚钱的消息传闻，跟着去买对应的基金，然后毫不意外地爆亏。 之后开始龟缩，去买货币基金、非常低风险的债基，或者买一些银行里面利率非常低的产品。 后来慢慢不满足于这种如此低收益的方式，又开始尝试高收益的方向，比如说买一些高风险的基金、买些股票。但是由于还是没有自己的理解，没有去系统学习过投资，所以又是毫不意外地爆亏。 最后大彻大悟，开始真正去学习投资相关的内容，形成了一套自己的投资风格。 到写这篇文章时，仍然处于亏本阶段。不过塞翁失马，焉知非福，正是这波亏损，才让我正式下定决心开始学习投资理财。 本文仅是个人理解分享，不构成任何投资建议，市场有风险，投资需谨慎！ 目前我个人总结了几个非常重要的核心思想：  一定一定不能抄别人作业。一定要有自己对市场、对公司的理解，有自己的一套逻辑和执行纪律，这是最为重要的一点，之所以有这个建议，是因为我因为抄别人的作业而吃过非常非常多的亏。因为每个人自己的个人情况和抗风险能力是完全不一样的，根本就没有“抄作业”这个选项。 一定不要去买窄基，更不要去买那种长时间封...</div></div></div></a><a class="pagination-related" href="/native-video-player/" title="自研跨平台播放器的帧调度与 GPU 管线"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">自研跨平台播放器的帧调度与 GPU 管线</div></div><div class="info-2"><div class="info-item-1"> 当视频进入登录背景、角色展示、动态 UI 与透明特效后，播放器的职责不再是从头播到尾的线性流媒体。它需要随界面频繁启闭，随剧情演出时间轴精确跳转，与实时 3D 场景混合渲染，并在切后台时释放大块显存、回前台时无缝恢复进度。 CRIWARE、AVPro Video 等成熟中间件提供了可靠的跨平台解码接入，却未能消除生命周期管理的内在复杂性。Unity 组件、原生会话、系统解码器与 GPU 显存往往各行其道，上层业务仍需修补繁琐的状态流转与释放时序。 以 CRIWARE 的 CriMana 为例，Stop() 仅发送异步停止请求，底层实例销毁必须显式调用 Dispose()；应用切后台若涉及渲染挂起，还需使用 PauseOnApplicationPause()，底层 Player 甚至需自行注册 Unity 生命周期回调。普通暂停、后台暂停、停止与销毁的语义各自分散，接入方必须自行维护大量胶水代码以处理预热撤销、对象池复用与快速切歌。CRIWARE Player 官方文档。 AVPro Video 也有据可查：其 3.3.4 版本曾修复 Android ExoPlayer 在尚未执...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/projects-all/" title="ProjectS编年史"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202212142331021.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2024-02-18</div><div class="info-item-2">ProjectS编年史</div></div><div class="info-2"><div class="info-item-1">前言 以此文章来记录ProjectS从企划到开发到宣发到上线的全过程，其中涉及玩法构思，资源制作，技术思考，市场分析，上架操作等，几乎包含了从零开始制作独立游戏的全部知识和经验，希望对大家能有所启发，本系列文章将会持续更新 玩法设计  代号ProjectS企划案  技术方案 GamePlay框架  ET7+FariyGUI+huatuo+luban+yooasset接入教程 基于行为树的MOBA技能系统：总目录 ProjectS中的AI转向系统（Context Steering） ProjectS中的体素碰撞和寻路  CI/DI方案  从零开始基于TeamCity搭建项目的CI工作流  剧情架构 PCG框架  ProjectS中的地形系统-Procedural Content Generation（PCG）  渲染框架  ProjectS中的纹素密度规划 ProjectS中的GPU Driven ProjectS中的全局光照系统-Voxel-based Global Illumination（VXGI） ProjectS中的地形系统-Terrian Rendering Proje...</div></div></div></a><a class="pagination-related" href="/poe-developer-notes/" title="《流放之路》十余年开发技术与设计笔记合集"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261125210042677.png" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2026-11-25</div><div class="info-item-2">《流放之路》十余年开发技术与设计笔记合集</div></div><div class="info-2"><div class="info-item-1">前言 这篇长文整合了 13 篇《流放之路》开发幕后笔记，整理自 16 场 GGG 官方演讲与开发者访谈（时间跨度从 2011 年 Alpha 演示到 ExileCon 2026）。内容涵盖随机地形生成、两代渲染器与 Radiance Cascades 全局光照、特效工作台、二代技能与物品重做、底层机制问答，以及世界观与叙事设计。 整体来说对于ARPG的游戏设计有非常重大的指导意义，仔细看完，大家一定有所收获    章节 分类 主题     1 引擎、渲染与关卡 2011 年的 Alpha 演示：《流放之路》最早怎么生成地牢和森林   2 引擎、渲染与关卡 ExileCon 2019 地形专场：《流放之路》十一年的随机地图演进   3 引擎、渲染与关卡 ExileCon 2019 渲染笔记：Alexander Sannikov 讲《流放之路》的图形演进   4 引擎、渲染与关卡 重看 ExileCon 2023：Alexander Sannikov 讲《流放之路 2》的渲染   5 引擎、渲染与关卡 ExileCon 2026 引擎专场：六个人怎么维护两代《流放之路》的渲染与工具 ...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%89%8D%E8%A8%80"><span class="toc-number">1.</span> <span class="toc-text">前言</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-%E8%BA%AB%E4%BD%93%E6%A8%A1%E5%9E%8B%EF%BC%9A%E4%B8%80%E6%AC%A1%E5%91%BD%E4%B8%AD%E6%80%8E%E6%A0%B7%E5%8F%98%E6%88%90%E2%80%9C%E5%88%87%E6%8E%89%E5%B7%A6%E5%89%8D%E8%87%82%E2%80%9D"><span class="toc-number">1.1.</span> <span class="toc-text">1. 身体模型：一次命中怎样变成“切掉左前臂”</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-%E8%BA%AB%E4%BD%93%E5%8C%BA%E5%9F%9F%E3%80%81%E9%AA%A8%E9%AA%BC%E5%92%8C%E6%8D%9F%E4%BC%A4%E6%93%8D%E4%BD%9C%E6%98%AF%E4%B8%89%E5%B1%82%E6%95%B0%E6%8D%AE"><span class="toc-number">1.1.1.</span> <span class="toc-text">1.1 身体区域、骨骼和损伤操作是三层数据</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-%E7%A0%B4%E6%B4%9E%E4%B9%9F%E4%B8%8D%E4%B8%80%E5%AE%9A%E9%9C%80%E8%A6%81%E5%A2%9E%E5%8A%A0%E5%8A%A8%E7%94%BB%E9%AA%A8%E9%AA%BC"><span class="toc-number">1.1.2.</span> <span class="toc-text">1.2 破洞也不一定需要增加动画骨骼</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-3-%E6%8D%9F%E4%BC%A4%E5%85%B3%E7%B3%BB%E5%9B%BE%E4%B8%8E%E5%8A%A8%E7%94%BB%E9%AA%A8%E6%9E%B6%E5%BF%85%E9%A1%BB%E5%88%86%E5%BC%80"><span class="toc-number">1.1.3.</span> <span class="toc-text">1.3 损伤关系图与动画骨架必须分开</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-4-%E8%85%B0%E6%96%A9%E8%BF%98%E4%BC%9A%E7%AD%9B%E9%80%89%E6%94%BB%E5%87%BB%E5%B9%B3%E9%9D%A2%E7%9A%84%E6%96%B9%E5%90%91"><span class="toc-number">1.1.4.</span> <span class="toc-text">1.4 腰斩还会筛选攻击平面的方向</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-5-%E5%85%88%E5%8C%B9%E9%85%8D%E8%BA%AB%E4%BD%93%E8%AF%AD%E4%B9%89%EF%BC%8C%E5%86%8D%E4%BA%A4%E7%BB%99%E8%A7%84%E5%88%99%E5%B1%82"><span class="toc-number">1.1.5.</span> <span class="toc-text">1.5 先匹配身体语义，再交给规则层</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-%E4%BC%A4%E5%AE%B3%E5%86%B3%E7%AD%96%EF%BC%9A%E7%A0%8D%E4%B8%AD%E3%80%81%E7%A0%8D%E6%96%AD%E5%92%8C%E6%AD%BB%E4%BA%A1%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E5%88%86%E5%BC%80"><span class="toc-number">1.2.</span> <span class="toc-text">2. 伤害决策：砍中、砍断和死亡为什么必须分开</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-75-%E8%A1%A8%E7%A4%BA%E7%94%9F%E5%91%BD%E6%AF%94%E4%BE%8B%E6%9D%A1%E4%BB%B6%EF%BC%8C%E4%B8%8D%E6%98%AF%E6%96%AD%E8%82%A2%E6%A6%82%E7%8E%87"><span class="toc-number">1.2.1.</span> <span class="toc-text">2.1 75 表示生命比例条件，不是断肢概率</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-%E5%8F%97%E5%87%BB%E7%8A%B6%E6%80%81%E4%BC%9A%E7%BB%A7%E7%BB%AD%E4%BF%AE%E6%94%B9%E6%96%AD%E8%82%A2%E6%A6%82%E7%8E%87"><span class="toc-number">1.2.2.</span> <span class="toc-text">2.2 受击状态会继续修改断肢概率</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-3-%E5%A4%84%E5%86%B3%E4%B8%8E%E7%8E%AF%E5%A2%83%E6%92%9E%E5%87%BB%E8%B5%B0%E4%B8%8D%E5%90%8C%E7%9A%84%E4%BC%A4%E5%AE%B3%E9%A2%84%E8%AE%BE"><span class="toc-number">1.2.3.</span> <span class="toc-text">2.3 处决与环境撞击走不同的伤害预设</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-%E5%A4%96%E8%A7%82%E5%88%86%E7%A6%BB%EF%BC%9A%E5%8E%9F%E8%BA%AB%E4%BD%93%E6%80%8E%E4%B9%88%E6%B6%88%E5%A4%B1%EF%BC%8C%E6%96%AD%E9%9D%A2%E6%80%8E%E4%B9%88%E5%87%BA%E7%8E%B0"><span class="toc-number">1.3.</span> <span class="toc-text">3. 外观分离：原身体怎么消失，断面怎么出现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-%E4%B8%80%E4%B8%AA%E5%88%87%E6%96%AD%E6%93%8D%E4%BD%9C%E5%8C%85%E5%90%AB%E4%B8%A4%E4%B8%AA%E7%AB%AF%E5%8F%A3"><span class="toc-number">1.3.1.</span> <span class="toc-text">3.1 一个切断操作包含两个端口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-%E9%9A%90%E8%97%8F%E5%A4%96%E5%A3%B3%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E6%AF%94%E5%88%87%E4%B8%89%E8%A7%92%E5%BD%A2%E6%9B%B4%E7%9C%81%E4%BA%8B"><span class="toc-number">1.3.2.</span> <span class="toc-text">3.2 隐藏外壳为什么能比切三角形更省事</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-3-%E5%A4%A7%E5%88%87%E5%8F%A3%E9%9C%80%E8%A6%81%E8%83%BD%E5%A4%9F%E5%8F%98%E5%BD%A2%E7%9A%84%E8%A1%A5%E7%89%87"><span class="toc-number">1.3.3.</span> <span class="toc-text">3.3 大切口需要能够变形的补片</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-4-%E9%AA%A8%E6%9E%B6%E7%B1%BB%E5%9E%8B%E4%B8%8E%E6%96%AD%E9%9D%A2%E5%B0%BA%E5%AF%B8%E6%98%AF%E4%B8%A4%E6%AC%A1%E7%8B%AC%E7%AB%8B%E9%80%89%E6%8B%A9"><span class="toc-number">1.3.4.</span> <span class="toc-text">3.4 骨架类型与断面尺寸是两次独立选择</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-%E7%BE%8E%E6%9C%AF%E7%AE%A1%E7%BA%BF%EF%BC%9A%E6%80%8E%E6%A0%B7%E5%88%B6%E4%BD%9C%E4%B8%80%E5%A5%97%E7%9C%9F%E6%AD%A3%E8%83%BD%E7%94%A8%E7%9A%84%E6%96%AD%E8%82%A2%E8%B5%84%E4%BA%A7"><span class="toc-number">1.4.</span> <span class="toc-text">4. 美术管线：怎样制作一套真正能用的断肢资产</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E4%BB%8E%E6%96%AD%E7%82%B9%E8%A1%A8%E5%BC%80%E5%A7%8B%E5%88%B6%E4%BD%9C"><span class="toc-number">1.4.1.</span> <span class="toc-text">4.1 从断点表开始制作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E5%AE%8C%E6%95%B4%E8%A7%92%E8%89%B2%E5%92%8C%E6%8D%9F%E4%BC%A4%E5%86%85%E9%83%A8%E5%8F%AF%E4%BB%A5%E5%88%86%E5%BC%80%E7%94%9F%E4%BA%A7"><span class="toc-number">1.4.2.</span> <span class="toc-text">4.2 完整角色和损伤内部可以分开生产</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E8%A2%96%E5%AD%90%E5%BF%85%E9%A1%BB%E5%92%8C%E7%9A%AE%E8%82%A4%E5%93%8D%E5%BA%94%E5%90%8C%E4%B8%80%E4%B8%AA%E6%96%AD%E7%82%B9"><span class="toc-number">1.4.3.</span> <span class="toc-text">4.3 袖子必须和皮肤响应同一个断点</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E8%92%99%E7%9A%AE%E4%B8%8D%E6%98%AF%E6%B2%BF%E7%9D%80%E6%96%AD%E7%82%B9%E4%B8%80%E5%88%80%E5%88%87%E6%88%90%E7%A1%AC%E6%9D%83%E9%87%8D"><span class="toc-number">1.4.4.</span> <span class="toc-text">4.4 蒙皮不是沿着断点一刀切成硬权重</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-5-%E7%BB%99%E7%BE%8E%E6%9C%AF%E7%9A%84%E4%BA%A4%E4%BB%98%E8%A1%A8%E5%BA%94%E8%AF%A5%E5%85%B7%E4%BD%93%E5%88%B0%E4%B8%80%E4%B8%AA%E6%96%AD%E7%82%B9"><span class="toc-number">1.4.5.</span> <span class="toc-text">4.5 给美术的交付表应该具体到一个断点</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#5-%E9%AA%A8%E6%9E%B6%E4%BA%A4%E6%8E%A5%EF%BC%9A%E8%BA%AB%E4%BD%93%E7%BB%A7%E7%BB%AD%E5%8A%A8%EF%BC%8C%E6%8E%89%E4%B8%8B%E6%9D%A5%E7%9A%84%E5%89%8D%E8%87%82%E7%94%B1%E8%B0%81%E6%8E%A7%E5%88%B6"><span class="toc-number">1.5.</span> <span class="toc-text">5. 骨架交接：身体继续动，掉下来的前臂由谁控制</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#5-1-%E5%8A%A8%E7%94%BB%E9%AA%A8%E6%9E%B6%E4%B8%8E%E7%89%A9%E7%90%86%E9%AA%A8%E6%9E%B6%E4%B8%8D%E6%98%AF%E4%B8%80%E5%9B%9E%E4%BA%8B"><span class="toc-number">1.5.1.</span> <span class="toc-text">5.1 动画骨架与物理骨架不是一回事</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-2-%E8%84%B1%E8%90%BD%E4%BD%93%E6%8B%A5%E6%9C%89%E8%87%AA%E5%B7%B1%E7%9A%84%E9%AA%A8%E6%9E%B6%E5%92%8C%E7%89%A9%E7%90%86%E7%BB%84%E4%BB%B6"><span class="toc-number">1.5.2.</span> <span class="toc-text">5.2 脱落体拥有自己的骨架和物理组件</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-3-%E6%96%B0%E9%AA%A8%E6%9E%B6%E5%BF%85%E9%A1%BB%E7%BB%A7%E6%89%BF%E5%88%87%E6%96%AD%E7%9E%AC%E9%97%B4%E7%9A%84%E4%B8%96%E7%95%8C%E5%A7%BF%E6%80%81"><span class="toc-number">1.5.3.</span> <span class="toc-text">5.3 新骨架必须继承切断瞬间的世界姿态</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-4-%E9%AA%A8%E6%8A%98%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E4%BC%9A%E7%9B%B4%E6%8E%A5%E6%8E%89%E4%B8%8B%E6%9D%A5"><span class="toc-number">1.5.4.</span> <span class="toc-text">5.4 骨折为什么不会直接掉下来</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#5-5-%E8%84%B1%E8%90%BD%E4%BD%93%E4%BD%BF%E7%94%A8%E5%8F%A6%E4%B8%80%E5%A5%97%E7%BA%A6%E6%9D%9F%E5%8F%82%E6%95%B0"><span class="toc-number">1.5.5.</span> <span class="toc-text">5.5 脱落体使用另一套约束参数</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#6-%E5%8A%A8%E7%94%BB%E9%80%82%E9%85%8D%EF%BC%9A%E6%96%AD%E8%82%A2%E4%B9%8B%E5%90%8E%E7%9A%84%E6%8C%A3%E6%89%8E%EF%BC%8C%E6%98%AF%E4%B8%80%E6%9D%A1%E5%B8%A6%E4%BA%8B%E4%BB%B6%E7%9A%84%E6%97%B6%E9%97%B4%E8%BD%B4"><span class="toc-number">1.6.</span> <span class="toc-text">6. 动画适配：断肢之后的挣扎，是一条带事件的时间轴</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#6-1-%E4%B8%93%E7%94%A8%E5%8F%8D%E5%BA%94%E5%8A%A8%E4%BD%9C%E4%B8%8D%E5%8F%AA%E6%98%AF%E6%8D%A2%E4%B8%80%E4%B8%AA%E5%8A%A8%E7%94%BB%E5%90%8D%E5%AD%97"><span class="toc-number">1.6.1.</span> <span class="toc-text">6.1 专用反应动作不只是换一个动画名字</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-2-%E4%B8%8D%E5%90%8C%E5%8A%A8%E4%BD%9C%E7%9A%84%E4%BA%A4%E6%8E%A5%E7%AA%97%E5%8F%A3%E5%B9%B6%E4%B8%8D%E7%9B%B8%E5%90%8C"><span class="toc-number">1.6.2.</span> <span class="toc-text">6.2 不同动作的交接窗口并不相同</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#6-3-%E6%B4%BB%E7%9D%80%E6%97%B6%E8%BF%98%E8%A6%81%E9%80%82%E9%85%8D%E6%94%BB%E5%87%BB%E3%80%81%E8%A3%85%E5%A4%87%E5%92%8C-IK"><span class="toc-number">1.6.3.</span> <span class="toc-text">6.3 活着时还要适配攻击、装备和 IK</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#7-%E7%89%A9%E7%90%86%E5%8F%8D%E9%A6%88%E4%B8%8E%E7%89%B9%E6%95%88%EF%BC%9A%E8%AE%A9%E5%88%87%E6%96%AD%E5%85%B7%E6%9C%89%E9%80%9F%E5%BA%A6%E3%80%81%E9%87%8D%E9%87%8F%E5%92%8C%E6%8C%81%E7%BB%AD%E6%80%A7"><span class="toc-number">1.7.</span> <span class="toc-text">7. 物理反馈与特效：让切断具有速度、重量和持续性</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#7-1-%E8%84%B1%E8%90%BD%E4%BD%93%E9%9C%80%E8%A6%81%E7%BB%A7%E6%89%BF%E8%BF%90%E5%8A%A8"><span class="toc-number">1.7.1.</span> <span class="toc-text">7.1 脱落体需要继承运动</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-2-%E9%9A%90%E8%97%8F%E7%BD%91%E6%A0%BC%E4%B8%8D%E4%BC%9A%E8%87%AA%E5%8A%A8%E7%A7%BB%E9%99%A4%E7%A2%B0%E6%92%9E"><span class="toc-number">1.7.2.</span> <span class="toc-text">7.2 隐藏网格不会自动移除碰撞</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#7-3-%E4%B8%A4%E7%AB%AF%E5%87%BA%E8%A1%80%E4%B8%8E%E8%A1%A8%E9%9D%A2%E8%A1%80%E8%BF%B9%E5%88%86%E5%88%AB%E6%9B%B4%E6%96%B0"><span class="toc-number">1.7.3.</span> <span class="toc-text">7.3 两端出血与表面血迹分别更新</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#8-%E7%8A%B6%E6%80%81%E4%B8%8E%E5%9B%9E%E6%94%B6%EF%BC%9A%E6%96%AD%E8%BF%87%E7%9A%84%E8%BA%AB%E4%BD%93%E5%BF%85%E9%A1%BB%E8%AE%B0%E5%BE%97%E8%87%AA%E5%B7%B1%E7%BC%BA%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">1.8.</span> <span class="toc-text">8. 状态与回收：断过的身体必须记得自己缺了什么</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#8-1-%E4%B8%80%E5%BC%A0%E7%8A%B6%E6%80%81%E8%A1%A8%E4%B8%8D%E5%A4%9F"><span class="toc-number">1.8.1.</span> <span class="toc-text">8.1 一张状态表不够</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-2-%E5%80%99%E9%80%89%E6%A3%80%E6%9F%A5%EF%BC%9A%E5%85%88%E6%8E%92%E9%99%A4%E9%87%8D%E5%A4%8D%E7%8A%B6%E6%80%81%EF%BC%8C%E5%86%8D%E9%80%89%E6%8B%A9%E4%B8%80%E4%B8%AA%E6%A7%BD"><span class="toc-number">1.8.2.</span> <span class="toc-text">8.2 候选检查：先排除重复状态，再选择一个槽</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-3-%E4%BB%8E%E8%BA%AB%E4%BD%93%E7%8A%B6%E6%80%81%E5%88%B0%E6%B8%B2%E6%9F%93%EF%BC%9A%E6%8A%8A%E7%9F%A9%E9%98%B5%E5%86%99%E8%BF%9B%E8%92%99%E7%9A%AE%E7%BD%91%E6%A0%BC"><span class="toc-number">1.8.3.</span> <span class="toc-text">8.3 从身体状态到渲染：把矩阵写进蒙皮网格</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-4-%E9%87%8D%E5%A4%8D%E5%88%87%E6%96%AD%E8%BF%98%E8%A6%81%E5%A4%84%E7%90%86%E4%B8%8A%E4%B8%8B%E6%B8%B8%E5%85%B3%E7%B3%BB"><span class="toc-number">1.8.4.</span> <span class="toc-text">8.4 重复切断还要处理上下游关系</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#8-5-%E5%88%9B%E5%BB%BA%E8%B7%9D%E7%A6%BB%E4%B8%8E%E4%BF%9D%E7%95%99%E8%B7%9D%E7%A6%BB%E8%A6%81%E5%88%86%E5%BC%80"><span class="toc-number">1.8.5.</span> <span class="toc-text">8.5 创建距离与保留距离要分开</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#9-%E6%8A%8A%E4%B8%80%E6%9D%A1%E6%96%AD%E8%82%A2%E9%93%BE%E7%9C%9F%E6%AD%A3%E5%81%9A%E9%80%9A"><span class="toc-number">1.9.</span> <span class="toc-text">9. 把一条断肢链真正做通</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#9-1-%E5%9C%A8-UE-%E4%B8%AD%E6%8A%8A%E7%BD%91%E6%A0%BC%E3%80%81%E9%81%AE%E7%BD%A9%E4%B8%8E%E8%A1%A5%E5%8F%A3%E6%8E%A5%E8%B5%B7%E6%9D%A5"><span class="toc-number">1.9.1.</span> <span class="toc-text">9.1 在 UE 中把网格、遮罩与补口接起来</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#9-2-%E9%85%8D%E5%A5%97-UE-%E5%B7%A5%E7%A8%8B%E4%B8%8E%E6%BA%90%E7%A0%81"><span class="toc-number">1.9.2.</span> <span class="toc-text">9.2 配套 UE 工程与源码</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%BB%B6%E4%BC%B8%E9%98%85%E8%AF%BB"><span class="toc-number">1.9.3.</span> <span class="toc-text">延伸阅读</span></a></li></ol></li></ol></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(async () => {
+  const showKatex = () => {
+    document.querySelectorAll('#article-container .katex').forEach(el => el.classList.add('katex-show'))
+  }
+
+  if (!window.katex_js_css) {
+    window.katex_js_css = true
+    await btf.getCSS('https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/katex.min.css')
+    if (true) {
+      await btf.getScript('https://cdn.jsdelivr.net/npm/katex@0.18.1/dist/contrib/copy-tex.min.js')
+    }
+  }
+
+  showKatex()
+})()</script><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '0bc08a08bffa9ac4918ee258c0d3d925'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"dying-light-2-dismemberment-pipeline","contentHash":"3f6e67149a4044af884a932e9a94c90a44aff04453edaccd3df5b178145dcaae"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>

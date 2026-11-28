@@ -1,0 +1,672 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Unity拖动2D和3D物体 | 登峰造极者，殊途亦同归。</title><meta name="author" content="烟雨迷离半世殇"><meta name="copyright" content="烟雨迷离半世殇"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="&#x2F;* 首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。 Description 描述 The current mouse position in pixel coordinates. (Read Only) 在屏幕坐标空间当前鼠标的位置（只读）。 The bottom-left of the screen or window is a">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Unity拖动2D和3D物体">
+<meta property="og:url" content="https://www.lfzxb.top/unity-2d3d/index.html">
+<meta property="og:site_name" content="登峰造极者，殊途亦同归。">
+<meta property="og:description" content="&#x2F;* 首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。 Description 描述 The current mouse position in pixel coordinates. (Read Only) 在屏幕坐标空间当前鼠标的位置（只读）。 The bottom-left of the screen or window is a">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp">
+<meta property="article:published_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-04T00:00:00.000Z">
+<meta property="article:author" content="烟雨迷离半世殇">
+<meta property="article:tag" content="Unity技术">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Unity拖动2D和3D物体",
+  "url": "https://www.lfzxb.top/unity-2d3d/",
+  "image": "https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp",
+  "datePublished": "2021-02-04T00:00:00.000Z",
+  "dateModified": "2021-02-04T00:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "烟雨迷离半世殇",
+      "url": "https://www.lfzxb.top/www.lfzxb.top"
+    }
+  ]
+}</script><link rel="shortcut icon" href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp"><link rel="canonical" href="https://www.lfzxb.top/unity-2d3d/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//www.google-analytics.com" crossorigin=""/><link rel="preconnect" href="//busuanzi.ibruce.info"/><meta name="google-site-verification" content="AhlEJ91V_L12bkwRF1ZS0BbytGCfsjqCX4GXztUluC8"/><meta name="baidu-site-verification" content="iRRtEBalDiujISsN"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          const hour = new Date().getHours()
+          const start = 6
+          const end = 8
+          const isNight =
+            start < end
+                ? hour < start || hour >= end
+                : hour >= start || hour < end
+          if (theme === undefined) isNight ? activateDarkMode() : activateLightMode()
+          else theme === 'light' ? activateLightMode() : activateDarkMode()
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script async="async" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><script>(adsbygoogle = window.adsbygoogle || []).push({
+  google_ad_client: 'ca-pub-7235595771604497',
+  enable_page_level_ads: 'true'
+});</script><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-XSL6D8K8G2"></script><script>window.dataLayer = window.dataLayer || []
+function gtag(){dataLayer.push(arguments)}
+gtag('js', new Date())
+gtag('config', 'G-XSL6D8K8G2')
+btf.addGlobalFn('pjaxComplete', () => {
+  gtag('config', 'G-XSL6D8K8G2', {'page_path': window.location.pathname})
+}, 'google_analytics')
+</script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":false,"highlightHeightLimit":800,"highlightFullpage":true,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: true,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: true,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Unity拖动2D和3D物体',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/CustomIcons/iconfontformaliyun.css"><meta name="referrer" content="no-referrer-when-downgrade"><meta name="generator" content="Hexo 7.3.0"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">261</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">233</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">60</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><img class="site-icon" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202507052331881.png!webp" alt="Logo" loading='lazy'></a><a class="nav-page-title" href="/"><span class="site-name">Unity拖动2D和3D物体</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-torii-gate"></i><span> 蓬莱仙境</span></a></div><div class="menus_item"><a class="site-page" href="/archives/"><i class="fa-fw fas fa-stream"></i><span> 白驹过隙</span></a></div><div class="menus_item"><a class="site-page" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 包罗万象</span></a></div><div class="menus_item"><a class="site-page" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分朋引类</span></a></div><div class="menus_item"><a class="site-page" href="/self/"><i class="fa-fw fas fa-id-card"></i><span> 择交而友</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 一见如故</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Unity拖动2D和3D物体</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2021-02-04T00:00:00.000Z" title="发表于 2021-02-04 00:00:00">2021-02-04</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2021-02-04T00:00:00.000Z" title="更新于 2021-02-04 00:00:00">2021-02-04</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/">GamePlay</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/GamePlay/%E5%AE%9E%E7%94%A8%E5%B7%A5%E5%85%B7/">实用工具</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/">游戏引擎</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%B8%B8%E6%88%8F%E5%BC%95%E6%93%8E/Unity/">Unity</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">608</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span><span class="post-meta-separator">|</span><span class="post-meta-commentcount"><i class="far fa-comments fa-fw post-meta-icon"></i><span class="post-meta-label">评论数:</span><a href="/unity-2d3d/#post-comment"><span class="gitalk-comment-count"><i class="fa-solid fa-spinner fa-spin"></i></span></a></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><div id="post-outdate-notice" data="{&quot;limitDay&quot;:365,&quot;messagePrev&quot;:&quot;这篇文章已经&quot;,&quot;messageNext&quot;:&quot;天没维护了，相关内容可能已过时。&quot;,&quot;postUpdate&quot;:&quot;2021-02-04 00:00:00&quot;}" hidden></div><p>/*<br>
+首先说一下，Input.mousePosition是鼠标所在像素平面内的坐标，需要根据自己的需求转变成世界坐标。<br>
+Description 描述<br>
+The current mouse position in pixel coordinates. (Read Only)</p>
+<p>在屏幕坐标空间当前鼠标的位置（只读）。</p>
+<p>The bottom-left of the screen or window is at (0, 0). The top-right of the screen or window is at (Screen.width, Screen.height).</p>
+<p>屏幕或窗口的左下角是坐标系的（0,0）坐标。右上角的坐标是（屏幕宽度值，屏幕高度值）。</p>
+<p>*/</p>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这里用于2D场景物体的移动，可以参考一下。</span></span><br><span class="line"><span class="keyword">private</span> <span class="built_in">bool</span> isMouseDown;</span><br><span class="line"><span class="keyword">private</span> Vector3 lastMousePosition = Vector3.zero;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">TwoDMove</span>()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">if</span> (Input.GetMouseButtonDown(<span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        isMouseDown = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (Input.GetMouseButtonUp(<span class="number">0</span>))</span><br><span class="line">    &#123;</span><br><span class="line">        isMouseDown = <span class="literal">false</span>;</span><br><span class="line">        lastMousePosition = Vector3.zero;<span class="comment">//这里要归零，不然会有漂移效果</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (isMouseDown)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (lastMousePosition != Vector3.zero)</span><br><span class="line">        &#123;</span><br><span class="line">            Vector3 offset = Camera.main.ScreenToWorldPoint(Input.mousePosition) - lastMousePosition;</span><br><span class="line">            transform.position += offset;</span><br><span class="line">        &#125;</span><br><span class="line">        lastMousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//这里是使用Ray射线来控制物体移动，可是由于射线本身检测速率的限制，并不适合持续的跟踪移动。具体效果各位读者试试便知。</span></span><br><span class="line">  <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">RayMove</span>()</span></span><br><span class="line">  &#123;</span><br><span class="line">      Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);</span><br><span class="line">      RaycastHit hit;</span><br><span class="line">      <span class="keyword">if</span> (isMouseDown)</span><br><span class="line">      &#123;</span><br><span class="line">          <span class="keyword">if</span> (Physics.Raycast(ray, <span class="keyword">out</span> hit))</span><br><span class="line">          &#123;</span><br><span class="line">              Vector3 offset = Input.mousePosition;</span><br><span class="line">              hit.transform.position = <span class="keyword">new</span> Vector3(hit.point.x, hit.point.y, hit.transform.position.z);</span><br><span class="line">              Debug.DrawLine(ray.origin, hit.point);</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c#"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> 这里是3D物体的移动，注意坐标系的转换即可。</span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;/summary&gt;</span></span></span><br><span class="line">  <span class="comment"><span class="doctag">///</span> <span class="doctag">&lt;returns&gt;</span><span class="doctag">&lt;/returns&gt;</span></span></span><br><span class="line"></span><br><span class="line"></span><br><span class="line">  <span class="comment">//注意世界坐标系转化为屏幕坐标系，Z轴是不变的</span></span><br><span class="line">  <span class="function">IEnumerator <span class="title">OnMouseDown</span>()</span></span><br><span class="line">      &#123;</span><br><span class="line">          <span class="comment">//将物体由世界坐标系转化为屏幕坐标系，由vector3 结构体变量ScreenSpace存储，以用来明确屏幕坐标系Z轴的位置</span></span><br><span class="line">          Vector3 ScreenSpace = Camera.main.WorldToScreenPoint(transform.position);</span><br><span class="line">          <span class="comment">//完成了两个步骤，1由于鼠标的坐标系是2维的，需要转化成3维的世界坐标系，2只有三维的情况下才能来计算鼠标位置与物体的距离，offset即是距离</span></span><br><span class="line">          Vector3 offset = transform.position - Camera.main.ScreenToWorldPoint(<span class="keyword">new</span> Vector3(Input.mousePosition.x, Input.mousePosition.y, ScreenSpace.z));</span><br><span class="line">          Debug.Log(<span class="string">&quot;down&quot;</span>);</span><br><span class="line">          <span class="comment">//当鼠标左键按下时</span></span><br><span class="line">          <span class="keyword">while</span> (Input.GetMouseButton(<span class="number">0</span>))</span><br><span class="line">          &#123;</span><br><span class="line">              <span class="comment">//得到现在鼠标的2维坐标系位置</span></span><br><span class="line">              Vector3 curScreenSpace = <span class="keyword">new</span> Vector3(Input.mousePosition.x, Input.mousePosition.y, ScreenSpace.z);</span><br><span class="line">              <span class="comment">//将当前鼠标的2维位置转化成三维的位置，再加上鼠标的移动量</span></span><br><span class="line">              Vector3 CurPosition = Camera.main.ScreenToWorldPoint(curScreenSpace) + offset;</span><br><span class="line">              <span class="comment">//CurPosition就是物体应该的移动向量赋给transform的position属性</span></span><br><span class="line">              transform.position = CurPosition;</span><br><span class="line">              <span class="function"><span class="keyword">yield</span> <span class="keyword">return</span> <span class="keyword">new</span> <span class="title">WaitForFixedUpdate</span>()</span>;</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="www.lfzxb.top">烟雨迷离半世殇</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://www.lfzxb.top/unity-2d3d/">https://www.lfzxb.top/unity-2d3d/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://www.lfzxb.top" target="_blank">登峰造极者，殊途亦同归。</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Unity%E6%8A%80%E6%9C%AF/">Unity技术</a></div><div class="post-share"><div class="social-share" data-image="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/202509232351560.webp" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><div class="post-reward"><div class="reward-button"><i class="fas fa-qrcode"></i>赞赏</div><div class="reward-main"><ul class="reward-all"><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175314.png!webp" alt="微信"/ loading='lazy'></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" target="_blank"><img class="post-qr-code-img" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/QQ截图20190430175304.png!webp" alt="支付宝"/ loading='lazy'></a><div class="post-qr-code-desc">支付宝</div></li></ul></div></div><div class="ads-wrap"><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7235595771604497" data-ad-slot="9104433828"></ins><script> (adsbygoogle = window.adsbygoogle || []).push({});</script></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/unity-base-ab-hotfix/" title="AssetBundle热更新完整工作流与知识点解析"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/11/QQ截图20191126220128.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" loading='lazy'><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">AssetBundle热更新完整工作流与知识点解析</div></div><div class="info-2"><div class="info-item-1">前言 虽然这一块内容是比较基础的，但是知识点比较分散，所以我还是决定写一篇博客来记录梳理一下。 环境：Unity 2018.4.0 参考文献 Unity官方文档：https://docs.unity3d.com/Manual/index.html 不会C++的码农知乎文章：https://zhuanlan.zhihu.com/p/25111851 AssetBundle相关知识 什么是AssetBundle？ 一个AssetBundle可以当做一个文件集合，它包含了Unity可以在运行时加载的特定于平台的非代码资产(例如模型、纹理、预制组件、音频，甚至整个场景)。AssetBundle可以表示彼此之间的依赖关系;例如，一个AssetBundle中的material可以引用另一个AssetBundle中的texture。为了在减轻网络传输压力，您可以根据需求选择内置算法(LZMA和LZ4)来压缩AssetBundle。 AssetBundle对于可下载内容(DLC)、减少初始安装大小、加载针对最终用户平台优化的资产以及减少运行时内存压力都很有用。 AssetBundle里有什么？ ...</div></div></div></a><a class="pagination-related" href="/ui-handbar-perspectivecamera-offset-solution/" title="解决血条在透视相机下的偏移"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/01/QQ截图20200123130210.png!webp" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" loading='lazy'><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">解决血条在透视相机下的偏移</div></div><div class="info-2"><div class="info-item-1">起因 我在为Moba项目开发人物头顶血条同步逻辑时，出现了一些问题。 Moba项目链接： 前提条件 UI工具：FGUI Unity版本：2018.4 自己计算同步血条的位置，这样相比于直接在人物身上挂载Canvas做血条显示的优点是不必考虑远大近小的情况（参考LOL中戏命师烬开大，咖喱奥开大跃起时的屏幕缩放而血条大小不变），并且更便于管理和维护。 问题描述 当人物与当前屏幕中心点不重合时，头顶血条会出现偏移的情况。 当人物基本上都在中央时  当偏离屏幕中央过远时（右边人物为屏幕中央）  参照目标 要解决问题很多时候需要一个参照模型，这里就拿LOL来举例。可以看到即使圣枪和最右边那一坨辨识度极低的英雄他们的血条都没有发生偏移。这里不理他是具体怎么实现的，只需要朝这个结果靠拢就行了。  问题定位 发现了问题就应该去找问题的根源。 遥想当年，自己写一个用手拖动2D小飞机的功能都觉得自己要起飞了（老飞行员了），回看今天，怎么2D变成3D的就拉了胯呢。 有一个很明显的不同点，2D的使用的是正交相机，3D的使用的是透视相机。 然后就有以下几个重要的信息点：  Moba游戏的相机一般而言都是有...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/nkgmoba-framestepstate-architecture-battle-design/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-12-19</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 在2021年的最后一段时间里，我决定将业余的时间和精力放到我的老朋友MOBA项目的技能系统的网络同步部分的开发和完善上来，主要工作内容是：  在原本行为树的基础上再接入一套Timeline系统用于更加方便和直观的编辑技能 将原本状态同步的方案转变到状态帧同步方案  这里还是简单的谈一下为什么不选择帧同步而选择状态帧同步，如果基于帧同步进行开发的话，定点数的使用会大大增加各个模块的时间和人力成本，并且稍不注意就会有毁灭性的不同步出现，再者，帧同步出于安全考虑需要服务端进行校验工作，工作量和状态同步基本上没什么区别，帧同步真正的价值在于其 “帧” 的概念，有了帧的概念，就可以去预测，去回滚，去做录像，去做观战。。。而状态帧方案就可以让我们在不受限于帧同步条条框框的基础上拥有帧同步的开发体验与项目效果，其相对于帧同步来说，最为困难的部分就是根据服务端传来的帧数据进行重新模拟+回滚，这要求状态和逻辑分离的非常纯粹，也就是说对于客户端，接收任意帧内相同的输入必须能回滚到...</div></div></div></a><a class="pagination-related" href="/unity-slate-study-and-extendplan/" title="ParadoxNotion-Slate学习笔记与拓展计划"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210907010528.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-10-19</div><div class="info-item-2">ParadoxNotion-Slate学习笔记与拓展计划</div></div><div class="info-2"><div class="info-item-1">前言 要准备开始把状态帧同步方案接入Moba项目了，其中比较重要的两部分是战斗系统的重构以及技能编辑器的适配，前者先不谈，内容多而细碎，后面会单独出文章整理说明。技能编辑器目前使用了是基于节点的行为树编辑器，说实话对于技能的配置与效果的预览并不友好，但不可否认的是其逻辑组织能力雀食优秀，为了弥补其短板，准备接入一个Timeline编辑器，我的选择是ParadoxNotion-Slate，理由是界面美观，可拓展性较好，源码注释详细简洁。 这篇文章就是梳理下Slate的架构以及技能编辑器的适配思路。 Slate版本：2.0.2 正文 基础架构 由表及里主要有CutsceneGroup，CutsceneTrack，ActionClip三层结构，三者都实现IDirectable接口  CutsceneGroup：包含多个CutsceneTrack与多个Section，其中Section被用于划分CutsceneTrack区域和快捷编辑 CutsceneTrack：包含多个ActionClip ActionClip：一个具体的行为片段，例如播放一段动画，播放一个特效，移动一段距离  具体层...</div></div></div></a><a class="pagination-related" href="/gameframework-starforce/" title="GameFramework篇：StarForce学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2019/04/20190105164355598.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-03-15</div><div class="info-item-2">GameFramework篇：StarForce学习笔记</div></div><div class="info-2"><div class="info-item-1">流程模块 StarForce流程讲解 环境：StarForce matser 3.1.7 之前我们就提到过流程贯穿游戏的始终，那么今天就来详细的说一下流程模块  ProcedureLauch为游戏入口流程，我们就来看他是什么，他做了什么 一眼看见他继承自ProcedureBase 我们一层层跟进，发现他和状态机有着不可分割的关系，每个流程都是一个状态 他们的关系大体上可以用这个UML图解释，当然这只是非常非常简略的版本，如果要把所有特性都列出来，那将会很庞大的。推荐大家仔细研读这部分代码，体会编程的乐趣与开发者的智慧。  我们需要知道，由基层的Fsm更新来驱动状态机状态的更新，状态机状态的切换也会传递到底层的Fsm上，即一切状态都被Fsm持有与维护 我们就以ProcedureChangeScene这个流程类来熟悉上面的流程图  进入流程时，订阅了一些事件，并且为切换场景做好了准备 流程状态更新，如果场景加载已经完成，就根据需要切换场景。其中的procedureOwner为流程持有者，为GameFramework.Fsm.IFsm&lt;GameFramework.Procedur...</div></div></div></a><a class="pagination-related" href="/nkgmoba-fromstatetoframestepstate-record/" title="基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/typoraImages_3/20210907123123.png!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2022-02-20</div><div class="info-item-2">基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统开发手札</div></div><div class="info-2"><div class="info-item-1">前言 基于行为树的Moba技能系统系列文章总目录：https://www.lfzxb.top/nkgmoba-total 承接上篇 基于行为树的MOBA技能系统：基于状态帧的战斗，技能编辑器与录像回放系统设计 这篇文章记录一下将状态同步切换为状态帧同步所做的改动 网络同步 首先是最基础的网络同步模块 目前业界主流有两种做法  使命召唤：客户端落后于服务器，服务器收到客户端消息时根据帧号回滚到那一帧进行模拟，并将得出的结果返回客户端 守望先锋：客户端领先于服务器，服务器收到客户端消息以当前服务器所在帧为准，统一进行模拟  两种做法都是可以的，最大的不同在于服务器收到客户端消息时的处理方式，其他逻辑（比如预测，回滚）本质都是一样的，因为守望先锋的分享更加详尽一些，细节处理的可参考度也就更高，所以这里选择守望先锋的做法 这块内容在 基于行为树的MOBA技能系统：技能系统与网络同步 有提到，此处不再过多赘述，其中需要注意的一个概念是客户端一定是领先于服务器的，因为我们发送的网络包会在半个RTT+一个缓存帧时长才会到达服务端，所以如果服务端当前是95帧，RTT是8帧，缓冲帧时长为1帧，那么...</div></div></div></a><a class="pagination-related" href="/unity-dots-part-of-entities/" title="Unity DOTS：Entities部分"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/2020/05/nordeus_jobsystem_2.jpg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-02-04</div><div class="info-item-2">Unity DOTS：Entities部分</div></div><div class="info-2"><div class="info-item-1">Entities Entities是实体组件系统体系结构的三个主要元素之一。它们代表游戏或应用程序中的各个“事物”。Entities既没有行为也没有数据；取而代之的是，它担任索引各种数据的职责。Systems提供行为，而Components存储数据。 entity本质上是一个ID。最简单方法是把它作为一个超轻量级GameObject甚至没有名称。实体ID稳定；您可以使用它们来存储对另一个component或entities的引用。例如，Hierarchy中的子entity可能需要引用其父entity。 一个EntityManager管理在一个World中所有的entities。EntityManager维护entities列表并组织与entities相关联的数据以实现最佳性能。 尽管实体没有类型，但是可以按与entities相关联的components的类型对其进行分组。创建entities并向其添加components时，EntityManager会持续跟踪监控entities上components的唯一组合。这种独特的组合称为Archetype（原型）。将components...</div></div></div></a><a class="pagination-related" href="/et6.0-study/" title="ET6.0学习笔记"><img class="cover" src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/AvatarAndBGs/56c27678b0a8b77cb8dc30b26df3c1ad.jpeg!webp" alt="cover" loading='lazy'><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="fas fa-history fa-fw"></i> 2021-08-22</div><div class="info-item-2">ET6.0学习笔记</div></div><div class="info-2"><div class="info-item-1">前言 由于之前已经写过很多ET相关教程，本篇文章主要提及ET6.0的新概念和新特性，其实6.0很多知识点和之前版本一样适用，想看ET之前版本教程的，可以前往：ET篇：个人笔记汇总 本文写作时对应的commit版本：https://github.com/egametang/ET/commit/43abb90cd05445f2e9a0625ac12caaab59486672 基础概念 此部分内容参考：ET6.0的设计思路 推荐大家有问题先去ET论坛逛逛，里面有很多管理员整理好的日常讨论答案，技术教程，以及其他朋友提出的问题，可以学到很多知识。 ET 6.0创新概览  之前每个功能是一个进程，比如realm gate location map，现在改成每个功能是一个Scene，一个Scene可以放到一个进程中。这样一台物理机先启动固定的进程，然后各个scene放到进程中运行。非常类似docker。 所有的Scene放在一个进程就变成了AllServer模式 服务器内部全部使用actor发送消息，比如realm发给gate，其实是发个actor消息到gate scene dbserver...</div></div></div></a></div></div><hr class="custom-hr"/><div id="post-comment"><div class="comment-head"><div class="comment-headline"><i class="fas fa-comments fa-fw"></i><span> 评论</span></div></div><div class="comment-wrap"><div><div id="gitalk-container"></div></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/mmexport1791096624848.jpg!webp" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/ loading='lazy'></div><div class="author-info-name">烟雨迷离半世殇</div><div class="author-info-description">愿天下心诚剑士人人可剑开天门！</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">261</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">233</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">60</div></a></div><div class="card-info-social-icons"><a class="social-icon" href="https://gitee.com/NKG_admin" target="_blank" title="Gitee"><i class="iconfont icon-mayun"></i></a><a class="social-icon" href="https://github.com/wqaetly" target="_blank" title="Github"><i class="iconfont icon-github"></i></a><a class="social-icon" href="https://space.bilibili.com/33595745" target="_blank" title="Bilibili"><i class="iconfont icon-bilibili-line"></i></a><a class="social-icon" href="https://music.163.com/#/user/home?id=286997681" target="_blank" title="网易云音乐"><i class="iconfont icon-wangyiyunyinle"></i></a><a class="social-icon" href="https://www.zhihu.com/people/gu-gao-de-wang-1" target="_blank" title="知乎"><i class="iconfont icon-zhihu"></i></a><a class="social-icon" href="http://mail.qq.com/cgi-bin/qm_share?t=qm_mailme&amp;email=QHF3d3hxc3lzcnEAMTFuIy8t" target="_blank" title="QQ邮箱"><i class="iconfont icon-youxiang"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">NKG烟雨阁：<a href="https://uni.lfzxb.top" target="_blank" rel="noopener">https://uni.lfzxb.top</a> 内含多个实用工具，欢迎游玩！</div></div><div class="sticky_layout"><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/my-investment-journey-2022-2026/" title="个人理财总结与分享"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026/20261116005404301.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="个人理财总结与分享"/ loading='lazy'></a><div class="content"><a class="title" href="/my-investment-journey-2022-2026/" title="个人理财总结与分享">个人理财总结与分享</a><time datetime="2026-11-28T00:00:00.000Z" title="更新于 2026-11-28 00:00:00">2026-11-28</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/poe-developer-notes/" title="《流放之路》十余年开发技术与设计笔记合集"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261125210042677.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="《流放之路》十余年开发技术与设计笔记合集"/ loading='lazy'></a><div class="content"><a class="title" href="/poe-developer-notes/" title="《流放之路》十余年开发技术与设计笔记合集">《流放之路》十余年开发技术与设计笔记合集</a><time datetime="2026-11-25T00:00:00.000Z" title="更新于 2026-11-25 00:00:00">2026-11-25</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/dying-light-2-dismemberment-pipeline/" title="深入拆解《消逝的光芒 2》断肢管线"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2026pipeline.png" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入拆解《消逝的光芒 2》断肢管线"/ loading='lazy'></a><div class="content"><a class="title" href="/dying-light-2-dismemberment-pipeline/" title="深入拆解《消逝的光芒 2》断肢管线">深入拆解《消逝的光芒 2》断肢管线</a><time datetime="2026-10-29T00:00:00.000Z" title="更新于 2026-10-29 00:00:00">2026-10-29</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/native-video-player/" title="自研跨平台播放器的帧调度与 GPU 管线"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20261007161013480.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="自研跨平台播放器的帧调度与 GPU 管线"/ loading='lazy'></a><div class="content"><a class="title" href="/native-video-player/" title="自研跨平台播放器的帧调度与 GPU 管线">自研跨平台播放器的帧调度与 GPU 管线</a><time datetime="2026-10-07T00:00:00.000Z" title="更新于 2026-10-07 00:00:00">2026-10-07</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/fluidninja2-agi/" title="深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线"><img src="https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/46-live2-stage13-front.png!webp" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线"/ loading='lazy'></a><div class="content"><a class="title" href="/fluidninja2-agi/" title="深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线">深入拆解 FluidNinja LIVE 2 的 Niagara 实时流体管线</a><time datetime="2026-09-20T00:00:00.000Z" title="更新于 2026-09-20 00:00:00">2026-09-20</time></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(https://myfirstblog.oss-cn-hangzhou.aliyuncs.com/blog2021/20210912135042.png!webp);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By 烟雨迷离半世殇</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 7.3.0</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">2018-2026 lfzxb.top版权所有</br><span id="realtime_duration"></span></br></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">简</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><a id="to_comment" href="#post-comment" title="前往评论"><i class="fas fa-comments"></i></a><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"><script>(() => {
+  const parseViewBox = viewBox => {
+    if (!viewBox) return null
+    const parts = viewBox.trim().split(/[\s,]+/).map(n => Number(n))
+    if (parts.length !== 4 || parts.some(n => Number.isNaN(n))) return null
+    return parts
+  }
+
+  const getSvgViewBox = svg => {
+    const attr = parseViewBox(svg.getAttribute('viewBox'))
+    if (attr) return attr
+
+    // Fallback: use bbox to build a viewBox
+    try {
+      const bbox = svg.getBBox()
+      if (bbox && bbox.width && bbox.height) return [bbox.x, bbox.y, bbox.width, bbox.height]
+    } catch (e) {
+      // getBBox may fail on some edge cases; ignore
+    }
+
+    const w = Number(svg.getAttribute('width')) || 0
+    const h = Number(svg.getAttribute('height')) || 0
+    if (w > 0 && h > 0) return [0, 0, w, h]
+    return [0, 0, 100, 100]
+  }
+
+  const setSvgViewBox = (svg, vb) => {
+    svg.setAttribute('viewBox', `${vb[0]} ${vb[1]} ${vb[2]} ${vb[3]}`)
+  }
+
+  const clamp = (v, min, max) => Math.max(min, Math.min(max, v))
+
+  const openSvgInNewTab = ({ source, initViewBox }) => {
+    const getClonedSvg = () => {
+      if (typeof source === 'string') {
+        const template = document.createElement('template')
+        template.innerHTML = source.trim()
+        const svg = template.content.querySelector('svg')
+        return svg ? svg.cloneNode(true) : null
+      }
+      if (source && typeof source.cloneNode === 'function') {
+        return source.cloneNode(true)
+      }
+      return null
+    }
+
+    const clone = getClonedSvg()
+    if (!clone) return
+    if (initViewBox && initViewBox.length === 4) {
+      clone.setAttribute('viewBox', initViewBox.join(' '))
+    }
+    if (!clone.getAttribute('xmlns')) clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+    if (!clone.getAttribute('xmlns:xlink') && clone.innerHTML.includes('xlink:')) {
+      clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+    }
+    // inject background to match current theme
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+    const bg = getComputedStyle(document.body).backgroundColor || (isDark ? '#1e1e1e' : '#ffffff')
+    if (!clone.style.background) clone.style.background = bg
+
+    const serializer = new XMLSerializer()
+    const svgSource = serializer.serializeToString(clone)
+    const htmlSource = `<!doctype html><html><head><meta charset="utf-8" />
+      <style>
+        html, body { width: 100%; height: 100%; margin: 0; display: flex; align-items: center; justify-content: center; background: ${bg}; }
+        svg { max-width: 100%; max-height: 100%; height: auto; width: auto; }
+      </style>
+      </head><body>${svgSource}</body></html>`
+    const blob = new Blob([htmlSource], { type: 'text/html;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    window.open(url, '_blank', 'noopener')
+
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+  }
+
+  const attachMermaidViewerButton = wrap => {
+    let btn = wrap.querySelector('.mermaid-open-btn')
+    if (!btn) {
+      btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'mermaid-open-btn'
+      wrap.appendChild(btn)
+    }
+
+    btn.innerHTML = '<i class="fa fa-search fa-fw" aria-hidden="true"></i>'
+
+    if (!btn.__mermaidViewerBound) {
+      btn.addEventListener('click', e => {
+        e.preventDefault()
+        e.stopPropagation()
+        const svg = wrap.__mermaidOriginalSvg || wrap.querySelector('svg')
+        if (!svg) return
+        const initViewBox = wrap.__mermaidInitViewBox
+        openSvgInNewTab({ source: svg, initViewBox })
+      })
+      btn.__mermaidViewerBound = true
+    }
+  }
+
+  // Zoom around a point (px, py) in the SVG viewport (in viewBox coordinates)
+  const zoomAtPoint = (vb, factor, px, py) => {
+    const w = vb[2] * factor
+    const h = vb[3] * factor
+    const nx = px - (px - vb[0]) * factor
+    const ny = py - (py - vb[1]) * factor
+    return [nx, ny, w, h]
+  }
+
+  const initMermaidGestures = wrap => {
+    // Clean up previous event listeners and pending frames
+    if (wrap.__mermaidAbortController) {
+      wrap.__mermaidAbortController.abort()
+      if (wrap.__mermaidRafId) cancelAnimationFrame(wrap.__mermaidRafId)
+    }
+    const ac = new AbortController()
+    wrap.__mermaidAbortController = ac
+    const svg = wrap.querySelector('svg')
+    if (!svg) return
+
+    // Ensure viewBox exists so gestures always work
+    const initVb = getSvgViewBox(svg)
+    wrap.__mermaidInitViewBox = initVb
+    wrap.__mermaidCurViewBox = initVb.slice()
+    setSvgViewBox(svg, initVb)
+    // Disable default gestures to prevent scroll chaining and pinch-zoom penetration in Chrome
+    svg.style.touchAction = 'none'
+
+    // Cache BoundingClientRect, throttled on scroll to reduce reflow
+    let cachedRect = svg.getBoundingClientRect()
+    let rectDirty = false
+    const markRectDirty = () => { rectDirty = true }
+    window.addEventListener('resize', markRectDirty, { signal: ac.signal })
+    window.addEventListener('scroll', markRectDirty, { signal: ac.signal, capture: true })
+    const getRect = () => {
+      if (rectDirty) {
+        cachedRect = svg.getBoundingClientRect()
+        rectDirty = false
+      }
+      return cachedRect
+    }
+
+    // Precompute clamp bounds from initial viewBox
+    const minW = initVb[2] * 0.1
+    const maxW = initVb[2] * 10
+    const minH = initVb[3] * 0.1
+    const maxH = initVb[3] * 10
+    const clampVb = vb => {
+      const out = vb.slice()
+      out[2] = clamp(out[2], minW, maxW)
+      out[3] = clamp(out[3], minH, maxH)
+      return out
+    }
+
+    // Throttle DOM updates using requestAnimationFrame
+    let pendingVb = null
+    let rafId = null
+    const applyVb = () => {
+      if (pendingVb) {
+        wrap.__mermaidCurViewBox = pendingVb
+        setSvgViewBox(svg, pendingVb)
+        pendingVb = null
+      }
+      rafId = null
+      wrap.__mermaidRafId = null
+    }
+    const setCurVb = vb => {
+      pendingVb = clampVb(vb)
+      if (!rafId) {
+        rafId = requestAnimationFrame(applyVb)
+        wrap.__mermaidRafId = rafId
+      }
+    }
+
+    const state = {
+      pointers: new Map(),
+      startVb: null,
+      startDist: 0,
+      lastPointerX: 0,
+      lastPointerY: 0
+    }
+
+    const onPointerDown = e => {
+      if (e.pointerType === 'mouse' && e.button !== 0) return
+      svg.setPointerCapture(e.pointerId)
+      const curVb = wrap.__mermaidCurViewBox
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      if (state.pointers.size === 1) {
+        state.startVb = curVb.slice()
+        state.lastPointerX = e.clientX
+        state.lastPointerY = e.clientY
+      } else if (state.pointers.size === 2) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        state.startDist = Math.hypot(dx, dy)
+        state.startVb = curVb.slice()
+      }
+    }
+
+    const onPointerMove = e => {
+      if (!state.pointers.has(e.pointerId)) return
+      state.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      if (state.pointers.size === 1 && state.startVb) {
+        const p = state.pointers.values().next().value
+        const dxClient = p.x - state.lastPointerX
+        const dyClient = p.y - state.lastPointerY
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+        const dx = dxClient * (curVb[2] / rect.width)
+        const dy = dyClient * (curVb[3] / rect.height)
+        setCurVb([curVb[0] - dx, curVb[1] - dy, curVb[2], curVb[3]])
+        return
+      }
+      if (state.pointers.size === 2 && state.startVb && state.startDist > 0) {
+        const pts = [...state.pointers.values()]
+        const dx = pts[0].x - pts[1].x
+        const dy = pts[0].y - pts[1].y
+        const dist = Math.hypot(dx, dy)
+        if (!dist) return
+        const factor = state.startDist / dist
+        const cx = (pts[0].x + pts[1].x) / 2
+        const cy = (pts[0].y + pts[1].y) / 2
+        const px = curVb[0] + (cx - rect.left) * (curVb[2] / rect.width)
+        const py = curVb[1] + (cy - rect.top) * (curVb[3] / rect.height)
+        setCurVb(zoomAtPoint(state.startVb, factor, px, py))
+      }
+    }
+
+    const onPointerUpOrCancel = e => {
+      // Release PointerCapture to avoid event capture anomalies
+      if (svg.hasPointerCapture && svg.hasPointerCapture(e.pointerId)) {
+        svg.releasePointerCapture(e.pointerId)
+      }
+      state.pointers.delete(e.pointerId)
+      if (state.pointers.size === 0) {
+        state.startVb = null
+        state.startDist = 0
+      } else if (state.pointers.size === 1) {
+        const p = state.pointers.values().next().value
+        state.lastPointerX = p.x
+        state.lastPointerY = p.y
+      }
+    }
+
+    const onWheel = e => {
+      // Prevent event bubbling from triggering external scroll
+      e.preventDefault()
+      e.stopPropagation()
+      // Normalize deltaY across deltaMode (Chrome uses pixels, Safari uses lines)
+      let delta = e.deltaY
+      if (e.deltaMode === 1) delta *= 16
+      else if (e.deltaMode === 2) delta *= 400
+
+      // Continuous zoom factor: smoother than fixed 1.1/0.9 steps
+      const zoomFactor = Math.pow(1.001, delta)
+
+      const curVb = wrap.__mermaidCurViewBox
+      const rect = getRect()
+      const px = curVb[0] + (e.clientX - rect.left) * (curVb[2] / rect.width)
+      const py = curVb[1] + (e.clientY - rect.top) * (curVb[3] / rect.height)
+      setCurVb(zoomAtPoint(curVb, zoomFactor, px, py))
+    }
+
+    const onDblClick = () => {
+      const init = wrap.__mermaidInitViewBox
+      if (init) setCurVb(init)
+    }
+
+    svg.addEventListener('pointerdown', onPointerDown, { signal: ac.signal })
+    svg.addEventListener('pointermove', onPointerMove, { signal: ac.signal })
+    svg.addEventListener('pointerup', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('pointercancel', onPointerUpOrCancel, { signal: ac.signal })
+    svg.addEventListener('wheel', onWheel, { passive: false, signal: ac.signal })
+    svg.addEventListener('dblclick', onDblClick, { signal: ac.signal })
+  }
+
+  const runMermaid = ele => {
+    window.loadMermaid = true
+    const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'default'
+    ele.forEach((item, index) => {
+      const mermaidSrc = item.firstElementChild
+      // Clean up event listeners before removing old SVG
+      if (item.__mermaidAbortController) {
+        item.__mermaidAbortController.abort()
+      }
+      const oldSvg = item.querySelector('svg')
+      if (oldSvg) oldSvg.remove()
+      let config = {}
+      try {
+        config = mermaidSrc.dataset.config ? JSON.parse(mermaidSrc.dataset.config) : {}
+      } catch (e) {
+        console.warn('[mermaid] failed to parse dataset.config:', e)
+      }
+      if (!config.theme) {
+        config.theme = theme
+      }
+      const mermaidThemeConfig = `%%{init: ${JSON.stringify(config)}}%%\n`
+      const mermaidID = `mermaid-${index}`
+      const mermaidDefinition = mermaidThemeConfig + mermaidSrc.textContent
+
+      const renderMermaid = svg => {
+        mermaidSrc.insertAdjacentHTML('afterend', svg)
+        if (true) initMermaidGestures(item)
+        item.__mermaidOriginalSvg = svg
+        if (true) attachMermaidViewerButton(item)
+      }
+
+      const handleError = err => {
+        console.error(`[mermaid] render failed for block #${index}:`, err)
+        const errorEl = document.createElement('div')
+        errorEl.className = 'mermaid-error'
+        errorEl.textContent = `Mermaid render error: ${err.message || err}`
+        mermaidSrc.insertAdjacentElement('afterend', errorEl)
+      }
+
+      try {
+        const renderFn = mermaid.render(mermaidID, mermaidDefinition)
+        // mermaid v9 and v10 compatibility
+        if (typeof renderFn === 'string') {
+          renderMermaid(renderFn)
+        } else {
+          renderFn.then(({ svg }) => renderMermaid(svg)).catch(handleError)
+        }
+      } catch (err) {
+        handleError(err)
+      }
+    })
+  }
+
+  const codeToMermaid = $article => {
+    const codeMermaidEle = $article.querySelectorAll('pre > code.mermaid')
+    if (codeMermaidEle.length === 0) return
+
+    codeMermaidEle.forEach(ele => {
+      const preEle = document.createElement('pre')
+      preEle.className = 'mermaid-src'
+      preEle.hidden = true
+      preEle.textContent = ele.textContent
+      const newEle = document.createElement('div')
+      newEle.className = 'mermaid-wrap'
+      newEle.appendChild(preEle)
+      ele.parentNode.replaceWith(newEle)
+    })
+  }
+
+  const loadMermaid = () => {
+    const $article = document.getElementById('article-container')
+    if (!$article) return
+
+    if (true) codeToMermaid($article)
+    const $mermaid = $article.querySelectorAll('.mermaid-wrap')
+    if ($mermaid.length === 0) return
+
+    const runMermaidFn = () => runMermaid($mermaid)
+    btf.addGlobalFn('themeChange', runMermaidFn, 'mermaid')
+    window.loadMermaid ? runMermaidFn() : btf.getScript('https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js').then(runMermaidFn)
+  }
+
+  btf.addGlobalFn('encrypt', loadMermaid, 'mermaid')
+  window.pjax ? loadMermaid() : document.addEventListener('DOMContentLoaded', loadMermaid)
+})()</script><script>(() => {
+  const isShuoshuo = GLOBAL_CONFIG_SITE.pageType === 'shuoshuo'
+  const option = null
+
+  const commentCount = n => {
+    const isCommentCount = document.querySelector('#post-meta .gitalk-comment-count')
+    if (isCommentCount) {
+      isCommentCount.textContent= n
+    }
+  }
+
+  const initGitalk = (el, path) => {
+    if (isShuoshuo) {
+      window.shuoshuoComment.destroyGitalk = () => {
+        if (el.children.length) {
+          el.innerHTML = ''
+          el.classList.add('no-comment')
+        }
+      }
+    }
+
+    const gitalk = new Gitalk({
+      clientID: '508db6cacf197b7363d1',
+      clientSecret: '2882a0b135eaa72b3ab256e37249c50733ce9e91',
+      repo: 'wqaetly',
+      owner: 'wqaetly',
+      admin: ['wqaetly'],
+      updateCountCallback: commentCount,
+      proxy: "https://strong-caramel-969805.netlify.app/github_access_token",
+      ...option,
+      id: isShuoshuo ? path : (option && option.id) || '63b910d7e9e4a8e5b55f7d3924bc37cd'
+    })
+
+    gitalk.render('gitalk-container')
+  }
+
+  const loadGitalk = async(el, path) => {
+    if (typeof Gitalk === 'function') initGitalk(el, path)
+    else {
+      await btf.getCSS('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.css')
+      await btf.getScript('https://cdn.jsdelivr.net/npm/gitalk@1.8.0/dist/gitalk.min.js')
+      initGitalk(el, path)
+    }
+  }
+
+  if (isShuoshuo) {
+    'Gitalk' === 'Gitalk'
+      ? window.shuoshuoComment = { loadComment: loadGitalk }
+      : window.loadOtherComment = loadGitalk
+    return
+  }
+
+  if ('Gitalk' === 'Gitalk' || !false) {
+    if (false) btf.loadComment(document.getElementById('gitalk-container'), loadGitalk)
+    else loadGitalk()
+  } else {
+    window.loadOtherComment = loadGitalk
+  }
+})()</script></div><script src="https://cdn.jsdelivr.net/npm/dayjs/dayjs.min.js"></script><script src="https://cdn.jsdelivr.net/npm/dayjs/plugin/duration.min.js"></script><script src="/js/realtime.js"></script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div class="docsearch-wrap"><div id="docsearch" style="display:none"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@docsearch/css@4.7.0/dist/style.min.css"/><script src="https://cdn.jsdelivr.net/npm/@docsearch/js@4.7.0/dist/umd/index.min.js"></script><script>(() => {
+  docsearch(Object.assign({
+    appId: 'D3U85CARGJ',
+    apiKey: '3edfc5bada9a140d5a4126085596f99c',
+    indexName: 'blogsearch',
+    container: '#docsearch',
+    placeholder: '搜索文章',
+  }, null))
+
+  const handleClick = () => {
+    document.querySelector('.DocSearch-Button').click()
+  }
+
+  const searchClickFn = () => {
+    btf.addEventListenerPjax(document.querySelector('#search-button > .search'), 'click', handleClick)
+  }
+
+  searchClickFn()
+  window.addEventListener('pjax:complete', searchClickFn)
+})()</script></div></div><script>window.__AI_ASSISTANT_CONFIG__={"endpoint":"https://ai.lfzxb.top","hmacSecret":"366ca2cac6f583b42e2a23399b580325c92454a3fbcdcb2268c9e4f4ecb75132","features":{"summary":true,"chat":true,"narration":false,"podcast":false,"selectionTts":false},"postId":"unity-2d3d","contentHash":"c6bb32d20db62cf30390f2708075f67d17947863aedb4eb9c79628b06ac29b3d"};</script><div id="ai-assistant-root"></div><script src="/runtime.js" defer></script></body></html>
